@@ -43,6 +43,29 @@ void net::train()
 
 vector<float> net::sigmod(vector<float> input)
 {
+    
+}
+
+// (1, k) * (k, 1)
+float mul(vector<float> a, vector<float> b)
+{
+    float res = 0;
+    for (int i = 0; i < a.size(); i++)
+    {
+        res += a[i] * b[i];
+    }
+    return res;
+}
+
+// (1, 1) * (1, k)
+vector<float> mul(float num, vector<float> a)
+{
+    vector<float> res;
+    for (int i = 0; i < a.size(); i++)
+    {
+        res.push_back(num * a[i]);
+    }
+    return res;
 }
 
 // #endif
