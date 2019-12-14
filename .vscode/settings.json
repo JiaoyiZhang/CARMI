@@ -52,7 +52,8 @@
         "xmemory": "cpp",
         "xstring": "cpp",
         "xtree": "cpp",
-        "ctime": "cpp"
+        "ctime": "cpp",
+        "iomanip": "cpp"
     },
     "C_Cpp.default.configurationProvider": "go2sh.cmake-integration"
 }

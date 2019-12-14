@@ -14,13 +14,9 @@ make
 ## File structure
 
 - src
-    - weightInitializer.h (Initialize the weight parameters of the network)
-    - rmi.h (The realization of the main algorithm of RMI model)
-    - optimizer.h
-    - net.h (The class of the net)
+    - learnedIndex.h (The realization of the main algorithm of RMI model)
+    - nn.h (The class of the net)
     - main.cpp 
-    - loss.h
-    - layer.h
 - cpp-btree (The dependency)
 - README.md
 - CMakeLists.txt
@@ -29,4 +25,4 @@ make
 ## Dependencies
 This code is based on C++.
 
-Main dependencies are **Eigen 3.3.4** and **cpp-btree**.
+Main dependencies is **cpp-btree**.

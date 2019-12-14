@@ -1,22 +1,24 @@
 #include <iostream>
-#include "rmi.h"
+#include "learnedIndex.h"
 #include <algorithm>
 #include <random>
-const int datasetSize = 1000000;
-std::array<int, datasetSize> dataset;
+#include <iomanip>
+const int datasetSize = 10000;
+vector<pair<double, double>> dataset;
 
 int main()
 {
-    float maxValue = 1000000.00;
+    float maxValue = 10000.00;
+    btree::btree_map<double, double> btreemap;
 
     // create dataset randomly
     std::default_random_engine generator;
     std::lognormal_distribution<double> distribution(0.0, 2.0);
-    std::array<double, datasetSize> ds;
+    vector<double> ds;
 
     for (int i = 0; i < datasetSize; i++)
     {
-        ds[i] = distribution(generator);
+        ds.push_back(distribution(generator));
     }
     std::sort(ds.begin(), ds.end());
 
@@ -24,53 +26,54 @@ int main()
     double factor = maxValue / maxV;
     for (int i = 0; i < ds.size(); i++)
     {
-        dataset[i] = static_cast<int>(ds[i] * factor);
+        dataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+        btreemap.insert({double(ds[i] * factor), double(ds[i] * factor) * 10});
     }
 
     params firstStageParams;
-    firstStageParams.batchSize = 4096;
     firstStageParams.learningRate = 0.01;
-    firstStageParams.maxNumEpochs = 50000;
+    firstStageParams.maxEpoch = 1000;
     firstStageParams.neuronNumber = 8;
 
     params secondStageParams;
-    secondStageParams.batchSize = 1024;
     secondStageParams.learningRate = 0.01;
-    secondStageParams.maxNumEpochs = 5000;
+    secondStageParams.maxEpoch = 1000;
+    secondStageParams.neuronNumber = 8;
 
-    RMI<int, int, 128> recursiveModelIndex(firstStageParams, secondStageParams, 20480);
-    btree::btree_map<int, int> btreemap;
+    totalModel rmi(dataset, firstStageParams, secondStageParams, 1024, 128);
 
-    for (int i = 0; i < datasetSize; i++)
-    {
-        recursiveModelIndex.insert(dataset[i], dataset[i + 1]);
-        btreemap.insert({dataset[i], dataset[i + 1]});
-    }
-    recursiveModelIndex.sortData();
+    rmi.sortData();
 
-    recursiveModelIndex.train();
+    rmi.train();
 
     std::vector<double> rmiDurations;
     std::vector<double> btreeDurations;
     clock_t RMI_start, RMI_end, BTree_start, BTree_end;
+    int repetitions = 10000;
     RMI_start = clock();
-    for (int i = 0; i < datasetSize; i++)
+    for (int k = 0; k < repetitions; k++)
     {
-        recursiveModelIndex.find(dataset[i]);
+        for (int i = 0; i < datasetSize; i++)
+        {
+            rmi.find(dataset[i].first);
+        }
     }
     RMI_end = clock();
-    double rmi_time = (double)(RMI_end - RMI_start) / CLOCKS_PER_SEC;
+    double rmi_time = static_cast<double>((RMI_end - RMI_start) / CLOCKS_PER_SEC);
 
     BTree_start = clock();
-    for (int i = 0; i < datasetSize; i++)
+    for (int k = 0; k < repetitions; k++)
     {
-        btreemap.find(dataset[i]);
+        for (int i = 0; i < datasetSize; i++)
+        {
+            btreemap.find(dataset[i].first);
+        }
     }
     BTree_end = clock();
-    double btree_time = (double)(BTree_end - BTree_start) / CLOCKS_PER_SEC;
+    double btree_time = static_cast<double>((BTree_end - BTree_start) / CLOCKS_PER_SEC);
 
-    std::cout << "rmi time: " << rmi_time / datasetSize << std::endl;
-    std::cout << "btree time: " << btree_time / datasetSize << std::endl;
+    std::cout << "rmi time: " << setiosflags(ios::fixed) << setprecision(8) << double(rmi_time / double(datasetSize)) << std::endl;
+    std::cout << "btree time: " << double(btree_time / double(datasetSize)) << std::endl;
 
     return 0;
 }

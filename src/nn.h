@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <iomanip>
 #include <chrono>
 #include <random>
 using namespace std;
@@ -54,27 +53,26 @@ vector<double> add(vector<double> a, vector<double> bias)
 class net
 {
 public:
-	net(vector<pair<double, double>> dataset, int maxEpochNumber, double lr, int neuronNumber)
-	{
-		m_dataset = dataset;
-		// m_batchSize = batchSize;
-		m_learningRate = lr;
-		m_maxEpochNumber = maxEpochNumber;
-		m_neuronNumber = neuronNumber;
+    net(){};
+
+    void insert(vector<pair<double, double>> dataset, int maxEpochNumber, double lr, int neuronNumber)
+    {
+        m_dataset = dataset;
 		datasetSize = m_dataset.size();
 		for (int i = 0; i < datasetSize; i++)
 		{
 			index.push_back(double(i) / double(datasetSize));
 		}
-	}
+        m_learningRate = lr;
+		m_maxEpochNumber = maxEpochNumber;
+		m_neuronNumber = neuronNumber;
+    }
 
 	void train();
 
 	double predict(int key); // return the key's index
 
 	vector<double> Relu(vector<double> input);
-
-	void print();
 
 private:
 	vector<pair<double, double>> m_dataset;
@@ -101,20 +99,18 @@ void net::train()
 		W2.push_back(dis(gen));
 		b1.push_back(1);
 	}
-	b2 = 0;
+	b2 = 0.91;
 
 	cout << "Start training" << endl;
-
+	double totalLoss = 0.0;
 	for (int epoch = 0; epoch < m_maxEpochNumber; epoch++)
 	{
-		cout << endl
-			 << "epoch: " << epoch << endl;
+		// cout << "epoch: " << epoch << endl;
 
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
 		shuffle(index.begin(), index.end(), default_random_engine(seed));
-
-		double totalLoss = 0.0;
+		totalLoss = 0.0;
 		double loss = 0.0;
 
 		for (int i = 0; i < datasetSize; i++)
@@ -149,7 +145,13 @@ void net::train()
 			W2 = add(W2, (multiply(-m_learningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
 			b2 = b2 - m_learningRate * (p - y);
 		}
-		cout << " loss is: " << setiosflags(ios::fixed) << setprecision(4) << totalLoss << endl;
+		//cout << "    loss is: " << setiosflags(ios::fixed) << setprecision(4) << totalLoss << endl;
+	}
+	if (totalLoss > 100)
+		train();
+	else
+	{
+		cout << "final loss is: " << totalLoss << endl;
 	}
 }
 
@@ -162,7 +164,6 @@ double net::predict(int key)
 		p = 0;
 	if (p > 1)
 		p = 1;
-	p *= datasetSize;
 	return p;
 }
 
