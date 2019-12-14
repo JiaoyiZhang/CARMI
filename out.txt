@@ -1,0 +1,32 @@
+train first stage
+Start training
+final loss is: 32.5942
+train second stage
+Start training
+final loss is: 2.22343
+Start training
+final loss is: 0.453805
+Start training
+final loss is: 0.19265
+Start training
+final loss is: 0.0777179
+Start training
+final loss is: 0.108445
+Start training
+final loss is: 0.0930904
+Start training
+final loss is: 0.0558768
+Start training
+final loss is: 0.0605307
+Start training
+final loss is: 0.0622492
+Start training
+Start training
+Start training
+Start training
+Start training
+Start training
+final loss is: 3.45649
+End train
+rmi time: 0.02770000
+btree time: 0.00460000

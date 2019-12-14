@@ -11,62 +11,62 @@ using namespace std;
 // (1, k) * (k, 1)
 double mul(vector<double> a, vector<double> b)
 {
-    double res = 0;
-    for (int i = 0; i < a.size(); i++)
-    {
-        res += a[i] * b[i];
-    }
-    return res;
+	double res = 0;
+	for (int i = 0; i < a.size(); i++)
+	{
+		res += a[i] * b[i];
+	}
+	return res;
 }
 
 // (1, 1) * (1, k)
 vector<double> multiply(double num, vector<double> a)
 {
-    vector<double> res;
-    for (int i = 0; i < a.size(); i++)
-    {
-        res.push_back(num * a[i]);
-    }
-    return res;
+	vector<double> res;
+	for (int i = 0; i < a.size(); i++)
+	{
+		res.push_back(num * a[i]);
+	}
+	return res;
 }
 
 // add (1, k) and b
 vector<double> add(vector<double> a, double bias)
 {
-    for (int i = 0; i < a.size(); i++)
-    {
-        a[i] += bias;
-    }
-    return a;
+	for (int i = 0; i < a.size(); i++)
+	{
+		a[i] += bias;
+	}
+	return a;
 }
 
 // add (1, k) and b(1, k)
 vector<double> add(vector<double> a, vector<double> bias)
 {
-    for (int i = 0; i < a.size(); i++)
-    {
-        a[i] += bias[i];
-    }
-    return a;
+	for (int i = 0; i < a.size(); i++)
+	{
+		a[i] += bias[i];
+	}
+	return a;
 }
 
 class net
 {
 public:
-    net(){};
+	net(){};
 
-    void insert(vector<pair<double, double>> dataset, int maxEpochNumber, double lr, int neuronNumber)
-    {
-        m_dataset = dataset;
+	void insert(vector<pair<double, double>> dataset, int maxEpochNumber, double lr, int neuronNumber)
+	{
+		m_dataset = dataset;
 		datasetSize = m_dataset.size();
 		for (int i = 0; i < datasetSize; i++)
 		{
 			index.push_back(double(i) / double(datasetSize));
 		}
-        m_learningRate = lr;
+		m_learningRate = lr;
 		m_maxEpochNumber = maxEpochNumber;
 		m_neuronNumber = neuronNumber;
-    }
+	}
 
 	void train();
 
@@ -147,7 +147,7 @@ void net::train()
 		}
 		//cout << "    loss is: " << setiosflags(ios::fixed) << setprecision(4) << totalLoss << endl;
 	}
-	if (totalLoss > 100)
+	if ((m_dataset.size() / totalLoss) < 100 && totalLoss > 100)
 		train();
 	else
 	{
