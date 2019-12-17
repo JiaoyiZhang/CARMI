@@ -157,9 +157,15 @@ void net::train()
 
 double net::predict(int key)
 {
-	double x = double(key);											  // key
-	vector<double> firstLayerResult = Relu(add(multiply(x, W1), b1)); // the result of first layer
-	double p = mul(firstLayerResult, W2) + b2;						  // the result of the nn
+	key = static_cast<double>(key);
+	double p = b2;
+	vector<double> firstLayerResult;
+	for (int i = 0; i < W1.size(); i++)
+	{
+		p += max(double(0), key * W1[i] + b1[i]) * W2[i];
+	}
+	// vector<double> firstLayerResult = Relu(add(multiply(key, W1), b1)); // the result of first layer
+	// double p = mul(firstLayerResult, W2) + b2;							// the result of the nn
 	if (p < 0)
 		p = 0;
 	if (p > 1)

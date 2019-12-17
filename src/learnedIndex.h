@@ -187,12 +187,6 @@ void totalModel::train()
         m_secondStage[i].train(perSubDataset[i]);
     }
     cout << "End train" << endl;
-    // cout << "output the maxError of each sub model" << endl;
-    // for (int i = 0; i < m_secondStageSize; i++)
-    // {
-    //     if (m_secondStage[i].validNode())
-    //         cout << "sub model : " << i << "  maxPositiveError:" << m_secondStage[i].getPositive() << "  maxNagetiveError:" << m_secondStage[i].getNagetive() << endl;
-    // }
 }
 
 pair<double, double> totalModel::find(double key)

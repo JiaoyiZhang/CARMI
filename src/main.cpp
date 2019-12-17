@@ -59,7 +59,7 @@ int main()
         }
     }
     RMI_end = clock();
-    double rmi_time = static_cast<double>((RMI_end - RMI_start) / CLOCKS_PER_SEC);
+    double rmi_time = static_cast<double>(RMI_end - RMI_start) / CLOCKS_PER_SEC;
 
     BTree_start = clock();
     for (int k = 0; k < repetitions; k++)
@@ -70,9 +70,9 @@ int main()
         }
     }
     BTree_end = clock();
-    double btree_time = static_cast<double>((BTree_end - BTree_start) / CLOCKS_PER_SEC);
+    double btree_time = static_cast<double>(BTree_end - BTree_start) / CLOCKS_PER_SEC;
 
-    std::cout << "rmi time: " << setiosflags(ios::fixed) << setprecision(8) << double(rmi_time / double(datasetSize)) << std::endl;
+    std::cout << "rmi time: " << double(rmi_time / double(datasetSize)) << std::endl;
     std::cout << "btree time: " << double(btree_time / double(datasetSize)) << std::endl;
 
     return 0;
