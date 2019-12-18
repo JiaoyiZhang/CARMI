@@ -55,7 +55,7 @@ class net
 public:
 	net(){};
 
-	void insert(vector<pair<double, double>> dataset, int maxEpochNumber, double lr, int neuronNumber)
+	void insert(const vector<pair<double, double>> &dataset, int maxEpochNumber, double lr, int neuronNumber)
 	{
 		m_dataset = dataset;
 		datasetSize = m_dataset.size();
@@ -111,7 +111,6 @@ void net::train()
 		shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
 		shuffle(index.begin(), index.end(), default_random_engine(seed));
 		totalLoss = 0.0;
-		double loss = 0.0;
 
 		for (int i = 0; i < datasetSize; i++)
 		{
@@ -128,8 +127,7 @@ void net::train()
 				p = 1;
 
 			// calculate the loss
-			loss = 0.5 * (p - double(y)) * (p - double(y));
-			totalLoss += loss;
+			totalLoss += 0.5 * (p - double(y)) * (p - double(y));
 
 			// backward propogation
 			// updata W1 and b1
