@@ -56,7 +56,7 @@ public:
             return pair<double, double>(-1, -1); // if no find, return <-1,-1>
     }
 
-    void train(vector<pair<double, double>> subDataset);
+    void train(const vector<pair<double, double>> &subDataset);
 
     // return the index in totalDataset
     int predict(double key)
@@ -86,7 +86,7 @@ private:
     btree::btree_map<double, int> m_tree; // <key, index in totalDataset>
 };
 
-void secondStageNode::train(vector<pair<double, double>> subDataset)
+void secondStageNode::train(const vector<pair<double, double>> &subDataset)
 {
     m_subDataset = subDataset;
     m_datasetSize = m_subDataset.size();
@@ -129,7 +129,7 @@ void secondStageNode::train(vector<pair<double, double>> subDataset)
 class totalModel
 {
 public:
-    totalModel(vector<pair<double, double>> dataset, params firstStageParams, params secondStageParams, int secondStageThreshold, int secondStageSize)
+    totalModel(const vector<pair<double, double>> &dataset, params firstStageParams, params secondStageParams, int secondStageThreshold, int secondStageSize)
     {
         m_dataset = dataset;
         m_firstStageParams = firstStageParams;
