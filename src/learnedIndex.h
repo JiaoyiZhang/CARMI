@@ -129,13 +129,14 @@ void secondStageNode::train(const vector<pair<double, double>> &subDataset)
 class totalModel
 {
 public:
-    totalModel(const vector<pair<double, double>> &dataset, params firstStageParams, params secondStageParams, int secondStageThreshold, int secondStageSize)
+    totalModel(const vector<pair<double, double>> &dataset, params firstStageParams, params secondStageParams, int secondStageThreshold, int secondStageSize, int maxInsertNumber)
     {
         m_dataset = dataset;
         m_firstStageParams = firstStageParams;
         m_secondStageParams = secondStageParams;
         m_secondStageSize = secondStageSize;
         m_secondStageThreshold = secondStageThreshold;
+        m_maxInsertNumber = maxInsertNumber;
 
         m_firstStageNetwork.insert(m_dataset, m_firstStageParams.maxEpoch, m_firstStageParams.learningRate, m_firstStageParams.neuronNumber);
 
@@ -156,6 +157,18 @@ public:
 
     pair<double, double> find(double key);
 
+    void insert(double key, double value)
+    {
+        m_insertArray.push_back({key, value});
+        if (m_maxInsertNumber <= m_insertArray.size())
+        {
+            m_dataset.insert(m_dataset.end(), m_insertArray.begin(), m_insertArray.end());
+            sortData();
+            m_insertArray.clear();
+            train();
+        }
+    }
+
 private:
     vector<pair<double, double>> m_dataset;
     net m_firstStageNetwork = net();
@@ -164,6 +177,9 @@ private:
     params m_secondStageParams;
     int m_secondStageThreshold;
     int m_secondStageSize;
+
+    vector<pair<double, double>> m_insertArray;
+    int m_maxInsertNumber;
 };
 
 void totalModel::train()
@@ -191,6 +207,29 @@ void totalModel::train()
 
 pair<double, double> totalModel::find(double key)
 {
+    // find key in m_insertArray firstly
+    int res = -1;
+    int insertStart = 0;
+    int insertEnd = m_insertArray.size();
+    while (insertStart < insertEnd)
+    {
+        int mid = (insertStart + insertEnd) / 2;
+        if (m_insertArray[mid].first == key)
+        {
+            res = mid;
+            break;
+        }
+        else if (m_insertArray[mid].first > key)
+            insertEnd = mid;
+        else
+            insertStart = mid + 1;
+    }
+    if (res != -1)
+    {
+        return {key, m_insertArray[res].second};
+    }
+
+
     double p = m_firstStageNetwork.predict(key);
     // cout << endl;
     // cout << "key: " << key << " , nn predict is: " << p;

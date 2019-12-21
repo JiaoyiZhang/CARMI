@@ -26,8 +26,11 @@ int main()
     double factor = maxValue / maxV;
     for (int i = 0; i < ds.size(); i++)
     {
-        dataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-        btreemap.insert({double(ds[i] * factor), double(ds[i] * factor) * 10});
+        if (i % 10 != 0)
+        {
+            dataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+            btreemap.insert({double(ds[i] * factor), double(ds[i] * factor) * 10});
+        }
     }
 
     params firstStageParams;
@@ -40,14 +43,12 @@ int main()
     secondStageParams.maxEpoch = 1000;
     secondStageParams.neuronNumber = 8;
 
-    totalModel rmi(dataset, firstStageParams, secondStageParams, 1024, 128);
+    totalModel rmi(dataset, firstStageParams, secondStageParams, 1024, 128, 1000);
 
     rmi.sortData();
 
     rmi.train();
 
-    std::vector<double> rmiDurations;
-    std::vector<double> btreeDurations;
     clock_t RMI_start, RMI_end, BTree_start, BTree_end;
     int repetitions = 10000;
     RMI_start = clock();
@@ -74,6 +75,40 @@ int main()
 
     std::cout << "rmi time: " << double(rmi_time / double(datasetSize)) << std::endl;
     std::cout << "btree time: " << double(btree_time / double(datasetSize)) << std::endl;
+
+    for (int i = 0; i < ds.size(); i++)
+    {
+        if (i % 10 == 0)
+        {
+            rmi.insert(double(ds[i] * factor), double(ds[i] * factor) * 10);
+            btreemap.insert({double(ds[i] * factor), double(ds[i] * factor) * 10});
+        }
+    }
+
+    RMI_start = clock();
+    for (int k = 0; k < repetitions; k++)
+    {
+        for (int i = 0; i < ds.size(); i += 10)
+        {
+            rmi.find(double(ds[i] * factor));
+        }
+    }
+    RMI_end = clock();
+    rmi_time = static_cast<double>(RMI_end - RMI_start) / CLOCKS_PER_SEC;
+
+    BTree_start = clock();
+    for (int k = 0; k < repetitions; k++)
+    {
+        for (int i = 0; i < ds.size(); i += 10)
+        {
+            btreemap.find(double(ds[i] * factor));
+        }
+    }
+    BTree_end = clock();
+    btree_time = static_cast<double>(BTree_end - BTree_start) / CLOCKS_PER_SEC;
+
+    std::cout << "rmi time (after insert) : " << double(rmi_time / double(repetitions)) << std::endl;
+    std::cout << "btree time (after insert) : " << double(btree_time / double(repetitions)) << std::endl;
 
     return 0;
 }
