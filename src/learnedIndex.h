@@ -62,9 +62,9 @@ public:
     int predict(double key)
     {
         double p = m_secondStageNetwork.predict(key); // return the index in subDataset
-        int preIdx = static_cast<int>(p * m_datasetSize);
-        preIdx = max(0, preIdx);
-        preIdx = min(m_datasetSize, preIdx);
+        int preIdx = static_cast<int>(p * (m_datasetSize-1));
+        // preIdx = max(0, preIdx);
+        // preIdx = min(m_datasetSize, preIdx);
         int index = int(m_subDataset[preIdx].second);
         return index;
     }
@@ -192,8 +192,8 @@ void totalModel::train()
         double p = m_firstStageNetwork.predict(m_dataset[i].first);
         p = p * (m_secondStageSize - 1); //calculate the index of second stage model
         int preIdx = static_cast<int>(p);
-        preIdx = max(0, preIdx);
-        preIdx = min(m_secondStageSize - 1, preIdx);
+        // preIdx = max(0, preIdx);
+        // preIdx = min(m_secondStageSize - 1, preIdx);
         perSubDataset[preIdx].push_back({m_dataset[i].first, double(i)});
     }
 
@@ -234,8 +234,8 @@ pair<double, double> totalModel::find(double key)
     // cout << endl;
     // cout << "key: " << key << " , nn predict is: " << p;
     int preIdx = static_cast<int>(p * (m_secondStageSize - 1));
-    preIdx = max(0, preIdx);
-    preIdx = min(m_secondStageSize - 1, preIdx);
+    // preIdx = max(0, preIdx);
+    // preIdx = min(m_secondStageSize - 1, preIdx);
     // cout << "    predict sub model is:" << preIdx << endl;
     if (m_secondStage[preIdx].validNode())
     {
