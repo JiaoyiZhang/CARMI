@@ -1,6 +1,7 @@
 #include <iostream>
 #include "learnedIndex.h"
 #include "segmentationModel.h"
+#include "gappedArray.h"
 #include <algorithm>
 #include <random>
 #include <iomanip>
@@ -45,16 +46,18 @@ int main()
     secondStageParams.neuronNumber = 8;
 
     totalModel rmi(dataset, firstStageParams, secondStageParams, 1024, 128, 1000);
-
     rmi.sortData();
-
     rmi.train();
 
     segModel seg(dataset);
     seg.sortData();
     seg.preProcess();
 
-    clock_t RMI_start, RMI_end, BTree_start, BTree_end, seg_start, seg_end;
+    gappedArray ga(dataset, 500);
+    ga.sortData();
+
+
+    clock_t RMI_start, RMI_end, BTree_start, BTree_end, seg_start, seg_end, ga_start, ga_end;
     int repetitions = 10000;
     RMI_start = clock();
     for (int k = 0; k < repetitions; k++)
@@ -78,6 +81,18 @@ int main()
     seg_end = clock();
     double seg_time = static_cast<double>(seg_end - seg_start) / CLOCKS_PER_SEC;
 
+    
+    ga_start = clock();
+    for (int k = 0; k < repetitions; k++)
+    {
+        for (int i = 0; i < datasetSize; i++)
+        {
+            ga.find(dataset[i].first);
+        }
+    }
+    ga_end = clock();
+    double ga_time = static_cast<double>(ga_end - ga_start) / CLOCKS_PER_SEC;
+
     BTree_start = clock();
     for (int k = 0; k < repetitions; k++)
     {
@@ -91,6 +106,7 @@ int main()
 
     std::cout << "rmi time: " << double(rmi_time / double(datasetSize)) << std::endl;
     std::cout << "seg time: " << double(seg_time / double(datasetSize)) << std::endl;
+    std::cout << "ga time: " << double(ga_time / double(datasetSize)) << std::endl;
     std::cout << "btree time: " << double(btree_time / double(datasetSize)) << std::endl;
 
     // for (int i = 0; i < ds.size(); i++)
