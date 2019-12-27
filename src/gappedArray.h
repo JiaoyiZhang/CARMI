@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <algorithm>
 using namespace std;
 
 class gappedArray
@@ -24,6 +25,7 @@ public:
         train(m_datasetSize);
     }
     bool insert(pair<double, double> data);
+
     pair<double, double> find(double key);
 
 private:
@@ -44,7 +46,13 @@ private:
         }
     }
 
-    int predict(double key);
+    int predict(double key)
+    {
+        int p = int(theta1 * key + theta2);
+        p = (p > m_datasetSize - 1 ? m_datasetSize - 1 : p);
+        p = (p < 0 ? 0 : p);
+        return p;
+    }
 
     void train(int size);
 
@@ -63,7 +71,7 @@ private:
 bool gappedArray::insert(pair<double, double> data)
 {
     // If an additional element will push the gapped
-    // array over its density bound d , then the gapped array expands. 
+    // array over its density bound d , then the gapped array expands.
     if (m_datasetSize * 1.0 / maxKeyNum >= 2.0 / 3.0)
         expand();
     // use the RMI to predict the insertion position
@@ -156,6 +164,120 @@ void gappedArray::train(int size)
         }
         m_dataset.clear();
         m_datasetSize = 0;
+    }
+}
+
+pair<double, double> gappedArray::find(double key)
+{
+    int preIdx = predict(key);
+    if (!isLeafNode)
+    {
+        gappedArray tmp = children[preIdx];
+        while (!tmp.isLeafNode)
+        {
+            preIdx = tmp.predict(key);
+            tmp = tmp.children[preIdx];
+        }
+        preIdx = tmp.predict(key);
+        // a later model-based lookup will result in a
+        // direct hit, thus we can do a lookup in O (1)
+        if (tmp.m_dataset[preIdx].first == key)
+            return tmp.m_dataset[preIdx];
+        else
+        {
+            int start, end;
+            //do exponential search to find the actual insertion position
+            if (tmp.m_dataset[preIdx].first > key)
+            {
+                int i = preIdx - 1;
+                while (i >= 0 && tmp.m_dataset[i].first >= key)
+                {
+                    i -= preIdx - i;
+                }
+                start = max(0, i);
+                end = preIdx - (preIdx - i) / 2;
+            }
+            else
+            {
+                int i = preIdx + 1;
+                while (i < tmp.m_datasetSize && tmp.m_dataset[i].first <= key)
+                    i += i - preIdx;
+
+                start = preIdx + (i - preIdx) / 2;
+                end = min(i, tmp.m_datasetSize);
+            }
+            // do binary search for the bound range
+            int res = -1;
+            while (start < end)
+            {
+                int mid = (start + end) / 2;
+                if (tmp.m_dataset[mid].first == key)
+                {
+                    res = mid;
+                    break;
+                }
+                else if (tmp.m_dataset[mid].first > key)
+                    end = mid;
+                else
+                    start = mid + 1;
+            }
+
+            if (res != -1)
+                return {key, tmp.m_dataset[res].second};
+            else
+                return {};
+        }
+    }
+    else
+    {
+        // a later model-based lookup will result in a
+        // direct hit, thus we can do a lookup in O (1)
+        if (m_dataset[preIdx].first == key)
+            return m_dataset[preIdx];
+        else
+        {
+            int start, end;
+            //do exponential search to find the actual insertion position
+            if (m_dataset[preIdx].first > key)
+            {
+                int i = preIdx - 1;
+                while (i >= 0 && m_dataset[i].first >= key)
+                {
+                    i -= preIdx - i;
+                }
+                start = max(0, i);
+                end = preIdx - (preIdx - i) / 2;
+            }
+            else
+            {
+                int i = preIdx + 1;
+                while (i < m_datasetSize && m_dataset[i].first <= key)
+                    i += i - preIdx;
+
+                start = preIdx + (i - preIdx) / 2;
+                end = min(i, m_datasetSize);
+            }
+            // do binary search for the bound range
+            int res = -1;
+            while (start < end)
+            {
+                int mid = (start + end) / 2;
+                if (m_dataset[mid].first == key)
+                {
+                    res = mid;
+                    break;
+                }
+                else if (m_dataset[mid].first > key)
+                    end = mid;
+                else
+                    start = mid + 1;
+            }
+
+            if (res != -1)
+                return {key, m_dataset[res].second};
+            else
+                return {};
+        }
     }
 }
 
