@@ -27,6 +27,13 @@ public:
     bool insert(pair<double, double> data);
 
     pair<double, double> find(double key);
+    
+    void sortData()
+    {
+        sort(m_dataset.begin(), m_dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+            return p1.first < p2.first;
+        });
+    }
 
 private:
     void expand()
