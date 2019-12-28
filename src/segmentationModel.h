@@ -130,7 +130,6 @@ public:
             secondStage second = secondStage();
             m_model.push_back(second);
         }
-        double index = 100;
         for (int i = 0; i < m_dataset.size(); i++)
         {
             m_model[int(m_dataset[i].first) % 100].insert({m_dataset[i].first, i});

@@ -53,8 +53,7 @@ int main()
     seg.sortData();
     seg.preProcess();
 
-    gappedArray ga(dataset, 500);
-    ga.sortData();
+    gappedArray ga(dataset, 200);
 
 
     clock_t RMI_start, RMI_end, BTree_start, BTree_end, seg_start, seg_end, ga_start, ga_end;
