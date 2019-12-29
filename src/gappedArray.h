@@ -6,6 +6,7 @@
 #include <math.h>
 #include <algorithm>
 using namespace std;
+static const int maxKeyNum = 400;
 class node
 {
 public:
@@ -13,80 +14,229 @@ public:
     {
         theta1 = 4000;
         theta2 = 0.666;
+        density = 2 / 3;
+        capacity = 300;
+        m_datasetSize = 0;
+        vector<pair<double, double>> tmp(capacity, {-1, -1});
+        m_dataset = tmp;
+        isLeafNode = true;
+        childNumber = 0;
     }
-    void getData(const vector<pair<double, double>> &dataset, int maxNum);
+    void initRoot();
+    void receiveData(const vector<pair<double, double>> &dataset);
+
     int getDatasetSize() { return m_datasetSize; }
-    pair<double, double> find(double key);
+    double getMaxData()
+    {
+        if (isLeafNode)
+            return m_dataset[m_datasetSize - 1].first;
+        else
+        {
+            return children[childNumber - 1]->getMaxData();
+        }
+    }
+
+    // pair<double, double> find(double key);
     void insert(pair<double, double> data);
-    int predict(double key);
-    void expand();
+    void insertLeaf(pair<double, double> data, int idx);
+    void insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx);
+    pair<double, double> predict(double key);
+    void expand(); // only for leaf node
+    void split();  // only for leaf node
     void train(int size);
 
     void print()
     {
         cout << "This node's structure is as follows:" << endl;
-        cout << "isLeafNode:" << isLeafNode << "    childNumber:" << childNumber << "    maxKeyNum:" << maxKeyNum << endl;
+        cout << "isLeafNode:" << isLeafNode << "    childNumber:" << childNumber << endl;
         cout << "linear regression params:" << theta1 << "    " << theta2 << endl;
         cout << "This stage's datasetSize is:" << m_datasetSize << endl;
-        for (int i = 0; i < m_datasetSize; i++)
-        {
-            cout << m_dataset[i].first << " " << m_dataset[i].second << "  |  ";
-            if ((i + 1) % 5 == 0)
-                cout << endl;
-        }
+        // for (int i = 0; i < m_datasetSize; i++)
+        // {
+        //     cout << m_dataset[i].first << "  |  ";
+        //     if ((i + 1) % 5 == 0)
+        //         cout << endl;
+        // }
         for (int i = 0; i < children.size(); i++)
         {
             cout << "child: " << i << endl;
-            children[i].print();
+            children[i]->print();
         }
         cout << "_________________________________" << endl;
         cout << endl;
     }
 
-private:
-    vector<pair<double, double>> m_dataset;
-    int m_datasetSize;
-    int maxKeyNum;
+    vector<node *> children;
     int childNumber;
     bool isLeafNode;
 
+private:
     double theta1;
     double theta2;
 
-    vector<node> children;
+    int capacity;
+    double density;
+
+    vector<pair<double, double>> m_dataset;
+    int m_datasetSize;
 };
 
-void node::getData(const vector<pair<double, double>> &dataset, int maxNum)
+// split the total dataset into several partitions
+void node::initRoot()
 {
-    m_dataset = dataset;
-    maxKeyNum = maxNum;
-    m_datasetSize = m_dataset.size();
-    // childNumber = ceil((1.0 * m_datasetSize) / (1 * maxKeyNum));
-    if (m_datasetSize > maxKeyNum)
-        isLeafNode = false;
-    else
-        isLeafNode = true;
+    isLeafNode = false;
+    vector<pair<double, double>> subDataset;
+    int nowNum = maxKeyNum;
+    for (int i = 0; i < m_dataset.size(); i++)
+    {
+        subDataset.push_back(m_dataset[i]);
+        if ((i + 1) >= nowNum || i == (m_datasetSize - 1))
+        {
+            node *tmp = new node();
+            tmp->receiveData(subDataset);
+            children.push_back(tmp);
+            nowNum += maxKeyNum;
+            subDataset.clear();
+        }
+    }
+    childNumber = children.size();
 }
 
-pair<double, double> node::find(double key)
+void node::receiveData(const vector<pair<double, double>> &dataset)
 {
+    m_dataset = dataset;
+    m_datasetSize = m_dataset.size();
+    isLeafNode = true;
+    // if (m_datasetSize > maxKeyNum)
+    //     isLeafNode = false;
+    // else
+    //     isLeafNode = true;
 }
 
 void node::insert(pair<double, double> data)
 {
+    if (m_datasetSize / capacity >= density)
+        expand();
+    if (m_datasetSize >= maxKeyNum)
+    {
+        int p = int(theta1 * data.first + theta2);
+        p = (p > capacity - 1 ? capacity - 1 : p);
+        p = (p < 0 ? 0 : p);
+        insertLeaf(data, p);
+        split();
+        return;
+    }
+    int p = int(theta1 * data.first + theta2);
+    p = (p > capacity - 1 ? capacity - 1 : p);
+    p = (p < 0 ? 0 : p);
+    insertLeaf(data, p);
 }
 
-int node::predict(double key)
+// use model to predict the index
+// if this is leaf node, return {key, value}
+// else return the index of child(next layer), {-999, index}
+pair<double, double> node::predict(double key)
 {
     int p = int(theta1 * key + theta2);
-    p = (p > m_datasetSize - 1 ? m_datasetSize - 1 : p);
+    p = (p > capacity - 1 ? capacity - 1 : p);
     p = (p < 0 ? 0 : p);
-    return p;
+    if (!isLeafNode)
+    {
+        return {-999, p};
+    }
+    else
+    {
+        // a later model-based lookup will result in a
+        // direct hit, thus we can do a lookup in O (1)
+        if (m_dataset[p].first == key)
+            return m_dataset[p];
+        else
+        {
+            int start, end;
+            //do exponential search to find the actual insertion position
+            if (m_dataset[p].first > key)
+            {
+                int i = p - 1;
+                while (i >= 0 && m_dataset[i].first >= key)
+                {
+                    i -= p - i;
+                }
+                start = max(0, i);
+                end = p - (p - i) / 2;
+            }
+            else
+            {
+                int i = p + 1;
+                while (i < capacity && m_dataset[i].first <= key)
+                    i += i - p;
+
+                start = p + (i - p) / 2;
+                end = min(i, capacity);
+            }
+            // do binary search for the bound range
+            int res = -1;
+            while (start < end)
+            {
+                int mid = (start + end) / 2;
+                if (m_dataset[mid].first == key)
+                {
+                    res = mid;
+                    break;
+                }
+                else if (m_dataset[mid].first > key)
+                    end = mid;
+                else
+                    start = mid + 1;
+            }
+
+            if (res != -1)
+                return {key, m_dataset[res].second};
+            else
+                return {};
+        }
+    }
 }
 
+void node::insertLeaf(pair<double, double> data, int idx)
+{
+    // If the insertion position is not a gap, we make
+    // a gap at the insertion position by shifting the elements
+    // by one position in the direction of the closest gap
+    if (m_dataset[idx].first != -1)
+    {
+        int j = idx;
+        while (m_dataset[j].first != -1)
+        {
+            j++;
+        }
+        for (int i = j; i > idx; i--)
+        {
+            m_dataset[i] = m_dataset[i - 1];
+        }
+    }
+    // insert the element into the gap
+    m_dataset[idx] = data;
+    m_datasetSize++;
+}
+
+void node::insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx)
+{
+    if (vec[idx].first != -1)
+    {
+        int j = idx;
+        while (vec[j].first != -1)
+            j++;
+        for (int i = j; j < idx; i--;)
+            vec[i] = vec[i - 1];
+    }
+    vec[idx] = data;
+}
+
+// expand the dataset when m_datasetSize / capacity >= density
 void node::expand()
 {
-    int newSize = int(m_datasetSize * 1.5);
+    // capacity *= 1.5;
+    int newSize = capacity * 1.5;
     theta1 *= 1.5;
     theta2 *= 1.5;
 
@@ -95,35 +245,83 @@ void node::expand()
     train(newSize);
 
     // do model-based inserts of all the elements in this node using the retrained RMI
-    for (int i = 0; i < m_datasetSize; i++)
+    vector<pair<double, double>> newDataset(newSize, pair<double, double>{-1, -1});
+    capacity = newSize;
+    for (int i = 0; i < capacity; i++)
     {
-        insert(m_dataset[i]);
+        if (m_dataset[i].first != -1)
+        {
+            int p = int(theta1 * m_dataset[i].first + theta2);
+            p = (p > capacity - 1 ? capacity - 1 : p);
+            p = (p < 0 ? 0 : p);
+            insertData(newDataset, m_dataset[i], p);
+        }
     }
+    m_dataset = newDataset;
 }
 
+// split this model when m_datasetSize >= maxKeyNum
+void node::split()
+{
+    node *tmp0 = new node();
+    node *tmp1 = new node();
+    int idx = 0;
+    for (int i = 0; i < m_datasetSize; i++)
+    {
+        // if it is a gap
+        if (m_dataset[idx].first == -1)
+            i--;
+        else
+        {
+            int p = int(theta1 * m_dataset[idx].first + theta2);
+            p = (p > capacity - 1 ? capacity - 1 : p);
+            p = (p < 0 ? 0 : p);
+            if (p < (maxKeyNum / 2))
+            {
+                tmp0->insertLeaf(m_dataset[idx], p * 2);
+            }
+            else
+            {
+                tmp0->insertLeaf(m_dataset[idx], (p - maxKeyNum / 2) * 2);
+            }
+        }
+        idx++;
+    }
+    tmp0->train(tmp0->m_datasetSize);
+    tmp1->train(tmp1->m_datasetSize);
+    children.push_back(tmp0);
+    children.push_back(tmp1);
+    childNumber = 2;
+    isLeafNode = false;
+    m_dataset.clear();
+}
+
+// use linear regression to train this node
 void node::train(int size)
 {
-
     if (m_datasetSize == 0)
     {
         cout << "This stage is empty!" << endl;
         return;
     }
     cout << "Training dataset, datasetsize is " << size << endl;
-    double factor = size * 1.0 / m_datasetSize;
+    double factor = size * 1.0 / capacity;
     double lr = 0.01;
-    for (int i = 0; i < 5000; i++)
+    for (int i = 0; i < 10000; i++)
     {
         double error1 = 0.0;
         double error2 = 0.0;
-        for (int j = 0; j < m_datasetSize; j++)
+        for (int j = 0; j < capacity; j++)
         {
-            double p = theta1 * m_dataset[j].first + theta2;
-            p = (p > size - 1 ? size - 1 : p);
-            p = (p < 0 ? 0 : p);
-            double y = j * factor;
-            error2 += p - y;
-            error1 += (p - y) * m_dataset[j].first;
+            if (m_dataset[j].first != -1)
+            {
+                double p = theta1 * m_dataset[j].first + theta2;
+                p = (p > size - 1 ? size - 1 : p);
+                p = (p < 0 ? 0 : p);
+                double y = j * factor;
+                error2 += p - y;
+                error1 += (p - y) * m_dataset[j].first;
+            }
         }
         theta1 = theta1 - lr * error1 / m_datasetSize;
         theta2 = theta2 - lr * error2 / m_datasetSize;
@@ -131,264 +329,112 @@ void node::train(int size)
         double loss = 0.0;
         for (int j = 0; j < m_datasetSize; j++)
         {
-            double p = theta1 * m_dataset[j].first + theta2;
-            p = (p > size - 1 ? size - 1 : p);
-            p = (p < 0 ? 0 : p);
-            double y = j * factor;
-            loss += (p - y) * (p - y);
-        }
-        loss = loss / (m_datasetSize * 2);
-        // if ((i + 1) % 100 == 0)
-        //     cout << "iteration: " << i << "    loss is " << loss << endl;
-    }
-    cout << "Train this node is over, params are:" << theta1 << ",    " << theta2 << endl;
-    childNumber = 0;
-    if (!isLeafNode)
-    {
-        vector<pair<double, double>> nextStageDataset;
-        int nowNum = maxKeyNum;
-        for (int i = 0; i < m_datasetSize; i++)
-        {
-            double p = theta1 * m_dataset[i].first + theta2;
-            p = (p > size - 1 ? size - 1 : p);
-            p = (p < 0 ? 0 : p);
-            nextStageDataset.push_back(m_dataset[i]);
-            // cout << "key is:" << m_dataset[i].first << "    p is:" << p << endl;
-            // if ((int(p) >= nowNum) || (i == (m_datasetSize - 1)))
-            if (((i + 1) >= nowNum) || (i == (m_datasetSize - 1)))
+            if (m_dataset[j].first != -1)
             {
-                node tmp;
-                tmp.getData(nextStageDataset, maxKeyNum);
-                tmp.train(nextStageDataset.size());
-                children.push_back(tmp);
-                nextStageDataset.clear();
-                nowNum += maxKeyNum;
+                double p = theta1 * m_dataset[j].first + theta2;
+                p = (p > size - 1 ? size - 1 : p);
+                p = (p < 0 ? 0 : p);
+                double y = j * factor;
+                loss += (p - y) * (p - y);
             }
         }
-        childNumber = children.size();
-        m_dataset.clear();
-        m_datasetSize = 0;
+        loss = loss / (m_datasetSize * 2);
+        if ((i + 1) % 500 == 0)
+            cout << "iteration: " << i << "    loss is " << loss << endl;
     }
+    cout << "Train this node is over, params are:" << theta1 << ",    " << theta2 << endl;
 }
 
 class gappedArray
 {
 public:
-    gappedArray(const vector<pair<double, double>> &dataset, int maxNum)
+    gappedArray(const vector<pair<double, double>> &dataset)
     {
         m_dataset = dataset;
         m_datasetSize = m_dataset.size();
         sortData();
-        vector<pair<double, double>> subDataset;
-        int nowNum = 400;
-        for (int i = 0; i < m_dataset.size(); i++)
-        {
-            subDataset.push_back(m_dataset[i]);
-            if ((i + 1) >= nowNum || i == (m_datasetSize - 1))
-            {
-                node tmp;
-                tmp.getData(subDataset, maxNum);
-                root.push_back(tmp);
-                nowNum += 400;
-                subDataset.clear();
-            }
-        }
+        root = new node();
+        root->receiveData(m_dataset);
+        root->initRoot();
         train();
     }
-    bool insert(pair<double, double> data);
+
+    void insert(pair<double, double> data);
 
     pair<double, double> find(double key);
 
+    void printStructure()
+    {
+        cout << "The adaptive rmi model's structure is as follows:" << endl;
+        cout << "Root:" << endl;
+        for (int i = 0; i < root->childNumber; i++)
+        {
+            root->children[i]->print();
+        }
+    }
+
+private:
     void sortData()
     {
         sort(m_dataset.begin(), m_dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
             return p1.first < p2.first;
         });
     }
-    void printStructure()
-    {
-        cout << "The adaptive rmi model's structure is as follows:" << endl;
-        cout << "Root:" << endl;
-        for (int i = 0; i < root.size(); i++)
-        {
-            root[i].print();
-        }
-    }
 
-private:
     void train();
 
     vector<pair<double, double>> m_dataset;
     int m_datasetSize;
 
-    vector<node> root;
+    node *root;
 };
 
-bool gappedArray::insert(pair<double, double> data)
+void gappedArray::insert(pair<double, double> data)
 {
-    // // If an additional element will push the gapped
-    // // array over its density bound d , then the gapped array expands.
-    // if (m_datasetSize * 1.0 / maxKeyNum >= 2.0 / 3.0)
-    //     expand();
-    // // use the RMI to predict the insertion position
-    // int preIdx = predict(data.first);
-    // if (!isLeafNode)
-    // {
-    //     gappedArray tmp = children[preIdx];
-    //     while (!tmp.isLeafNode)
-    //     {
-    //         preIdx = tmp.predict(data.first);
-    //         tmp = tmp.children[preIdx];
-    //     }
-    //     preIdx = tmp.predict(data.first);
-    //     // If the insertion position is not a gap, we make
-    //     // a gap at the insertion position by shifting the elements
-    //     // by one position in the direction of the closest gap
-    //     if (tmp.m_dataset[preIdx].first != -1)
-    //     {
-    //         int j = preIdx;
-    //         while (tmp.m_dataset[j].first != -1)
-    //         {
-    //             j++;
-    //         }
-    //         for (int i = j; i > preIdx; i--)
-    //         {
-    //             tmp.m_dataset[i] = tmp.m_dataset[i - 1];
-    //         }
-    //     }
-    //     // insert the element into the gap
-    //     tmp.m_dataset[preIdx] = data;
-    // }
-    // else
-    // {
-    //     m_dataset[preIdx] = data;
-    // }
+    for (int i = 0; i < root->childNumber; i++)
+    {
+        if (data.first < root->children[i]->getMaxData())
+        {
+            node *tmp = root->children[i];
+            pair<double, double> res = tmp->predict(data.first);
+            while (tmp->isLeafNode == false)
+            {
+                tmp = tmp->children[int(res.second)];
+                res = tmp->predict(data.first);
+            }
+            tmp->insert(data);
+        }
+    }
 }
 
+// train the structure of  adaptive rmi
 void gappedArray::train()
 {
     cout << "Start to train total model" << endl;
-    for (int i = 0; i < root.size(); i++)
+    for (int i = 0; i < root->childNumber; i++)
     {
-        root[i].train(root[i].getDatasetSize());
+        root->children[i]->train(root->children[i]->getDatasetSize());
     }
     cout << "End train" << endl;
 }
 
 pair<double, double> gappedArray::find(double key)
 {
-    // int preIdx = predict(key);
-    // cout << "Now is finding: " << key << "    preIdx is: " << preIdx << endl;
-    // if (!isLeafNode)
-    // {
-    //     gappedArray tmp = children[preIdx];
-    //     while (!tmp.isLeafNode)
-    //     {
-    //         preIdx = tmp.predict(key);
-    //         tmp = tmp.children[preIdx];
-    //     }
-    //     preIdx = tmp.predict(key);
-    //     cout << "Not leaf node, final preIdx is" << preIdx << endl;
-    //     // a later model-based lookup will result in a
-    //     // direct hit, thus we can do a lookup in O (1)
-    //     if (tmp.m_dataset[preIdx].first == key)
-    //         return tmp.m_dataset[preIdx];
-    //     else
-    //     {
-    //         int start, end;
-    //         //do exponential search to find the actual insertion position
-    //         if (tmp.m_dataset[preIdx].first > key)
-    //         {
-    //             int i = preIdx - 1;
-    //             while (i >= 0 && tmp.m_dataset[i].first >= key)
-    //             {
-    //                 i -= preIdx - i;
-    //             }
-    //             start = max(0, i);
-    //             end = preIdx - (preIdx - i) / 2;
-    //         }
-    //         else
-    //         {
-    //             int i = preIdx + 1;
-    //             while (i < tmp.m_datasetSize && tmp.m_dataset[i].first <= key)
-    //                 i += i - preIdx;
-
-    //             start = preIdx + (i - preIdx) / 2;
-    //             end = min(i, tmp.m_datasetSize);
-    //         }
-    //         // do binary search for the bound range
-    //         int res = -1;
-    //         while (start < end)
-    //         {
-    //             int mid = (start + end) / 2;
-    //             if (tmp.m_dataset[mid].first == key)
-    //             {
-    //                 res = mid;
-    //                 break;
-    //             }
-    //             else if (tmp.m_dataset[mid].first > key)
-    //                 end = mid;
-    //             else
-    //                 start = mid + 1;
-    //         }
-
-    //         if (res != -1)
-    //             return {key, tmp.m_dataset[res].second};
-    //         else
-    //             return {};
-    //     }
-    // }
-    // else
-    // {
-    //     // a later model-based lookup will result in a
-    //     // direct hit, thus we can do a lookup in O (1)
-    //     if (m_dataset[preIdx].first == key)
-    //         return m_dataset[preIdx];
-    //     else
-    //     {
-    //         int start, end;
-    //         //do exponential search to find the actual insertion position
-    //         if (m_dataset[preIdx].first > key)
-    //         {
-    //             int i = preIdx - 1;
-    //             while (i >= 0 && m_dataset[i].first >= key)
-    //             {
-    //                 i -= preIdx - i;
-    //             }
-    //             start = max(0, i);
-    //             end = preIdx - (preIdx - i) / 2;
-    //         }
-    //         else
-    //         {
-    //             int i = preIdx + 1;
-    //             while (i < m_datasetSize && m_dataset[i].first <= key)
-    //                 i += i - preIdx;
-
-    //             start = preIdx + (i - preIdx) / 2;
-    //             end = min(i, m_datasetSize);
-    //         }
-    //         // do binary search for the bound range
-    //         int res = -1;
-    //         while (start < end)
-    //         {
-    //             int mid = (start + end) / 2;
-    //             if (m_dataset[mid].first == key)
-    //             {
-    //                 res = mid;
-    //                 break;
-    //             }
-    //             else if (m_dataset[mid].first > key)
-    //                 end = mid;
-    //             else
-    //                 start = mid + 1;
-    //         }
-
-    //         if (res != -1)
-    //             return {key, m_dataset[res].second};
-    //         else
-    //             return {};
-    //     }
-    // }
+    for (int i = 0; i < root->childNumber; i++)
+    {
+        if (key < root->children[i]->getMaxData())
+        {
+            cout << "find key is:" << key << "    in root->child idx " << i << endl;
+            node *tmp = root->children[i];
+            pair<double, double> res = tmp->predict(key);
+            while (res.first != key)
+            {
+                tmp = tmp->children[int(res.second)];
+                res = tmp->predict(key);
+            }
+            return res;
+        }
+    }
 }
 
 #endif
