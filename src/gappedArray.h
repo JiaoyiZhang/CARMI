@@ -226,7 +226,7 @@ void node::insertData(vector<pair<double, double>> &vec, pair<double, double> da
         int j = idx;
         while (vec[j].first != -1)
             j++;
-        for (int i = j; j < idx; i--;)
+        for (int i = j; j < idx; i--)
             vec[i] = vec[i - 1];
     }
     vec[idx] = data;
