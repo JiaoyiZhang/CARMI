@@ -50,13 +50,13 @@ public:
         cout << "This node's structure is as follows:" << endl;
         cout << "isLeafNode:" << isLeafNode << "    childNumber:" << childNumber << endl;
         cout << "linear regression params:" << theta1 << "    " << theta2 << endl;
-        cout << "This stage's datasetSize is:" << m_datasetSize << endl;
-        // for (int i = 0; i < m_datasetSize; i++)
-        // {
-        //     cout << m_dataset[i].first << "  |  ";
-        //     if ((i + 1) % 5 == 0)
-        //         cout << endl;
-        // }
+        cout << "This stage's datasetSize is:" << m_datasetSize << "    capacity is:" << capacity << endl;
+        for (int i = 0; i < m_datasetSize; i++)
+        {
+            cout << m_dataset[i].first << "  |  ";
+            if ((i + 1) % 5 == 0)
+                cout << endl;
+        }
         for (int i = 0; i < children.size(); i++)
         {
             cout << "child: " << i << endl;
@@ -107,10 +107,6 @@ void node::receiveData(const vector<pair<double, double>> &dataset)
     m_dataset = dataset;
     m_datasetSize = m_dataset.size();
     isLeafNode = true;
-    // if (m_datasetSize > maxKeyNum)
-    //     isLeafNode = false;
-    // else
-    //     isLeafNode = true;
 }
 
 void node::insert(pair<double, double> data)
@@ -138,7 +134,8 @@ void node::insert(pair<double, double> data)
 pair<double, double> node::predict(double key)
 {
     int p = int(theta1 * key + theta2);
-    p = (p > capacity - 1 ? capacity - 1 : p);
+    int maxIdx = max(capacity, m_datasetSize);
+    p = (p > maxIdx - 1 ? maxIdx - 1 : p);
     p = (p < 0 ? 0 : p);
     if (!isLeafNode)
     {
@@ -167,15 +164,15 @@ pair<double, double> node::predict(double key)
             else
             {
                 int i = p + 1;
-                while (i < capacity && m_dataset[i].first <= key)
+                while (i < maxIdx && m_dataset[i].first <= key)
                     i += i - p;
 
                 start = p + (i - p) / 2;
-                end = min(i, capacity);
+                end = min(i, maxIdx);
             }
             // do binary search for the bound range
             int res = -1;
-            while (start < end)
+            while (start <= end)
             {
                 int mid = (start + end) / 2;
                 if (m_dataset[mid].first == key)
@@ -184,7 +181,7 @@ pair<double, double> node::predict(double key)
                     break;
                 }
                 else if (m_dataset[mid].first > key)
-                    end = mid;
+                    end = mid - 1;
                 else
                     start = mid + 1;
             }
@@ -339,8 +336,8 @@ void node::train(int size)
             }
         }
         loss = loss / (m_datasetSize * 2);
-        if ((i + 1) % 500 == 0)
-            cout << "iteration: " << i << "    loss is " << loss << endl;
+        // if ((i + 1) % 1000 == 0)
+        //     cout << "iteration: " << i << "    loss is " << loss << endl;
     }
     cout << "Train this node is over, params are:" << theta1 << ",    " << theta2 << endl;
 }
@@ -422,16 +419,18 @@ pair<double, double> gappedArray::find(double key)
 {
     for (int i = 0; i < root->childNumber; i++)
     {
-        if (key < root->children[i]->getMaxData())
+        if (key <= root->children[i]->getMaxData())
         {
-            cout << "find key is:" << key << "    in root->child idx " << i << endl;
+            // cout << "find key is:" << key << "    in root->child idx " << i << endl;
             node *tmp = root->children[i];
             pair<double, double> res = tmp->predict(key);
             while (res.first != key)
             {
                 tmp = tmp->children[int(res.second)];
                 res = tmp->predict(key);
+                // cout << "In while, the res is " << res.first << "    " << res.second << endl;
             }
+            // cout << "Out of while, the res is " << res.first << "    " << res.second << endl;
             return res;
         }
     }
