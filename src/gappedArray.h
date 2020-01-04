@@ -14,7 +14,7 @@ public:
     {
         theta1 = 4000;
         theta2 = 0.666;
-        density = 2 / 3;
+        density = 3 / 4;
         capacity = 300;
         m_datasetSize = 0;
         vector<pair<double, double>> tmp(maxKeyNum, {-1, -1});
@@ -44,7 +44,6 @@ public:
 
     pair<double, double> find(double key);
     int search(const vector<pair<double, double>> &data_, double key, int p);
-    int entrySearch(const vector<pair<double, double>> &data_, int idx);
     int gapArrayBinarySearch(const vector<pair<double, double>> &data, double key, int start_pos, int end_pos);
 
     void expand(); // only for leaf node
@@ -160,60 +159,43 @@ int node::search(const vector<pair<double, double>> &data_, double key, int p)
     */
 
     int start_idx, end_idx;
-    bool StartOrEnd;
-    //Find the first position after data_[p] that is not the gap.
-    for (; data_[p].first == -1 && p < data_.size() - 1; p++)
+    if (data_[p].first == -1)
     {
+        p++;
+        if (p >= data_.size())
+            p -= 2;
     }
-    StartOrEnd = (data_[p].first > key ? true : false);
-    if (StartOrEnd)
+    if (data_[p].first > key)
     {
-        end_idx = p;
-        //Find the start_idx
         int offset = 1;
-        int last_start_idx = this->entrySearch(data_, 0);
-        start_idx = last_start_idx;
-        while (data_[start_idx].first < key)
+        int i = p;
+        while (i >= 0 && data_[i].first >= key)
         {
-            last_start_idx = start_idx;
-            start_idx += (offset << 1);
-            start_idx = this->entrySearch(data_, start_idx);
+            i = p - offset;
+            offset = offset << 1;
+            if (data_[i].first == -1)
+                i++;
         }
-        start_idx = last_start_idx;
-
-        //Binary Search
-        return this->gapArrayBinarySearch(data_, key, start_idx, p);
+        start_idx = max(0, i);
+        end_idx = p - (offset >> 1);
+        if (data_[end_idx].first == -1)
+            end_idx++;
     }
     else
     {
-        if (data_[p].first == key)
-            return p;
-        start_idx = p;
-
-        //Find the End_idx
         int offset = 1;
-        int last_end_idx = this->entrySearch(data_, p);
-        end_idx = last_end_idx;
-        while (data_[end_idx].first < key && end_idx < data_.size())
+        int i = p;
+        while (i < data_.size() && data_[i].first <= key)
         {
-            last_end_idx = end_idx;
-            end_idx += (offset << 1);
-            end_idx = this->entrySearch(data_, end_idx);
+            i = p + offset;
+            offset = offset << 1;
+            if (data_[i].first == -1)
+                i++;
         }
-        end_idx = min(int(data_.size() - 1), end_idx);
-        // end_idx  = last_end_idx; //In this time end_idx is the first position that data_[end_idx].first > key
-        return this->gapArrayBinarySearch(data_, key, p, end_idx);
+        start_idx = p + (offset >> 1);
+        end_idx = min(int(data_.size()), i);
     }
-    return -1;
-}
-
-int node::entrySearch(const vector<pair<double, double>> &data_, int idx)
-{
-    //Do this function have exactly result. Especially when out of the largest size of array???
-    for (; data_[idx].first == -1 && idx < data_.size(); idx++)
-    {
-    }
-    return idx;
+    return this->gapArrayBinarySearch(data_, key, start_idx, end_idx);
 }
 
 int node::gapArrayBinarySearch(const vector<pair<double, double>> &data_, double key, int start_pos, int end_pos)
@@ -221,7 +203,8 @@ int node::gapArrayBinarySearch(const vector<pair<double, double>> &data_, double
     while (start_pos <= end_pos)
     {
         int mid = (start_pos + end_pos) >> 1;
-        mid = this->entrySearch(data_, mid);
+        if (data_[mid].first == -1)
+            mid++;
 
         if (mid == data_.size() - 1)
         {
