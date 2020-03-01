@@ -56,13 +56,40 @@ public:
             return pair<double, double>(-1, -1); // if no find, return <-1,-1>
     }
 
+    bool treeDelete(double key)
+    {
+        assert(isUseTree && "Called treeFind but the tree isn't supposed to be used");
+        auto result = m_tree.find(key);
+        if (result != m_tree.end())
+        {
+            m_tree.erase(key);
+            return true;
+        }
+        else
+            return false;
+    }
+
+    bool treeUpdate(double key, double value)
+    {
+        assert(isUseTree && "Called treeFind but the tree isn't supposed to be used");
+        auto result = m_tree.find(key);
+        if (result != m_tree.end())
+        {
+            m_tree.erase(key);
+            m_tree.insert({key, value});
+            return true;
+        }
+        else
+            return false;
+    }
+
     void train(const vector<pair<double, double>> &subDataset);
 
     // return the index in totalDataset
     int predict(double key)
     {
         double p = m_secondStageNetwork.predict(key); // return the index in subDataset
-        int preIdx = static_cast<int>(p * (m_datasetSize-1));
+        int preIdx = static_cast<int>(p * (m_datasetSize - 1));
         // preIdx = max(0, preIdx);
         // preIdx = min(m_datasetSize, preIdx);
         int index = int(m_subDataset[preIdx].second);
@@ -169,6 +196,10 @@ public:
         }
     }
 
+    bool del(double key);
+
+    bool update(double key, double value);
+
 private:
     vector<pair<double, double>> m_dataset;
     net m_firstStageNetwork = net();
@@ -229,7 +260,6 @@ pair<double, double> totalModel::find(double key)
         return {key, m_insertArray[res].second};
     }
 
-
     double p = m_firstStageNetwork.predict(key);
     // cout << endl;
     // cout << "key: " << key << " , nn predict is: " << p;
@@ -282,6 +312,181 @@ pair<double, double> totalModel::find(double key)
     {
         cout << key << "   requested an invalid sub model" << endl;
         return {};
+    }
+}
+
+bool totalModel::del(double key)
+{
+    // find key in m_insertArray firstly
+    int res = -1;
+    int insertStart = 0;
+    int insertEnd = m_insertArray.size();
+    while (insertStart < insertEnd)
+    {
+        int mid = (insertStart + insertEnd) / 2;
+        if (m_insertArray[mid].first == key)
+        {
+            res = mid;
+            break;
+        }
+        else if (m_insertArray[mid].first > key)
+            insertEnd = mid;
+        else
+            insertStart = mid + 1;
+    }
+    if (res != -1)
+    {
+        for (int i = res; i < insertEnd - 1; i++)
+        {
+            m_insertArray[i] = m_insertArray[i + 1];
+        }
+        return true;
+    }
+
+    double p = m_firstStageNetwork.predict(key);
+    // cout << endl;
+    // cout << "key: " << key << " , nn predict is: " << p;
+    int preIdx = static_cast<int>(p * (m_secondStageSize - 1));
+    // preIdx = max(0, preIdx);
+    // preIdx = min(m_secondStageSize - 1, preIdx);
+    // cout << "    predict sub model is:" << preIdx << endl;
+    if (m_secondStage[preIdx].validNode())
+    {
+        if (m_secondStage[preIdx].useTree())
+        {
+            return m_secondStage[preIdx].treeDelete(key);
+        }
+        else
+        {
+            int preIndex = m_secondStage[preIdx].predict(key);
+            if (m_dataset[preIndex].first == key)
+            {
+                for (int i = res; i < insertEnd - 1; i++)
+                {
+                    m_insertArray[i] = m_insertArray[i + 1];
+                }
+                return true;
+            }
+            else
+            {
+                int start = max(0, preIndex + m_secondStage[preIdx].getNagetive());
+                int end = min(int(m_dataset.size() - 1), preIndex + m_secondStage[preIdx].getPositive());
+
+                int res = -1;
+                while (start < end)
+                {
+                    int mid = (start + end) / 2;
+                    if (m_dataset[mid].first == key)
+                    {
+                        res = mid;
+                        break;
+                    }
+                    else if (m_dataset[mid].first > key)
+                        end = mid;
+                    else
+                        start = mid + 1;
+                }
+
+                if (res != -1)
+                {
+                    for (int i = res; i < insertEnd - 1; i++)
+                    {
+                        m_insertArray[i] = m_insertArray[i + 1];
+                    }
+                    return true;
+                }
+                else
+                    return false;
+            }
+        }
+    }
+    else
+    {
+        cout << key << "   requested an invalid sub model" << endl;
+        return false;
+    }
+}
+
+bool totalModel::update(double key, double value)
+{
+    // find key in m_insertArray firstly
+    int res = -1;
+    int insertStart = 0;
+    int insertEnd = m_insertArray.size();
+    while (insertStart < insertEnd)
+    {
+        int mid = (insertStart + insertEnd) / 2;
+        if (m_insertArray[mid].first == key)
+        {
+            res = mid;
+            break;
+        }
+        else if (m_insertArray[mid].first > key)
+            insertEnd = mid;
+        else
+            insertStart = mid + 1;
+    }
+    if (res != -1)
+    {
+        m_insertArray[res].second = value;
+        return true;
+    }
+
+    double p = m_firstStageNetwork.predict(key);
+    // cout << endl;
+    // cout << "key: " << key << " , nn predict is: " << p;
+    int preIdx = static_cast<int>(p * (m_secondStageSize - 1));
+    // preIdx = max(0, preIdx);
+    // preIdx = min(m_secondStageSize - 1, preIdx);
+    // cout << "    predict sub model is:" << preIdx << endl;
+    if (m_secondStage[preIdx].validNode())
+    {
+        if (m_secondStage[preIdx].useTree())
+        {
+            return m_secondStage[preIdx].treeUpdate(key, value);
+        }
+        else
+        {
+            int preIndex = m_secondStage[preIdx].predict(key);
+            if (m_dataset[preIndex].first == key)
+            {
+                m_dataset[preIndex].second = value;
+                return true;
+            }
+            else
+            {
+                int start = max(0, preIndex + m_secondStage[preIdx].getNagetive());
+                int end = min(int(m_dataset.size() - 1), preIndex + m_secondStage[preIdx].getPositive());
+
+                int res = -1;
+                while (start < end)
+                {
+                    int mid = (start + end) / 2;
+                    if (m_dataset[mid].first == key)
+                    {
+                        res = mid;
+                        break;
+                    }
+                    else if (m_dataset[mid].first > key)
+                        end = mid;
+                    else
+                        start = mid + 1;
+                }
+
+                if (res != -1)
+                {
+                    m_dataset[res].second = value;
+                    return true;
+                }
+                else
+                    return false;
+            }
+        }
+    }
+    else
+    {
+        cout << key << "   requested an invalid sub model" << endl;
+        return false;
     }
 }
 
