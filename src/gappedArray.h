@@ -43,6 +43,8 @@ public:
     int predict(double key);
 
     pair<double, double> find(double key);
+    pair<double, double> update(double key, double value);
+    pair<double, double> del(double key);
     int search(const vector<pair<double, double>> &data_, double key, int p);
     int gapArrayBinarySearch(const vector<pair<double, double>> &data, double key, int start_pos, int end_pos);
 
@@ -150,6 +152,56 @@ pair<double, double> node::find(double key)
     }
 }
 
+pair<double, double> node::update(double key, double value)
+{
+    int p = int(theta1 * key + theta2);
+    int maxIdx = max(capacity, m_datasetSize);
+    p = (p > maxIdx - 1 ? maxIdx - 1 : p);
+    p = (p < 0 ? 0 : p);
+    if (!isLeafNode)
+    {
+        return {-999, p};
+    }
+    else
+    {
+        // a later model-based lookup will result in a
+        // direct hit, thus we can do a lookup in O (1)
+        if (m_dataset[p].first == key)
+        {
+            m_dataset[p].second = value;
+            return m_dataset[p];
+        }
+        else
+        {
+            return m_dataset[search(m_dataset, key, p)];
+        }
+    }
+}
+
+pair<double, double> node::del(double key)
+{
+    int p = int(theta1 * key + theta2);
+    int maxIdx = max(capacity, m_datasetSize);
+    p = (p > maxIdx - 1 ? maxIdx - 1 : p);
+    p = (p < 0 ? 0 : p);
+    if (!isLeafNode)
+    {
+        return {-999, p};
+    }
+    else
+    {
+        if (m_dataset[p].first == key)
+        {
+            m_dataset[p] = {-1, -1};
+            return m_dataset[p];
+        }
+        else
+        {
+            return m_dataset[search(m_dataset, key, p)];
+        }
+    }
+}
+
 int node::search(const vector<pair<double, double>> &data_, double key, int p)
 {
     /*
@@ -177,7 +229,7 @@ int node::search(const vector<pair<double, double>> &data_, double key, int p)
                 i++;
         }
         start_idx = max(0, i);
-        end_idx = p - (offset >> 1);
+        end_idx = p - (offset / 4);
         if (data_[end_idx].first == -1)
             end_idx++;
     }
@@ -192,7 +244,7 @@ int node::search(const vector<pair<double, double>> &data_, double key, int p)
             if (data_[i].first == -1)
                 i++;
         }
-        start_idx = p + (offset >> 1);
+        start_idx = p + (offset >> 2);
         end_idx = min(int(data_.size()), i);
     }
     return this->gapArrayBinarySearch(data_, key, start_idx, end_idx);
@@ -434,6 +486,10 @@ public:
 
     void insert(pair<double, double> data);
 
+    bool update(double key, double value);
+
+    bool del(double key);
+
     pair<double, double> find(double key);
 
     void printStructure()
@@ -513,6 +569,50 @@ pair<double, double> gappedArray::find(double key)
             return res;
         }
     }
+}
+
+bool gappedArray::update(double key, double value)
+{
+    for (int i = 0; i < root->childNumber; i++)
+    {
+        if (key <= root->children[i]->getMaxData())
+        {
+            // cout << "find key is:" << key << "    in root->child idx " << i << endl;
+            node *tmp = root->children[i];
+            pair<double, double> res = tmp->update(key, value);
+            while (res.first != key)
+            {
+                tmp = tmp->children[int(res.second)];
+                res = tmp->update(key, value);
+                // cout << "In while, the res is " << res.first << "    " << res.second << endl;
+            }
+            // cout << "Out of while, the res is " << res.first << "    " << res.second << endl;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool gappedArray::del(double key)
+{
+    for (int i = 0; i < root->childNumber; i++)
+    {
+        if (key <= root->children[i]->getMaxData())
+        {
+            // cout << "find key is:" << key << "    in root->child idx " << i << endl;
+            node *tmp = root->children[i];
+            pair<double, double> res = tmp->del(key);
+            while (res.first != key)
+            {
+                tmp = tmp->children[int(res.second)];
+                res = tmp->del(key);
+                // cout << "In while, the res is " << res.first << "    " << res.second << endl;
+            }
+            // cout << "Out of while, the res is " << res.first << "    " << res.second << endl;
+            return true;
+        }
+    }
+    return false;
 }
 
 #endif
