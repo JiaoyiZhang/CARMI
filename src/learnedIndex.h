@@ -69,19 +69,19 @@ public:
             return false;
     }
 
-    bool treeUpdate(double key, double value)
-    {
-        assert(isUseTree && "Called treeFind but the tree isn't supposed to be used");
-        auto result = m_tree.find(key);
-        if (result != m_tree.end())
-        {
-            m_tree.erase(key);
-            m_tree.insert({key, value});
-            return true;
-        }
-        else
-            return false;
-    }
+    // bool treeUpdate(double key, double value)
+    // {
+    //     assert(isUseTree && "Called treeFind but the tree isn't supposed to be used");
+    //     auto result = m_tree.find(key);
+    //     if (result != m_tree.end())
+    //     {
+    //         m_tree.erase(key);
+    //         m_tree.insert({key, value});
+    //         return true;
+    //     }
+    //     else
+    //         return false;
+    // }
 
     void train(const vector<pair<double, double>> &subDataset);
 
@@ -336,7 +336,7 @@ bool totalModel::del(double key)
     }
     if (res != -1)
     {
-        for (int i = res; i < insertEnd - 1; i++)
+        for (int i = res; i < m_insertArray.size() - 1; i++)
         {
             m_insertArray[i] = m_insertArray[i + 1];
         }
@@ -361,9 +361,9 @@ bool totalModel::del(double key)
             int preIndex = m_secondStage[preIdx].predict(key);
             if (m_dataset[preIndex].first == key)
             {
-                for (int i = res; i < insertEnd - 1; i++)
+                for (int i = preIndex; i < m_dataset.size() - 1; i++)
                 {
-                    m_insertArray[i] = m_insertArray[i + 1];
+                    m_dataset[i] = m_dataset[i + 1];
                 }
                 return true;
             }
@@ -389,9 +389,9 @@ bool totalModel::del(double key)
 
                 if (res != -1)
                 {
-                    for (int i = res; i < insertEnd - 1; i++)
+                    for (int i = res; i < m_dataset.size() - 1; i++)
                     {
-                        m_insertArray[i] = m_insertArray[i + 1];
+                        m_dataset[i] = m_dataset[i + 1];
                     }
                     return true;
                 }
@@ -429,6 +429,7 @@ bool totalModel::update(double key, double value)
     if (res != -1)
     {
         m_insertArray[res].second = value;
+        cout << "In insertArray Update key:" << key << "    value:" << m_insertArray[res].second << endl;
         return true;
     }
 
@@ -443,7 +444,9 @@ bool totalModel::update(double key, double value)
     {
         if (m_secondStage[preIdx].useTree())
         {
-            return m_secondStage[preIdx].treeUpdate(key, value);
+            auto idx = m_secondStage[preIdx].treeFind(key);
+            m_dataset[(int)idx.second].second = value;
+            return true;
         }
         else
         {
