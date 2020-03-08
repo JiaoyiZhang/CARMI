@@ -1,13 +1,13 @@
 #include <iostream>
 #include "learnedIndex.h"
-#include "segmentationModel.h"
+#include "segModelWithSplit.h"
 #include "gappedArray.h"
 #include <algorithm>
 #include <random>
 #include <iomanip>
-const int datasetSize = 10000;
+int datasetSize = 10000;
 vector<pair<double, double>> dataset;
-
+vector<pair<double, double>> insertDataset;
 int main()
 {
     float maxValue = 10000.00;
@@ -28,12 +28,15 @@ int main()
     double factor = maxValue / maxV;
     for (int i = 0; i < ds.size(); i++)
     {
-        // if (i % 10 != 0)
-        // {
-        dataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-        btreemap.insert({double(ds[i] * factor), double(ds[i] * factor) * 10});
-        // }
+        if (i % 10 != 0)
+        {
+            dataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+            btreemap.insert({double(ds[i] * factor), double(ds[i] * factor) * 10});
+        }
+        else
+            insertDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
     }
+    datasetSize = dataset.size();
 
     params firstStageParams;
     firstStageParams.learningRate = 0.01;
@@ -45,19 +48,22 @@ int main()
     secondStageParams.maxEpoch = 1000;
     secondStageParams.neuronNumber = 8;
 
-    totalModel rmi(dataset, firstStageParams, secondStageParams, 1024, 128, 1000);
+    totalModel rmi(dataset, firstStageParams, secondStageParams, 1024, 128, 500);
     rmi.sortData();
     rmi.train();
+    cout << "rmi model over! " << endl;
 
-    segModel seg(dataset);
-    seg.sortData();
+    segModelWithSplit seg(dataset);
     seg.preProcess();
+    std::cout << "seg model over! " << endl;
+    // seg.printStructure();
 
     gappedArray ga(dataset);
-
+    std::cout << "ga model over! " << endl;
 
     clock_t RMI_start, RMI_end, BTree_start, BTree_end, seg_start, seg_end, ga_start, ga_end;
     int repetitions = 10000;
+    int InsertRepetitions = 1;
     RMI_start = clock();
     for (int k = 0; k < repetitions; k++)
     {
@@ -74,13 +80,12 @@ int main()
     {
         for (int i = 0; i < datasetSize; i++)
         {
-            seg.find(dataset[i].first);
+            pair<double, double> gaResult = seg.find(dataset[i].first);
         }
     }
     seg_end = clock();
     double seg_time = static_cast<double>(seg_end - seg_start) / CLOCKS_PER_SEC;
 
-    
     ga_start = clock();
     for (int k = 0; k < repetitions; k++)
     {
@@ -103,44 +108,163 @@ int main()
     BTree_end = clock();
     double btree_time = static_cast<double>(BTree_end - BTree_start) / CLOCKS_PER_SEC;
 
+    std::cout << "Find:" << endl;
     std::cout << "rmi time: " << double(rmi_time / double(datasetSize)) << std::endl;
     std::cout << "seg time: " << double(seg_time / double(datasetSize)) << std::endl;
     std::cout << "ga time: " << double(ga_time / double(datasetSize)) << std::endl;
     std::cout << "btree time: " << double(btree_time / double(datasetSize)) << std::endl;
 
-    // for (int i = 0; i < ds.size(); i++)
-    // {
-    //     if (i % 10 == 0)
-    //     {
-    //         rmi.insert(double(ds[i] * factor), double(ds[i] * factor) * 10);
-    //         btreemap.insert({double(ds[i] * factor), double(ds[i] * factor) * 10});
-    //     }
-    // }
 
-    // RMI_start = clock();
-    // for (int k = 0; k < repetitions; k++)
-    // {
-    //     for (int i = 0; i < ds.size(); i += 10)
-    //     {
-    //         rmi.find(double(ds[i] * factor));
-    //     }
-    // }
-    // RMI_end = clock();
-    // rmi_time = static_cast<double>(RMI_end - RMI_start) / CLOCKS_PER_SEC;
+    RMI_start = clock();
+    for (int k = 0; k < InsertRepetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            rmi.insert(insertDataset[i].first, insertDataset[i].second);
+        }
+    }
+    RMI_end = clock();
+    rmi_time = static_cast<double>(RMI_end - RMI_start) / CLOCKS_PER_SEC;
 
-    // BTree_start = clock();
-    // for (int k = 0; k < repetitions; k++)
-    // {
-    //     for (int i = 0; i < ds.size(); i += 10)
-    //     {
-    //         btreemap.find(double(ds[i] * factor));
-    //     }
-    // }
-    // BTree_end = clock();
-    // btree_time = static_cast<double>(BTree_end - BTree_start) / CLOCKS_PER_SEC;
+    seg_start = clock();
+    for (int k = 0; k < InsertRepetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            seg.insert(insertDataset[i].first, insertDataset[i].second);
+        }
+    }
+    seg_end = clock();
+    seg_time = static_cast<double>(seg_end - seg_start) / CLOCKS_PER_SEC;
 
-    // std::cout << "rmi time (after insert) : " << double(rmi_time / double(repetitions)) << std::endl;
-    // std::cout << "btree time (after insert) : " << double(btree_time / double(repetitions)) << std::endl;
+    ga_start = clock();
+    for (int k = 0; k < InsertRepetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            ga.insert({insertDataset[i].first, insertDataset[i].second});
+        }
+    }
+    ga_end = clock();
+    ga_time = static_cast<double>(ga_end - ga_start) / CLOCKS_PER_SEC;
 
+    BTree_start = clock();
+    for (int k = 0; k < InsertRepetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            btreemap.insert({insertDataset[i].first, insertDataset[i].second});
+        }
+    }
+    BTree_end = clock();
+    btree_time = static_cast<double>(BTree_end - BTree_start) / CLOCKS_PER_SEC;
+
+    std::cout << "Insert:" << endl;
+    std::cout << "rmi time: " << double(rmi_time / double(insertDataset.size())) << std::endl;
+    std::cout << "seg time: " << double(seg_time / double(insertDataset.size())) << std::endl;
+    std::cout << "ga time: " << double(ga_time / double(insertDataset.size())) << std::endl;
+    std::cout << "btree time: " << double(btree_time / double(insertDataset.size())) << std::endl;
+
+
+    RMI_start = clock();
+    for (int k = 0; k < repetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            rmi.update(insertDataset[i].first, 1.11);
+        }
+    }
+    RMI_end = clock();
+    rmi_time = static_cast<double>(RMI_end - RMI_start) / CLOCKS_PER_SEC;
+
+    seg_start = clock();
+    for (int k = 0; k < repetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            seg.update(insertDataset[i].first, 1.11);
+        }
+    }
+    seg_end = clock();
+    seg_time = static_cast<double>(seg_end - seg_start) / CLOCKS_PER_SEC;
+
+    ga_start = clock();
+    for (int k = 0; k < repetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            ga.update(insertDataset[i].first, 1.11);
+        }
+    }
+    ga_end = clock();
+    ga_time = static_cast<double>(ga_end - ga_start) / CLOCKS_PER_SEC;
+
+    BTree_start = clock();
+    for (int k = 0; k < repetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            btreemap.find(insertDataset[i].first);
+        }
+    }
+    BTree_end = clock();
+    btree_time = static_cast<double>(BTree_end - BTree_start) / CLOCKS_PER_SEC;
+
+    std::cout << "Update:" << endl;
+    std::cout << "rmi time: " << double(rmi_time / double(insertDataset.size())) << std::endl;
+    std::cout << "seg time: " << double(seg_time / double(insertDataset.size())) << std::endl;
+    std::cout << "ga time: " << double(ga_time / double(insertDataset.size())) << std::endl;
+    std::cout << "btree time: " << double(btree_time / double(insertDataset.size())) << std::endl;
+
+
+    RMI_start = clock();
+    for (int k = 0; k < InsertRepetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            rmi.del(insertDataset[i].first);
+        }
+    }
+    RMI_end = clock();
+    rmi_time = static_cast<double>(RMI_end - RMI_start) / CLOCKS_PER_SEC;
+
+    seg_start = clock();
+    for (int k = 0; k < InsertRepetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            seg.del(insertDataset[i].first);
+        }
+    }
+    seg_end = clock();
+    seg_time = static_cast<double>(seg_end - seg_start) / CLOCKS_PER_SEC;
+
+    ga_start = clock();
+    for (int k = 0; k < InsertRepetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            ga.del(insertDataset[i].first);
+        }
+    }
+    ga_end = clock();
+    ga_time = static_cast<double>(ga_end - ga_start) / CLOCKS_PER_SEC;
+
+    BTree_start = clock();
+    for (int k = 0; k < InsertRepetitions; k++)
+    {
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            btreemap.erase(insertDataset[i].first);
+        }
+    }
+    BTree_end = clock();
+    btree_time = static_cast<double>(BTree_end - BTree_start) / CLOCKS_PER_SEC;
+
+    std::cout << "Delete:" << endl;
+    std::cout << "rmi time: " << double(rmi_time / double(insertDataset.size())) << std::endl;
+    std::cout << "seg time: " << double(seg_time / double(insertDataset.size())) << std::endl;
+    std::cout << "ga time: " << double(ga_time / double(insertDataset.size())) << std::endl;
+    std::cout << "btree time: " << double(btree_time / double(insertDataset.size())) << std::endl;
     return 0;
 }

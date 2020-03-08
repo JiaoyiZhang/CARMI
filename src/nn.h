@@ -145,7 +145,8 @@ void net::train()
 		}
 		//cout << "    loss is: " << setiosflags(ios::fixed) << setprecision(4) << totalLoss << endl;
 	}
-	if ((m_dataset.size() / totalLoss) < 100 && totalLoss > 100)
+	// cout << "In nn, loss is:    " << totalLoss << endl;
+	if ((m_dataset.size() / totalLoss) > 50 && totalLoss > 100)
 		train();
 	else
 	{
@@ -160,7 +161,7 @@ double net::predict(int key)
 	vector<double> firstLayerResult;
 	for (int i = 0; i < W1.size(); i++)
 	{
-		p += max(double(0), key * W1[i] + b1[i]) * W2[i];
+		p += max(double(0), key *W1[i] + b1[i]) * W2[i];
 	}
 	// vector<double> firstLayerResult = Relu(add(multiply(key, W1), b1)); // the result of first layer
 	// double p = mul(firstLayerResult, W2) + b2;							// the result of the nn

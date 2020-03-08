@@ -581,7 +581,7 @@ void node::train(int size)
         cout << "This stage is empty!" << endl;
         return;
     }
-    cout << "Training dataset, datasetsize is " << m_datasetSize << endl;
+    // cout << "Training dataset, datasetsize is " << m_datasetSize << endl;
     double lr = 0.01;
     int maxIdx = max(capacity, m_datasetSize);
     double factor = size * 1.0 / maxIdx;
