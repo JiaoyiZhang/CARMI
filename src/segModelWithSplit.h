@@ -416,6 +416,7 @@ void secondStageWithSplit::split()
 class segModelWithSplit
 {
 public:
+    segModelWithSplit(){};
     segModelWithSplit(vector<pair<double, double>> &dataset)
     {
         m_dataset = dataset;

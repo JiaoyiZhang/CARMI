@@ -70,7 +70,7 @@ public:
 
 	void train();
 
-	double predict(int key); // return the key's index
+	double predict(double key); // return the key's index
 
 	vector<double> Relu(vector<double> input);
 
@@ -101,7 +101,7 @@ void net::train()
 	}
 	b2 = 0.91;
 
-	cout << "Start training" << endl;
+	// cout << "Start training" << endl;
 	double totalLoss = 0.0;
 	for (int epoch = 0; epoch < m_maxEpochNumber; epoch++)
 	{
@@ -146,15 +146,18 @@ void net::train()
 		//cout << "    loss is: " << setiosflags(ios::fixed) << setprecision(4) << totalLoss << endl;
 	}
 	// cout << "In nn, loss is:    " << totalLoss << endl;
-	if ((m_dataset.size() / totalLoss) > 50 && totalLoss > 100)
+	if ((m_dataset.size() / totalLoss) > 60 && totalLoss > 100)
+	{
+		cout<<"RETRAIN"<<endl;
 		train();
+	}
 	else
 	{
-		cout << "final loss is: " << totalLoss << endl;
+		// cout << "final loss is: " << totalLoss << endl;
 	}
 }
 
-double net::predict(int key)
+double net::predict(double key)
 {
 	key = static_cast<double>(key);
 	double p = b2;
