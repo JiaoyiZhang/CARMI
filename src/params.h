@@ -1,9 +1,8 @@
 #ifndef PARAMS
 #define PARAMS
 
-class params
+struct params
 {
-public:
     params(double lr, int epoch, int num)
     {
         maxEpoch = epoch;

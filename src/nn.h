@@ -1,6 +1,7 @@
 #ifndef NN_H
 #define NN_H
 
+#include "params.h"
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -55,45 +56,34 @@ class net
 public:
 	net(){};
 
-	void insert(const vector<pair<double, double>> &dataset, int maxEpochNumber, double lr, int neuronNumber)
-	{
-		m_dataset = dataset;
-		datasetSize = m_dataset.size();
-		for (int i = 0; i < datasetSize; i++)
-		{
-			index.push_back(double(i) / double(datasetSize));
-		}
-		m_learningRate = lr;
-		m_maxEpochNumber = maxEpochNumber;
-		m_neuronNumber = neuronNumber;
-	}
-
-	void train();
+	void train(const vector<pair<double, double>> &dataset, params param);
 
 	double predict(double key); // return the key's index
 
 	vector<double> Relu(vector<double> input);
 
 private:
-	vector<pair<double, double>> m_dataset;
-	vector<double> index;
 	vector<double> W1;
 	vector<double> W2;
 	vector<double> b1;
 	double b2;
-	int m_maxEpochNumber;
-	double m_learningRate;
-	int m_neuronNumber;
-	int datasetSize;
 };
 
 // train the network
-void net::train()
+void net::train(const vector<pair<double, double>> &dataset, params param)
 {
+	vector<pair<double, double>> m_dataset = dataset;
+	vector<double> index;
+	int datasetSize = m_dataset.size();
+	for (int i = 0; i < datasetSize; i++)
+	{
+		index.push_back(double(i) / double(datasetSize));
+	}
+
 	// initialize the parameters
 	std::default_random_engine gen;
 	std::normal_distribution<double> dis(1, 3);
-	for (int i = 0; i < m_neuronNumber; i++)
+	for (int i = 0; i < param.neuronNumber; i++)
 	{
 		W1.push_back(dis(gen));
 		W2.push_back(dis(gen));
@@ -101,12 +91,9 @@ void net::train()
 	}
 	b2 = 0.91;
 
-	// cout << "Start training" << endl;
 	double totalLoss = 0.0;
-	for (int epoch = 0; epoch < m_maxEpochNumber; epoch++)
+	for (int epoch = 0; epoch < param.maxEpoch; epoch++)
 	{
-		// cout << "epoch: " << epoch << endl;
-
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
 		shuffle(index.begin(), index.end(), default_random_engine(seed));
@@ -135,25 +122,19 @@ void net::train()
 			{
 				if (tempFLR[j] > 0)
 				{
-					W1[j] = W1[j] - m_learningRate * x * W2[j] * (p - y);
-					b1[j] = b1[j] - m_learningRate * W2[j] * (p - y);
+					W1[j] = W1[j] - param.learningRate * x * W2[j] * (p - y);
+					b1[j] = b1[j] - param.learningRate * W2[j] * (p - y);
 				}
 			}
 			// update W2 and b2
-			W2 = add(W2, (multiply(-m_learningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
-			b2 = b2 - m_learningRate * (p - y);
+			W2 = add(W2, (multiply(-param.learningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
+			b2 = b2 - param.learningRate * (p - y);
 		}
-		//cout << "    loss is: " << setiosflags(ios::fixed) << setprecision(4) << totalLoss << endl;
 	}
-	// cout << "In nn, loss is:    " << totalLoss << endl;
 	if ((m_dataset.size() / totalLoss) > 60 && totalLoss > 100)
 	{
-		cout<<"RETRAIN"<<endl;
-		train();
-	}
-	else
-	{
-		// cout << "final loss is: " << totalLoss << endl;
+		cout << "RETRAIN" << endl;
+		train(dataset, param);
 	}
 }
 

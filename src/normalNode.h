@@ -6,6 +6,7 @@
 #include "nn.h"
 #include <array>
 
+template <typename type>
 class normalNode
 {
 public:
@@ -47,12 +48,13 @@ private:
     vector<pair<double, double>> m_subDataset; // <key, value>
 
     params m_secondStageParams; // parameters of network
-    net m_secondStageNetwork = net();
+    type m_secondStageNetwork = type();
 
     btree::btree_map<double, int> m_tree; // <key, index in subDataset>
 };
 
-void normalNode::train(const vector<pair<double, double>> &subDataset)
+template <typename type>
+void normalNode<type>::train(const vector<pair<double, double>> &subDataset)
 {
     m_subDataset = subDataset;
     m_datasetSize = m_subDataset.size();
@@ -61,8 +63,7 @@ void normalNode::train(const vector<pair<double, double>> &subDataset)
     std::sort(m_subDataset.begin(), m_subDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
         return p1.first < p2.first;
     });
-    m_secondStageNetwork.insert(m_subDataset, m_secondStageParams.maxEpoch, m_secondStageParams.learningRate, m_secondStageParams.neuronNumber);
-    m_secondStageNetwork.train();
+    m_secondStageNetwork.train(m_subDataset, m_secondStageParams);
     double maxError = 0;
     double p;
     for (int i = 0; i < m_datasetSize; i++)
@@ -89,7 +90,8 @@ void normalNode::train(const vector<pair<double, double>> &subDataset)
         isUseTree = false;
 }
 
-pair<double, double> normalNode::find(double key)
+template <typename type>
+pair<double, double> normalNode<type>::find(double key)
 {
     //  use B-Tree if the data is particularly hard to learn
     if (isUseTree)
@@ -179,7 +181,8 @@ pair<double, double> normalNode::find(double key)
     }
 }
 
-bool normalNode::insert(pair<double, double> data)
+template <typename type>
+bool normalNode<type>::insert(pair<double, double> data)
 {
     // use learnedIndex to find the data
     double p = m_secondStageNetwork.predict(data.first);
@@ -251,7 +254,8 @@ bool normalNode::insert(pair<double, double> data)
     return true;
 }
 
-bool normalNode::del(double key)
+template <typename type>
+bool normalNode<type>::del(double key)
 {
     //  use B-Tree if the data is particularly hard to learn
     if (isUseTree)
@@ -348,7 +352,9 @@ bool normalNode::del(double key)
         return true;
     }
 }
-bool normalNode::update(pair<double, double> data)
+
+template <typename type>
+bool normalNode<type>::update(pair<double, double> data)
 {
     //  use B-Tree if the data is particularly hard to learn
     if (isUseTree)

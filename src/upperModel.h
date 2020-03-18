@@ -6,7 +6,7 @@
 #include "params.h"
 #include <array>
 
-template <typename type>
+template <typename lowerType, typename mlType>
 class upperModel
 {
 public:
@@ -17,8 +17,8 @@ public:
         std::sort(m_dataset.begin(), m_dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
             return p1.first < p2.first;
         });
-        m_firstStageNetwork.insert(m_dataset, firstStageParams.maxEpoch, firstStageParams.learningRate, firstStageParams.neuronNumber);
-
+        
+        m_firstStageParams = firstStageParams;
         m_secondStageParams = secondStageParams;
         m_secondStageSize = secondStageSize;
         // m_maxInsertNumber = maxInsertNumber;
@@ -58,19 +58,20 @@ public:
 
 private:
     vector<pair<double, double>> m_dataset; // the initial dataset, useless after training
-    net m_firstStageNetwork = net();        // network of the first stage
+    mlType m_firstStageNetwork = mlType();        // network of the first stage
     // int m_maxInsertNumber;                  // maximum number of inserts
 
-    vector<type> m_secondStage; // store the lower nodes
+    vector<lowerType> m_secondStage; // store the lower nodes
+    params m_firstStageParams; // parameters of network
     params m_secondStageParams; // parameters of lower nodes
     int m_secondStageSize;      // the size of the lower nodes
 };
 
-template <typename type>
-void upperModel<type>::train()
+template <typename lowerType, typename mlType>
+void upperModel<lowerType, mlType>::train()
 {
     cout << "train first stage" << endl;
-    m_firstStageNetwork.train();
+    m_firstStageNetwork.train(m_dataset, m_firstStageParams);
     array<vector<pair<double, double>>, 128> perSubDataset;
     for (int i = 0; i < m_dataset.size(); i++)
     {
