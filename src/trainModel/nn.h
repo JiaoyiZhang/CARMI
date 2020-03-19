@@ -1,7 +1,7 @@
 #ifndef NN_H
 #define NN_H
 
-#include "params.h"
+#include "../params.h"
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -75,9 +75,10 @@ void net::train(const vector<pair<double, double>> &dataset, params param)
 	vector<pair<double, double>> m_dataset = dataset;
 	vector<double> index;
 	int datasetSize = m_dataset.size();
-	for (int i = 0; i < datasetSize; i++)
+	for (int i = 0; i < m_dataset.size(); i++)
 	{
-		index.push_back(double(i) / double(datasetSize));
+		if (m_dataset[i].first != -1)
+			index.push_back(double(i) / double(datasetSize));
 	}
 
 	// initialize the parameters
@@ -101,34 +102,37 @@ void net::train(const vector<pair<double, double>> &dataset, params param)
 
 		for (int i = 0; i < datasetSize; i++)
 		{
-			// forward
-			double y = index[i];				   // the actual index
-			double x = double(m_dataset[i].first); // key
-			vector<double> tempFLR = add(multiply(x, W1), b1);
-			vector<double> firstLayerResult = Relu(tempFLR); // the result of first layer
-			double p = mul(firstLayerResult, W2) + b2;		 // the result of the nn
-
-			if (p < 0)
-				p = 0;
-			if (p > 1)
-				p = 1;
-
-			// calculate the loss
-			totalLoss += 0.5 * (p - double(y)) * (p - double(y));
-
-			// backward propogation
-			// updata W1 and b1
-			for (int j = 0; j < W1.size(); j++)
+			if (m_dataset[i].first != -1)
 			{
-				if (tempFLR[j] > 0)
+				// forward
+				double y = index[i];				   // the actual index
+				double x = double(m_dataset[i].first); // key
+				vector<double> tempFLR = add(multiply(x, W1), b1);
+				vector<double> firstLayerResult = Relu(tempFLR); // the result of first layer
+				double p = mul(firstLayerResult, W2) + b2;		 // the result of the nn
+
+				if (p < 0)
+					p = 0;
+				if (p > 1)
+					p = 1;
+
+				// calculate the loss
+				totalLoss += 0.5 * (p - double(y)) * (p - double(y));
+
+				// backward propogation
+				// updata W1 and b1
+				for (int j = 0; j < W1.size(); j++)
 				{
-					W1[j] = W1[j] - param.learningRate * x * W2[j] * (p - y);
-					b1[j] = b1[j] - param.learningRate * W2[j] * (p - y);
+					if (tempFLR[j] > 0)
+					{
+						W1[j] = W1[j] - param.learningRate * x * W2[j] * (p - y);
+						b1[j] = b1[j] - param.learningRate * W2[j] * (p - y);
+					}
 				}
+				// update W2 and b2
+				W2 = add(W2, (multiply(-param.learningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
+				b2 = b2 - param.learningRate * (p - y);
 			}
-			// update W2 and b2
-			W2 = add(W2, (multiply(-param.learningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
-			b2 = b2 - param.learningRate * (p - y);
 		}
 	}
 	if ((m_dataset.size() / totalLoss) > 60 && totalLoss > 100)

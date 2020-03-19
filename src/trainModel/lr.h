@@ -1,6 +1,6 @@
 #ifndef LR_H
 #define LR_H
-#include "params.h"
+#include "../params.h"
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -19,7 +19,13 @@ private:
 
 void linearRegression::train(vector<pair<double, double>> dataset, params param)
 {
-    if (dataset.size() == 0)
+    int actualSize = 0;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        if (dataset[i].first != -1)
+            actualSize++;
+    }
+    if (actualSize == 0)
     {
         cout << "This node is empty!" << endl;
         return;
@@ -30,11 +36,14 @@ void linearRegression::train(vector<pair<double, double>> dataset, params param)
         double error2 = 0.0;
         for (int j = 0; j < dataset.size(); j++)
         {
-            double p = theta1 * dataset[j].first + theta2;
-            p = (p > 1 ? 1 : p);
-            p = (p < 0 ? 0 : p);
-            error1 += (p - j) * dataset[j].first;
-            error2 += p - j;
+            if (dataset[j].first != -1)
+            {
+                double p = theta1 * dataset[j].first + theta2;
+                p = (p > 1 ? 1 : p);
+                p = (p < 0 ? 0 : p);
+                error1 += (p - j) * dataset[j].first;
+                error2 += p - j;
+            }
         }
         theta1 = theta1 - param.learningRate * error1 / dataset.size();
         theta2 = theta2 - param.learningRate * error2 / dataset.size();
@@ -42,10 +51,13 @@ void linearRegression::train(vector<pair<double, double>> dataset, params param)
         double loss = 0.0;
         for (int j = 0; j < dataset.size(); j++)
         {
-            double p = theta1 * dataset[j].first + theta2;
-            p = (p > 1 ? 1 : p);
-            p = (p < 0 ? 0 : p);
-            loss += (p - j) * (p - j);
+            if (dataset[j].first != -1)
+            {
+                double p = theta1 * dataset[j].first + theta2;
+                p = (p > 1 ? 1 : p);
+                p = (p < 0 ? 0 : p);
+                loss += (p - j) * (p - j);
+            }
         }
         loss = loss / (dataset.size() * 2);
         // cout << "iteration: " << i << "    loss is: " << loss << endl;
