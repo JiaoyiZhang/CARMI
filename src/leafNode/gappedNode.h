@@ -3,8 +3,8 @@
 
 #include "../params.h"
 #include "../../cpp-btree/btree_map.h"
-#include "../trainModel/nn.h"
-#include "../trainModel/lr.h"
+// #include "../trainModel/nn.h"
+// #include "../trainModel/lr.h"
 #include <array>
 
 static const int childNumber = 20;
@@ -20,11 +20,12 @@ public:
         m_datasetSize = 0;
         density = 0.75;
         capacity = cap;
+        isLeafNode = true;
     }
 
     void train(const vector<pair<double, double>> &subDataset);
     int getSize() { return m_datasetSize; }
-    bool isLeaf() { return true; }
+    bool isLeaf() { return isLeafNode; }
     vector<pair<double, double>> &getDataset() { return m_dataset; }
 
     pair<double, double> find(double key);
@@ -48,6 +49,8 @@ private:
     int capacity;   // the current maximum capacity of the leaf node data
     double density; // the maximum density of the leaf node data
     int maxKeyNum;  // the maximum amount of data
+
+    bool isLeafNode;
 };
 
 template <typename type>
@@ -59,9 +62,9 @@ void gappedNode<type>::train(const vector<pair<double, double>> &subDataset)
     m_secondStageNetwork.train(subDataset, m_secondStageParams);
     vector<pair<double, double>> newDataset(maxKeyNum + 1, pair<double, double>{-1, -1});
     int cnt = 0;
-    for (int i = 0; i < maxKeyNum; i++)
+    for (int i = 0; i < m_datasetSize; i++)
     {
-        if (m_dataset[i].first != -1)
+        if (subDataset[i].first != -1)
         {
             double p = m_secondStageNetwork.predict(subDataset[i].first);
             int maxIdx = max(capacity, m_datasetSize);
@@ -149,7 +152,6 @@ bool gappedNode<type>::insert(pair<double, double> data)
 
     // exponential search
     int start_idx, end_idx;
-    int maxIdx = max(capacity, m_datasetSize);
     while (m_dataset[preIdx].first == -1)
     {
         preIdx++;

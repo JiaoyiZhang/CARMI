@@ -3,8 +3,8 @@
 
 #include "../params.h"
 #include "../../cpp-btree/btree_map.h"
-#include "../trainModel/lr.h"
-#include "../trainModel/nn.h"
+// #include "../trainModel/lr.h"
+// #include "../trainModel/nn.h"
 #include <array>
 
 template <typename type>
@@ -60,6 +60,8 @@ private:
 template <typename type>
 void normalNode<type>::train(const vector<pair<double, double>> &subDataset)
 {
+    m_subDataset = subDataset;
+    m_datasetSize = m_subDataset.size();
     if (m_datasetSize == 0)
         return;
     std::sort(m_subDataset.begin(), m_subDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
@@ -252,7 +254,7 @@ bool normalNode<type>::insert(pair<double, double> data)
     // If the current number is greater than the maximum,
     // the child node needs to be retrained
     if (m_datasetSize >= m_maxInsertNumber)
-        train();
+        train(m_subDataset);
     return true;
 }
 

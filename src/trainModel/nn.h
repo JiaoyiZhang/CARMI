@@ -75,6 +75,8 @@ void net::train(const vector<pair<double, double>> &dataset, params param)
 	vector<pair<double, double>> m_dataset = dataset;
 	vector<double> index;
 	int datasetSize = m_dataset.size();
+	if(datasetSize == 0)
+		return;
 	for (int i = 0; i < m_dataset.size(); i++)
 	{
 		if (m_dataset[i].first != -1)
