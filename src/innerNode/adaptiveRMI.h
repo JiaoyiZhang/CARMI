@@ -1,9 +1,6 @@
 #ifndef ADAPTIVE_RMI_H
 #define ADAPTIVE_RMI_H
 
-#include "../trainModel/lr.h"
-#include "../trainModel/nn.h"
-#include "../../cpp-btree/btree_map.h"
 #include "../params.h"
 #include <array>
 
@@ -24,11 +21,12 @@ public:
         maxKeyNum = maxKey;
         density = 0.75;
         capacity = cap;
+        isLeafNode = false;
     }
 
     void initialize(vector<pair<double, double>> &dataset);
-    bool isLeaf() { return false; }
-    void insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt); // insert data into new vector
+    bool isLeaf() { return isLeafNode; }
+    // void insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt); // insert data into new vector
 
     pair<double, double> find(double key);
     bool insert(pair<double, double> data);
@@ -36,8 +34,8 @@ public:
     bool update(pair<double, double> data);
 
 private:
-    vector<void *> children; // The type of child node may be innerNode or leafNode
-    int childNumber;         // the number of children
+    vector<lowerType *> children; // The type of child node may be innerNode or leafNode
+    int childNumber;              // the number of children
 
     int capacity;   // the current maximum capacity of the leaf node data
     double density; // the maximum density of the leaf node data
@@ -46,6 +44,8 @@ private:
     mlType m_firstStageNetwork = mlType(); // network of the first stage
     params m_firstStageParams;             // parameters of network
     params m_secondStageParams;            // parameters of lower nodes
+
+    bool isLeafNode;
 };
 
 // Initialize is first called on the RMI’s root
@@ -59,9 +59,9 @@ void adaptiveRMI<lowerType, mlType>::initialize(vector<pair<double, double>> &da
     if (dataset.size() == 0)
         return;
     ;
-    // first train the node’s linear model using its assigned keys
+    // first train the node's linear model using its assigned keys
     m_firstStageNetwork.train(dataset, m_firstStageParams);
-
+    cout << "first over" << endl;
     //  use the model to divide the keys into some number of partitions
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -69,33 +69,45 @@ void adaptiveRMI<lowerType, mlType>::initialize(vector<pair<double, double>> &da
     {
         perSubDataset.push_back(tmp);
     }
-    for (int i = 0; i < m_dataset.size(); i++)
+    for (int i = 0; i < dataset.size(); i++)
     {
-        double p = m_firstStageNetwork.predict(m_dataset[i].first);
+        double p = m_firstStageNetwork.predict(dataset[i].first);
         p = p * (childNumber - 1); //calculate the index of second stage model
         int preIdx = static_cast<int>(p);
-        perSubDataset[preIdx].push_back(m_dataset[i]);
+        perSubDataset[preIdx].push_back(dataset[i]);
     }
+    for (int i = 0; i < childNumber; i++)
+    {
+        if (perSubDataset[i].size() >= dataset.size() / 1.3)
+            return initialize(dataset);
+    }
+    cout << "divide over" << endl;
     // then iterate through the partitions in sorted order
     for (int i = 0; i < childNumber; i++)
     {
+        cout << "Child " << i << " " << perSubDataset[i].size() << endl;
         if (perSubDataset[i].size() > maxKeyNum)
         {
             // If a partition has more than the maximum bound number of
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
+            cout << i << ": inner init" << endl;
             adaptiveRMI *child = new adaptiveRMI(m_firstStageParams, m_secondStageParams, maxKeyNum, childNumber, capacity);
             child->initialize(perSubDataset[i]);
-            children.push_back(child);
+            children.push_back((lowerType *)child);
+            cout << "Inner node " << i << endl;
         }
         else
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
+            cout << i << ": leaf init" << endl;
             lowerType *child = new lowerType(maxKeyNum, m_secondStageParams, capacity);
             child->train(perSubDataset[i]);
+            cout << "leaf node train finish " << i << endl;
             children.push_back(child);
+            cout << "Leaf node " << i << endl;
         }
     }
 }
@@ -105,6 +117,8 @@ pair<double, double> adaptiveRMI<lowerType, mlType>::find(double key)
 {
     double p = m_firstStageNetwork.predict(key);
     int preIdx = static_cast<int>(p * (childNumber - 1));
+    if (children[preIdx]->isLeaf() == false)
+        return ((adaptiveRMI *)children[preIdx])->find(key);
     return children[preIdx]->find(key);
 }
 
@@ -141,22 +155,24 @@ bool adaptiveRMI<lowerType, mlType>::insert(pair<double, double> data)
         {
             perSubDataset.push_back(temp);
         }
-        for (int i = 0; i < m_dataset.size(); i++)
+        for (int i = 0; i < dataset.size(); i++)
         {
-            double p = m_firstStageNetwork.predict(m_dataset[i].first);
-            p = p * (childNumber - 1); 
+            double p = m_firstStageNetwork.predict(dataset[i].first);
+            p = p * (childNumber - 1);
             int pIdx = static_cast<int>(p);
-            perSubDataset[pIdx].push_back(m_dataset[i]);
+            perSubDataset[pIdx].push_back(dataset[i]);
         }
 
         // Each of the children leaf nodes trains its own
-        // model on its portion of the data. 
+        // model on its portion of the data.
         for (int i = 0; i < childNumber; i++)
         {
             newNode->children[i]->train(perSubDataset[i]);
         }
-        children[preIdx] = newNode;
+        children[preIdx] = (lowerType *)newNode;
     }
+    else
+        return ((adaptiveRMI *)children[preIdx])->find(key);
     return children[preIdx]->insert(data);
 }
 
@@ -165,7 +181,9 @@ bool adaptiveRMI<lowerType, mlType>::del(double key)
 {
     double p = m_firstStageNetwork.predict(key);
     int preIdx = static_cast<int>(p * (childNumber - 1));
-    return children[preIdx].del(key);
+    if (children[preIdx]->isLeaf() == false)
+        return ((adaptiveRMI *)children[preIdx])->find(key);
+    return children[preIdx]->del(key);
 }
 
 template <typename lowerType, typename mlType>
@@ -173,9 +191,12 @@ bool adaptiveRMI<lowerType, mlType>::update(pair<double, double> data)
 {
     double p = m_firstStageNetwork.predict(data.first);
     int preIdx = static_cast<int>(p * (childNumber - 1));
+    if (children[preIdx]->isLeaf() == false)
+        return ((adaptiveRMI *)children[preIdx])->find(key);
     return children[preIdx]->update(data);
 }
 
+/*
 template <typename lowerType, typename mlType>
 void adaptiveRMI<lowerType, mlType>::insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt)
 {
@@ -202,4 +223,5 @@ void adaptiveRMI<lowerType, mlType>::insertData(vector<pair<double, double>> &ve
     }
     vec[idx] = data;
 }
+*/
 #endif

@@ -1,9 +1,6 @@
 #ifndef STATIC_RMI_H
 #define STATIC_RMI_H
 
-#include "../trainModel/lr.h"
-#include "../trainModel/nn.h"
-#include "../../cpp-btree/btree_map.h"
 #include "../params.h"
 #include <array>
 
@@ -26,7 +23,7 @@ public:
 
         for (int i = 0; i < m_secondStageSize; i++)
         {
-            m_secondStage.push_back(new type(threshold, m_secondStageParams, maxInsertNumber));
+            m_secondStage.push_back(new lowerType(threshold, m_secondStageParams, maxInsertNumber));
         }
     }
 
@@ -48,7 +45,7 @@ public:
     {
         double p = m_firstStageNetwork.predict(key);
         int preIdx = static_cast<int>(p * (m_secondStageSize - 1));
-        return m_secondStage[preIdx].del(key);
+        return m_secondStage[preIdx]->del(key);
     }
     bool update(pair<double, double> data)
     {
@@ -77,7 +74,7 @@ void staticRMI<lowerType, mlType>::train()
     for (int i = 0; i < m_dataset.size(); i++)
     {
         double p = m_firstStageNetwork.predict(m_dataset[i].first);
-        p = p * (m_secondStageSize - 1); //calculate the index of second stage model
+        p = p * (m_secondStageSize - 1);
         int preIdx = static_cast<int>(p);
         perSubDataset[preIdx].push_back(m_dataset[i]);
     }

@@ -61,6 +61,9 @@ void gappedNode<type>::train(const vector<pair<double, double>> &subDataset)
         return;
     m_secondStageNetwork.train(subDataset, m_secondStageParams);
     vector<pair<double, double>> newDataset(maxKeyNum + 1, pair<double, double>{-1, -1});
+    while (m_datasetSize > capacity)
+        capacity /= density;
+    capacity = capacity > maxKeyNum ? maxKeyNum : capacity;
     int cnt = 0;
     for (int i = 0; i < m_datasetSize; i++)
     {
@@ -69,7 +72,7 @@ void gappedNode<type>::train(const vector<pair<double, double>> &subDataset)
             double p = m_secondStageNetwork.predict(subDataset[i].first);
             int maxIdx = max(capacity, m_datasetSize);
             int preIdx = static_cast<int>(p * (maxIdx - 1));
-            insertData(newDataset, subDataset[i], p, cnt);
+            insertData(newDataset, subDataset[i], preIdx, cnt);
         }
     }
     m_dataset = newDataset;
