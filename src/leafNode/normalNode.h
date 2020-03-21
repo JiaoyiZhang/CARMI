@@ -26,7 +26,13 @@ public:
     void train(const vector<pair<double, double>> &subDataset);
     int getSize() { return m_datasetSize; }
     bool isLeaf() { return true; }
-    vector<pair<double, double>> getDataset() { return m_subDataset; }
+    void getDataset(vector<pair<double, double>> &dataset)
+    {
+        for (int i = 0; i < m_subDataset.size(); i++)
+        {
+            dataset.push_back(m_subDataset[i]);
+        }
+    }
 
     pair<double, double> find(double key);
     bool insert(pair<double, double> data);
