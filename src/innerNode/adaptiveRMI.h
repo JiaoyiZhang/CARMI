@@ -138,8 +138,8 @@ bool adaptiveRMI<lowerType, mlType>::insert(pair<double, double> data)
         // a number of children leaf level models are created
         for (int i = 0; i < childNumber; i++)
         {
-            lowerType *tmp = new lowerType(maxKeyNum, m_secondStageParams, capacity);
-            newNode->children.push_back(tmp);
+            lowerType *temp = new lowerType(maxKeyNum, m_secondStageParams, capacity);
+            newNode->children.push_back(temp);
         }
 
         // The data from the original leaf node is then
@@ -198,32 +198,4 @@ bool adaptiveRMI<lowerType, mlType>::update(pair<double, double> data)
     return children[preIdx]->update(data);
 }
 
-/*
-template <typename lowerType, typename mlType>
-void adaptiveRMI<lowerType, mlType>::insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt)
-{
-    cnt++;
-    int maxIdx;
-    if (capacity == cnt)
-        maxIdx = capacity + 1;
-    else
-        maxIdx = max(capacity, cnt);
-    while (vec[idx].first != -1 && idx < maxIdx)
-    {
-        idx++;
-    }
-    if (idx == maxIdx - 1)
-    {
-        int j = idx - 1;
-        while (vec[j].first != -1)
-            j--;
-        for (; j < idx - 1; j++)
-        {
-            vec[j] = vec[j + 1];
-        }
-        idx--;
-    }
-    vec[idx] = data;
-}
-*/
 #endif
