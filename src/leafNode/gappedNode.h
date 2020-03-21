@@ -3,8 +3,6 @@
 
 #include "../params.h"
 #include "../../cpp-btree/btree_map.h"
-// #include "../trainModel/nn.h"
-// #include "../trainModel/lr.h"
 #include <array>
 
 static const int childNumber = 20;
@@ -21,12 +19,20 @@ public:
         density = 0.75;
         capacity = cap;
         isLeafNode = true;
+        maxIndex = 0;
     }
 
     void train(const vector<pair<double, double>> &subDataset);
     int getSize() { return m_datasetSize; }
     bool isLeaf() { return isLeafNode; }
-    vector<pair<double, double>> &getDataset() { return m_dataset; }
+    void getDataset(vector<pair<double, double>> &dataset)
+    {
+        for (int i = 0; i < m_dataset.size(); i++)
+        {
+            if (m_dataset[i].first != -1)
+                dataset.push_back(m_dataset[i]);
+        }
+    }
 
     pair<double, double> find(double key);
     bool insert(pair<double, double> data);
@@ -42,6 +48,7 @@ private:
 private:
     vector<pair<double, double>> m_dataset;
     int m_datasetSize;
+    int maxIndex; // tht index of the last one
 
     params m_secondStageParams; // parameters of network
     type m_secondStageNetwork = type();
@@ -58,32 +65,33 @@ void gappedNode<type>::train(const vector<pair<double, double>> &subDataset)
 {
     m_datasetSize = subDataset.size();
     if (m_datasetSize == 0)
+    {
+        m_dataset = vector<pair<double, double>>(maxKeyNum, pair<double, double>{-1, -1});
         return;
+    }
     m_secondStageNetwork.train(subDataset, m_secondStageParams);
-    vector<pair<double, double>> newDataset(maxKeyNum + 1, pair<double, double>{-1, -1});
+    vector<pair<double, double>> newDataset(maxKeyNum, pair<double, double>{-1, -1});
     while (m_datasetSize > capacity)
         capacity /= density;
     capacity = capacity > maxKeyNum ? maxKeyNum : capacity;
-    int cnt = 0;
     for (int i = 0; i < m_datasetSize; i++)
     {
         if (subDataset[i].first != -1)
         {
             double p = m_secondStageNetwork.predict(subDataset[i].first);
-            int maxIdx = max(capacity, m_datasetSize);
-            int preIdx = static_cast<int>(p * (maxIdx - 1));
-            insertData(newDataset, subDataset[i], preIdx, cnt);
+            int preIdx = static_cast<int>(p * (capacity - 1));
+            insertData(newDataset, subDataset[i], preIdx, maxIndex);
         }
     }
     m_dataset = newDataset;
+    m_secondStageNetwork.train(m_dataset, m_secondStageParams);
 }
 
 template <typename type>
 pair<double, double> gappedNode<type>::find(double key)
 {
     double p = m_secondStageNetwork.predict(key);
-    int maxIdx = max(capacity, m_datasetSize);
-    int preIdx = static_cast<int>(p * (maxIdx - 1));
+    int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == key)
         return m_dataset[preIdx];
     else
@@ -99,8 +107,7 @@ template <typename type>
 bool gappedNode<type>::update(pair<double, double> data)
 {
     double p = m_secondStageNetwork.predict(data.first);
-    int maxIdx = max(capacity, m_datasetSize);
-    int preIdx = static_cast<int>(p * (maxIdx - 1));
+    int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == data.first)
     {
         m_dataset[preIdx].second = data.second;
@@ -118,15 +125,13 @@ bool gappedNode<type>::update(pair<double, double> data)
 
 template <typename type>
 bool gappedNode<type>::del(double key)
-{
+{ 
     double p = m_secondStageNetwork.predict(key);
-    int maxIdx = max(capacity, m_datasetSize);
-    int preIdx = static_cast<int>(p * (maxIdx - 1));
+    int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == key)
     {
         m_dataset[preIdx] = {-1, -1};
         m_datasetSize--;
-        return true;
     }
     else
     {
@@ -135,14 +140,40 @@ bool gappedNode<type>::del(double key)
             return false;
         m_datasetSize--;
         m_dataset[res] = {-1, -1};
-        return true;
+    }
+    if (preIdx == maxIndex)
+        maxIndex--;
+    else
+    {
+        bool isMove = false;
+        if ((preIdx > 0 && m_dataset[preIdx - 1].first == -1) || (m_dataset[preIdx + 1].first == -1))
+        {
+            int i = preIdx + 1;
+            if (m_dataset[preIdx - 1].first == -1)
+                i++;
+            while ((i + 1) <= maxIndex)
+            {
+                m_dataset[i] = m_dataset[i + 1];
+                if (m_dataset[i + 1].first != -1 && m_dataset[i + 2].first != -1)
+                {
+                    m_dataset[i + 1] = {-1, -1};
+                    break;
+                }
+                i++;
+            }
+            if ((i + 1) == maxIndex + 1)
+            {
+                m_dataset[i] = {-1, -1};
+                maxIndex--;
+            }
+        }
     }
 }
 
 template <typename type>
 bool gappedNode<type>::insert(pair<double, double> data)
 {
-    if (m_datasetSize * 1.0 / capacity >= density)
+    if ((capacity < maxKeyNum) && (m_datasetSize * 1.0 / capacity >= density))
     {
         // If an additional insertion results in crossing the density
         // then we expand the gapped array
@@ -150,135 +181,166 @@ bool gappedNode<type>::insert(pair<double, double> data)
     }
 
     double p = m_secondStageNetwork.predict(data.first);
-    int maxIdx = max(capacity, m_datasetSize);
-    int preIdx = static_cast<int>(p * (maxIdx - 1));
-
-    // exponential search
-    int start_idx, end_idx;
-    while (m_dataset[preIdx].first == -1)
+    int preIdx = static_cast<int>(p * (capacity - 1));
+    if (m_datasetSize == 0)
     {
-        preIdx++;
-        if (preIdx >= maxIdx)
-            preIdx = 0;
-    }
-    if (m_dataset[preIdx].first > data.first)
-    {
-        int offset = 1;
-        int i = preIdx;
-        while (i >= 0 && m_dataset[i].first > data.first)
-        {
-            i = preIdx - offset;
-            offset = offset << 1;
-            while (m_dataset[i].first == -1)
-                i++;
-        }
-        start_idx = max(0, i);
-        end_idx = preIdx - (offset / 4);
-        while (m_dataset[end_idx].first == -1)
-            end_idx++;
-    }
-    else
-    {
-        int offset = 1;
-        int i = preIdx;
-        while (i < maxIdx && m_dataset[i].first < data.first)
-        {
-            i = preIdx + offset;
-            offset = offset << 1;
-            while (m_dataset[i].first == -1)
-                i++;
-        }
-        start_idx = preIdx + (offset >> 2);
-        end_idx = min(maxIdx, i);
+        m_dataset[preIdx] = data;
+        m_datasetSize++;
+        maxIndex = 0;
+        return true;
     }
 
-    // use binary search to find where to insert
-    int cnt = 0;
-    while (start_idx <= end_idx)
+    int start_idx = 0, end_idx = maxIndex;
+    bool isViolative = false;
+    for (int i = preIdx - 1; i >= 0; i--)
     {
-        cnt = 0;
-        for (int i = start_idx; i <= end_idx; i++)
+        if (m_dataset[i].first != -1 && m_dataset[i].first > data.first)
         {
-            if (m_dataset[i].first != -1)
-                cnt++;
-        }
-        if (cnt <= 2)
+            end_idx = i;
+            isViolative = true;
             break;
-
-        int mid = (start_idx + end_idx) >> 1;
-
-        while (m_dataset[mid].first == -1 && mid < maxIdx - 1)
-            mid++;
-
-        if (mid == maxIdx - 1)
-        {
-            mid = (start_idx + end_idx) >> 1;
-            for (; m_dataset[mid].first == -1 && mid > start_idx; mid--)
-            {
-            }
-        }
-
-        double tmp = m_dataset[mid].first;
-        if (data.first < tmp)
-        {
-            if (end_idx == mid)
-            {
-                while (m_dataset[start_idx + 1].first == -1)
-                    start_idx++;
-                while (m_dataset[end_idx - 1].first == -1)
-                    end_idx--;
-            }
-            else
-                end_idx = mid;
-        }
-        else if (data.first > tmp)
-        {
-            start_idx = mid;
         }
     }
-    // skip empty positions
-    while (cnt == 2 && m_dataset[end_idx].first == -1)
-        end_idx--;
-    while (cnt == 2 && m_dataset[start_idx].first == -1)
-        start_idx++;
-    if (cnt == 2)
+    for (int i = preIdx; i <= maxIndex; i++)
     {
-        if (m_dataset[end_idx].first < data.first)
-            end_idx++;
-        else if (m_dataset[start_idx].first > data.first)
-            end_idx = start_idx;
+        if (m_dataset[i].first != -1 && m_dataset[i].first < data.first)
+        {
+            start_idx = i;
+            isViolative = true;
+            break;
+        }
+    }
+    if (isViolative)
+    {
+        if (m_dataset[0].first != -1 && m_dataset[0].first > data.first)
+            preIdx = 0;
+        else if (m_dataset[0].first == -1 && m_dataset[1].first != -1 && m_dataset[1].first > data.first)
+            preIdx = 1;
+        else if (m_dataset[maxIndex].first < data.first)
+            preIdx = maxIndex + 1;
+        else
+        {
+            // exponential search
+            int offset = 1;
+            int i = start_idx;
+            while (i <= end_idx && m_dataset[i].first < data.first)
+            {
+                i = start_idx + offset;
+                offset = offset << 1;
+                if (m_dataset[i].first == -1)
+                    i++;
+            }
+            start_idx = (start_idx + offset >> 2) > maxIndex ? maxIndex : (start_idx + offset >> 2);
+            end_idx = min(i, maxIndex);
+            if (m_dataset[start_idx].first == -1)
+                start_idx++;
+
+            // use binary search to find where to insert
+            while (start_idx < end_idx)
+            {
+                int mid = (start_idx + end_idx) >> 1;
+                if (m_dataset[mid].first == -1)
+                {
+                    int left = max(start_idx, mid - 1);
+                    int right = min(end_idx, mid + 1);
+                    if (m_dataset[left].first < data.first && m_dataset[right].first > data.first)
+                    {
+                        preIdx = mid;
+                        break;
+                    }
+                    else if (m_dataset[left].first > data.first)
+                        end_idx = left;
+                    else if (m_dataset[right].first < data.first)
+                        start_idx = right;
+                }
+                else
+                {
+                    int left = (m_dataset[mid - 1].first == -1) ? mid - 2 : mid - 1;
+                    left = max(start_idx, left);
+                    int right = min(end_idx, mid);
+                    if (left == right)
+                        right++;
+                    if (m_dataset[right].first == -1)
+                        right++;
+                    if (m_dataset[left].first < data.first && m_dataset[right].first > data.first)
+                    {
+                        preIdx = right;
+                        break;
+                    }
+                    else if (m_dataset[left].first > data.first)
+                        end_idx = left;
+                    else if (m_dataset[mid].first < data.first)
+                        start_idx = mid;
+                }
+                if (m_dataset[start_idx].first == -1)
+                    start_idx--;
+                if (m_dataset[end_idx].first == -1)
+                    end_idx++;
+            }
+            if (start_idx == end_idx)
+                preIdx = end_idx;
+        }
     }
 
     // if the insertion position is a gap,
     //  then we insert the element into the gap and are done
-    if (end_idx > 0 && m_dataset[end_idx - 1].first == -1)
-        m_dataset[end_idx - 1] = data;
+    if (m_dataset[preIdx].first == -1)
+    {
+        int empty = 0;
+        int i;
+        for (i = preIdx - 1; i >= 0; i--)
+        {
+            if (m_dataset[i].first == -1)
+                empty++;
+            else
+            {
+                break;
+            }
+        }
+        if (empty > 1)
+        {
+            m_dataset[i + 2] = data;
+            m_datasetSize++;
+            maxIndex = max(maxIndex, i + 2);
+            return true;
+        }
+        if (i == -1)
+            preIdx = 0;
+        m_dataset[preIdx] = data;
+        m_datasetSize++;
+        maxIndex = max(maxIndex, preIdx);
+        return true;
+    }
     else
     {
         // If the insertion position is not a gap, we make
         // a gap at the insertion position by shifting the elements
         // by one position in the direction of the closest gap
-        int j = end_idx + 1;
-        while (j < maxIdx - 1 && m_dataset[j].first != -1)
-            j++;
-        if (j == maxIdx - 1)
+        int i = preIdx + 1;
+        while (m_dataset[i].first != -1)
+            i++;
+        if (i >= capacity)
         {
-            j = end_idx - 1;
-            while (j >= 0 && m_dataset[j].first != -1)
-                j--;
-            for (int i = j; i < end_idx - 1; i++)
-                m_dataset[i] = m_dataset[i + 1];
-            m_dataset[end_idx - 1] = data;
+            i = preIdx - 1;
+            while (i >= 0 && m_dataset[i].first != -1)
+                i--;
+            for (int j = i; j < preIdx - 1; j++)
+                m_dataset[j] = m_dataset[j + 1];
+            preIdx--;
         }
         else
         {
-            for (int i = j; i > end_idx; i--)
+            if (i > maxIndex)
+                maxIndex++;
+            for (i; i > preIdx; i--)
                 m_dataset[i] = m_dataset[i - 1];
-            m_dataset[end_idx] = data;
         }
+        m_dataset[preIdx] = data;
+        m_datasetSize++;
+        maxIndex = max(maxIndex, preIdx);
+        return true;
     }
-    m_datasetSize++;
-    return true;
+    return false;
 }
 
 /*
@@ -292,11 +354,10 @@ int gappedNode<type>::search(double key, int p)
 {
     // exponential search
     int start_idx, end_idx;
-    int maxIdx = max(capacity, m_datasetSize);
     while (m_dataset[p].first == -1)
     {
         p++;
-        if (p >= maxIdx)
+        if (p > maxIndex)
             p = 0;
     }
     if (m_dataset[p].first > key)
@@ -307,48 +368,43 @@ int gappedNode<type>::search(double key, int p)
         {
             i = p - offset;
             offset = offset << 1;
-            while (m_dataset[i].first == -1)
+            i = max(0, i);
+            if (m_dataset[i].first == -1)
                 i++;
         }
-        start_idx = max(0, i);
-        end_idx = p - (offset / 4);
-        while (m_dataset[end_idx].first == -1)
+        start_idx = i;
+        end_idx = (p - (offset >> 2)) < 0 ? 0 : p - (offset >> 2);
+        if (m_dataset[end_idx].first == -1)
             end_idx++;
     }
-    else
+    else if (m_dataset[p].first < key)
     {
         int offset = 1;
         int i = p;
-        while (i < maxIdx && m_dataset[i].first < key)
+        while (i <= maxIndex && m_dataset[i].first < key)
         {
             i = p + offset;
             offset = offset << 1;
-            while (m_dataset[i].first == -1)
+            i = min(i, maxIndex);
+            if (m_dataset[i].first == -1)
                 i++;
         }
-        start_idx = p + (offset >> 2);
-        end_idx = min(maxIdx, i);
+        start_idx = (p + offset >> 2) > maxIndex ? maxIndex : (p + offset >> 2);
+        end_idx = i;
+        if (m_dataset[start_idx].first == -1)
+            start_idx++;
+    }
+    else
+    {
+        return p;
     }
 
     // binary search
     while (start_idx <= end_idx)
     {
         int mid = (start_idx + end_idx) >> 1;
-        while (m_dataset[mid].first == -1 && mid < maxIdx - 1)
+        if (m_dataset[mid].first == -1)
             mid++;
-        if (mid == end_idx + 1)
-        {
-            mid--;
-            while ((m_dataset[mid].first == -1) && (mid >= start_idx))
-                mid--;
-        }
-        if (mid == maxIdx - 1)
-        {
-            mid = (start_idx + end_idx) >> 1;
-            for (; m_dataset[mid].first == -1 && mid > start_idx; mid--)
-            {
-            };
-        }
         if (start_idx == end_idx)
         {
             if (key == m_dataset[start_idx].first)
@@ -371,13 +427,19 @@ int gappedNode<type>::search(double key, int p)
 template <typename type>
 void gappedNode<type>::expand()
 {
-    int newSize = capacity / density;
-    if (newSize > maxKeyNum)
+    if (capacity == maxKeyNum)
     {
-        capacity = maxKeyNum;
+        m_secondStageNetwork.train(m_dataset, m_secondStageParams);
         return;
     }
-    // retraining the node’s linear model on the existing keys
+    int newSize = capacity / density;
+    while (m_datasetSize * 1.0 / newSize >= density)
+        newSize /= density;
+    if (newSize > maxKeyNum)
+    {
+        newSize = maxKeyNum;
+    }
+    // retraining the node's linear model on the existing keys
     m_secondStageNetwork.train(m_dataset, m_secondStageParams);
 
     // rescaling the model to predict positions in the expanded array
@@ -385,7 +447,7 @@ void gappedNode<type>::expand()
 
     // do model-based inserts of all the elements
     // in this node using the retrained RMI
-    vector<pair<double, double>> newDataset(maxKeyNum + 1, pair<double, double>{-1, -1});
+    vector<pair<double, double>> newDataset(maxKeyNum, pair<double, double>{-1, -1});
     int cnt = 0;
     for (int i = 0; i < maxKeyNum; i++)
     {
@@ -397,28 +459,25 @@ void gappedNode<type>::expand()
             insertData(newDataset, m_dataset[i], p, cnt);
         }
     }
+    maxIndex = cnt;
     m_dataset = newDataset;
 }
 
 /*
 vec: insert data into the new vector
 idx: insertion position
-cnt: current number of data in the vector
+cnt: current maxIndex of data in the vector
 */
 template <typename type>
 void gappedNode<type>::insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt)
 {
-    cnt++;
-    int maxIdx;
-    if (capacity == cnt)
-        maxIdx = capacity + 1;
-    else
-        maxIdx = max(capacity, cnt);
-    while (vec[idx].first != -1 && idx < maxIdx)
+    if (idx < cnt)
+        idx = cnt + 1;
+    while (vec[idx].first != -1 && idx < capacity)
     {
         idx++;
     }
-    if (idx == maxIdx - 1)
+    if (idx == capacity)
     {
         int j = idx - 1;
         while (vec[j].first != -1)
@@ -429,7 +488,33 @@ void gappedNode<type>::insertData(vector<pair<double, double>> &vec, pair<double
         }
         idx--;
     }
-    vec[idx] = data;
+    int empty = 0;
+    int i;
+    for (i = idx - 1; i >= 0; i--)
+    {
+        if (vec[i].first == -1)
+            empty++;
+        else
+        {
+            break;
+        }
+    }
+    if (empty > 1)
+    {
+        vec[i + 2] = data;
+        cnt = i + 2;
+        return;
+    }
+    if (i == -1)
+    {
+        vec[0] = data;
+        cnt = 0;
+    }
+    else
+    {
+        vec[idx] = data;
+        cnt = idx;
+    }
 }
 
 #endif

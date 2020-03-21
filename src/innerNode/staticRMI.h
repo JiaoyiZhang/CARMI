@@ -19,7 +19,6 @@ public:
         m_firstStageParams = firstStageParams;
         m_secondStageParams = secondStageParams;
         m_secondStageSize = secondStageSize;
-        // m_maxInsertNumber = maxInsertNumber;
 
         for (int i = 0; i < m_secondStageSize; i++)
         {
@@ -57,7 +56,6 @@ public:
 private:
     vector<pair<double, double>> m_dataset; // the initial dataset, useless after training
     mlType m_firstStageNetwork = mlType();  // network of the first stage
-    // int m_maxInsertNumber;                  // maximum number of inserts
 
     vector<lowerType *> m_secondStage; // store the lower nodes
     params m_firstStageParams;         // parameters of network
@@ -87,6 +85,7 @@ void staticRMI<lowerType, mlType>::train()
     cout << "train second stage" << endl;
     for (int i = 0; i < m_secondStageSize; i++)
     {
+        cout << "second node:" << i << "    sub dataset size is:" << perSubDataset[i].size() << endl;
         m_secondStage[i]->train(perSubDataset[i]);
     }
     cout << "End train" << endl;

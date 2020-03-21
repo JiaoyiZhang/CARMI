@@ -11,9 +11,6 @@ public:
     adaptiveRMI(){};
     adaptiveRMI(params firstStageParams, params secondStageParams, int maxKey, int splitChildNumber, int cap)
     {
-        // std::sort(m_dataset.begin(), m_dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        //     return p1.first < p2.first;
-        // });
         m_firstStageParams = firstStageParams;
         m_secondStageParams = secondStageParams;
 
@@ -26,7 +23,6 @@ public:
 
     void initialize(vector<pair<double, double>> &dataset);
     bool isLeaf() { return isLeafNode; }
-    // void insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt); // insert data into new vector
 
     pair<double, double> find(double key);
     bool insert(pair<double, double> data);
@@ -53,15 +49,15 @@ private:
 template <typename lowerType, typename mlType>
 void adaptiveRMI<lowerType, mlType>::initialize(vector<pair<double, double>> &dataset)
 {
+    cout << "Start initialize! DatasetSize is: " << dataset.size() << endl;
+    if (dataset.size() == 0)
+        return;
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
         return p1.first < p2.first;
     });
-    if (dataset.size() == 0)
-        return;
-    ;
+
     // first train the node's linear model using its assigned keys
     m_firstStageNetwork.train(dataset, m_firstStageParams);
-    cout << "first over" << endl;
     //  use the model to divide the keys into some number of partitions
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -78,14 +74,12 @@ void adaptiveRMI<lowerType, mlType>::initialize(vector<pair<double, double>> &da
     }
     for (int i = 0; i < childNumber; i++)
     {
-        if (perSubDataset[i].size() >= dataset.size() / 1.3)
+        if (perSubDataset[i].size() == dataset.size())
             return initialize(dataset);
     }
-    cout << "divide over" << endl;
     // then iterate through the partitions in sorted order
     for (int i = 0; i < childNumber; i++)
     {
-        cout << "Child " << i << " " << perSubDataset[i].size() << endl;
         if (perSubDataset[i].size() > maxKeyNum)
         {
             // If a partition has more than the maximum bound number of
@@ -102,14 +96,14 @@ void adaptiveRMI<lowerType, mlType>::initialize(vector<pair<double, double>> &da
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
-            cout << i << ": leaf init" << endl;
+            cout << i << ": leaf node! Dataset size is:" << perSubDataset[i].size() << endl;
             lowerType *child = new lowerType(maxKeyNum, m_secondStageParams, capacity);
             child->train(perSubDataset[i]);
-            cout << "leaf node train finish " << i << endl;
             children.push_back(child);
-            cout << "Leaf node " << i << endl;
         }
     }
+    cout << "Finish" << endl;
+    return;
 }
 
 template <typename lowerType, typename mlType>
@@ -137,7 +131,9 @@ bool adaptiveRMI<lowerType, mlType>::insert(pair<double, double> data)
         // The corresponding leaf level model in RMI
         // now becomes an inner level model
         adaptiveRMI *newNode = new adaptiveRMI(m_firstStageParams, m_secondStageParams, maxKeyNum, childNumber, capacity);
-        vector<pair<double, double>> dataset = children[preIdx]->getDataset();
+        vector<pair<double, double>> dataset;
+        children[preIdx]->getDataset(dataset);
+        newNode->m_firstStageNetwork.train(dataset, m_firstStageParams);
 
         // a number of children leaf level models are created
         for (int i = 0; i < childNumber; i++)
@@ -157,10 +153,15 @@ bool adaptiveRMI<lowerType, mlType>::insert(pair<double, double> data)
         }
         for (int i = 0; i < dataset.size(); i++)
         {
-            double p = m_firstStageNetwork.predict(dataset[i].first);
-            p = p * (childNumber - 1);
-            int pIdx = static_cast<int>(p);
+            double pre = newNode->m_firstStageNetwork.predict(dataset[i].first);
+            pre = pre * (childNumber - 1);
+            int pIdx = static_cast<int>(pre);
             perSubDataset[pIdx].push_back(dataset[i]);
+        }
+        for (int i = 0; i < childNumber; i++)
+        {
+            if (perSubDataset[i].size() == size)
+                return insert(data);
         }
 
         // Each of the children leaf nodes trains its own
@@ -170,9 +171,10 @@ bool adaptiveRMI<lowerType, mlType>::insert(pair<double, double> data)
             newNode->children[i]->train(perSubDataset[i]);
         }
         children[preIdx] = (lowerType *)newNode;
+        return ((adaptiveRMI *)children[preIdx])->insert(data);
     }
-    else
-        return ((adaptiveRMI *)children[preIdx])->find(key);
+    else if (children[preIdx]->isLeaf() == false)
+        return ((adaptiveRMI *)children[preIdx])->insert(data);
     return children[preIdx]->insert(data);
 }
 
@@ -182,7 +184,7 @@ bool adaptiveRMI<lowerType, mlType>::del(double key)
     double p = m_firstStageNetwork.predict(key);
     int preIdx = static_cast<int>(p * (childNumber - 1));
     if (children[preIdx]->isLeaf() == false)
-        return ((adaptiveRMI *)children[preIdx])->find(key);
+        return ((adaptiveRMI *)children[preIdx])->del(key);
     return children[preIdx]->del(key);
 }
 
@@ -192,7 +194,7 @@ bool adaptiveRMI<lowerType, mlType>::update(pair<double, double> data)
     double p = m_firstStageNetwork.predict(data.first);
     int preIdx = static_cast<int>(p * (childNumber - 1));
     if (children[preIdx]->isLeaf() == false)
-        return ((adaptiveRMI *)children[preIdx])->find(key);
+        return ((adaptiveRMI *)children[preIdx])->update(data);
     return children[preIdx]->update(data);
 }
 

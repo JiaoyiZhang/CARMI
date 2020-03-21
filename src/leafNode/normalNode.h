@@ -35,7 +35,7 @@ public:
 
     int predict(double key)
     {
-        double p = m_secondStageNetwork.predict(key); // return the index in subDataset
+        double p = m_secondStageNetwork.predict(key);
         int preIdx = static_cast<int>(p * (m_datasetSize - 1));
         int index = int(m_subDataset[preIdx].second);
         return index;
@@ -100,7 +100,6 @@ pair<double, double> normalNode<type>::find(double key)
     //  use B-Tree if the data is particularly hard to learn
     if (isUseTree)
     {
-        // cout << "USE BTREE!" << endl;
         auto result = m_tree.find(key); // result:{key, index}
         if (result != m_tree.end())
             return m_subDataset[int(result->second)];
@@ -109,7 +108,6 @@ pair<double, double> normalNode<type>::find(double key)
     }
     else
     {
-        // cout << "LEARNED INDEX!" << endl;
         // use learnedIndex to find the data
         double p = m_secondStageNetwork.predict(key);
         int preIdx = static_cast<int>(p * (m_datasetSize - 1));

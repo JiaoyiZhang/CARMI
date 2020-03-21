@@ -8,7 +8,11 @@ using namespace std;
 class linearRegression
 {
 public:
-    linearRegression(){};
+    linearRegression()
+    {
+        theta1 = 0.0001;
+        theta2 = 0.666;
+    }
     void train(vector<pair<double, double>> dataset, params param);
     double predict(double key);
 
@@ -20,10 +24,12 @@ private:
 void linearRegression::train(vector<pair<double, double>> dataset, params param)
 {
     int actualSize = 0;
+    vector<double> index;
     for (int i = 0; i < dataset.size(); i++)
     {
         if (dataset[i].first != -1)
             actualSize++;
+        index.push_back(double(i) / double(dataset.size()));
     }
     if (actualSize == 0)
     {
@@ -41,12 +47,12 @@ void linearRegression::train(vector<pair<double, double>> dataset, params param)
                 double p = theta1 * dataset[j].first + theta2;
                 p = (p > 1 ? 1 : p);
                 p = (p < 0 ? 0 : p);
-                error1 += (p - j) * dataset[j].first;
-                error2 += p - j;
+                error1 += (p - index[j]) * dataset[j].first;
+                error2 += p - index[j];
             }
         }
-        theta1 = theta1 - param.learningRate * error1 / dataset.size();
-        theta2 = theta2 - param.learningRate * error2 / dataset.size();
+        theta1 = theta1 - param.learningRate * error1 / actualSize;
+        theta2 = theta2 - param.learningRate * error2 / actualSize;
 
         double loss = 0.0;
         for (int j = 0; j < dataset.size(); j++)
@@ -56,11 +62,10 @@ void linearRegression::train(vector<pair<double, double>> dataset, params param)
                 double p = theta1 * dataset[j].first + theta2;
                 p = (p > 1 ? 1 : p);
                 p = (p < 0 ? 0 : p);
-                loss += (p - j) * (p - j);
+                loss += (p - index[j]) * (p - index[j]);
             }
         }
-        loss = loss / (dataset.size() * 2);
-        // cout << "iteration: " << i << "    loss is: " << loss << endl;
+        loss = loss / (actualSize * 2);
     }
 }
 
