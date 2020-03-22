@@ -73,168 +73,136 @@ void createModel()
     cout << "SCALE_gapped init over!" << endl;
 }
 
-template <typename type>
-void find(type obj)
-{
-    for (int i = 0; i < dataset.size(); i++)
-    {
-        obj.find(dataset[i].first);
-    }
-}
-template <typename type>
-void insert(type obj)
-{
-    for (int i = 0; i < insertDataset.size(); i++)
-    {
-        obj.insert(insertDataset[i]);
-    }
-}
-template <typename type>
-void update(type obj)
-{
-    for (int i = 0; i < insertDataset.size(); i++)
-    {
-        obj.update({insertDataset[i].first, 1.11});
-    }
-}
-template <typename type>
-void del(type obj)
-{
-    for (int i = 0; i < insertDataset.size(); i++)
-    {
-        obj.del(insertDataset[i].first);
-    }
-}
-template <typename type>
-void test(type obj, double &time0, double &time1, double &time2, double &time3)
-{
-    clock_t s, e;
-    s = clock();
-    find(obj);
-    e = clock();
-    time0 += static_cast<double>(e - s) / CLOCKS_PER_SEC;
-    cout << "Find time:" << static_cast<double>(e - s) / CLOCKS_PER_SEC / float(datasetSize) << endl;
-
-    s = clock();
-    insert(obj);
-    e = clock();
-    time1 += static_cast<double>(e - s) / CLOCKS_PER_SEC;
-    cout << "Insert time:" << static_cast<double>(e - s) / CLOCKS_PER_SEC / float(insertDataset.size()) << endl;
-
-    s = clock();
-    update(obj);
-    e = clock();
-    time2 += static_cast<double>(e - s) / CLOCKS_PER_SEC;
-    cout << "Update time:" << static_cast<double>(e - s) / CLOCKS_PER_SEC / float(insertDataset.size()) << endl;
-
-    s = clock();
-    del(obj);
-    e = clock();
-    time3 += static_cast<double>(e - s) / CLOCKS_PER_SEC;
-    cout << "Delete time:" << static_cast<double>(e - s) / CLOCKS_PER_SEC / float(insertDataset.size()) << endl;
-}
-void btreetest(double &time0, double &time1, double &time2, double &time3)
+void btree_test(double &time0, double &time1, double &time2, double &time3)
 {
     clock_t s, e;
     s = clock();
     for (int i = 0; i < dataset.size(); i++)
-    {
         btreemap.find(dataset[i].first);
-    }
     e = clock();
-    time0 += static_cast<double>(e - s) / CLOCKS_PER_SEC;
+    time0 += float(e - s) / CLOCKS_PER_SEC;
     cout << "Find time:" << time0 / (float)datasetSize << endl;
 
-    s = clock();
-    for (int i = 0; i < insertDataset.size(); i++)
+    for (int k = 0; k < 9; k++)
     {
-        btreemap.insert(insertDataset[i]);
-    }
-    e = clock();
-    time1 += static_cast<double>(e - s) / CLOCKS_PER_SEC;
-    cout << "Insert time:" << time1 / float(insertDataset.size()) << endl;
+        s = clock();
+        for (int i = 0; i < insertDataset.size(); i++)
+            btreemap.insert(insertDataset[i]);
+        e = clock();
+        time1 += float(e - s) / CLOCKS_PER_SEC;
 
-    s = clock();
-    for (int i = 0; i < insertDataset.size(); i++)
-    {
-        btreemap.find(insertDataset[i].first);
-    }
-    e = clock();
-    time2 += static_cast<double>(e - s) / CLOCKS_PER_SEC;
-    cout << "Update time:" << time2 / float(insertDataset.size()) << endl;
+        s = clock();
+        for (int i = 0; i < dataset.size(); i++)
+            btreemap.find(dataset[i].first);
+        e = clock();
+        time2 += float(e - s) / CLOCKS_PER_SEC;
 
-    s = clock();
-    for (int i = 0; i < insertDataset.size(); i++)
-    {
-        btreemap.erase(insertDataset[i].first);
+        s = clock();
+        for (int i = 0; i < insertDataset.size(); i++)
+            btreemap.erase(insertDataset[i].first);
+        e = clock();
+        time3 += float(e - s) / CLOCKS_PER_SEC;
     }
-    e = clock();
-    time3 += static_cast<double>(e - s) / CLOCKS_PER_SEC;
-    cout << "Delete time:" << time3 / float(insertDataset.size()) << endl;
+    cout << "Insert time:" << time1 / float(datasetSize) << endl;
+    cout << "Update time:" << time2 / float(datasetSize) << endl;
+    cout << "Delete time:" << time3 / float(datasetSize) << endl;
+    cout << endl;
 }
+
+template <typename type>
+void test(type obj,double &time0, double &time1, double &time2, double &time3)
+{
+    clock_t s, e;
+    s = clock();
+    for (int i = 0; i < dataset.size(); i++)
+        obj.find(dataset[i].first);
+    e = clock();
+    time0 += float(e - s) / CLOCKS_PER_SEC;
+    cout << "Find time:" << time0 / (float)datasetSize << endl;
+
+    for (int k = 0; k < 9; k++)
+    {
+        s = clock();
+        for (int i = 0; i < insertDataset.size(); i++)
+            obj.insert(insertDataset[i]);
+        e = clock();
+        time1 += float(e - s) / CLOCKS_PER_SEC;
+
+        s = clock();
+        for (int i = 0; i < dataset.size(); i++)
+            obj.update({insertDataset[i].first, 1.11});
+        e = clock();
+        time2 += float(e - s) / CLOCKS_PER_SEC;
+
+        s = clock();
+        for (int i = 0; i < insertDataset.size(); i++)
+            obj.del(insertDataset[i].first);
+        e = clock();
+        time3 += float(e - s) / CLOCKS_PER_SEC;
+    }
+    cout << "Insert time:" << time1 / float(datasetSize) << endl;
+    cout << "Update time:" << time2 / float(datasetSize) << endl;
+    cout << "Delete time:" << time3 / float(datasetSize) << endl;
+    cout << endl;
+}
+
 void printResult(int r, double &time0, double &time1, double &time2, double &time3)
 {
     cout << "Average time: " << endl;
-    cout << "Find time:" << time0 / float(datasetSize) / float(r) << endl;
-    cout << "Insert time:" << time1 / float(insertDataset.size()) / float(r) << endl;
-    cout << "Update time:" << time2 / float(insertDataset.size()) / float(r) << endl;
-    cout << "Delete time:" << time3 / float(insertDataset.size()) / float(r) << endl;
+    cout << "Find time:" << time0 / (float)datasetSize / float(r) << endl;
+    cout << "Insert time:" << time1 / (float)datasetSize / float(r) << endl;
+    cout << "Update time:" << time2 / (float)datasetSize / float(r) << endl;
+    cout << "Delete time:" << time3 / (float)datasetSize / float(r) << endl;
     cout << "***********************" << endl;
-    time0 = 0;
-    time1 = 0;
-    time2 = 0;
-    time3 = 0;
 }
 int main()
 {
     generateDataset();
     createModel();
     clock_t s, e;
-    double time0 = 0.0, time1 = 0.0, time2 = 0.0, time3 = 0.0;
+    double btree_time0 = 0.0, btree_time1 = 0.0, btree_time2 = 0.0, btree_time3 = 0.0;
+    double SCALE_gapped_time0 = 0.0, SCALE_gapped_time1 = 0.0, SCALE_gapped_time2 = 0.0, SCALE_gapped_time3 = 0.0;
+    double ARMI_gapped_time0 = 0.0, ARMI_gapped_time1 = 0.0, ARMI_gapped_time2 = 0.0, ARMI_gapped_time3 = 0.0;
+    double SRMI_gapped_time0 = 0.0, SRMI_gapped_time1 = 0.0, SRMI_gapped_time2 = 0.0, SRMI_gapped_time3 = 0.0;
+    double SRMI_normal_time0 = 0.0, SRMI_normal_time1 = 0.0, SRMI_normal_time2 = 0.0, SRMI_normal_time3 = 0.0;
     int repetitions = 100;
     for (int i = 0; i < repetitions; i++)
     {
         cout << "btree:    " << i << endl;
-        btreetest(time0, time1, time2, time3);
+        btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
         cout << endl;
-    }
-    cout << "btreemap:" << endl;
-    printResult(repetitions, time0, time1, time2, time3);
 
-    for (int i = 0; i < repetitions; i++)
-    {
-        cout << "SRMI_normal:    " << i << endl;
-        test(SRMI_normal, time0, time1, time2, time3);
-        cout << endl;
-    }
-    cout << "SRMI_normal:" << endl;
-    printResult(repetitions, time0, time1, time2, time3);
-
-    for (int i = 0; i < repetitions; i++)
-    {
-        cout << "SRMI_gapped:    " << i << endl;
-        test(SRMI_gapped, time0, time1, time2, time3);
-        cout << endl;
-    }
-    cout << "SRMI_gapped:" << endl;
-    printResult(repetitions, time0, time1, time2, time3);
-
-    for (int i = 0; i < repetitions; i++)
-    {
-        cout << "btree:    " << i << endl;
-        test(ARMI_gapped, time0, time1, time2, time3);
-        cout << endl;
-    }
-    cout << "ARMI_gapped:" << endl;
-    printResult(repetitions, time0, time1, time2, time3);
-
-    for (int i = 0; i < repetitions; i++)
-    {
         cout << "SCALE_gapped:    " << i << endl;
-        test(SCALE_gapped, time0, time1, time2, time3);
+        test(SCALE_gapped, SCALE_gapped_time0, SCALE_gapped_time1, SCALE_gapped_time2, SCALE_gapped_time3);
+        cout << endl;
+
+        cout << "ARMI_gapped:    " << i << endl;
+        test(ARMI_gapped, ARMI_gapped_time0, ARMI_gapped_time1, ARMI_gapped_time2, ARMI_gapped_time3);
+        cout << endl;
+
+        cout << "SRMI_gapped:    " << i << endl;
+        test(SRMI_gapped, SRMI_gapped_time0, SRMI_gapped_time1, SRMI_gapped_time2, SRMI_gapped_time3);
+        cout << endl;
+
+        cout << "SRMI_normal:    " << i << endl;
+        test(SRMI_normal, SRMI_normal_time0, SRMI_normal_time1, SRMI_normal_time2, SRMI_normal_time3);
         cout << endl;
     }
+
+    cout << "btreemap:" << endl;
+    printResult(repetitions, btree_time0, btree_time1, btree_time2, btree_time3);
+
     cout << "SCALE_gapped:" << endl;
-    printResult(repetitions, time0, time1, time2, time3);
+    printResult(repetitions, SCALE_gapped_time0, SCALE_gapped_time1, SCALE_gapped_time2, SCALE_gapped_time3);
+
+    cout << "ARMI_gapped:" << endl;
+    printResult(repetitions, ARMI_gapped_time0, ARMI_gapped_time1, ARMI_gapped_time2, ARMI_gapped_time3);
+
+    cout << "SRMI_gapped:" << endl;
+    printResult(repetitions, SRMI_gapped_time0, SRMI_gapped_time1, SRMI_gapped_time2, SRMI_gapped_time3);
+
+    cout << "SRMI_normal:" << endl;
+    printResult(repetitions, SRMI_normal_time0, SRMI_normal_time1, SRMI_normal_time2, SRMI_normal_time3);
+
     return 0;
 }
