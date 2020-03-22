@@ -8,7 +8,9 @@
 
 #include <algorithm>
 #include <random>
+#include <windows.h>
 #include <iostream>
+using namespace std;
 
 int datasetSize = 10000;
 vector<pair<double, double>> dataset;
@@ -75,74 +77,73 @@ void createModel()
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)
 {
-    clock_t s, e;
-    s = clock();
+    LARGE_INTEGER s, e, c;
+    QueryPerformanceFrequency(&c);
+    QueryPerformanceCounter(&s);
     for (int i = 0; i < dataset.size(); i++)
         btreemap.find(dataset[i].first);
-    e = clock();
-    time0 += float(e - s) / CLOCKS_PER_SEC;
-    cout << "Find time:" << time0 / (float)datasetSize << endl;
+    QueryPerformanceCounter(&e);
+    time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+    cout << "Find time:" << time0 << endl;
 
+    QueryPerformanceCounter(&s);
+    for (int i = 0; i < insertDataset.size(); i++)
+        btreemap.insert(insertDataset[i]);
+    QueryPerformanceCounter(&e);
+    time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+    cout << "Insert time:" << time1 << endl;
+
+    QueryPerformanceCounter(&s);
     for (int k = 0; k < 9; k++)
     {
-        s = clock();
         for (int i = 0; i < insertDataset.size(); i++)
-            btreemap.insert(insertDataset[i]);
-        e = clock();
-        time1 += float(e - s) / CLOCKS_PER_SEC;
-
-        s = clock();
-        for (int i = 0; i < dataset.size(); i++)
-            btreemap.find(dataset[i].first);
-        e = clock();
-        time2 += float(e - s) / CLOCKS_PER_SEC;
-
-        s = clock();
-        for (int i = 0; i < insertDataset.size(); i++)
-            btreemap.erase(insertDataset[i].first);
-        e = clock();
-        time3 += float(e - s) / CLOCKS_PER_SEC;
+            btreemap.find(insertDataset[i].first);
     }
-    cout << "Insert time:" << time1 / float(datasetSize) << endl;
-    cout << "Update time:" << time2 / float(datasetSize) << endl;
-    cout << "Delete time:" << time3 / float(datasetSize) << endl;
+    QueryPerformanceCounter(&e);
+    time2 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+    cout << "Update time:" << time2 << endl;
+
+    QueryPerformanceCounter(&s);
+    for (int i = 0; i < insertDataset.size(); i++)
+        btreemap.erase(insertDataset[i].first);
+    QueryPerformanceCounter(&e);
+    time3 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+    cout << "Delete time:" << time3 << endl;
     cout << endl;
 }
 
 template <typename type>
-void test(type obj,double &time0, double &time1, double &time2, double &time3)
+void test(type obj, double &time0, double &time1, double &time2, double &time3)
 {
-    clock_t s, e;
-    s = clock();
+    LARGE_INTEGER s, e, c;
+    QueryPerformanceCounter(&s);
     for (int i = 0; i < dataset.size(); i++)
         obj.find(dataset[i].first);
-    e = clock();
-    time0 += float(e - s) / CLOCKS_PER_SEC;
-    cout << "Find time:" << time0 / (float)datasetSize << endl;
+    QueryPerformanceCounter(&e);
+    time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+    cout << "Find time:" << time0 << endl;
 
-    for (int k = 0; k < 9; k++)
-    {
-        s = clock();
-        for (int i = 0; i < insertDataset.size(); i++)
-            obj.insert(insertDataset[i]);
-        e = clock();
-        time1 += float(e - s) / CLOCKS_PER_SEC;
+    QueryPerformanceCounter(&s);
+    for (int i = 0; i < insertDataset.size(); i++)
+        obj.insert(insertDataset[i]);
+    QueryPerformanceCounter(&e);
+    time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+    cout << "Insert time:" << time1 << endl;
 
-        s = clock();
-        for (int i = 0; i < dataset.size(); i++)
-            obj.update({insertDataset[i].first, 1.11});
-        e = clock();
-        time2 += float(e - s) / CLOCKS_PER_SEC;
+    QueryPerformanceCounter(&s);
+    for (int i = 0; i < insertDataset.size(); i++)
+        obj.update({insertDataset[i].first, 1.11});
 
-        s = clock();
-        for (int i = 0; i < insertDataset.size(); i++)
-            obj.del(insertDataset[i].first);
-        e = clock();
-        time3 += float(e - s) / CLOCKS_PER_SEC;
-    }
-    cout << "Insert time:" << time1 / float(datasetSize) << endl;
-    cout << "Update time:" << time2 / float(datasetSize) << endl;
-    cout << "Delete time:" << time3 / float(datasetSize) << endl;
+    QueryPerformanceCounter(&e);
+    time2 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+    cout << "Update time:" << time2 << endl;
+
+    QueryPerformanceCounter(&s);
+    for (int i = 0; i < insertDataset.size(); i++)
+        obj.del(insertDataset[i].first);
+    QueryPerformanceCounter(&e);
+    time3 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+    cout << "Delete time:" << time3 << endl;
     cout << endl;
 }
 
@@ -150,16 +151,16 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
 {
     cout << "Average time: " << endl;
     cout << "Find time:" << time0 / (float)datasetSize / float(r) << endl;
-    cout << "Insert time:" << time1 / (float)datasetSize / float(r) << endl;
-    cout << "Update time:" << time2 / (float)datasetSize / float(r) << endl;
-    cout << "Delete time:" << time3 / (float)datasetSize / float(r) << endl;
+    cout << "Insert time:" << time1 / (float)insertDataset.size() / float(r) << endl;
+    cout << "Update time:" << time2 / (float)insertDataset.size() / float(r) << endl;
+    cout << "Delete time:" << time3 / (float)insertDataset.size() / float(r) << endl;
     cout << "***********************" << endl;
 }
 int main()
 {
     generateDataset();
     createModel();
-    clock_t s, e;
+    LARGE_INTEGER s, e, c;
     double btree_time0 = 0.0, btree_time1 = 0.0, btree_time2 = 0.0, btree_time3 = 0.0;
     double SCALE_gapped_time0 = 0.0, SCALE_gapped_time1 = 0.0, SCALE_gapped_time2 = 0.0, SCALE_gapped_time3 = 0.0;
     double ARMI_gapped_time0 = 0.0, ARMI_gapped_time1 = 0.0, ARMI_gapped_time2 = 0.0, ARMI_gapped_time3 = 0.0;
@@ -187,6 +188,8 @@ int main()
         cout << "SRMI_normal:    " << i << endl;
         test(SRMI_normal, SRMI_normal_time0, SRMI_normal_time1, SRMI_normal_time2, SRMI_normal_time3);
         cout << endl;
+
+        createModel();
     }
 
     cout << "btreemap:" << endl;
