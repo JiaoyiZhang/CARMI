@@ -45,7 +45,7 @@ private:
 template <typename lowerType>
 void scaleModel<lowerType>::initialize(vector<pair<double, double>> &dataset)
 {
-    cout << "Start initialize! DatasetSize is: " << dataset.size() << endl;
+    cout << "initialize! Dataset size is:" << dataset.size() << endl;
     if (dataset.size() == 0)
         return;
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
@@ -73,18 +73,15 @@ void scaleModel<lowerType>::initialize(vector<pair<double, double>> &dataset)
     // then iterate through the partitions in sorted order
     for (int i = 0; i < childNumber; i++)
     {
-        cout << "i:" << i << " index[i]:" << index[i] << endl;
         if (perSubDataset[i].size() > maxKeyNum)
         {
             // If a partition has more than the maximum bound number of
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            cout << i << ": inner init" << endl;
             scaleModel *child = new scaleModel(m_secondStageParams, maxKeyNum, childNumber, capacity);
             child->initialize(perSubDataset[i]);
             children.push_back((lowerType *)child);
-            cout << "Inner node " << i << endl;
         }
         else
         {

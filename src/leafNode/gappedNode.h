@@ -125,7 +125,7 @@ bool gappedNode<type>::update(pair<double, double> data)
 
 template <typename type>
 bool gappedNode<type>::del(double key)
-{ 
+{
     double p = m_secondStageNetwork.predict(key);
     int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == key)
@@ -140,6 +140,7 @@ bool gappedNode<type>::del(double key)
             return false;
         m_datasetSize--;
         m_dataset[res] = {-1, -1};
+        preIdx = res;
     }
     if (preIdx == maxIndex)
         maxIndex--;
@@ -366,6 +367,8 @@ int gappedNode<type>::search(double key, int p)
         int i = p;
         while (i >= 0 && m_dataset[i].first > key)
         {
+            if (offset == 0)
+                return -1;
             i = p - offset;
             offset = offset << 1;
             i = max(0, i);

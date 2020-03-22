@@ -1,26 +1,26 @@
-#include <iostream>
-#include "normalNode.h"
-#include "upperModel.h"
-#include "gappedNode.h"
-#include "segModelWithSplit.h"
+#include "./trainModel/lr.h"
+#include "./trainModel/nn.h"
+#include "./innerNode/adaptiveRMI.h"
+#include "./innerNode/staticRMI.h"
+#include "./innerNode/scaleModel.h"
+#include "./leafNode/gappedNode.h"
+#include "./leafNode/normalNode.h"
+
 #include <algorithm>
 #include <random>
-#include <iomanip>
+#include <iostream>
+
 int datasetSize = 10000;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
-model modelName;
+
 btree::btree_map<double, double> btreemap;
-upperModel<normalNode> rmi;
-upperModel<gappedNode> ga;
-segModelWithSplit seg;
-enum model
-{
-    LEARNED_INDEX,
-    GAPPED_ARRAY,
-    SEG_MODEL,
-    B_TREE
-};
+
+staticRMI<normalNode<linearRegression>, linearRegression> SRMI_normal;
+staticRMI<gappedNode<linearRegression>, linearRegression> SRMI_gapped;
+adaptiveRMI<gappedNode<linearRegression>, linearRegression> ARMI_gapped;
+scaleModel<gappedNode<linearRegression>> SCALE_gapped;
+
 void generateDataset()
 {
     float maxValue = 10000.00;
@@ -50,99 +50,114 @@ void generateDataset()
     }
     datasetSize = dataset.size();
 }
+
 void createModel()
 {
-    params firstStageParams(0.01, 1000, 8);
-    params secondStageParams(0.01, 1000, 8);
+    params firstStageParams(0.001, 100000, 8);
+    params secondStageParams(0.001, 100000, 8);
 
-    rmi = upperModel<normalNode>(dataset, firstStageParams, secondStageParams, 1024, 128, 200);
-    rmi.train();
-    cout << "rmi model over! " << endl;
+    SRMI_normal = staticRMI<normalNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 1024, 128, 200);
+    SRMI_normal.train();
+    cout << "SRMI_normal init over!" << endl;
 
-    ga = upperModel<gappedNode>(dataset, firstStageParams, secondStageParams, 600, 128, 400);
-    ga.train();
-    cout << "ga model over! " << endl;
+    SRMI_gapped = staticRMI<gappedNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 5000, 128, 800);
+    SRMI_gapped.train();
+    cout << "SRMI_gapped init over!" << endl;
 
-    seg = segModelWithSplit(dataset);
-    seg.preProcess();
-    cout << "seg model over! " << endl;
+    ARMI_gapped = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 12, 800);
+    ARMI_gapped.initialize(dataset);
+    cout << "ARMI_gapped init over!" << endl;
+
+    SCALE_gapped = scaleModel<gappedNode<linearRegression>>(secondStageParams, 1000, 100, 800);
+    SCALE_gapped.initialize(dataset);
+    cout << "SCALE_gapped init over!" << endl;
 }
-pair<double, double> find(int num, double key)
+
+template <typename type>
+void find(type obj)
 {
-    switch (num)
+    for (int i = 0; i < datasetSize; i++)
     {
-    case 0:
-        return rmi.find(key);
-    case 1:
-        return ga.find(key);
-    case 2:
-        return seg.find(key);
-    case 3:
-        auto res = btreemap.find(key);
-        return {res->first, res->second};
-    default:
-        break;
+        cout << "Find " << i << ":    " << dataset[i].first;
+        auto res = obj.find(dataset[i].first);
+
+        cout << "  " << res.first << "  " << res.second << endl;
+    }
+    cout << "Find over!" << endl;
+}
+template <typename type>
+void insert(type obj)
+{
+    for (int i = 0; i < insertDataset.size(); i++)
+    {
+        cout << "Insert " << i << ":    " << insertDataset[i].first;
+
+        obj.insert(insertDataset[i]);
+
+        auto res = obj.find(insertDataset[i].first);
+        cout << "    After insert: " << res.first << "  " << res.second << endl;
     }
 }
-bool del(int num, double key)
+template <typename type>
+void update(type obj)
 {
-    switch (num)
+    for (int i = 0; i < insertDataset.size(); i++)
     {
-    case 0:
-        return rmi.del(key);
-    case 1:
-        return ga.del(key);
-    case 2:
-        return seg.del(key);
-    case 3:
-        auto res = btreemap.erase(key);
-        return true;
-    default:
-        break;
+        cout << "Update " << i << ":    " << insertDataset[i].first;
+        obj.update({insertDataset[i].first, 1.11});
+
+        auto res = obj.find(insertDataset[i].first);
+        cout << "    After update: " << res.first << "  " << res.second << endl;
     }
 }
-bool update(int num, pair<double, double> data)
+template <typename type>
+void del(type obj)
 {
-    switch (num)
+    for (int i = 0; i < insertDataset.size(); i++)
     {
-    case 0:
-        return rmi.update(data);
-    case 1:
-        return ga.update(data);
-    case 2:
-        return seg.update(data.first, data.second);
-    case 3:
-        auto res = btreemap.find(data.first);
-        return true;
-    default:
-        break;
+        cout << "Delete " << i << ":    " << insertDataset[i].first;
+        obj.del(insertDataset[i].first);
+
+        auto res = obj.find(insertDataset[i].first);
+        cout << "    After delete: " << res.first << "  " << res.second << endl;
     }
 }
-bool insert(int num, pair<double, double> data)
+template <typename type>
+void test(type obj)
 {
-    switch (num)
+    find(obj);
+    insert(obj);
+    update(obj);
+    del(obj);
+}
+void btreetest()
+{
+    for (int i = 0; i < datasetSize; i++)
     {
-    case 0:
-        return rmi.insert(data);
-    case 1:
-        return ga.insert(data);
-    case 2:
-        return seg.insert(data.first, data.second);
-    case 3:
-        auto res = btreemap.insert(data);
-        return true;
-    default:
-        break;
+        btreemap.find(dataset[i].first);
+    }
+
+    for (int i = 0; i < insertDataset.size(); i++)
+    {
+        btreemap.insert(insertDataset[i]);
+    }
+    for (int i = 0; i < insertDataset.size(); i++)
+    {
+        btreemap.find(insertDataset[i].first);
+    }
+
+    for (int i = 0; i < insertDataset.size(); i++)
+    {
+        btreemap.erase(insertDataset[i].first);
     }
 }
 int main()
 {
     generateDataset();
     createModel();
-    insert(B_TREE, {1.11, 1.11});
-    find(LEARNED_INDEX, dataset[0].first);
-    update(GAPPED_ARRAY, {dataset[1].first, 2.22});
-    del(LEARNED_INDEX, dataset[3].first);
-    
-    return 0;
+    test(SRMI_normal);
+    test(SRMI_gapped);
+    test(ARMI_gapped);
+    test(SCALE_gapped);
+    btreetest();
 }

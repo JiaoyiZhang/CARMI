@@ -85,7 +85,6 @@ void staticRMI<lowerType, mlType>::train()
     cout << "train second stage" << endl;
     for (int i = 0; i < m_secondStageSize; i++)
     {
-        cout << "second node:" << i << "    sub dataset size is:" << perSubDataset[i].size() << endl;
         m_secondStage[i]->train(perSubDataset[i]);
     }
     cout << "End train" << endl;

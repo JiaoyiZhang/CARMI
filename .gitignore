@@ -2,4 +2,3 @@
 build/*
 CMakeFiles/*
 .vscode/*
-src/testMain.cpp
