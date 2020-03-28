@@ -72,19 +72,22 @@ void staticRMI<lowerType, mlType>::train()
     for (int i = 0; i < m_dataset.size(); i++)
     {
         double p = m_firstStageNetwork.predict(m_dataset[i].first);
+        // cout << i << " :" << m_dataset[i].first << " p:" << p << "  preIdx: ";
         p = p * (m_secondStageSize - 1);
         int preIdx = static_cast<int>(p);
+        // cout << preIdx << endl;
         perSubDataset[preIdx].push_back(m_dataset[i]);
     }
     for (int i = 0; i < m_secondStageSize; i++)
     {
-        if (perSubDataset[i].size() >= m_dataset.size() / 2)
+        if (perSubDataset[i].size() == m_dataset.size())
             return train();
     }
 
     cout << "train second stage" << endl;
     for (int i = 0; i < m_secondStageSize; i++)
     {
+        // cout << "second stage " << i << "    datasetSize is:" << perSubDataset[i].size() << endl;
         m_secondStage[i]->train(perSubDataset[i]);
     }
     cout << "End train" << endl;

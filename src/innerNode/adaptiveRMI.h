@@ -49,7 +49,8 @@ private:
 template <typename lowerType, typename mlType>
 void adaptiveRMI<lowerType, mlType>::initialize(vector<pair<double, double>> &dataset)
 {
-    cout << "Start initialize! DatasetSize is: " << dataset.size() << endl;
+    cout << "Start initialize!" << endl;
+    cout << " DatasetSize is : " << dataset.size() << endl;
     if (dataset.size() == 0)
         return;
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
@@ -75,7 +76,10 @@ void adaptiveRMI<lowerType, mlType>::initialize(vector<pair<double, double>> &da
     for (int i = 0; i < childNumber; i++)
     {
         if (perSubDataset[i].size() == dataset.size())
+        {
+            m_firstStageParams.learningRate2 *= 10;
             return initialize(dataset);
+        }
     }
     // then iterate through the partitions in sorted order
     for (int i = 0; i < childNumber; i++)
@@ -86,23 +90,20 @@ void adaptiveRMI<lowerType, mlType>::initialize(vector<pair<double, double>> &da
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            cout << i << ": inner init" << endl;
+            isLeafNode = false;
             adaptiveRMI *child = new adaptiveRMI(m_firstStageParams, m_secondStageParams, maxKeyNum, childNumber, capacity);
             child->initialize(perSubDataset[i]);
             children.push_back((lowerType *)child);
-            cout << "Inner node " << i << endl;
         }
         else
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
-            cout << i << ": leaf node! Dataset size is:" << perSubDataset[i].size() << endl;
             lowerType *child = new lowerType(maxKeyNum, m_secondStageParams, capacity);
             child->train(perSubDataset[i]);
             children.push_back(child);
         }
     }
-    cout << "Finish" << endl;
     return;
 }
 
@@ -161,7 +162,11 @@ bool adaptiveRMI<lowerType, mlType>::insert(pair<double, double> data)
         for (int i = 0; i < childNumber; i++)
         {
             if (perSubDataset[i].size() == size)
+            {
+                m_firstStageParams.learningRate1 *= 10;
+                m_firstStageParams.learningRate2 *= 10;
                 return insert(data);
+            }
         }
 
         // Each of the children leaf nodes trains its own

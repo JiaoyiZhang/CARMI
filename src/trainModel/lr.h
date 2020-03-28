@@ -3,6 +3,9 @@
 #include "../params.h"
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <chrono>
+#include <random>
 using namespace std;
 
 class linearRegression
@@ -36,6 +39,13 @@ void linearRegression::train(vector<pair<double, double>> dataset, params param)
         cout << "This node is empty!" << endl;
         return;
     }
+    theta1 = param.initTheta1;
+    theta2 = param.initTheta2;
+    if (theta1 == 0.0)
+        theta1 = 1.0 / double(dataset.size());
+    if (theta2 == 0.0)
+        theta2 = theta1 * (1 - dataset[0].first);
+    double oldLoss = 0.0;
     for (int i = 0; i < param.maxEpoch; i++)
     {
         double error1 = 0.0;
@@ -51,8 +61,8 @@ void linearRegression::train(vector<pair<double, double>> dataset, params param)
                 error2 += p - index[j];
             }
         }
-        theta1 = theta1 - param.learningRate * error1 / actualSize;
-        theta2 = theta2 - param.learningRate * error2 / actualSize;
+        theta1 = theta1 - param.learningRate1 * error1 / actualSize;
+        theta2 = theta2 - param.learningRate2 * error2 / actualSize;
 
         double loss = 0.0;
         for (int j = 0; j < dataset.size(); j++)
@@ -66,7 +76,14 @@ void linearRegression::train(vector<pair<double, double>> dataset, params param)
             }
         }
         loss = loss / (actualSize * 2);
+        // cout << "\tepoch: " << i << "\tloss: " << loss << endl;
+        double diff = (oldLoss - loss) > 0 ? (oldLoss - loss) : (loss - oldLoss);
+        if (loss < 1e-3 || diff < 1e-6)
+            break;
+        oldLoss = loss;
     }
+    if (theta1 < 0)
+        theta1 = -theta1;
 }
 
 double linearRegression::predict(double key)

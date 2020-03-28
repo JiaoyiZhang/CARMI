@@ -45,7 +45,8 @@ private:
 template <typename lowerType>
 void scaleModel<lowerType>::initialize(vector<pair<double, double>> &dataset)
 {
-    cout << "initialize! Dataset size is:" << dataset.size() << endl;
+    cout << "Start initialize!" << endl;
+    // cout << " DatasetSize is : " << dataset.size() << endl;
     if (dataset.size() == 0)
         return;
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
@@ -86,7 +87,7 @@ void scaleModel<lowerType>::initialize(vector<pair<double, double>> &dataset)
         else
         {
             // make this partition a leaf node
-            cout << i << ": leaf node! Dataset size is:" << perSubDataset[i].size() << endl;
+            // cout << i << ": leaf node! Dataset size is:" << perSubDataset[i].size() << endl;
             lowerType *child = new lowerType(maxKeyNum, m_secondStageParams, capacity);
             child->train(perSubDataset[i]);
             children.push_back(child);

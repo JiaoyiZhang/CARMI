@@ -127,13 +127,13 @@ void net::train(const vector<pair<double, double>> &dataset, params param)
 				{
 					if (tempFLR[j] > 0)
 					{
-						W1[j] = W1[j] - param.learningRate * x * W2[j] * (p - y);
-						b1[j] = b1[j] - param.learningRate * W2[j] * (p - y);
+						W1[j] = W1[j] - param.learningRate1 * x * W2[j] * (p - y);
+						b1[j] = b1[j] - param.learningRate2 * W2[j] * (p - y);
 					}
 				}
 				// update W2 and b2
-				W2 = add(W2, (multiply(-param.learningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
-				b2 = b2 - param.learningRate * (p - y);
+				W2 = add(W2, (multiply(-param.learningRate1, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
+				b2 = b2 - param.learningRate2 * (p - y);
 			}
 		}
 	}

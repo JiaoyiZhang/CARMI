@@ -3,8 +3,6 @@
 
 #include "../params.h"
 #include "../../cpp-btree/btree_map.h"
-// #include "../trainModel/lr.h"
-// #include "../trainModel/nn.h"
 #include <array>
 
 template <typename type>
@@ -21,11 +19,13 @@ public:
         maxNegativeError = 0;
 
         m_secondStageParams = secondStageParams;
+
+        isLeafNode = true;
     }
 
     void train(const vector<pair<double, double>> &subDataset);
     int getSize() { return m_datasetSize; }
-    bool isLeaf() { return true; }
+    bool isLeaf() { return isLeafNode; }
     void getDataset(vector<pair<double, double>> &dataset)
     {
         for (int i = 0; i < m_subDataset.size(); i++)
@@ -61,6 +61,8 @@ private:
     type m_secondStageNetwork = type();
 
     btree::btree_map<double, int> m_tree; // <key, index in subDataset>
+
+    bool isLeafNode;
 };
 
 template <typename type>
@@ -104,7 +106,7 @@ template <typename type>
 pair<double, double> normalNode<type>::find(double key)
 {
     //  use B-Tree if the data is particularly hard to learn
-    if (isUseTree)
+    if (this->isUseTree)
     {
         auto result = m_tree.find(key); // result:{key, index}
         if (result != m_tree.end())
