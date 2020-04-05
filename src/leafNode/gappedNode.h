@@ -4,11 +4,12 @@
 #include "../params.h"
 #include "../../cpp-btree/btree_map.h"
 #include <array>
+#include "node.h"
 
 static const int childNumber = 20;
 
 template <typename type>
-class gappedNode
+class gappedNode : public node
 {
 public:
     gappedNode(int threshold, params secondStageParams, int cap)

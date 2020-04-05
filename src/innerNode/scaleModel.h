@@ -3,6 +3,9 @@
 
 #include "../params.h"
 #include <vector>
+#include "../leafNode/node.h"
+#include "../trainModel/lr.h"
+#include "../leafNode/gappedNode.h"
 using namespace std;
 
 template <typename lowerType>
@@ -28,11 +31,13 @@ public:
     bool del(double key);
     bool update(pair<double, double> data);
 
+    void change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap);
+
 private:
     vector<double> index;
 
-    vector<lowerType *> children; // The type of child node may be innerNode or leafNode
-    int childNumber;              // the number of children
+    vector<node *> children; // The type of child node may be innerNode or leafNode
+    int childNumber;         // the number of children
 
     int capacity;  // the current maximum capacity of the leaf node data
     int maxKeyNum; // the maximum amount of data
@@ -82,7 +87,7 @@ void scaleModel<lowerType>::initialize(vector<pair<double, double>> &dataset)
             // recursively call Initialize on the new node.
             scaleModel *child = new scaleModel(m_secondStageParams, maxKeyNum, childNumber, capacity);
             child->initialize(perSubDataset[i]);
-            children.push_back((lowerType *)child);
+            children.push_back((node *)child);
         }
         else
         {
@@ -225,5 +230,38 @@ bool scaleModel<lowerType>::insert(pair<double, double> data)
     else if (children[mid]->isLeaf() == false)
         return ((scaleModel *)children[mid])->insert(data);
     return children[mid]->insert(data);
+}
+
+template <typename lowerType>
+void scaleModel<lowerType>::change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap)
+{
+    int idx = 0;
+    for (int i = 0; i < childNumber; i++)
+    {
+        if (children[i]->isLeaf())
+        {
+            int r = 0, w = 0;
+            vector<pair<double, double>> tmp;
+            children[i]->getDataset(tmp);
+            vector<pair<double, double>> data;
+            for (int j = 0; j < tmp.size(); j++)
+            {
+                if (tmp[j].first != -1)
+                {
+                    r += cnt[idx].first;
+                    w += cnt[idx].second;
+                    data.push_back(tmp[j]);
+                    idx++;
+                }
+            }
+            if ((float)r / (float)w <= 5.0)
+            {
+                // change from array to gapped array
+                gappedNode<linearRegression> *newNode = new gappedNode<linearRegression>(threshold, secondStageParams, cap);
+                newNode->train(data);
+                children[i] = newNode;
+            }
+        }
+    }
 }
 #endif

@@ -7,6 +7,7 @@
 #include "./leafNode/normalNode.h"
 #include "./dataset/lognormalDistribution.h"
 #include "./dataset/uniformDistribution.h"
+#include "reconstruction.h"
 
 #include <algorithm>
 #include <random>
@@ -32,16 +33,16 @@ void createModel()
     for (int i = 0; i < dataset.size(); i++)
         btreemap.insert(dataset[i]);
 
-    // lognormalDistribution params
-    params firstStageParams(0.001, 100000, 8, 0.0001, 0.666);
-    params secondStageParams(0.001, 100000, 8, 0.0001, 0.666);
+    // // lognormalDistribution params
+    // params firstStageParams(0.001, 100000, 8, 0.0001, 0.666);
+    // params secondStageParams(0.001, 100000, 8, 0.0001, 0.666);
 
-    // // uniformDistrubution params
-    // params firstStageParams(0.00001, 5000, 8, 0.0001, 0.00001);
-    // params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
+    // uniformDistrubution params
+    params firstStageParams(0.00001, 5000, 8, 0.0001, 0.00001);
+    params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
 
-    SRMI_normal = staticRMI<normalNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 2000, 15, 800);
     // SRMI_normal = staticRMI<normalNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 2000, 15, 800);
+    SRMI_normal = staticRMI<normalNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 2000, 15, 800);
     SRMI_normal.train();
     cout << "SRMI_normal init over!" << endl;
     cout << "****************" << endl;
@@ -159,13 +160,14 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
 }
 int main()
 {
-    // // generateDataset: uniform dataset
-    // uniformDataset uniData = uniformDataset(datasetSize, 0.9);
-    // uniData.generateDataset(dataset, insertDataset);
+    // generateDataset: uniform dataset
+    uniformDataset uniData = uniformDataset(datasetSize, 0.9);
+    uniData.generateDataset(dataset, insertDataset);
 
-    // generateDataset: lognormal dataset
-    lognormalDataset logData = lognormalDataset(datasetSize, 0.9);
-    logData.generateDataset(dataset, insertDataset);
+    // // generateDataset: lognormal dataset
+    // lognormalDataset logData = lognormalDataset(datasetSize, 0.9);
+    // logData.generateDataset(dataset, insertDataset);
+    
 
     createModel();
     double btree_time0 = 0.0, btree_time1 = 0.0, btree_time2 = 0.0, btree_time3 = 0.0;
@@ -175,7 +177,7 @@ int main()
     double SCALE_normal_time0 = 0.0, SCALE_normal_time1 = 0.0, SCALE_normal_time2 = 0.0, SCALE_normal_time3 = 0.0;
     double ARMI_normal_time0 = 0.0, ARMI_normal_time1 = 0.0, ARMI_normal_time2 = 0.0, ARMI_normal_time3 = 0.0;
     double SRMI_normal_time0 = 0.0, SRMI_normal_time1 = 0.0, SRMI_normal_time2 = 0.0, SRMI_normal_time3 = 0.0;
-    int repetitions = 50;
+    int repetitions = 1;
     for (int i = 0; i < repetitions; i++)
     {
         cout << "btree:    " << i << endl;
@@ -243,6 +245,22 @@ int main()
 
     cout << "SRMI_normal:" << endl;
     printResult(repetitions, SRMI_normal_time0, SRMI_normal_time1, SRMI_normal_time2, SRMI_normal_time3);
+
+    vector<pair<double, double>> totalData;
+    for (int i = 0; i < dataset.size(); i++)
+        totalData.push_back(dataset[i]);
+    for (int i = 0; i < insertDataset.size(); i++)
+        totalData.push_back(insertDataset[i]);
+    std::sort(totalData.begin(), totalData.end());
+    vector<pair<int, int>> cnt;
+    for (int i = 0; i < datasetSize; i++)
+    {
+        if ((i + 1) % 10 == 0)
+            cnt.push_back({0, 1});
+        else
+            cnt.push_back({1, 0});
+    }
+    reconstruction(totalData, cnt);
 
     return 0;
 }

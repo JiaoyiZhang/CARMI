@@ -4,9 +4,10 @@
 #include "../params.h"
 #include "../../cpp-btree/btree_map.h"
 #include <array>
+#include "node.h"
 
 template <typename type>
-class normalNode
+class normalNode : public node
 {
 public:
     normalNode(int threshold, params secondStageParams, int maxInsertNumber)

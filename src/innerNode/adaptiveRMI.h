@@ -3,7 +3,9 @@
 
 #include "../params.h"
 #include <array>
-
+#include "../leafNode/node.h"
+#include "../leafNode/gappedNode.h"
+using namespace std;
 template <typename lowerType, typename mlType>
 class adaptiveRMI
 {
@@ -29,9 +31,11 @@ public:
     bool del(double key);
     bool update(pair<double, double> data);
 
+    void change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap);
+
 private:
-    vector<lowerType *> children; // The type of child node may be innerNode or leafNode
-    int childNumber;              // the number of children
+    vector<node *> children; // The type of child node may be innerNode or leafNode
+    int childNumber;         // the number of children
 
     int capacity;   // the current maximum capacity of the leaf node data
     double density; // the maximum density of the leaf node data
@@ -201,6 +205,39 @@ bool adaptiveRMI<lowerType, mlType>::update(pair<double, double> data)
     if (children[preIdx]->isLeaf() == false)
         return ((adaptiveRMI *)children[preIdx])->update(data);
     return children[preIdx]->update(data);
+}
+
+template <typename lowerType, typename mlType>
+void adaptiveRMI<lowerType, mlType>::change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap)
+{
+    int idx = 0;
+    for (int i = 0; i < childNumber; i++)
+    {
+        if (children[i]->isLeaf())
+        {
+            int r = 0, w = 0;
+            vector<pair<double, double>> tmp;
+            children[i]->getDataset(tmp);
+            vector<pair<double, double>> data;
+            for (int j = 0; j < tmp.size(); j++)
+            {
+                if (tmp[j].first != -1)
+                {
+                    r += cnt[idx].first;
+                    w += cnt[idx].second;
+                    data.push_back(tmp[j]);
+                    idx++;
+                }
+            }
+            if ((float)r / (float)w <= 5.0)
+            {
+                // change from array to gapped array
+                gappedNode<mlType> *newNode = new gappedNode<mlType>(threshold, secondStageParams, cap);
+                newNode->train(data);
+                children[i] = newNode;
+            }
+        }
+    }
 }
 
 #endif

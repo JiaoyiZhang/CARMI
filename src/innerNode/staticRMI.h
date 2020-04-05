@@ -3,6 +3,8 @@
 
 #include "../params.h"
 #include <array>
+#include "../leafNode/node.h"
+#include "../leafNode/gappedNode.h"
 
 template <typename lowerType, typename mlType>
 class staticRMI
@@ -53,14 +55,16 @@ public:
         return m_secondStage[preIdx]->update(data);
     }
 
+    void change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap);
+
 private:
     vector<pair<double, double>> m_dataset; // the initial dataset, useless after training
     mlType m_firstStageNetwork = mlType();  // network of the first stage
 
-    vector<lowerType *> m_secondStage; // store the lower nodes
-    params m_firstStageParams;         // parameters of network
-    params m_secondStageParams;        // parameters of lower nodes
-    int m_secondStageSize;             // the size of the lower nodes
+    vector<node *> m_secondStage; // store the lower nodes
+    params m_firstStageParams;    // parameters of network
+    params m_secondStageParams;   // parameters of lower nodes
+    int m_secondStageSize;        // the size of the lower nodes
 };
 
 template <typename lowerType, typename mlType>
@@ -93,4 +97,33 @@ void staticRMI<lowerType, mlType>::train()
     cout << "End train" << endl;
 }
 
+template <typename lowerType, typename mlType>
+void staticRMI<lowerType, mlType>::change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap)
+{
+    int idx = 0;
+    for (int i = 0; i < m_secondStageSize; i++)
+    {
+        int r = 0, w = 0;
+        vector<pair<double, double>> tmp;
+        m_secondStage[i]->getDataset(tmp);
+        vector<pair<double, double>> data;
+        for (int j = 0; j < tmp.size(); j++)
+        {
+            if (tmp[j].first != -1)
+            {
+                r += cnt[idx].first;
+                w += cnt[idx].second;
+                data.push_back(tmp[j]);
+                idx++;
+            }
+        }
+        if ((float)r / (float)w <= 5.0)
+        {
+            // change from array to gapped array
+            gappedNode<mlType> *newNode = new gappedNode<mlType>(threshold, secondStageParams, cap);
+            newNode->train(data);
+            m_secondStage[i] = newNode;
+        }
+    }
+}
 #endif
