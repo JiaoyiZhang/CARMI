@@ -4,7 +4,7 @@
 #include "../params.h"
 #include "../../cpp-btree/btree_map.h"
 #include <array>
-#include "node.h"
+#include "../node.h"
 
 static const int childNumber = 20;
 
@@ -34,6 +34,7 @@ public:
                 dataset.push_back(m_dataset[i]);
         }
     }
+    long double getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset);
 
     pair<double, double> find(double key);
     bool insert(pair<double, double> data);
@@ -519,6 +520,43 @@ void gappedNode<type>::insertData(vector<pair<double, double>> &vec, pair<double
         vec[idx] = data;
         cnt = idx;
     }
+}
+
+template <typename type>
+long double gappedNode<type>::getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset)
+{
+    m_datasetSize = dataset.size();
+    if (m_datasetSize == 0)
+    {
+        m_dataset = vector<pair<double, double>>(maxKeyNum, pair<double, double>{-1, -1});
+        return 0;
+    }
+    m_secondStageNetwork.train(dataset, m_secondStageParams);
+    vector<pair<double, double>> newDataset(maxKeyNum, pair<double, double>{-1, -1});
+    while (m_datasetSize > capacity)
+        capacity /= density;
+    capacity = capacity > maxKeyNum ? maxKeyNum : capacity;
+    for (int i = 0; i < m_datasetSize; i++)
+    {
+        double p = m_secondStageNetwork.predict(dataset[i].first);
+        int preIdx = static_cast<int>(p * (capacity - 1));
+        insertData(newDataset, dataset[i], preIdx, maxIndex);
+    }
+    m_dataset = newDataset;
+    m_secondStageNetwork.train(m_dataset, m_secondStageParams);
+
+    // calculate cost
+    long double totalCost = 0;
+    double READCOST = 1.2;
+    double WRITECOST = 3.5;
+    for (int i = 0; i < m_datasetSize; i++)
+    {
+        pair<int, int> tmp = cntTree.find(dataset[i].first);
+        double tmpRead = tmp.first * READCOST;
+        double tmpWrite = tmp.first * WRITECOST;
+        totalCost += tmpRead + tmpWrite;
+    }
+    return totalCost;
 }
 
 #endif

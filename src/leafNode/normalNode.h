@@ -4,7 +4,7 @@
 #include "../params.h"
 #include "../../cpp-btree/btree_map.h"
 #include <array>
-#include "node.h"
+#include "../node.h"
 
 template <typename type>
 class normalNode : public node
@@ -47,6 +47,8 @@ public:
         int index = int(m_subDataset[preIdx].second);
         return index;
     }
+
+    long double getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset);
 
 private:
     int m_maxInsertNumber; // the maximum number of inserts
@@ -452,6 +454,57 @@ bool normalNode<type>::update(pair<double, double> data)
         m_subDataset[preIdx].second = data.second;
         return true;
     }
+}
+
+template <typename type>
+long double normalNode<type>::getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset)
+{
+    m_subDataset = dataset;
+    m_datasetSize = m_subDataset.size();
+    if (m_datasetSize == 0)
+        return 0;
+    std::sort(m_subDataset.begin(), m_subDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+        return p1.first < p2.first;
+    });
+    m_secondStageNetwork.train(m_subDataset, m_secondStageParams);
+    double maxError = 0;
+    double p;
+    for (int i = 0; i < m_datasetSize; i++)
+    {
+        p = m_secondStageNetwork.predict(m_subDataset[i].first);
+        p *= m_datasetSize - 1;
+        int error = i - p;
+        if (error > maxPositiveError)
+            maxPositiveError = error;
+        if (error < maxNegativeError)
+            maxNegativeError = error;
+        if (abs(error) > maxError)
+            maxError = abs(error);
+    }
+    maxPositiveError++;
+    maxNegativeError--;
+    if (maxError > m_threshold)
+    {
+        isUseTree = true;
+        for (int i = 0; i < m_datasetSize; i++)
+            m_tree.insert({m_subDataset[i].first, i});
+    }
+    else
+        isUseTree = false;
+
+    // calculate cost
+    long double totalCost = 0;
+    double READCOST = 1.2;
+    double WRITECOST = 3.5;
+    for (int i = 0; i < m_datasetSize; i++)
+    {
+        pair<int, int> tmp = cntTree.find(dataset[i].first);
+        double tmpRead = tmp.first * READCOST;
+        double tmpWrite = tmp.first * WRITECOST;
+        totalCost += tmpRead + tmpWrite;
+    }
+    return totalCost;
+    
 }
 
 #endif
