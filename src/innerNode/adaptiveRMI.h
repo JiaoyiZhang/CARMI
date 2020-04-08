@@ -3,11 +3,11 @@
 
 #include "../params.h"
 #include <array>
-#include "../leafNode/node.h"
+#include "../node.h"
 #include "../leafNode/gappedNode.h"
 using namespace std;
 template <typename lowerType, typename mlType>
-class adaptiveRMI
+class adaptiveRMI : public node
 {
 public:
     adaptiveRMI(){};
@@ -31,7 +31,8 @@ public:
     bool del(double key);
     bool update(pair<double, double> data);
 
-    void change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap);
+    long double getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset);
+    void change(const vector<pair<int, int>> &cnt);
 
 private:
     vector<node *> children; // The type of child node may be innerNode or leafNode
@@ -208,7 +209,7 @@ bool adaptiveRMI<lowerType, mlType>::update(pair<double, double> data)
 }
 
 template <typename lowerType, typename mlType>
-void adaptiveRMI<lowerType, mlType>::change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap)
+void adaptiveRMI<lowerType, mlType>::change(const vector<pair<int, int>> &cnt)
 {
     int idx = 0;
     for (int i = 0; i < childNumber; i++)
@@ -229,15 +230,78 @@ void adaptiveRMI<lowerType, mlType>::change(const vector<pair<int, int>> &cnt, i
                     idx++;
                 }
             }
-            if ((float)r / (float)w <= 5.0)
+            if ((float)r / (float)w > 10.0)
             {
-                // change from array to gapped array
-                gappedNode<mlType> *newNode = new gappedNode<mlType>(threshold, secondStageParams, cap);
+                // change from gapped array to array
+                normalNode<mlType> *newNode = new normalNode<mlType>(maxKeyNum, m_secondStageParams, capacity);
                 newNode->train(data);
                 children[i] = newNode;
             }
         }
     }
+}
+
+template <typename lowerType, typename mlType>
+long double adaptiveRMI<lowerType, mlType>::getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset)
+{
+    cout << "Start initialize!" << endl;
+    int initCost = 2;
+    long double totalCost = initCost;
+    cout << " DatasetSize is : " << dataset.size() << endl;
+    if (dataset.size() == 0)
+        return 0;
+    std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+        return p1.first < p2.first;
+    });
+
+    // first train the node's linear model using its assigned keys
+    m_firstStageNetwork.train(dataset, m_firstStageParams);
+    //  use the model to divide the keys into some number of partitions
+    vector<vector<pair<double, double>>> perSubDataset;
+    vector<pair<double, double>> tmp;
+    for (int i = 0; i < childNum; i++)
+    {
+        perSubDataset.push_back(tmp);
+    }
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        double p = m_firstStageNetwork.predict(dataset[i].first);
+        p = p * (childNum - 1); //calculate the index of second stage model
+        int preIdx = static_cast<int>(p);
+        perSubDataset[preIdx].push_back(dataset[i]);
+    }
+    for (int i = 0; i < childNum; i++)
+    {
+        if (perSubDataset[i].size() == dataset.size())
+        {
+            m_firstStageParams.learningRate2 *= 10;
+            return initialize(dataset);
+        }
+    }
+    // then iterate through the partitions in sorted order
+    for (int i = 0; i < childNum; i++)
+    {
+        if (perSubDataset[i].size() > maxKeyNum)
+        {
+            // If a partition has more than the maximum bound number of
+            // keys, then this partition is oversized,
+            // so we create a new inner node and
+            // recursively call Initialize on the new node.
+            adaptiveRMI *child = new adaptiveRMI(m_firstStageParams, m_secondStageParams, maxKeyNum, childNum, capacity);
+            totalCost += child->getCost(cntTree, childNum, perSubDataset[i]);
+            children.push_back((lowerType *)child);
+        }
+        else
+        {
+            // Otherwise, the partition is under the maximum bound number of keys,
+            // so we could just make this partition a leaf node
+            lowerType *child = new lowerType(maxKeyNum, m_secondStageParams, capacity);
+            totalCost += child->getCost(cntTree, childNum, perSubDataset[i]);
+            children.push_back(child);
+        }
+    }
+    cout << "sub tree get cost finish!" << endl;
+    return totalCost;
 }
 
 #endif

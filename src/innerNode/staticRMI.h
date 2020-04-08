@@ -3,11 +3,11 @@
 
 #include "../params.h"
 #include <array>
-#include "../leafNode/node.h"
+#include "../node.h"
 #include "../leafNode/gappedNode.h"
 
 template <typename lowerType, typename mlType>
-class staticRMI
+class staticRMI : public node
 {
 public:
     staticRMI(){};

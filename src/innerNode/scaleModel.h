@@ -9,7 +9,7 @@
 using namespace std;
 
 template <typename lowerType>
-class scaleModel
+class scaleModel : public node
 {
 public:
     scaleModel(){};
@@ -31,7 +31,8 @@ public:
     bool del(double key);
     bool update(pair<double, double> data);
 
-    void change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap);
+    long double getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset);
+    void change(const vector<pair<int, int>> &cnt);
 
 private:
     vector<double> index;
@@ -233,7 +234,7 @@ bool scaleModel<lowerType>::insert(pair<double, double> data)
 }
 
 template <typename lowerType>
-void scaleModel<lowerType>::change(const vector<pair<int, int>> &cnt, int threshold, params secondStageParams, int cap)
+void scaleModel<lowerType>::change(const vector<pair<int, int>> &cnt)
 {
     int idx = 0;
     for (int i = 0; i < childNumber; i++)
@@ -254,14 +255,72 @@ void scaleModel<lowerType>::change(const vector<pair<int, int>> &cnt, int thresh
                     idx++;
                 }
             }
-            if ((float)r / (float)w <= 5.0)
+            if ((float)r / (float)w > 10.0)
             {
-                // change from array to gapped array
-                gappedNode<linearRegression> *newNode = new gappedNode<linearRegression>(threshold, secondStageParams, cap);
+                // change from gapped array to array
+                normalNode<linearRegression> *newNode = new normalNode<linearRegression>(maxKeyNum, m_secondStageParams, capacity);
                 newNode->train(data);
                 children[i] = newNode;
             }
         }
     }
+}
+
+template <typename lowerType>
+long double scaleModel<lowerType>::getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset)
+{
+    cout << "Start initialize!" << endl;
+    int initCost = 10;
+    long double totalCost = initCost;
+    // cout << " DatasetSize is : " << dataset.size() << endl;
+    if (dataset.size() == 0)
+        return 0;
+    std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+        return p1.first < p2.first;
+    });
+
+    vector<vector<pair<double, double>>> perSubDataset;
+    vector<pair<double, double>> tmp;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        tmp.push_back(dataset[i]);
+        if ((i + 1) % (dataset.size() / childNum) == 0)
+        {
+            perSubDataset.push_back(tmp);
+            index.push_back(dataset[i].first);
+            tmp = vector<pair<double, double>>();
+        }
+    }
+    if (index.size() == childNum - 1)
+    {
+        perSubDataset.push_back(tmp);
+        index.push_back(dataset[dataset.size() - 1].first);
+    }
+
+    // then iterate through the partitions in sorted order
+    for (int i = 0; i < childNum; i++)
+    {
+        if (perSubDataset[i].size() > maxKeyNum)
+        {
+            // If a partition has more than the maximum bound number of
+            // keys, then this partition is oversized,
+            // so we create a new inner node and
+            // recursively call Initialize on the new node.
+            scaleModel *child = new scaleModel(m_secondStageParams, maxKeyNum, childNum, capacity);
+            totalCost += child->getCost(cntTree, childNum, perSubDataset[i]);
+            children.push_back((node *)child);
+        }
+        else
+        {
+            // make this partition a leaf node
+            // cout << i << ": leaf node! Dataset size is:" << perSubDataset[i].size() << endl;
+            lowerType *child = new lowerType(maxKeyNum, m_secondStageParams, capacity);
+            totalCost += child->getCost(cntTree, childNum, perSubDataset[i]);
+            children.push_back(child);
+        }
+    }
+    cout << "sub tree get cost finish!" << endl;
+    return totalCost;
+
 }
 #endif
