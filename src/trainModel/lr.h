@@ -1,14 +1,16 @@
 #ifndef LR_H
 #define LR_H
-#include "../params.h"
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <chrono>
 #include <random>
+#include "../params.h"
+#include "model.h"
 using namespace std;
 
-class linearRegression
+class linearRegression : public basicModel
 {
 public:
     linearRegression()

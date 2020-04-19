@@ -2,6 +2,7 @@
 #define NN_H
 
 #include "../params.h"
+#include "model.h"
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -51,7 +52,7 @@ vector<double> add(vector<double> a, vector<double> bias)
 	return a;
 }
 
-class net
+class net : public basicModel
 {
 public:
 	net(){};
@@ -75,7 +76,7 @@ void net::train(const vector<pair<double, double>> &dataset, params param)
 	vector<pair<double, double>> m_dataset = dataset;
 	vector<double> index;
 	int datasetSize = m_dataset.size();
-	if(datasetSize == 0)
+	if (datasetSize == 0)
 		return;
 	for (int i = 0; i < m_dataset.size(); i++)
 	{
@@ -146,9 +147,8 @@ void net::train(const vector<pair<double, double>> &dataset, params param)
 
 double net::predict(double key)
 {
-	key = static_cast<double>(key);
 	double p = b2;
-	vector<double> firstLayerResult;
+	// vector<double> firstLayerResult;
 	for (int i = 0; i < W1.size(); i++)
 	{
 		p += max(double(0), key *W1[i] + b1[i]) * W2[i];
