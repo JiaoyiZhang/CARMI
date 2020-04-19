@@ -3,11 +3,21 @@
 
 #include "./trainModel/lr.h"
 #include "./trainModel/nn.h"
-#include "./innerNode/adaptiveRMI.h"
-#include "./innerNode/staticRMI.h"
-#include "./innerNode/scaleModel.h"
-#include "./leafNode/gappedNode.h"
-#include "./leafNode/normalNode.h"
+
+#include "./innerNode/innerNode.h"
+#include "./innerNode/adaptiveBin.h"
+#include "./innerNode/adaptiveDiv.h"
+#include "./innerNode/adaptiveLR.h"
+#include "./innerNode/adaptiveNN.h"
+#include "./innerNode/nnNode.h"
+#include "./innerNode/lrNode.h"
+#include "./innerNode/binarySearch.h"
+#include "./innerNode/divisionNode.h"
+
+#include "./leafNode/leafNode.h"
+#include "./leafNode/array.h"
+#include "./leafNode/gappedArray.h"
+
 #include "./dataset/lognormalDistribution.h"
 #include "./dataset/uniformDistribution.h"
 #include "node.h"
@@ -23,41 +33,35 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     cout << endl;
     cout << "-------------------------------" << endl;
     cout << "Start reconstruction!" << endl;
-    node root;
 
     int datasetSize = data.size();
+    vector<pair<double, double>> dataset = data;
     btree::btree_map<double, pair<int, int>> cntTree;
     for (int i = 0; i < cnt.size(); i++)
-        cntTree.insert(dataset[i].first, cnt[i]); // <key, <read, write>>
-    int totalReadNum = 0, totalWriteNum = 0;
-    for (int i = 0; i < datasetSize; i++)
-    {
-        totalReadNum += cnt[i].first;
-        totalWriteNum += cnt[i].second;
-    }
+        cntTree.insert({dataset[i].first, cnt[i]}); // <key, <read, write>>
 
     // // lognormalDistribution params
     // params firstStageParams(0.001, 100000, 8, 0.0001, 0.666);
     // params secondStageParams(0.001, 100000, 8, 0.0001, 0.666);
 
     // uniformDistrubution params
-    params firstStageParams(0.00001, 5000, 8, 0.0001, 0.00001);
+    params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
     params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
-
-    // Select the innerNode model
-    bool rootIsScale = true;
-    if (rootIsScale)
-        root = scaleModel<gappedNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-    else
-        root = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 12, 800);
-    cout << "root init over!" << endl;
 
     // Find the minimum childNum
     long double minCost = 1e100;
     int minNum = 0;
-    for (int i = 2; i < dataset.size(); i++)
+    int maxChildNum = dataset.size() / 50;
+    for (int i = 2; i < maxChildNum; i++)
     {
-        long double tmpCost = root.getCost(cntTree, i);
+        cout << "calculate childNum :" << i << endl;
+        // int threshold = float(dataset.size() * 1.2) / i;
+        // int capacity = threshold * 0.8;
+        int threshold = 1000;
+        int capacity = 800;
+        cout << "threhold is:" << threshold << "\tcapacity:" << capacity << endl;
+        long double tmpCost = lrNode<arrayNode>::getCost(cntTree, i, dataset, capacity, threshold);
+        cout << "tmpCost is: " << tmpCost << "    minCost: " << minCost << "    minNum: " << minNum << endl;
         if (tmpCost < minCost)
         {
             minCost = tmpCost;
@@ -67,17 +71,10 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     cout << "find the minimum childNum: " << minNum << endl;
 
     // Rebuild the tree according to the calculated most suitable childNum
-    int threshold = float(dataset.size() * 1.2) / minNum;
+    int threshold = float(dataset.size() * 1.4) / minNum;
     int capacity = threshold * 0.8;
-    if (rootIsScale)
-        root = scaleModel<gappedNode<linearRegression>>(secondStageParams, threshold, minNum, capacity);
-    else
-        root = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, threshold, minNum, capacity);
+    lrNode<arrayNode> *root = new lrNode<arrayNode>(firstStageParams, secondStageParams, threshold, minNum, capacity);
     cout << "Rebuild root over!" << endl;
-
-    // Adjust the structure of leaf nodes
-    root.change(cntTree);
-    cout << "Adjust leaf nodes over!" << endl;
 
     //test
     LARGE_INTEGER s, e, c;
@@ -85,7 +82,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     QueryPerformanceFrequency(&c);
     for (int i = 0; i < dataset.size(); i++)
     {
-        root.find(dataset[i].first);
+        root->find(dataset[i].first);
     }
     QueryPerformanceCounter(&e);
     cout << "Find time:" << (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart / (float)dataset.size() << endl;

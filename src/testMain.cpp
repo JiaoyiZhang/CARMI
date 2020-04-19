@@ -1,10 +1,20 @@
 #include "./trainModel/lr.h"
 #include "./trainModel/nn.h"
-#include "./innerNode/adaptiveRMI.h"
-#include "./innerNode/staticRMI.h"
-#include "./innerNode/scaleModel.h"
-#include "./leafNode/gappedNode.h"
-#include "./leafNode/normalNode.h"
+
+#include "./innerNode/innerNode.h"
+#include "./innerNode/adaptiveBin.h"
+#include "./innerNode/adaptiveDiv.h"
+#include "./innerNode/adaptiveLR.h"
+#include "./innerNode/adaptiveNN.h"
+#include "./innerNode/nnNode.h"
+#include "./innerNode/lrNode.h"
+#include "./innerNode/binarySearch.h"
+#include "./innerNode/divisionNode.h"
+
+#include "./leafNode/leafNode.h"
+#include "./leafNode/array.h"
+#include "./leafNode/gappedArray.h"
+
 #include "./dataset/lognormalDistribution.h"
 #include "./dataset/uniformDistribution.h"
 #include "reconstruction.h"
@@ -21,12 +31,23 @@ vector<pair<double, double>> insertDataset;
 
 btree::btree_map<double, double> btreemap;
 
-staticRMI<normalNode<linearRegression>, linearRegression> SRMI_normal;
-adaptiveRMI<normalNode<linearRegression>, linearRegression> ARMI_normal;
-scaleModel<normalNode<linearRegression>> SCALE_normal;
-staticRMI<gappedNode<linearRegression>, linearRegression> SRMI_gapped;
-adaptiveRMI<gappedNode<linearRegression>, linearRegression> ARMI_gapped;
-scaleModel<gappedNode<linearRegression>> SCALE_gapped;
+lrNode<arrayNode> lr_array;
+lrNode<gappedArray> lr_ga;
+nnNode<arrayNode> nn_array;
+nnNode<gappedArray> nn_ga;
+divisionNode<arrayNode> div_array;
+divisionNode<gappedArray> div_ga;
+binarySearchNode<arrayNode> bin_array;
+binarySearchNode<gappedArray> bin_ga;
+
+adaptiveLR<arrayNode> ada_lr_array;
+adaptiveLR<gappedArray> ada_lr_ga;
+adaptiveNN<arrayNode> ada_nn_array;
+adaptiveNN<gappedArray> ada_nn_ga;
+adaptiveDiv<arrayNode> ada_div_array;
+adaptiveDiv<gappedArray> ada_div_ga;
+adaptiveBin<arrayNode> ada_bin_array;
+adaptiveBin<gappedArray> ada_bin_ga;
 
 void createModel()
 {
@@ -38,15 +59,49 @@ void createModel()
     // params secondStageParams(0.001, 100000, 8, 0.0001, 0.666);
 
     // uniformDistrubution params
-    params firstStageParams(0.00001, 5000, 8, 0.0001, 0.00001);
+    params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
     params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
 
-    // SRMI_normal = staticRMI<normalNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 2000, 15, 800);
-    SRMI_normal = staticRMI<normalNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 2000, 15, 800);
-    SRMI_normal.train();
-    cout << "SRMI_normal init over!" << endl;
+    lr_array = lrNode<arrayNode> (firstStageParams, secondStageParams, 1000, 15, 800);
+    lr_array.init(dataset);
+    cout << "lr_array init over!" << endl;
     cout << "****************" << endl;
 
+    lr_ga = lrNode<gappedArray> (firstStageParams, secondStageParams, 1000, 15, 800);
+    lr_ga.init(dataset);
+    cout << "lr_ga init over!" << endl;
+    cout << "****************" << endl;
+
+    nn_array = nnNode<arrayNode> (firstStageParams, secondStageParams, 1000, 15, 800);
+    nn_array.init(dataset);
+    cout << "nn_array init over!" << endl;
+    cout << "****************" << endl;
+
+    nn_ga = nnNode<gappedArray> (firstStageParams, secondStageParams, 10000, 15, 800);
+    nn_ga.init(dataset);
+    cout << "nn_ga init over!" << endl;
+    cout << "****************" << endl;
+
+    div_array = divisionNode<arrayNode> (secondStageParams, 1000, 15, 800);
+    div_array.init(dataset);
+    cout << "div_array init over!" << endl;
+    cout << "****************" << endl;
+
+    div_ga = divisionNode<gappedArray> (secondStageParams, 10000, 15, 800);
+    div_ga.init(dataset);
+    cout << "div_ga init over!" << endl;
+    cout << "****************" << endl;
+
+    bin_array = binarySearchNode<arrayNode> (secondStageParams, 1000, 15, 800);
+    bin_array.init(dataset);
+    cout << "bin_array init over!" << endl;
+    cout << "****************" << endl;
+
+    bin_ga = binarySearchNode<gappedArray> (secondStageParams, 1000, 15, 800);
+    bin_ga.init(dataset);
+    cout << "bin_ga init over!" << endl;
+    cout << "****************" << endl;
+/*
     // ARMI_normal = adaptiveRMI<normalNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 15, 800);
     ARMI_normal = adaptiveRMI<normalNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1500, 12, 800);
     ARMI_normal.initialize(dataset);
@@ -76,6 +131,7 @@ void createModel()
     SCALE_gapped.initialize(dataset);
     cout << "SCALE_gapped init over!" << endl;
     cout << "****************" << endl;
+*/
 }
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)
@@ -167,16 +223,17 @@ int main()
     // // generateDataset: lognormal dataset
     // lognormalDataset logData = lognormalDataset(datasetSize, 0.9);
     // logData.generateDataset(dataset, insertDataset);
-    
 
     createModel();
     double btree_time0 = 0.0, btree_time1 = 0.0, btree_time2 = 0.0, btree_time3 = 0.0;
-    double SCALE_gapped_time0 = 0.0, SCALE_gapped_time1 = 0.0, SCALE_gapped_time2 = 0.0, SCALE_gapped_time3 = 0.0;
-    double ARMI_gapped_time0 = 0.0, ARMI_gapped_time1 = 0.0, ARMI_gapped_time2 = 0.0, ARMI_gapped_time3 = 0.0;
-    double SRMI_gapped_time0 = 0.0, SRMI_gapped_time1 = 0.0, SRMI_gapped_time2 = 0.0, SRMI_gapped_time3 = 0.0;
-    double SCALE_normal_time0 = 0.0, SCALE_normal_time1 = 0.0, SCALE_normal_time2 = 0.0, SCALE_normal_time3 = 0.0;
-    double ARMI_normal_time0 = 0.0, ARMI_normal_time1 = 0.0, ARMI_normal_time2 = 0.0, ARMI_normal_time3 = 0.0;
-    double SRMI_normal_time0 = 0.0, SRMI_normal_time1 = 0.0, SRMI_normal_time2 = 0.0, SRMI_normal_time3 = 0.0;
+    double lr_array_time0 = 0.0, lr_array_time1 = 0.0, lr_array_time2 = 0.0, lr_array_time3 = 0.0;
+    double lr_ga_time0 = 0.0, lr_ga_time1 = 0.0, lr_ga_time2 = 0.0, lr_ga_time3 = 0.0;
+    double nn_array_time0 = 0.0, nn_array_time1 = 0.0, nn_array_time2 = 0.0, nn_array_time3 = 0.0;
+    double nn_ga_time0 = 0.0, nn_ga_time1 = 0.0, nn_ga_time2 = 0.0, nn_ga_time3 = 0.0;
+    double div_array_time0 = 0.0, div_array_time1 = 0.0, div_array_time2 = 0.0, div_array_time3 = 0.0;
+    double div_ga_time0 = 0.0, div_ga_time1 = 0.0, div_ga_time2 = 0.0, div_ga_time3 = 0.0;
+    double bin_array_time0 = 0.0, bin_array_time1 = 0.0, bin_array_time2 = 0.0, bin_array_time3 = 0.0;
+    double bin_ga_time0 = 0.0, bin_ga_time1 = 0.0, bin_ga_time2 = 0.0, bin_ga_time3 = 0.0;
     int repetitions = 1;
     for (int i = 0; i < repetitions; i++)
     {
@@ -186,81 +243,105 @@ int main()
         printResult((i + 1), btree_time0, btree_time1, btree_time2, btree_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "SCALE_gapped:    " << i << endl;
-        test(SCALE_gapped, SCALE_gapped_time0, SCALE_gapped_time1, SCALE_gapped_time2, SCALE_gapped_time3);
+        cout << "lr_array:    " << i << endl;
+        test(lr_array, lr_array_time0, lr_array_time1, lr_array_time2, lr_array_time3);
         cout << endl;
-        printResult((i + 1), SCALE_gapped_time0, SCALE_gapped_time1, SCALE_gapped_time2, SCALE_gapped_time3);
+        printResult((i + 1), lr_array_time0, lr_array_time1, lr_array_time2, lr_array_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "ARMI_gapped:    " << i << endl;
-        test(ARMI_gapped, ARMI_gapped_time0, ARMI_gapped_time1, ARMI_gapped_time2, ARMI_gapped_time3);
+        cout << "lr_ga:    " << i << endl;
+        test(lr_ga, lr_ga_time0, lr_ga_time1, lr_ga_time2, lr_ga_time3);
         cout << endl;
-        printResult((i + 1), ARMI_gapped_time0, ARMI_gapped_time1, ARMI_gapped_time2, ARMI_gapped_time3);
+        printResult((i + 1), lr_ga_time0, lr_ga_time1, lr_ga_time2, lr_ga_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "SRMI_gapped:    " << i << endl;
-        test(SRMI_gapped, SRMI_gapped_time0, SRMI_gapped_time1, SRMI_gapped_time2, SRMI_gapped_time3);
+        cout << "nn_array:    " << i << endl;
+        test(nn_array, nn_array_time0, nn_array_time1, nn_array_time2, nn_array_time3);
         cout << endl;
-        printResult((i + 1), SRMI_gapped_time0, SRMI_gapped_time1, SRMI_gapped_time2, SRMI_gapped_time3);
+        printResult((i + 1), nn_array_time0, nn_array_time1, nn_array_time2, nn_array_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "SCALE_normal:    " << i << endl;
-        test(SCALE_normal, SCALE_normal_time0, SCALE_normal_time1, SCALE_normal_time2, SCALE_normal_time3);
+        cout << "nn_ga:    " << i << endl;
+        test(nn_ga, nn_ga_time0, nn_ga_time1, nn_ga_time2, nn_ga_time3);
         cout << endl;
-        printResult((i + 1), SCALE_normal_time0, SCALE_normal_time1, SCALE_normal_time2, SCALE_normal_time3);
+        printResult((i + 1), nn_ga_time0, nn_ga_time1, nn_ga_time2, nn_ga_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "ARMI_normal:    " << i << endl;
-        test(ARMI_normal, ARMI_normal_time0, ARMI_normal_time1, ARMI_normal_time2, ARMI_normal_time3);
+        cout << "div_array:    " << i << endl;
+        test(div_array, div_array_time0, div_array_time1, div_array_time2, div_array_time3);
         cout << endl;
-        printResult((i + 1), ARMI_normal_time0, ARMI_normal_time1, ARMI_normal_time2, ARMI_normal_time3);
+        printResult((i + 1), div_array_time0, div_array_time1, div_array_time2, div_array_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "SRMI_normal:    " << i << endl;
-        test(SRMI_normal, SRMI_normal_time0, SRMI_normal_time1, SRMI_normal_time2, SRMI_normal_time3);
+        cout << "div_ga:    " << i << endl;
+        test(div_ga, div_ga_time0, div_ga_time1, div_ga_time2, div_ga_time3);
         cout << endl;
-        printResult((i + 1), SRMI_normal_time0, SRMI_normal_time1, SRMI_normal_time2, SRMI_normal_time3);
+        printResult((i + 1), div_ga_time0, div_ga_time1, div_ga_time2, div_ga_time3);
         cout << "-------------------------------" << endl;
 
+        cout << "bin_array:    " << i << endl;
+        test(bin_array, bin_array_time0, bin_array_time1, bin_array_time2, bin_array_time3);
+        cout << endl;
+        printResult((i + 1), bin_array_time0, bin_array_time1, bin_array_time2, bin_array_time3);
+        cout << "-------------------------------" << endl;
+
+        cout << "bin_ga:    " << i << endl;
+        test(bin_ga, bin_ga_time0, bin_ga_time1, bin_ga_time2, bin_ga_time3);
+        cout << endl;
+        printResult((i + 1), bin_ga_time0, bin_ga_time1, bin_ga_time2, bin_ga_time3);
+        cout << "-------------------------------" << endl;
+        
         createModel();
     }
 
     cout << "btreemap:" << endl;
     printResult(repetitions, btree_time0, btree_time1, btree_time2, btree_time3);
 
-    cout << "SCALE_gapped:" << endl;
-    printResult(repetitions, SCALE_gapped_time0, SCALE_gapped_time1, SCALE_gapped_time2, SCALE_gapped_time3);
+    cout << "lr_array:" << endl;
+    printResult(repetitions, lr_array_time0, lr_array_time1, lr_array_time2, lr_array_time3);
 
-    cout << "ARMI_gapped:" << endl;
-    printResult(repetitions, ARMI_gapped_time0, ARMI_gapped_time1, ARMI_gapped_time2, ARMI_gapped_time3);
+    cout << "lr_ga:" << endl;
+    printResult(repetitions, lr_ga_time0, lr_ga_time1, lr_ga_time2, lr_ga_time3);
 
-    cout << "SRMI_gapped:" << endl;
-    printResult(repetitions, SRMI_gapped_time0, SRMI_gapped_time1, SRMI_gapped_time2, SRMI_gapped_time3);
+    cout << "nn_array:" << endl;
+    printResult(repetitions, nn_array_time0, nn_array_time1, nn_array_time2, nn_array_time3);
 
-    cout << "SCALE_normal:" << endl;
-    printResult(repetitions, SCALE_normal_time0, SCALE_normal_time1, SCALE_normal_time2, SCALE_normal_time3);
+    cout << "nn_ga:" << endl;
+    printResult(repetitions, nn_ga_time0, nn_ga_time1, nn_ga_time2, nn_ga_time3);
 
-    cout << "ARMI_normal:" << endl;
-    printResult(repetitions, ARMI_normal_time0, ARMI_normal_time1, ARMI_normal_time2, ARMI_normal_time3);
+    cout << "div_array:" << endl;
+    printResult(repetitions, div_array_time0, div_array_time1, div_array_time2, div_array_time3);
 
-    cout << "SRMI_normal:" << endl;
-    printResult(repetitions, SRMI_normal_time0, SRMI_normal_time1, SRMI_normal_time2, SRMI_normal_time3);
+    cout << "div_ga:" << endl;
+    printResult(repetitions, div_ga_time0, div_ga_time1, div_ga_time2, div_ga_time3);
 
-    vector<pair<double, double>> totalData;
-    for (int i = 0; i < dataset.size(); i++)
-        totalData.push_back(dataset[i]);
-    for (int i = 0; i < insertDataset.size(); i++)
-        totalData.push_back(insertDataset[i]);
-    std::sort(totalData.begin(), totalData.end());
-    vector<pair<int, int>> cnt;
-    for (int i = 0; i < datasetSize; i++)
-    {
-        if ((i + 1) % 10 == 0)
-            cnt.push_back({0, 1});
-        else
-            cnt.push_back({1, 0});
-    }
-    reconstruction(totalData, cnt);
+    cout << "bin_array:" << endl;
+    printResult(repetitions, bin_array_time0, bin_array_time1, bin_array_time2, bin_array_time3);
+
+    cout << "bin_ga:" << endl;
+    printResult(repetitions, bin_ga_time0, bin_ga_time1, bin_ga_time2, bin_ga_time3);
+
+   
+   
+   
+   
+    // vector<pair<double, double>> totalData;
+    // for (int i = 0; i < dataset.size(); i++)
+    //     totalData.push_back(dataset[i]);
+    // for (int i = 0; i < insertDataset.size(); i++)
+    //     totalData.push_back(insertDataset[i]);
+    // std::sort(totalData.begin(), totalData.end(), [](pair<double, double> p1, pair<double, double> p2) {
+    //     return p1.first < p2.first;
+    // });
+    // vector<pair<int, int>> cnt;
+    // for (int i = 0; i < datasetSize; i++)
+    // {
+    //     if ((i + 1) % 10 == 0)
+    //         cnt.push_back({0, 1});
+    //     else
+    //         cnt.push_back({1, 0});
+    // }
+    // reconstruction(totalData, cnt);
 
     return 0;
 }
