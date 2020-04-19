@@ -1,63 +1,48 @@
-#ifndef SCALE_MODEL_H
-#define SCALE_MODEL_H
+#ifndef ADAPTIVE_BIN_H
+#define ADAPTIVE_BIN_H
 
-#include "../params.h"
-#include <vector>
-#include "../leafNode/node.h"
-#include "../trainModel/lr.h"
-#include "../leafNode/gappedNode.h"
-using namespace std;
+#include "innerNode.h"
 
 template <typename lowerType>
-class scaleModel : public node
+class adaptiveBin : public basicInnerNode
 {
 public:
-    scaleModel(){};
-    scaleModel(params secondStageParams, int maxKey, int splitChildNumber, int cap)
+    adaptiveBin() : basicInnerNode(){};
+    adaptiveBin(params secondStageParams, int maxKey, int childNum, int cap) : basicInnerNode(childNum)
     {
         m_secondStageParams = secondStageParams;
 
-        childNumber = splitChildNumber;
         maxKeyNum = maxKey;
+        density = 0.75;
         capacity = cap;
-        isLeafNode = false;
     }
 
-    void initialize(vector<pair<double, double>> &dataset);
-    bool isLeaf() { return isLeafNode; }
+    void init(const vector<pair<double, double>> &dataset);
 
     pair<double, double> find(double key);
     bool insert(pair<double, double> data);
     bool del(double key);
     bool update(pair<double, double> data);
 
-    long double getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset);
-    void change(const vector<pair<int, int>> &cnt);
+    static long double getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
 
 private:
+    int capacity;   // the current maximum capacity of the leaf node data
+    double density; // the maximum density of the leaf node data
+    int maxKeyNum;  // the maximum amount of data
+
     vector<double> index;
-
-    vector<node *> children; // The type of child node may be innerNode or leafNode
-    int childNumber;         // the number of children
-
-    int capacity;  // the current maximum capacity of the leaf node data
-    int maxKeyNum; // the maximum amount of data
-
     params m_secondStageParams; // parameters of lower nodes
-
-    bool isLeafNode;
 };
 
 template <typename lowerType>
-void scaleModel<lowerType>::initialize(vector<pair<double, double>> &dataset)
+void adaptiveBin<lowerType>::init(const vector<pair<double, double>> &dataset)
 {
-    cout << "Start initialize!" << endl;
-    // cout << " DatasetSize is : " << dataset.size() << endl;
     if (dataset.size() == 0)
         return;
-    std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
+    // std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+    //     return p1.first < p2.first;
+    // });
 
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -77,7 +62,7 @@ void scaleModel<lowerType>::initialize(vector<pair<double, double>> &dataset)
         index.push_back(dataset[dataset.size() - 1].first);
     }
 
-    // then iterate through the partitions in sorted order
+    cout << "train next stage" << endl;
     for (int i = 0; i < childNumber; i++)
     {
         if (perSubDataset[i].size() > maxKeyNum)
@@ -86,25 +71,24 @@ void scaleModel<lowerType>::initialize(vector<pair<double, double>> &dataset)
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            scaleModel *child = new scaleModel(m_secondStageParams, maxKeyNum, childNumber, capacity);
-            child->initialize(perSubDataset[i]);
-            children.push_back((node *)child);
+            adaptiveBin *child = new adaptiveBin(m_secondStageParams, maxKeyNum, childNumber, capacity);
+            child->init(perSubDataset[i]);
+            children.push_back((lowerType *)child);
         }
         else
         {
-            // make this partition a leaf node
-            // cout << i << ": leaf node! Dataset size is:" << perSubDataset[i].size() << endl;
+            // Otherwise, the partition is under the maximum bound number of keys,
+            // so we could just make this partition a leaf node
             lowerType *child = new lowerType(maxKeyNum, m_secondStageParams, capacity);
             child->train(perSubDataset[i]);
             children.push_back(child);
         }
     }
-    cout << "Finish" << endl;
-    return;
+    cout << "End train" << endl;
 }
 
 template <typename lowerType>
-pair<double, double> scaleModel<lowerType>::find(double key)
+pair<double, double> adaptiveBin<lowerType>::find(double key)
 {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -122,12 +106,11 @@ pair<double, double> scaleModel<lowerType>::find(double key)
             break;
     }
     if (children[mid]->isLeaf() == false)
-        return ((scaleModel *)children[mid])->find(key);
+        return ((adaptiveBin *)children[mid])->find(key);
     return children[mid]->find(key);
 }
-
 template <typename lowerType>
-bool scaleModel<lowerType>::update(pair<double, double> data)
+bool adaptiveBin<lowerType>::update(pair<double, double> data)
 {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -145,12 +128,12 @@ bool scaleModel<lowerType>::update(pair<double, double> data)
             break;
     }
     if (children[mid]->isLeaf() == false)
-        return ((scaleModel *)children[mid])->update(data);
+        return ((adaptiveBin *)children[mid])->update(data);
     return children[mid]->update(data);
 }
 
 template <typename lowerType>
-bool scaleModel<lowerType>::del(double key)
+bool adaptiveBin<lowerType>::del(double key)
 {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -168,12 +151,12 @@ bool scaleModel<lowerType>::del(double key)
             break;
     }
     if (children[mid]->isLeaf() == false)
-        return ((scaleModel *)children[mid])->del(key);
+        return ((adaptiveBin *)children[mid])->del(key);
     return children[mid]->del(key);
 }
 
 template <typename lowerType>
-bool scaleModel<lowerType>::insert(pair<double, double> data)
+bool adaptiveBin<lowerType>::insert(pair<double, double> data)
 {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -191,28 +174,21 @@ bool scaleModel<lowerType>::insert(pair<double, double> data)
             break;
     }
     int size = children[mid]->getSize();
+
+    // if an insert will push a leaf node's
+    // data structure over its maximum bound number of keys,
+    // then we split the leaf data node
     if (children[mid]->isLeaf() && size >= maxKeyNum)
     {
-        scaleModel *newNode = new scaleModel(m_secondStageParams, maxKeyNum, childNumber, capacity);
+        // The corresponding leaf level model in RMI
+        // now becomes an inner level model
+        adaptiveBin *newNode = new adaptiveBin(m_secondStageParams, maxKeyNum, childNumber, capacity);
         vector<pair<double, double>> dataset;
         children[mid]->getDataset(dataset);
-        vector<vector<pair<double, double>>> perSubDataset;
-        vector<pair<double, double>> tmp;
-        for (int i = 0; i < dataset.size(); i++)
-        {
-            tmp.push_back(dataset[i]);
-            if ((i + 1) % (dataset.size() / childNumber) == 0)
-            {
-                perSubDataset.push_back(tmp);
-                newNode->index.push_back(dataset[i].first);
-                tmp = vector<pair<double, double>>();
-            }
-        }
-        if (index.size() != childNumber)
-        {
-            perSubDataset.push_back(tmp);
-            newNode->index.push_back(dataset[dataset.size() - 1].first);
-        }
+
+        std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+            return p1.first < p2.first;
+        });
 
         // a number of children leaf level models are created
         for (int i = 0; i < childNumber; i++)
@@ -221,63 +197,50 @@ bool scaleModel<lowerType>::insert(pair<double, double> data)
             newNode->children.push_back(temp);
         }
 
+        // The data from the original leaf node is then
+        // distributed to the newly created children leaf nodes
+        // according to the original nodeâ€™s model.
+        vector<vector<pair<double, double>>> perSubDataset;
+        vector<pair<double, double>> tmp;
+        for (int i = 0; i < dataset.size(); i++)
+        {
+            tmp.push_back(dataset[i]);
+            if ((i + 1) % (dataset.size() / newNode->childNumber) == 0)
+            {
+                perSubDataset.push_back(tmp);
+                newNode->index.push_back(dataset[i].first);
+                tmp = vector<pair<double, double>>();
+            }
+        }
+        if (newNode->index.size() == childNumber - 1)
+        {
+            perSubDataset.push_back(tmp);
+            newNode->index.push_back(dataset[dataset.size() - 1].first);
+        }
+
+        // Each of the children leaf nodes trains its own
+        // model on its portion of the data.
         for (int i = 0; i < childNumber; i++)
         {
             newNode->children[i]->train(perSubDataset[i]);
         }
         children[mid] = (lowerType *)newNode;
-        return ((scaleModel *)children[mid])->insert(data);
+        return ((adaptiveBin *)children[mid])->insert(data);
     }
     else if (children[mid]->isLeaf() == false)
-        return ((scaleModel *)children[mid])->insert(data);
+        return ((adaptiveBin *)children[mid])->insert(data);
     return children[mid]->insert(data);
 }
 
 template <typename lowerType>
-void scaleModel<lowerType>::change(const vector<pair<int, int>> &cnt)
+long double adaptiveBin<lowerType>::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
-    int idx = 0;
-    for (int i = 0; i < childNumber; i++)
-    {
-        if (children[i]->isLeaf())
-        {
-            int r = 0, w = 0;
-            vector<pair<double, double>> tmp;
-            children[i]->getDataset(tmp);
-            vector<pair<double, double>> data;
-            for (int j = 0; j < tmp.size(); j++)
-            {
-                if (tmp[j].first != -1)
-                {
-                    r += cnt[idx].first;
-                    w += cnt[idx].second;
-                    data.push_back(tmp[j]);
-                    idx++;
-                }
-            }
-            if ((float)r / (float)w > 10.0)
-            {
-                // change from gapped array to array
-                normalNode<linearRegression> *newNode = new normalNode<linearRegression>(maxKeyNum, m_secondStageParams, capacity);
-                newNode->train(data);
-                children[i] = newNode;
-            }
-        }
-    }
-}
-
-template <typename lowerType>
-long double scaleModel<lowerType>::getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset)
-{
-    cout << "Start initialize!" << endl;
-    int initCost = 10;
+    double initCost = (log(childNum) / log(2)) * dataset.size();
+    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tinitCost is:" << initCost << endl;
     long double totalCost = initCost;
     // cout << " DatasetSize is : " << dataset.size() << endl;
     if (dataset.size() == 0)
         return 0;
-    std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
 
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -287,40 +250,24 @@ long double scaleModel<lowerType>::getCost(btree::btree_map<double, pair<int, in
         if ((i + 1) % (dataset.size() / childNum) == 0)
         {
             perSubDataset.push_back(tmp);
-            index.push_back(dataset[i].first);
             tmp = vector<pair<double, double>>();
         }
     }
     if (index.size() == childNum - 1)
     {
         perSubDataset.push_back(tmp);
-        index.push_back(dataset[dataset.size() - 1].first);
     }
 
     // then iterate through the partitions in sorted order
     for (int i = 0; i < childNum; i++)
     {
         if (perSubDataset[i].size() > maxKeyNum)
-        {
-            // If a partition has more than the maximum bound number of
-            // keys, then this partition is oversized,
-            // so we create a new inner node and
-            // recursively call Initialize on the new node.
-            scaleModel *child = new scaleModel(m_secondStageParams, maxKeyNum, childNum, capacity);
-            totalCost += child->getCost(cntTree, childNum, perSubDataset[i]);
-            children.push_back((node *)child);
-        }
+            totalCost += adaptiveBin<lowerType>::getCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
         else
-        {
-            // make this partition a leaf node
-            // cout << i << ": leaf node! Dataset size is:" << perSubDataset[i].size() << endl;
-            lowerType *child = new lowerType(maxKeyNum, m_secondStageParams, capacity);
-            totalCost += child->getCost(cntTree, childNum, perSubDataset[i]);
-            children.push_back(child);
-        }
+            totalCost += lowerType::getCost(cntTree, perSubDataset[i]);
     }
     cout << "sub tree get cost finish!" << endl;
     return totalCost;
-
 }
+
 #endif
