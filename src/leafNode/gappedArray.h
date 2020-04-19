@@ -1,77 +1,50 @@
-#ifndef GAPPED_NODE_H
-#define GAPPED_NODE_H
+#ifndef GAPPED_ARRAY_H
+#define GAPPED_ARRAY_H
 
-#include "../params.h"
-#include "../../cpp-btree/btree_map.h"
-#include <array>
-#include "../node.h"
+#include "leafNode.h"
 
-static const int childNumber = 20;
-
-template <typename type>
-class gappedNode : public node
+class gappedArray : public basicLeafNode
 {
 public:
-    gappedNode(int threshold, params secondStageParams, int cap)
+    gappedArray(int maxKeyNumber, params p, int cap) : basicLeafNode(p)
     {
-        maxKeyNum = threshold;
-        m_secondStageParams = secondStageParams;
-        m_datasetSize = 0;
+        maxKeyNum = maxKeyNumber;
         density = 0.75;
         capacity = cap;
-        isLeafNode = true;
         maxIndex = 0;
     }
-
     void train(const vector<pair<double, double>> &subDataset);
-    int getSize() { return m_datasetSize; }
-    bool isLeaf() { return isLeafNode; }
-    void getDataset(vector<pair<double, double>> &dataset)
-    {
-        for (int i = 0; i < m_dataset.size(); i++)
-        {
-            if (m_dataset[i].first != -1)
-                dataset.push_back(m_dataset[i]);
-        }
-    }
-    long double getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset);
 
     pair<double, double> find(double key);
     bool insert(pair<double, double> data);
     bool update(pair<double, double> data);
     bool del(double key);
 
+    static long double getCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset);
+
 private:
     int search(double key, int p);                                                                    // return the index of key
     void insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt); // insert data into new vector
 
     void expand(); // expand the vector when m_datasetSize / capacity >= density
-
 private:
-    vector<pair<double, double>> m_dataset;
-    int m_datasetSize;
-    int maxIndex; // tht index of the last one
-
-    params m_secondStageParams; // parameters of network
-    type m_secondStageNetwork = type();
-
+    int maxIndex;   // tht index of the last one
     int capacity;   // the current maximum capacity of the leaf node data
     double density; // the maximum density of the leaf node data
     int maxKeyNum;  // the maximum amount of data
-
-    bool isLeafNode;
 };
 
-template <typename type>
-void gappedNode<type>::train(const vector<pair<double, double>> &subDataset)
+void gappedArray::train(const vector<pair<double, double>> &subDataset)
 {
     m_datasetSize = subDataset.size();
+    // cout << "In gapped array: m_datasetSize is: " << m_datasetSize << endl;
+    // cout << "maxIndex is:" << maxIndex << "\tcap:" << capacity << "\tdensity:" << density << "\tmaxKeyNum:" << maxKeyNum << endl;
     if (m_datasetSize == 0)
     {
         m_dataset = vector<pair<double, double>>(maxKeyNum, pair<double, double>{-1, -1});
         return;
     }
-    m_secondStageNetwork.train(subDataset, m_secondStageParams);
+    model->train(subDataset, parameter);
     vector<pair<double, double>> newDataset(maxKeyNum, pair<double, double>{-1, -1});
     while (m_datasetSize > capacity)
         capacity /= density;
@@ -80,19 +53,19 @@ void gappedNode<type>::train(const vector<pair<double, double>> &subDataset)
     {
         if (subDataset[i].first != -1)
         {
-            double p = m_secondStageNetwork.predict(subDataset[i].first);
+            double p = model->predict(subDataset[i].first);
             int preIdx = static_cast<int>(p * (capacity - 1));
+            // cout << "init i: " << i << "\tp is:" << p << "\tpreIdx is:" << preIdx << endl;
             insertData(newDataset, subDataset[i], preIdx, maxIndex);
         }
     }
     m_dataset = newDataset;
-    m_secondStageNetwork.train(m_dataset, m_secondStageParams);
+    model->train(m_dataset, parameter);
 }
 
-template <typename type>
-pair<double, double> gappedNode<type>::find(double key)
+pair<double, double> gappedArray::find(double key)
 {
-    double p = m_secondStageNetwork.predict(key);
+    double p = model->predict(key);
     int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == key)
         return m_dataset[preIdx];
@@ -105,10 +78,9 @@ pair<double, double> gappedNode<type>::find(double key)
     }
 }
 
-template <typename type>
-bool gappedNode<type>::update(pair<double, double> data)
+bool gappedArray::update(pair<double, double> data)
 {
-    double p = m_secondStageNetwork.predict(data.first);
+    double p = model->predict(data.first);
     int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == data.first)
     {
@@ -125,10 +97,9 @@ bool gappedNode<type>::update(pair<double, double> data)
     }
 }
 
-template <typename type>
-bool gappedNode<type>::del(double key)
+bool gappedArray::del(double key)
 {
-    double p = m_secondStageNetwork.predict(key);
+    double p = model->predict(key);
     int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == key)
     {
@@ -173,8 +144,7 @@ bool gappedNode<type>::del(double key)
     }
 }
 
-template <typename type>
-bool gappedNode<type>::insert(pair<double, double> data)
+bool gappedArray::insert(pair<double, double> data)
 {
     if ((capacity < maxKeyNum) && (m_datasetSize * 1.0 / capacity >= density))
     {
@@ -183,7 +153,7 @@ bool gappedNode<type>::insert(pair<double, double> data)
         expand();
     }
 
-    double p = m_secondStageNetwork.predict(data.first);
+    double p = model->predict(data.first);
     int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_datasetSize == 0)
     {
@@ -352,8 +322,8 @@ search the index of key
 1. Exponential Search at first, and decide the range of binary search
 2. Use Binary Search to search the gap array.
 */
-template <typename type>
-int gappedNode<type>::search(double key, int p)
+
+int gappedArray::search(double key, int p)
 {
     // exponential search
     int start_idx, end_idx;
@@ -429,12 +399,12 @@ int gappedNode<type>::search(double key, int p)
 }
 
 // expand the vector when m_datasetSize / capacity >= density
-template <typename type>
-void gappedNode<type>::expand()
+
+void gappedArray::expand()
 {
     if (capacity == maxKeyNum)
     {
-        m_secondStageNetwork.train(m_dataset, m_secondStageParams);
+        model->train(m_dataset, parameter);
         return;
     }
     int newSize = capacity / density;
@@ -445,7 +415,7 @@ void gappedNode<type>::expand()
         newSize = maxKeyNum;
     }
     // retraining the node's linear model on the existing keys
-    m_secondStageNetwork.train(m_dataset, m_secondStageParams);
+    model->train(m_dataset, parameter);
 
     // rescaling the model to predict positions in the expanded array
     capacity = newSize;
@@ -458,7 +428,7 @@ void gappedNode<type>::expand()
     {
         if (m_dataset[i].first != -1)
         {
-            double p = m_secondStageNetwork.predict(m_dataset[i].first);
+            double p = model->predict(m_dataset[i].first);
             int maxIdx = max(capacity, m_datasetSize);
             int preIdx = static_cast<int>(p * (maxIdx - 1));
             insertData(newDataset, m_dataset[i], p, cnt);
@@ -473,8 +443,8 @@ vec: insert data into the new vector
 idx: insertion position
 cnt: current maxIndex of data in the vector
 */
-template <typename type>
-void gappedNode<type>::insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt)
+
+void gappedArray::insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt)
 {
     if (idx < cnt)
         idx = cnt + 1;
@@ -522,41 +492,23 @@ void gappedNode<type>::insertData(vector<pair<double, double>> &vec, pair<double
     }
 }
 
-template <typename type>
-long double gappedNode<type>::getCost(btree::btree_map<double, pair<int, int>> cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double gappedArray::getCost(const btree::btree_map<double, pair<int, int>> &cntTree,vector<pair<double, double>> &dataset)
 {
-    m_datasetSize = dataset.size();
-    if (m_datasetSize == 0)
-    {
-        m_dataset = vector<pair<double, double>>(maxKeyNum, pair<double, double>{-1, -1});
+    int datasetSize = dataset.size();
+    if (datasetSize == 0)
         return 0;
-    }
-    m_secondStageNetwork.train(dataset, m_secondStageParams);
-    vector<pair<double, double>> newDataset(maxKeyNum, pair<double, double>{-1, -1});
-    while (m_datasetSize > capacity)
-        capacity /= density;
-    capacity = capacity > maxKeyNum ? maxKeyNum : capacity;
-    for (int i = 0; i < m_datasetSize; i++)
-    {
-        double p = m_secondStageNetwork.predict(dataset[i].first);
-        int preIdx = static_cast<int>(p * (capacity - 1));
-        insertData(newDataset, dataset[i], preIdx, maxIndex);
-    }
-    m_dataset = newDataset;
-    m_secondStageNetwork.train(m_dataset, m_secondStageParams);
 
     // calculate cost
     long double totalCost = 0;
-    double READCOST = 1.2;
-    double WRITECOST = 3.5;
-    for (int i = 0; i < m_datasetSize; i++)
+    double READCOST = log(datasetSize) / log(6);
+    double WRITECOST = 3.5 * READCOST;
+    for (int i = 0; i < datasetSize; i++)
     {
-        pair<int, int> tmp = cntTree.find(dataset[i].first);
+        pair<int, int> tmp = (cntTree.find(dataset[i].first))->second;
         double tmpRead = tmp.first * READCOST;
         double tmpWrite = tmp.first * WRITECOST;
         totalCost += tmpRead + tmpWrite;
     }
     return totalCost;
 }
-
 #endif
