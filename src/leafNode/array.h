@@ -10,9 +10,7 @@ class arrayNode : public basicLeafNode
 public:
     arrayNode(int maxInsertNumber, params p, int threshold) : basicLeafNode(p)
     {
-        m_threshold = threshold;
         m_maxInsertNumber = maxInsertNumber;
-        isUseTree = false;
         maxPositiveError = 0;
         maxNegativeError = 0;
     }
@@ -28,12 +26,8 @@ public:
 
 private:
     int m_maxInsertNumber; // the maximum number of inserts
-    int m_threshold;       // the maximum error margin
     int maxPositiveError;
     int maxNegativeError;
-
-    bool isUseTree;                       // used to indicate whether to use b-tree
-    btree::btree_map<double, int> m_tree; // <key, index in subDataset>
 };
 
 void arrayNode::train(const vector<pair<double, double>> &dataset)
@@ -66,71 +60,51 @@ void arrayNode::train(const vector<pair<double, double>> &dataset)
     }
     maxPositiveError++;
     maxNegativeError--;
-    if (maxError > m_threshold)
-    {
-        isUseTree = true;
-        for (int i = 0; i < m_datasetSize; i++)
-            m_tree.insert({m_dataset[i].first, i});
-    }
-    else
-        isUseTree = false;
 }
 
 pair<double, double> arrayNode::find(double key)
 {
-    //  use B-Tree if the data is particularly hard to learn
-    if (this->isUseTree)
+    // use learnedIndex to find the data
+    double p = model->predict(key);
+    int preIdx = static_cast<int>(p * (m_datasetSize - 1));
+    if (m_dataset[preIdx].first == key)
     {
-        auto result = m_tree.find(key); // result:{key, index}
-        if (result != m_tree.end())
-            return m_dataset[int(result->second)];
-        else
-            return {};
+        return m_dataset[preIdx];
     }
     else
     {
-        // use learnedIndex to find the data
-        double p = model->predict(key);
-        int preIdx = static_cast<int>(p * (m_datasetSize - 1));
-        if (m_dataset[preIdx].first == key)
-        {
-            return m_dataset[preIdx];
-        }
-        else
-        {
-            // binary search
-            int start = max(0, preIdx + maxNegativeError);
-            int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+        // binary search
+        int start = max(0, preIdx + maxNegativeError);
+        int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
 
-            int res = -1;
-            while (start <= end)
+        int res = -1;
+        while (start <= end)
+        {
+            int mid = (start + end) / 2;
+            if (m_dataset[mid].first == key)
             {
-                int mid = (start + end) / 2;
-                if (m_dataset[mid].first == key)
+                res = mid;
+                break;
+            }
+            else if (start == end)
+            {
+                if (m_dataset[end].first == key)
                 {
-                    res = mid;
+                    res = end;
                     break;
                 }
-                else if (start == end)
-                {
-                    if (m_dataset[end].first == key)
-                    {
-                        res = end;
-                        break;
-                    }
-                    else
-                        break;
-                }
-                else if (m_dataset[mid].first > key)
-                    end = mid;
                 else
-                    start = mid + 1;
+                    break;
             }
-
-            if (res != -1)
-                return m_dataset[res];
-            return {};
+            else if (m_dataset[mid].first > key)
+                end = mid;
+            else
+                start = mid + 1;
         }
+
+        if (res != -1)
+            return m_dataset[res];
+        return {};
     }
 }
 
@@ -172,8 +146,6 @@ bool arrayNode::insert(pair<double, double> data)
         }
         if (mid == m_dataset.size() - 1 && m_dataset[mid].first < data.first)
         {
-            if (isUseTree)
-                m_tree.insert({data.first, mid + 1});
             m_dataset.push_back(data);
             m_datasetSize++;
             return true;
@@ -189,9 +161,6 @@ bool arrayNode::insert(pair<double, double> data)
             start_idx = mid + 1;
     }
 
-    if (isUseTree)
-        m_tree.insert({data.first, preIdx});
-
     // insert data
     m_dataset.push_back(m_dataset[m_datasetSize - 1]);
     m_datasetSize++;
@@ -200,28 +169,17 @@ bool arrayNode::insert(pair<double, double> data)
     m_dataset[preIdx] = data;
 
     // updata error
-    if (isUseTree == false)
+    int pre = static_cast<int>(p * (m_datasetSize - 1));
+    int error = preIdx - pre;
+    if (error > maxPositiveError)
     {
-        int pre = static_cast<int>(p * (m_datasetSize - 1));
-        int error = preIdx - pre;
-        if (error > maxPositiveError)
-        {
-            maxPositiveError = error;
-            maxPositiveError++;
-        }
-        if (error < maxNegativeError)
-        {
-            maxNegativeError = error;
-            maxNegativeError--;
-        }
-        if (error < 0)
-            error = -error;
-        if (error > m_threshold)
-        {
-            isUseTree = true;
-            for (int i = 0; i < m_datasetSize; i++)
-                m_tree.insert({m_dataset[i].first, i});
-        }
+        maxPositiveError = error;
+        maxPositiveError++;
+    }
+    if (error < maxNegativeError)
+    {
+        maxNegativeError = error;
+        maxNegativeError--;
     }
 
     // If the current number is greater than the maximum,
@@ -233,130 +191,95 @@ bool arrayNode::insert(pair<double, double> data)
 
 bool arrayNode::del(double key)
 {
-    //  use B-Tree if the data is particularly hard to learn
-    if (isUseTree)
+    // use learnedIndex to find the data
+    double p = model->predict(key);
+    int preIdx = static_cast<int>(p * (m_datasetSize - 1));
+    if (m_dataset[preIdx].first != key)
     {
-        auto result = m_tree.find(key); // result:{key, index}
-        if (result != m_tree.end())
+        // binary search
+        int start = max(0, preIdx + maxNegativeError);
+        int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+
+        int res = -1;
+        while (start <= end)
         {
-            int idx = int(result->second);
-            for (int i = idx; i < m_datasetSize - 1; i++)
-                m_dataset[i] = m_dataset[i + 1];
-            m_datasetSize--;
-            m_dataset.pop_back();
-            m_tree.erase(key);
-            return true;
+            int mid = (start + end) / 2;
+            if (m_dataset[mid].first == key)
+            {
+                res = mid;
+                break;
+            }
+            else if (start == end)
+            {
+                if (m_dataset[end].first == key)
+                {
+                    res = end;
+                    break;
+                }
+                else
+                    break;
+            }
+            else if (m_dataset[mid].first > key)
+                end = mid;
+            else
+                start = mid + 1;
         }
+
+        if (res != -1)
+            preIdx = res;
         else
             return false;
     }
-    else
-    {
-        // use learnedIndex to find the data
-        double p = model->predict(key);
-        int preIdx = static_cast<int>(p * (m_datasetSize - 1));
-        if (m_dataset[preIdx].first != key)
-        {
-            // binary search
-            int start = max(0, preIdx + maxNegativeError);
-            int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
-
-            int res = -1;
-            while (start <= end)
-            {
-                int mid = (start + end) / 2;
-                if (m_dataset[mid].first == key)
-                {
-                    res = mid;
-                    break;
-                }
-                else if (start == end)
-                {
-                    if (m_dataset[end].first == key)
-                    {
-                        res = end;
-                        break;
-                    }
-                    else
-                        break;
-                }
-                else if (m_dataset[mid].first > key)
-                    end = mid;
-                else
-                    start = mid + 1;
-            }
-
-            if (res != -1)
-                preIdx = res;
-            else
-                return false;
-        }
-        for (int i = preIdx; i < m_datasetSize - 1; i++)
-            m_dataset[i] = m_dataset[i + 1];
-        m_datasetSize--;
-        m_dataset.pop_back();
-        return true;
-    }
+    for (int i = preIdx; i < m_datasetSize - 1; i++)
+        m_dataset[i] = m_dataset[i + 1];
+    m_datasetSize--;
+    m_dataset.pop_back();
+    return true;
 }
 
 bool arrayNode::update(pair<double, double> data)
 {
-    //  use B-Tree if the data is particularly hard to learn
-    if (isUseTree)
+    // use learnedIndex to find the data
+    double p = model->predict(data.first);
+    int preIdx = static_cast<int>(p * (m_datasetSize - 1));
+    if (m_dataset[preIdx].first != data.first)
     {
-        auto result = m_tree.find(data.first); // result:{key, index}
-        if (result != m_tree.end())
+        // binary search
+        int start = max(0, preIdx + maxNegativeError);
+        int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+
+        int res = -1;
+        while (start <= end)
         {
-            m_dataset[int(result->second)].second = data.second;
-            return true;
+            int mid = (start + end) / 2;
+            if (m_dataset[mid].first == data.first)
+            {
+                res = mid;
+                break;
+            }
+            else if (start == end)
+            {
+                if (m_dataset[end].first == data.first)
+                {
+                    res = end;
+                    break;
+                }
+                else
+                    break;
+            }
+            else if (m_dataset[mid].first > data.first)
+                end = mid;
+            else
+                start = mid + 1;
         }
+
+        if (res != -1)
+            preIdx = res;
         else
             return false;
     }
-    else
-    {
-        // use learnedIndex to find the data
-        double p = model->predict(data.first);
-        int preIdx = static_cast<int>(p * (m_datasetSize - 1));
-        if (m_dataset[preIdx].first != data.first)
-        {
-            // binary search
-            int start = max(0, preIdx + maxNegativeError);
-            int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
-
-            int res = -1;
-            while (start <= end)
-            {
-                int mid = (start + end) / 2;
-                if (m_dataset[mid].first == data.first)
-                {
-                    res = mid;
-                    break;
-                }
-                else if (start == end)
-                {
-                    if (m_dataset[end].first == data.first)
-                    {
-                        res = end;
-                        break;
-                    }
-                    else
-                        break;
-                }
-                else if (m_dataset[mid].first > data.first)
-                    end = mid;
-                else
-                    start = mid + 1;
-            }
-
-            if (res != -1)
-                preIdx = res;
-            else
-                return false;
-        }
-        m_dataset[preIdx].second = data.second;
-        return true;
-    }
+    m_dataset[preIdx].second = data.second;
+    return true;
 }
 
 long double arrayNode::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)
