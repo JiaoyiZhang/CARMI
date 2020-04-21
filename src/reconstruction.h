@@ -5,10 +5,6 @@
 #include "./trainModel/nn.h"
 
 #include "./innerNode/innerNode.h"
-#include "./innerNode/adaptiveBin.h"
-#include "./innerNode/adaptiveDiv.h"
-#include "./innerNode/adaptiveLR.h"
-#include "./innerNode/adaptiveNN.h"
 #include "./innerNode/nnNode.h"
 #include "./innerNode/lrNode.h"
 #include "./innerNode/binarySearch.h"
@@ -20,7 +16,6 @@
 
 #include "./dataset/lognormalDistribution.h"
 #include "./dataset/uniformDistribution.h"
-#include "node.h"
 
 #include <algorithm>
 #include <iostream>

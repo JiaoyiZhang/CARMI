@@ -2,10 +2,6 @@
 #include "./trainModel/nn.h"
 
 #include "./innerNode/innerNode.h"
-#include "./innerNode/adaptiveBin.h"
-#include "./innerNode/adaptiveDiv.h"
-#include "./innerNode/adaptiveLR.h"
-#include "./innerNode/adaptiveNN.h"
 #include "./innerNode/nnNode.h"
 #include "./innerNode/lrNode.h"
 #include "./innerNode/binarySearch.h"
@@ -62,76 +58,76 @@ void createModel()
     params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
     params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
 
-    lr_array = lrNode<arrayNode> (firstStageParams, secondStageParams, 1000, 15, 800);
+    lr_array = lrNode<arrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
     lr_array.init(dataset);
     cout << "lr_array init over!" << endl;
     cout << "****************" << endl;
 
-    lr_ga = lrNode<gappedArray> (firstStageParams, secondStageParams, 1000, 15, 800);
+    lr_ga = lrNode<gappedArray>(firstStageParams, secondStageParams, 1000, 15, 800);
     lr_ga.init(dataset);
     cout << "lr_ga init over!" << endl;
     cout << "****************" << endl;
 
-    nn_array = nnNode<arrayNode> (firstStageParams, secondStageParams, 1000, 15, 800);
+    nn_array = nnNode<arrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
     nn_array.init(dataset);
     cout << "nn_array init over!" << endl;
     cout << "****************" << endl;
 
-    nn_ga = nnNode<gappedArray> (firstStageParams, secondStageParams, 10000, 15, 800);
+    nn_ga = nnNode<gappedArray>(firstStageParams, secondStageParams, 10000, 15, 800);
     nn_ga.init(dataset);
     cout << "nn_ga init over!" << endl;
     cout << "****************" << endl;
 
-    div_array = divisionNode<arrayNode> (secondStageParams, 1000, 15, 800);
+    div_array = divisionNode<arrayNode>(secondStageParams, 1000, 15, 800);
     div_array.init(dataset);
     cout << "div_array init over!" << endl;
     cout << "****************" << endl;
 
-    div_ga = divisionNode<gappedArray> (secondStageParams, 10000, 15, 800);
+    div_ga = divisionNode<gappedArray>(secondStageParams, 10000, 15, 800);
     div_ga.init(dataset);
     cout << "div_ga init over!" << endl;
     cout << "****************" << endl;
 
-    bin_array = binarySearchNode<arrayNode> (secondStageParams, 1000, 15, 800);
+    bin_array = binarySearchNode<arrayNode>(secondStageParams, 1000, 15, 800);
     bin_array.init(dataset);
     cout << "bin_array init over!" << endl;
     cout << "****************" << endl;
 
-    bin_ga = binarySearchNode<gappedArray> (secondStageParams, 1000, 15, 800);
+    bin_ga = binarySearchNode<gappedArray>(secondStageParams, 1000, 15, 800);
     bin_ga.init(dataset);
     cout << "bin_ga init over!" << endl;
     cout << "****************" << endl;
-/*
-    // ARMI_normal = adaptiveRMI<normalNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 15, 800);
-    ARMI_normal = adaptiveRMI<normalNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1500, 12, 800);
-    ARMI_normal.initialize(dataset);
-    cout << "ARMI_normal init over!" << endl;
-    cout << "****************" << endl;
+    /*
+        // ARMI_normal = adaptiveRMI<normalNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 15, 800);
+        ARMI_normal = adaptiveRMI<normalNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1500, 12, 800);
+        ARMI_normal.initialize(dataset);
+        cout << "ARMI_normal init over!" << endl;
+        cout << "****************" << endl;
 
-    // SCALE_normal = scaleModel<normalNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-    SCALE_normal = scaleModel<normalNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-    SCALE_normal.initialize(dataset);
-    cout << "SCALE_normal init over!" << endl;
-    cout << "****************" << endl;
+        // SCALE_normal = scaleModel<normalNode<linearRegression>>(secondStageParams, 1000, 100, 800);
+        SCALE_normal = scaleModel<normalNode<linearRegression>>(secondStageParams, 1000, 100, 800);
+        SCALE_normal.initialize(dataset);
+        cout << "SCALE_normal init over!" << endl;
+        cout << "****************" << endl;
 
-    // SRMI_gapped = staticRMI<gappedNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 2000, 15, 800);
-    SRMI_gapped = staticRMI<gappedNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 5000, 15, 4600);
-    SRMI_gapped.train();
-    cout << "SRMI_gapped init over!" << endl;
-    cout << "****************" << endl;
+        // SRMI_gapped = staticRMI<gappedNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 2000, 15, 800);
+        SRMI_gapped = staticRMI<gappedNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 5000, 15, 4600);
+        SRMI_gapped.train();
+        cout << "SRMI_gapped init over!" << endl;
+        cout << "****************" << endl;
 
-    // ARMI_gapped = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 15, 800);
-    ARMI_gapped = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 12, 800);
-    ARMI_gapped.initialize(dataset);
-    cout << "ARMI_gapped init over!" << endl;
-    cout << "****************" << endl;
+        // ARMI_gapped = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 15, 800);
+        ARMI_gapped = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 12, 800);
+        ARMI_gapped.initialize(dataset);
+        cout << "ARMI_gapped init over!" << endl;
+        cout << "****************" << endl;
 
-    // SCALE_gapped = scaleModel<gappedNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-    SCALE_gapped = scaleModel<gappedNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-    SCALE_gapped.initialize(dataset);
-    cout << "SCALE_gapped init over!" << endl;
-    cout << "****************" << endl;
-*/
+        // SCALE_gapped = scaleModel<gappedNode<linearRegression>>(secondStageParams, 1000, 100, 800);
+        SCALE_gapped = scaleModel<gappedNode<linearRegression>>(secondStageParams, 1000, 100, 800);
+        SCALE_gapped.initialize(dataset);
+        cout << "SCALE_gapped init over!" << endl;
+        cout << "****************" << endl;
+    */
 }
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)
@@ -176,7 +172,7 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceFrequency(&c);
     for (int i = 0; i < dataset.size(); i++)
     {
-        obj.find(dataset[i].first);
+        auto res = obj.find(dataset[i].first);
     }
     QueryPerformanceCounter(&e);
     time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -184,21 +180,27 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
 
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
+    {
         obj.insert(insertDataset[i]);
+    }
     QueryPerformanceCounter(&e);
     time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
     cout << "Insert time:" << time1 << endl;
 
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
+    {
         obj.update({insertDataset[i].first, 1.11});
+    }
     QueryPerformanceCounter(&e);
     time2 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
     cout << "Update time:" << time2 << endl;
 
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
+    {
         obj.del(insertDataset[i].first);
+    }
     QueryPerformanceCounter(&e);
     time3 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
     cout << "Delete time:" << time3 << endl;
@@ -290,7 +292,7 @@ int main()
         cout << endl;
         printResult((i + 1), bin_ga_time0, bin_ga_time1, bin_ga_time2, bin_ga_time3);
         cout << "-------------------------------" << endl;
-        
+
         createModel();
     }
 
@@ -321,10 +323,6 @@ int main()
     cout << "bin_ga:" << endl;
     printResult(repetitions, bin_ga_time0, bin_ga_time1, bin_ga_time2, bin_ga_time3);
 
-   
-   
-   
-   
     // vector<pair<double, double>> totalData;
     // for (int i = 0; i < dataset.size(); i++)
     //     totalData.push_back(dataset[i]);
