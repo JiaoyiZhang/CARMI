@@ -10,10 +10,10 @@
 #include "model.h"
 using namespace std;
 
-class linearRegression : public basicModel
+class LinearRegression : public BasicModel
 {
 public:
-    linearRegression()
+    LinearRegression()
     {
         theta1 = 0.0001;
         theta2 = 0.666;
@@ -26,7 +26,7 @@ private:
     double theta2;
 };
 
-void linearRegression::train(vector<pair<double, double>> dataset, params param)
+void LinearRegression::train(vector<pair<double, double>> dataset, params param)
 {
     int actualSize = 0;
     vector<double> index;
@@ -88,7 +88,7 @@ void linearRegression::train(vector<pair<double, double>> dataset, params param)
         theta1 = -theta1;
 }
 
-double linearRegression::predict(double key)
+double LinearRegression::predict(double key)
 {
     double p = theta1 * key + theta2;
     p = p < 0 ? 0 : p;

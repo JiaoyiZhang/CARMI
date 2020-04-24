@@ -5,10 +5,10 @@
 #include "../params.h"
 using namespace std;
 
-class basicModel
+class BasicModel
 {
 public:
-    basicModel(){};
+    BasicModel(){};
 
     virtual void train(vector<pair<double, double>> dataset, params param){};
     virtual double predict(double key){};

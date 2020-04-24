@@ -1,12 +1,13 @@
 #ifndef GAPPED_ARRAY_H
 #define GAPPED_ARRAY_H
 
-#include "leafNode.h"
+#include "leaf_node.h"
+#include <algorithm>
 
-class gappedArray : public basicLeafNode
+class GappedArray : public BasicLeafNode
 {
 public:
-    gappedArray(int maxKeyNumber, params p, int cap) : basicLeafNode(p)
+    GappedArray(int maxKeyNumber, params p, int cap) : BasicLeafNode(p)
     {
         maxKeyNum = maxKeyNumber;
         density = 0.75;
@@ -34,7 +35,7 @@ private:
     int maxKeyNum;  // the maximum amount of data
 };
 
-void gappedArray::train(const vector<pair<double, double>> &subDataset)
+void GappedArray::train(const vector<pair<double, double>> &subDataset)
 {
     m_datasetSize = subDataset.size();
     // cout << "In gapped array: m_datasetSize is: " << m_datasetSize << endl;
@@ -63,7 +64,7 @@ void gappedArray::train(const vector<pair<double, double>> &subDataset)
     model->train(m_dataset, parameter);
 }
 
-pair<double, double> gappedArray::find(double key)
+pair<double, double> GappedArray::find(double key)
 {
     double p = model->predict(key);
     int preIdx = static_cast<int>(p * (capacity - 1));
@@ -78,7 +79,7 @@ pair<double, double> gappedArray::find(double key)
     }
 }
 
-bool gappedArray::update(pair<double, double> data)
+bool GappedArray::update(pair<double, double> data)
 {
     double p = model->predict(data.first);
     int preIdx = static_cast<int>(p * (capacity - 1));
@@ -97,7 +98,7 @@ bool gappedArray::update(pair<double, double> data)
     }
 }
 
-bool gappedArray::del(double key)
+bool GappedArray::del(double key)
 {
     double p = model->predict(key);
     int preIdx = static_cast<int>(p * (capacity - 1));
@@ -144,7 +145,7 @@ bool gappedArray::del(double key)
     }
 }
 
-bool gappedArray::insert(pair<double, double> data)
+bool GappedArray::insert(pair<double, double> data)
 {
     if ((capacity < maxKeyNum) && (m_datasetSize * 1.0 / capacity >= density))
     {
@@ -323,7 +324,7 @@ search the index of key
 2. Use Binary Search to search the gap array.
 */
 
-int gappedArray::search(double key, int p)
+int GappedArray::search(double key, int p)
 {
     // exponential search
     int start_idx, end_idx;
@@ -400,7 +401,7 @@ int gappedArray::search(double key, int p)
 
 // expand the vector when m_datasetSize / capacity >= density
 
-void gappedArray::expand()
+void GappedArray::expand()
 {
     if (capacity == maxKeyNum)
     {
@@ -444,7 +445,7 @@ idx: insertion position
 cnt: current maxIndex of data in the vector
 */
 
-void gappedArray::insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt)
+void GappedArray::insertData(vector<pair<double, double>> &vec, pair<double, double> data, int idx, int &cnt)
 {
     if (idx < cnt)
         idx = cnt + 1;
@@ -492,7 +493,7 @@ void gappedArray::insertData(vector<pair<double, double>> &vec, pair<double, dou
     }
 }
 
-long double gappedArray::getCost(const btree::btree_map<double, pair<int, int>> &cntTree,vector<pair<double, double>> &dataset)
+long double GappedArray::getCost(const btree::btree_map<double, pair<int, int>> &cntTree,vector<pair<double, double>> &dataset)
 {
     int datasetSize = dataset.size();
     if (datasetSize == 0)

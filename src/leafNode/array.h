@@ -2,13 +2,13 @@
 #define ARRAY_H
 
 #include <math.h>
-#include "leafNode.h"
+#include "leaf_node.h"
 using namespace std;
 
-class arrayNode : public basicLeafNode
+class ArrayNode : public BasicLeafNode
 {
 public:
-    arrayNode(int maxInsertNumber, params p, int threshold) : basicLeafNode(p)
+    ArrayNode(int maxInsertNumber, params p, int threshold) : BasicLeafNode(p)
     {
         m_maxInsertNumber = maxInsertNumber;
         maxPositiveError = 0;
@@ -30,7 +30,7 @@ private:
     int maxNegativeError;
 };
 
-void arrayNode::train(const vector<pair<double, double>> &dataset)
+void ArrayNode::train(const vector<pair<double, double>> &dataset)
 {
     m_dataset = dataset;
     m_datasetSize = m_dataset.size();
@@ -62,7 +62,7 @@ void arrayNode::train(const vector<pair<double, double>> &dataset)
     maxNegativeError--;
 }
 
-pair<double, double> arrayNode::find(double key)
+pair<double, double> ArrayNode::find(double key)
 {
     // use learnedIndex to find the data
     double p = model->predict(key);
@@ -108,7 +108,7 @@ pair<double, double> arrayNode::find(double key)
     }
 }
 
-bool arrayNode::insert(pair<double, double> data)
+bool ArrayNode::insert(pair<double, double> data)
 {
     // use learnedIndex to find the data
     double p = model->predict(data.first);
@@ -189,7 +189,7 @@ bool arrayNode::insert(pair<double, double> data)
     return true;
 }
 
-bool arrayNode::del(double key)
+bool ArrayNode::del(double key)
 {
     // use learnedIndex to find the data
     double p = model->predict(key);
@@ -237,7 +237,7 @@ bool arrayNode::del(double key)
     return true;
 }
 
-bool arrayNode::update(pair<double, double> data)
+bool ArrayNode::update(pair<double, double> data)
 {
     // use learnedIndex to find the data
     double p = model->predict(data.first);
@@ -282,7 +282,7 @@ bool arrayNode::update(pair<double, double> data)
     return true;
 }
 
-long double arrayNode::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)
+long double ArrayNode::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)
 {
     int datasetSize = dataset.size();
     if (datasetSize == 0)

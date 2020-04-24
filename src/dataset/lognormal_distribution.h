@@ -7,10 +7,10 @@
 #include <vector>
 using namespace std;
 
-class lognormalDataset
+class LognormalDataset
 {
 public:
-    lognormalDataset(int total, double initRatio)
+    LognormalDataset(int total, double initRatio)
     {
         totalSize = total;
         initSize = total * initRatio;
@@ -29,7 +29,7 @@ private:
     int num;
 };
 
-void lognormalDataset::generateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
+void LognormalDataset::generateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
     float maxValue = totalSize;
 

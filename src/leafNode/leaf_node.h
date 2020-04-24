@@ -10,21 +10,21 @@
 #include "../../cpp-btree/btree_map.h"
 using namespace std;
 
-class basicLeafNode
+class BasicLeafNode
 {
 public:
-    basicLeafNode()
+    BasicLeafNode()
     {
         isLeafNode = true;
         m_datasetSize = 0;
-        model = new linearRegression();
+        model = new LinearRegression();
     }
-    basicLeafNode(params p)
+    BasicLeafNode(params p)
     {
         parameter = p;
         isLeafNode = true;
         m_datasetSize = 0;
-        model = new linearRegression();
+        model = new LinearRegression();
     }
     bool isLeaf() { return isLeafNode; }
     int getSize() { return m_datasetSize; }
@@ -40,9 +40,9 @@ public:
     void chooseModel(int cnt)
     {
         if (cnt == 0)
-            model = new linearRegression();
+            model = new LinearRegression();
         else if (cnt == 1)
-            model = new net();
+            model = new Net();
     }
 
     virtual void train(const vector<pair<double, double>> &dataset){};
@@ -59,7 +59,7 @@ protected:
     int m_datasetSize;
 
     params parameter;
-    basicModel *model;
+    BasicModel *model;
 };
 
 #endif

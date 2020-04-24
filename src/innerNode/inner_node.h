@@ -3,18 +3,18 @@
 
 #include <vector>
 #include "../params.h"
-#include "../leafNode/leafNode.h"
+#include "../leafNode/leaf_node.h"
 #include "../../cpp-btree/btree_map.h"
 using namespace std;
 
-class basicInnerNode
+class BasicInnerNode
 {
 public:
-    basicInnerNode()
+    BasicInnerNode()
     {
         isLeafNode = false;
     }
-    basicInnerNode(int childNum)
+    BasicInnerNode(int childNum)
     {
         isLeafNode = false;
         childNumber = childNum;
@@ -29,7 +29,7 @@ public:
     virtual bool update(pair<double, double> data){};
 
 protected:
-    vector<basicLeafNode *> children; // store the lower nodes
+    vector<BasicLeafNode *> children; // store the lower nodes
     int childNumber;                  // the size of the lower nodes
     bool isLeafNode;
 };

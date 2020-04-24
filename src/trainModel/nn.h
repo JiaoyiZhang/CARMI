@@ -52,10 +52,10 @@ vector<double> add(vector<double> a, vector<double> bias)
 	return a;
 }
 
-class net : public basicModel
+class Net : public BasicModel
 {
 public:
-	net(){};
+	Net(){};
 
 	void train(const vector<pair<double, double>> &dataset, params param);
 
@@ -70,8 +70,8 @@ private:
 	double b2;
 };
 
-// train the network
-void net::train(const vector<pair<double, double>> &dataset, params param)
+// train the Network
+void Net::train(const vector<pair<double, double>> &dataset, params param)
 {
 	vector<pair<double, double>> m_dataset = dataset;
 	vector<double> index;
@@ -145,7 +145,7 @@ void net::train(const vector<pair<double, double>> &dataset, params param)
 	}
 }
 
-double net::predict(double key)
+double Net::predict(double key)
 {
 	double p = b2;
 	// vector<double> firstLayerResult;
@@ -162,7 +162,7 @@ double net::predict(double key)
 	return p;
 }
 
-vector<double> net::Relu(vector<double> input)
+vector<double> Net::Relu(vector<double> input)
 {
 	for (int i = 0; i < input.size(); i++)
 	{

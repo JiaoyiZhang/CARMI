@@ -1,20 +1,20 @@
 #ifndef NN_NODE_H
 #define NN_NODE_H
 
-#include "innerNode.h"
+#include "inner_node.h"
 #include "../trainModel/nn.h"
 
 template <typename lowerType>
-class nnNode : public basicInnerNode
+class NetworkNode : public BasicInnerNode
 {
 public:
-    nnNode() : basicInnerNode(){};
-    nnNode(params firstStageParams, params secondStageParams, int childNum) : basicInnerNode(childNum)
+    NetworkNode() : BasicInnerNode(){};
+    NetworkNode(params firstStageParams, params secondStageParams, int childNum) : BasicInnerNode(childNum)
     {
         m_firstStageParams = firstStageParams;
         m_secondStageParams = secondStageParams;
     }
-    nnNode(params firstStageParams, params secondStageParams, int threshold, int childNum, int maxInsertNumber) : basicInnerNode(childNum)
+    NetworkNode(params firstStageParams, params secondStageParams, int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
     {
         m_firstStageParams = firstStageParams;
         m_secondStageParams = secondStageParams;
@@ -31,7 +31,7 @@ public:
         double p = m_firstStageNetwork.predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children[preIdx]->isLeaf() == false)
-            return ((nnNode *)children[preIdx])->find(key);
+            return ((NetworkNode *)children[preIdx])->find(key);
         return children[preIdx]->find(key);
     }
     bool insert(pair<double, double> data)
@@ -45,7 +45,7 @@ public:
         double p = m_firstStageNetwork.predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children[preIdx]->isLeaf() == false)
-            return ((nnNode *)children[preIdx])->del(key);
+            return ((NetworkNode *)children[preIdx])->del(key);
         return children[preIdx]->del(key);
     }
     bool update(pair<double, double> data)
@@ -53,7 +53,7 @@ public:
         double p = m_firstStageNetwork.predict(data.first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children[preIdx]->isLeaf() == false)
-            return ((nnNode *)children[preIdx])->update(data);
+            return ((NetworkNode *)children[preIdx])->update(data);
         return children[preIdx]->update(data);
     }
 
@@ -62,11 +62,11 @@ public:
 protected:
     params m_firstStageParams;       // parameters of network
     params m_secondStageParams;      // parameters of lower nodes
-    net m_firstStageNetwork = net(); // network of the first stage
+    Net m_firstStageNetwork = Net(); // network of the first stage
 };
 
 template <typename lowerType>
-void nnNode<lowerType>::init(const vector<pair<double, double>> &dataset)
+void NetworkNode<lowerType>::init(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -98,7 +98,7 @@ void nnNode<lowerType>::init(const vector<pair<double, double>> &dataset)
 }
 
 template <typename lowerType>
-long double nnNode<lowerType>::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double NetworkNode<lowerType>::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double initCost = 16;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tinitCost is:" << initCost << endl;
@@ -106,7 +106,7 @@ long double nnNode<lowerType>::getCost(const btree::btree_map<double, pair<int, 
     if (dataset.size() == 0)
         return 0;
 
-    net tmpNet = net();
+    Net tmpNet = Net();
     params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
     tmpNet.train(dataset, firstStageParams);
     vector<vector<pair<double, double>>> perSubDataset;
@@ -128,11 +128,11 @@ long double nnNode<lowerType>::getCost(const btree::btree_map<double, pair<int, 
 }
 
 template <typename lowerType>
-class adaptiveNN : public nnNode<lowerType>
+class AdaptiveNN : public NetworkNode<lowerType>
 {
 public:
-    adaptiveNN() : nnNode<lowerType>(){};
-    adaptiveNN(params firstStageParams, params secondStageParams, int maxKey, int childNum, int cap) : nnNode<lowerType>(firstStageParams, secondStageParams, childNum)
+    AdaptiveNN() : NetworkNode<lowerType>(){};
+    AdaptiveNN(params firstStageParams, params secondStageParams, int maxKey, int childNum, int cap) : NetworkNode<lowerType>(firstStageParams, secondStageParams, childNum)
     {
         maxKeyNum = maxKey;
         density = 0.75;
@@ -152,7 +152,7 @@ private:
 };
 
 template <typename lowerType>
-void adaptiveNN<lowerType>::init(const vector<pair<double, double>> &dataset)
+void AdaptiveNN<lowerType>::init(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -189,7 +189,7 @@ void adaptiveNN<lowerType>::init(const vector<pair<double, double>> &dataset)
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            adaptiveNN *child = new adaptiveNN(this->m_firstStageParams, this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
+            AdaptiveNN *child = new AdaptiveNN(this->m_firstStageParams, this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
             child->init(perSubDataset[i]);
             this->children.push_back((lowerType *)child);
         }
@@ -206,7 +206,7 @@ void adaptiveNN<lowerType>::init(const vector<pair<double, double>> &dataset)
 }
 
 template <typename lowerType>
-bool adaptiveNN<lowerType>::insert(pair<double, double> data)
+bool AdaptiveNN<lowerType>::insert(pair<double, double> data)
 {
     double p = this->m_firstStageNetwork.predict(data.first);
     int preIdx = static_cast<int>(p * (this->childNumber - 1));
@@ -219,7 +219,7 @@ bool adaptiveNN<lowerType>::insert(pair<double, double> data)
     {
         // The corresponding leaf level model in RMI
         // now becomes an inner level model
-        adaptiveNN *newNode = new adaptiveNN(this->m_firstStageParams, this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
+        AdaptiveNN *newNode = new AdaptiveNN(this->m_firstStageParams, this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
         vector<pair<double, double>> dataset;
         this->children[preIdx]->getDataset(dataset);
         newNode->m_firstStageNetwork.train(dataset, this->m_firstStageParams);
@@ -251,15 +251,15 @@ bool adaptiveNN<lowerType>::insert(pair<double, double> data)
         for (int i = 0; i < this->childNumber; i++)
             newNode->children[i]->train(perSubDataset[i]);
         this->children[preIdx] = (lowerType *)newNode;
-        return ((adaptiveNN *)this->children[preIdx])->insert(data);
+        return ((AdaptiveNN *)this->children[preIdx])->insert(data);
     }
     else if (this->children[preIdx]->isLeaf() == false)
-        return ((adaptiveNN *)this->children[preIdx])->insert(data);
+        return ((AdaptiveNN *)this->children[preIdx])->insert(data);
     return this->children[preIdx]->insert(data);
 }
 
 template <typename lowerType>
-long double adaptiveNN<lowerType>::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double AdaptiveNN<lowerType>::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double initCost = 16;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tinitCost is:" << initCost << endl;
@@ -267,7 +267,7 @@ long double adaptiveNN<lowerType>::getCost(const btree::btree_map<double, pair<i
     if (dataset.size() == 0)
         return 0;
 
-    net tmpNet = net();
+    Net tmpNet = Net();
     params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
     tmpNet.train(dataset, firstStageParams);
     vector<vector<pair<double, double>>> perSubDataset;
@@ -285,7 +285,7 @@ long double adaptiveNN<lowerType>::getCost(const btree::btree_map<double, pair<i
     for (int i = 0; i < childNum; i++)
     {
         if (perSubDataset[i].size() > maxNum)
-            totalCost += adaptiveNN<lowerType>::getCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
+            totalCost += AdaptiveNN<lowerType>::getCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
         else
             totalCost += lowerType::getCost(cntTree, perSubDataset[i]);
     }

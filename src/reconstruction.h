@@ -4,18 +4,18 @@
 #include "./trainModel/lr.h"
 #include "./trainModel/nn.h"
 
-#include "./innerNode/innerNode.h"
-#include "./innerNode/nnNode.h"
-#include "./innerNode/lrNode.h"
-#include "./innerNode/binarySearch.h"
-#include "./innerNode/divisionNode.h"
+#include "./innerNode/inner_node.h"
+#include "./innerNode/nn_node.h"
+#include "./innerNode/lr_node.h"
+#include "./innerNode/binary_search.h"
+#include "./innerNode/division_node.h"
 
-#include "./leafNode/leafNode.h"
+#include "./leafNode/leaf_node.h"
 #include "./leafNode/array.h"
-#include "./leafNode/gappedArray.h"
+#include "./leafNode/gapped_array.h"
 
-#include "./dataset/lognormalDistribution.h"
-#include "./dataset/uniformDistribution.h"
+#include "./dataset/lognormal_distribution.h"
+#include "./dataset/uniform_distribution.h"
 
 #include <algorithm>
 #include <iostream>
@@ -55,7 +55,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
         int threshold = 1000;
         int capacity = 800;
         cout << "threhold is:" << threshold << "\tcapacity:" << capacity << endl;
-        long double tmpCost = lrNode<arrayNode>::getCost(cntTree, i, dataset, capacity, threshold);
+        long double tmpCost = LRNode<ArrayNode>::getCost(cntTree, i, dataset, capacity, threshold);
         cout << "tmpCost is: " << tmpCost << "    minCost: " << minCost << "    minNum: " << minNum << endl;
         if (tmpCost < minCost)
         {
@@ -68,7 +68,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     // Rebuild the tree according to the calculated most suitable childNum
     int threshold = float(dataset.size() * 1.4) / minNum;
     int capacity = threshold * 0.8;
-    lrNode<arrayNode> *root = new lrNode<arrayNode>(firstStageParams, secondStageParams, threshold, minNum, capacity);
+    LRNode<ArrayNode> *root = new LRNode<ArrayNode>(firstStageParams, secondStageParams, threshold, minNum, capacity);
     cout << "Rebuild root over!" << endl;
 
     //test

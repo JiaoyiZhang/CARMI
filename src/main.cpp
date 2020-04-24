@@ -1,18 +1,18 @@
 #include "./trainModel/lr.h"
 #include "./trainModel/nn.h"
 
-#include "./innerNode/innerNode.h"
-#include "./innerNode/nnNode.h"
-#include "./innerNode/lrNode.h"
-#include "./innerNode/binarySearch.h"
-#include "./innerNode/divisionNode.h"
+#include "./innerNode/inner_node.h"
+#include "./innerNode/nn_node.h"
+#include "./innerNode/lr_node.h"
+#include "./innerNode/binary_search.h"
+#include "./innerNode/division_node.h"
 
-#include "./leafNode/leafNode.h"
+#include "./leafNode/leaf_node.h"
 #include "./leafNode/array.h"
-#include "./leafNode/gappedArray.h"
+#include "./leafNode/gapped_array.h"
 
-#include "./dataset/lognormalDistribution.h"
-#include "./dataset/uniformDistribution.h"
+#include "./dataset/lognormal_distribution.h"
+#include "./dataset/uniform_distribution.h"
 #include "reconstruction.h"
 
 #include <algorithm>
@@ -27,23 +27,23 @@ vector<pair<double, double>> insertDataset;
 
 btree::btree_map<double, double> btreemap;
 
-lrNode<arrayNode> lr_array;
-lrNode<gappedArray> lr_ga;
-nnNode<arrayNode> nn_array;
-nnNode<gappedArray> nn_ga;
-divisionNode<arrayNode> div_array;
-divisionNode<gappedArray> div_ga;
-binarySearchNode<arrayNode> bin_array;
-binarySearchNode<gappedArray> bin_ga;
+LRNode<ArrayNode> lr_array;
+LRNode<GappedArray> lr_ga;
+NetworkNode<ArrayNode> nn_array;
+NetworkNode<GappedArray> nn_ga;
+DivisionNode<ArrayNode> div_array;
+DivisionNode<GappedArray> div_ga;
+BinarySearchNode<ArrayNode> bin_array;
+BinarySearchNode<GappedArray> bin_ga;
 
-adaptiveLR<arrayNode> ada_lr_array;
-adaptiveLR<gappedArray> ada_lr_ga;
-adaptiveNN<arrayNode> ada_nn_array;
-adaptiveNN<gappedArray> ada_nn_ga;
-adaptiveDiv<arrayNode> ada_div_array;
-adaptiveDiv<gappedArray> ada_div_ga;
-adaptiveBin<arrayNode> ada_bin_array;
-adaptiveBin<gappedArray> ada_bin_ga;
+AdaptiveLR<ArrayNode> ada_lr_array;
+AdaptiveLR<GappedArray> ada_lr_ga;
+AdaptiveNN<ArrayNode> ada_nn_array;
+AdaptiveNN<GappedArray> ada_nn_ga;
+AdaptiveDiv<ArrayNode> ada_div_array;
+AdaptiveDiv<GappedArray> ada_div_ga;
+AdaptiveBin<ArrayNode> ada_bin_array;
+AdaptiveBin<GappedArray> ada_bin_ga;
 
 void createModel()
 {
@@ -58,42 +58,42 @@ void createModel()
     params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
     params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
 
-    lr_array = lrNode<arrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
+    lr_array = LRNode<ArrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
     lr_array.init(dataset);
     cout << "lr_array init over!" << endl;
     cout << "****************" << endl;
 
-    lr_ga = lrNode<gappedArray>(firstStageParams, secondStageParams, 1000, 15, 800);
+    lr_ga = LRNode<GappedArray>(firstStageParams, secondStageParams, 1000, 15, 800);
     lr_ga.init(dataset);
     cout << "lr_ga init over!" << endl;
     cout << "****************" << endl;
 
-    nn_array = nnNode<arrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
+    nn_array = NetworkNode<ArrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
     nn_array.init(dataset);
     cout << "nn_array init over!" << endl;
     cout << "****************" << endl;
 
-    nn_ga = nnNode<gappedArray>(firstStageParams, secondStageParams, 10000, 15, 800);
+    nn_ga = NetworkNode<GappedArray>(firstStageParams, secondStageParams, 10000, 15, 800);
     nn_ga.init(dataset);
     cout << "nn_ga init over!" << endl;
     cout << "****************" << endl;
 
-    div_array = divisionNode<arrayNode>(secondStageParams, 1000, 15, 800);
+    div_array = DivisionNode<ArrayNode>(secondStageParams, 1000, 15, 800);
     div_array.init(dataset);
     cout << "div_array init over!" << endl;
     cout << "****************" << endl;
 
-    div_ga = divisionNode<gappedArray>(secondStageParams, 10000, 15, 800);
+    div_ga = DivisionNode<GappedArray>(secondStageParams, 10000, 15, 800);
     div_ga.init(dataset);
     cout << "div_ga init over!" << endl;
     cout << "****************" << endl;
 
-    bin_array = binarySearchNode<arrayNode>(secondStageParams, 1000, 15, 800);
+    bin_array = BinarySearchNode<ArrayNode>(secondStageParams, 1000, 15, 800);
     bin_array.init(dataset);
     cout << "bin_array init over!" << endl;
     cout << "****************" << endl;
 
-    bin_ga = binarySearchNode<gappedArray>(secondStageParams, 1000, 15, 800);
+    bin_ga = BinarySearchNode<GappedArray>(secondStageParams, 1000, 15, 800);
     bin_ga.init(dataset);
     cout << "bin_ga init over!" << endl;
     cout << "****************" << endl;
@@ -219,7 +219,7 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
 int main()
 {
     // generateDataset: uniform dataset
-    uniformDataset uniData = uniformDataset(datasetSize, 0.9);
+    UniformDataset uniData = UniformDataset(datasetSize, 0.9);
     uniData.generateDataset(dataset, insertDataset);
 
     // // generateDataset: lognormal dataset

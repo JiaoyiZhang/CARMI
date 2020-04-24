@@ -7,10 +7,10 @@
 #include <vector>
 using namespace std;
 
-class uniformDataset
+class UniformDataset
 {
 public:
-    uniformDataset(int total, double initRatio)
+    UniformDataset(int total, double initRatio)
     {
         totalSize = total;
         initSize = total * initRatio;
@@ -29,7 +29,7 @@ private:
     int num;
 };
 
-void uniformDataset::generateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
+void UniformDataset::generateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
     // create dataset randomly
     // std::default_random_engine generator;
