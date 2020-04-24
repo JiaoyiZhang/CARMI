@@ -14,7 +14,7 @@ public:
         capacity = cap;
         maxIndex = 0;
     }
-    void Train(const vector<pair<double, double>> &subDataset);
+    void SetDataset(const vector<pair<double, double>> &subDataset);
 
     pair<double, double> Find(double key);
     bool Insert(pair<double, double> data);
@@ -35,7 +35,7 @@ private:
     int maxKeyNum;  // the maximum amount of data
 };
 
-void GappedArray::Train(const vector<pair<double, double>> &subDataset)
+void GappedArray::SetDataset(const vector<pair<double, double>> &subDataset)
 {
     m_datasetSize = subDataset.size();
     // cout << "In gapped array: m_datasetSize is: " << m_datasetSize << endl;

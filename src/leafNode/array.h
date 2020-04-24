@@ -15,7 +15,7 @@ public:
         maxNegativeError = 0;
     }
 
-    void Train(const vector<pair<double, double>> &dataset);
+    void SetDataset(const vector<pair<double, double>> &dataset);
 
     pair<double, double> Find(double key);
     bool Insert(pair<double, double> data);
@@ -30,7 +30,7 @@ private:
     int maxNegativeError;
 };
 
-void ArrayNode::Train(const vector<pair<double, double>> &dataset)
+void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
 {
     m_dataset = dataset;
     m_datasetSize = m_dataset.size();
@@ -185,7 +185,7 @@ bool ArrayNode::Insert(pair<double, double> data)
     // If the current number is greater than the maximum,
     // the child node needs to be reTrained
     if (m_datasetSize >= m_maxInsertNumber)
-        Train(m_dataset);
+        SetDataset(m_dataset);
     return true;
 }
 

@@ -15,31 +15,27 @@ class BasicLeafNode
 public:
     BasicLeafNode()
     {
-        isLeafNode = true;
         m_datasetSize = 0;
         model = new LinearRegression();
     }
-    bool IsLeaf() { return isLeafNode; }
     int GetSize() { return m_datasetSize; }
-    void GetDataset(vector<pair<double, double>> &dataset)
+    void GetDataset(vector<pair<double, double>> *dataset)
     {
         for (int i = 0; i < m_dataset.size(); i++)
         {
             if (m_dataset[i].first != -1)
-                dataset.push_back(m_dataset[i]);
+                dataset->push_back(m_dataset[i]);
         }
     }
 
-    virtual void Train(const vector<pair<double, double>> &dataset){};
+    virtual void SetDataset(const vector<pair<double, double>> &dataset) = 0;
 
-    virtual pair<double, double> Find(double key){};
-    virtual bool Insert(pair<double, double> data){};
-    virtual bool Delete(double key){};
-    virtual bool Update(pair<double, double> data){};
+    virtual pair<double, double> Find(double key) = 0;
+    virtual bool Insert(pair<double, double> data) = 0;
+    virtual bool Delete(double key) = 0;
+    virtual bool Update(pair<double, double> data) = 0;
 
 protected:
-    bool isLeafNode;
-
     vector<pair<double, double>> m_dataset;
     int m_datasetSize;
 
