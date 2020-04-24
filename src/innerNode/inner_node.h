@@ -10,16 +10,11 @@ using namespace std;
 class BasicInnerNode
 {
 public:
-    BasicInnerNode()
-    {
-        isLeafNode = false;
-    }
+    BasicInnerNode(){};
     BasicInnerNode(int childNum)
     {
-        isLeafNode = false;
         childNumber = childNum;
     }
-    bool IsLeaf() { return isLeafNode; }
 
     virtual void Initialize(const vector<pair<double, double>> &dataset){};
 
@@ -29,9 +24,9 @@ public:
     virtual bool Update(pair<double, double> data){};
 
 protected:
-    vector<BasicLeafNode *> children; // store the lower nodes
-    int childNumber;                  // the size of the lower nodes
-    bool isLeafNode;
+    vector<void *> children;       // store the lower nodes
+    vector<bool> children_is_leaf; //record whether each child node is a leaf node
+    int childNumber;               // the size of the lower nodes
 };
 
 #endif

@@ -14,6 +14,7 @@ public:
         for (int i = 0; i < childNumber; i++)
         {
             children.push_back(new lowerType(threshold, maxInsertNumber));
+            children_is_leaf.push_back(true);
         }
     }
 
@@ -56,7 +57,7 @@ void BinarySearchNode<lowerType>::Initialize(const vector<pair<double, double>> 
 
     cout << "train next stage" << endl;
     for (int i = 0; i < childNumber; i++)
-        children[i]->Train(perSubDataset[i]);
+        ((lowerType *)children[i])->SetDataset(perSubDataset[i]);
     cout << "End train" << endl;
 }
 
@@ -78,9 +79,9 @@ pair<double, double> BinarySearchNode<lowerType>::Find(double key)
         else
             break;
     }
-    if (children[mid]->IsLeaf() == false)
+    if (children_is_leaf[mid] == false)
         return ((BinarySearchNode *)children[mid])->Find(key);
-    return children[mid]->Find(key);
+    return ((lowerType *)children[mid])->Find(key);
 }
 template <typename lowerType>
 bool BinarySearchNode<lowerType>::Update(pair<double, double> data)
@@ -100,9 +101,9 @@ bool BinarySearchNode<lowerType>::Update(pair<double, double> data)
         else
             break;
     }
-    if (children[mid]->IsLeaf() == false)
+    if (children_is_leaf[mid] == false)
         return ((BinarySearchNode *)children[mid])->Update(data);
-    return children[mid]->Update(data);
+    return ((lowerType *)children[mid])->Update(data);
 }
 
 template <typename lowerType>
@@ -123,9 +124,9 @@ bool BinarySearchNode<lowerType>::Delete(double key)
         else
             break;
     }
-    if (children[mid]->IsLeaf() == false)
+    if (children_is_leaf[mid] == false)
         return ((BinarySearchNode *)children[mid])->Delete(key);
-    return children[mid]->Delete(key);
+    return ((lowerType *)children[mid])->Delete(key);
 }
 
 template <typename lowerType>
@@ -146,7 +147,7 @@ bool BinarySearchNode<lowerType>::Insert(pair<double, double> data)
         else
             break;
     }
-    return children[mid]->Insert(data);
+    return ((lowerType *)children[mid])->Insert(data);
 }
 
 template <typename lowerType>
@@ -237,14 +238,16 @@ void AdaptiveBin<lowerType>::Initialize(const vector<pair<double, double>> &data
             AdaptiveBin *child = new AdaptiveBin(maxKeyNum, this->childNumber, capacity);
             child->Initialize(perSubDataset[i]);
             this->children.push_back((lowerType *)child);
+            this->children_is_leaf.push_back(false);
         }
         else
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
             lowerType *child = new lowerType(maxKeyNum, capacity);
-            child->Train(perSubDataset[i]);
+            child->SetDataset(perSubDataset[i]);
             this->children.push_back(child);
+            this->children_is_leaf.push_back(true);
         }
     }
     cout << "End train" << endl;
@@ -268,57 +271,60 @@ bool AdaptiveBin<lowerType>::Insert(pair<double, double> data)
         else
             break;
     }
-    int size = this->children[mid]->GetSize();
-
-    // if an Insert will push a leaf node's
-    // data structure over its maximum bound number of keys,
-    // then we split the leaf data node
-    if (this->children[mid]->IsLeaf() && size >= maxKeyNum)
+    if (this->children_is_leaf[mid] == true)
     {
-        // The corresponding leaf level moDelete in RMI
-        // now becomes an inner level moDelete
-        AdaptiveBin *newNode = new AdaptiveBin(maxKeyNum, this->childNumber, capacity);
-        vector<pair<double, double>> dataset;
-        this->children[mid]->GetDataset(dataset);
-
-        // a number of children leaf level moDeletes are created
-        for (int i = 0; i < this->childNumber; i++)
+        int size = ((lowerType *)this->children[mid])->GetSize();
+        // if an Insert will push a leaf node's
+        // data structure over its maximum bound number of keys,
+        // then we split the leaf data node
+        if (size >= maxKeyNum)
         {
-            lowerType *temp = new lowerType(maxKeyNum, capacity);
-            newNode->children.push_back(temp);
-        }
+            // The corresponding leaf level moDelete in RMI
+            // now becomes an inner level moDelete
+            AdaptiveBin *newNode = new AdaptiveBin(maxKeyNum, this->childNumber, capacity);
+            vector<pair<double, double>> dataset;
+            ((lowerType *)this->children[mid])->GetDataset(&dataset);
 
-        // The data from the original leaf node is then
-        // distributed to the newly created children leaf nodes
-        // according to the original nodeÃ¢â‚¬â„¢s moDelete.
-        vector<vector<pair<double, double>>> perSubDataset;
-        vector<pair<double, double>> tmp;
-        for (int i = 0; i < dataset.size(); i++)
-        {
-            tmp.push_back(dataset[i]);
-            if ((i + 1) % (dataset.size() / newNode->childNumber) == 0)
+            // a number of children leaf level moDeletes are created
+            for (int i = 0; i < this->childNumber; i++)
+            {
+                lowerType *temp = new lowerType(maxKeyNum, capacity);
+                newNode->children.push_back(temp);
+                newNode->children_is_leaf.push_back(true);
+            }
+
+            // The data from the original leaf node is then
+            // distributed to the newly created children leaf nodes
+            // according to the original nodeÃ¢â‚¬â„¢s moDelete.
+            vector<vector<pair<double, double>>> perSubDataset;
+            vector<pair<double, double>> tmp;
+            for (int i = 0; i < dataset.size(); i++)
+            {
+                tmp.push_back(dataset[i]);
+                if ((i + 1) % (dataset.size() / newNode->childNumber) == 0)
+                {
+                    perSubDataset.push_back(tmp);
+                    newNode->index.push_back(dataset[i].first);
+                    tmp = vector<pair<double, double>>();
+                }
+            }
+            if (newNode->index.size() == this->childNumber - 1)
             {
                 perSubDataset.push_back(tmp);
-                newNode->index.push_back(dataset[i].first);
-                tmp = vector<pair<double, double>>();
+                newNode->index.push_back(dataset[dataset.size() - 1].first);
             }
-        }
-        if (newNode->index.size() == this->childNumber - 1)
-        {
-            perSubDataset.push_back(tmp);
-            newNode->index.push_back(dataset[dataset.size() - 1].first);
-        }
 
-        // Each of the children leaf nodes trains its own
-        // moDelete on its portion of the data.
-        for (int i = 0; i < this->childNumber; i++)
-            newNode->children[i]->Train(perSubDataset[i]);
-        this->children[mid] = (lowerType *)newNode;
-        return ((AdaptiveBin *)this->children[mid])->Insert(data);
+            // Each of the children leaf nodes trains its own
+            // moDelete on its portion of the data.
+            for (int i = 0; i < this->childNumber; i++)
+                ((lowerType *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
+            this->children[mid] = (lowerType *)newNode;
+            return ((AdaptiveBin *)this->children[mid])->Insert(data);
+        }
     }
-    else if (this->children[mid]->IsLeaf() == false)
+    else
         return ((AdaptiveBin *)this->children[mid])->Insert(data);
-    return this->children[mid]->Insert(data);
+    return ((lowerType *)this->children[mid])->Insert(data);
 }
 
 template <typename lowerType>

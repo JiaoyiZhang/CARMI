@@ -12,9 +12,11 @@ public:
     LRNode(int childNum) : BasicInnerNode(childNum){};
     LRNode(int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
     {
-
         for (int i = 0; i < childNumber; i++)
+        {
             children.push_back(new lowerType(threshold, maxInsertNumber));
+            children_is_leaf.push_back(true);
+        }
     }
 
     void Initialize(const vector<pair<double, double>> &dataset);
@@ -23,31 +25,31 @@ public:
     {
         double p = m_firstStageNetwork.Predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        if (children[preIdx]->IsLeaf() == false)
+        if (children_is_leaf[preIdx] == false)
             return ((LRNode *)children[preIdx])->Find(key);
-        return children[preIdx]->Find(key);
+        return ((lowerType *)children[preIdx])->Find(key);
     }
     bool Insert(pair<double, double> data)
     {
         double p = m_firstStageNetwork.Predict(data.first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        return children[preIdx]->Insert(data);
+        return ((lowerType *)children[preIdx])->Insert(data);
     }
     bool Delete(double key)
     {
         double p = m_firstStageNetwork.Predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        if (children[preIdx]->IsLeaf() == false)
+        if (children_is_leaf[preIdx] == false)
             return ((LRNode *)children[preIdx])->Delete(key);
-        return children[preIdx]->Delete(key);
+        return ((lowerType *)children[preIdx])->Delete(key);
     }
     bool Update(pair<double, double> data)
     {
         double p = m_firstStageNetwork.Predict(data.first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        if (children[preIdx]->IsLeaf() == false)
+        if (children_is_leaf[preIdx] == false)
             return ((LRNode *)children[preIdx])->Update(data);
-        return children[preIdx]->Update(data);
+        return ((lowerType *)children[preIdx])->Update(data);
     }
 
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
@@ -82,7 +84,7 @@ void LRNode<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
 
     cout << "train second stage" << endl;
     for (int i = 0; i < childNumber; i++)
-        children[i]->Train(perSubDataset[i]);
+        ((lowerType *)children[i])->SetDataset(perSubDataset[i]);
     cout << "End train" << endl;
 }
 
@@ -177,15 +179,17 @@ void AdaptiveLR<lowerType>::Initialize(const vector<pair<double, double>> &datas
             // recursively call Initialize on the new node.
             AdaptiveLR *child = new AdaptiveLR(maxKeyNum, this->childNumber, capacity);
             child->Initialize(perSubDataset[i]);
-            this->children.push_back((lowerType *)child);
+            this->children.push_back(child);
+            this->children_is_leaf.push_back(false);
         }
         else
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
             lowerType *child = new lowerType(maxKeyNum, capacity);
-            child->Train(perSubDataset[i]);
+            child->SetDataset(perSubDataset[i]);
             this->children.push_back(child);
+            this->children_is_leaf.push_back(true);
         }
     }
     cout << "End train" << endl;
@@ -196,52 +200,56 @@ bool AdaptiveLR<lowerType>::Insert(pair<double, double> data)
 {
     double p = this->m_firstStageNetwork.Predict(data.first);
     int preIdx = static_cast<int>(p * (this->childNumber - 1));
-    int size = this->children[preIdx]->GetSize();
-
-    // if an Insert will push a leaf node's
-    // data structure over its maximum bound number of keys,
-    // then we split the leaf data node
-    if (this->children[preIdx]->IsLeaf() && size >= maxKeyNum)
+    if (this->children_is_leaf[preIdx] == true)
     {
-        // The corresponding leaf level moDelete in RMI
-        // now becomes an inner level moDelete
-        AdaptiveLR *newNode = new AdaptiveLR(maxKeyNum, this->childNumber, capacity);
-        vector<pair<double, double>> dataset;
-        this->children[preIdx]->GetDataset(dataset);
-        newNode->m_firstStageNetwork.Train(dataset);
-
-        // a number of children leaf level moDeletes are created
-        for (int i = 0; i < this->childNumber; i++)
+        int size = ((lowerType *)this->children[preIdx])->GetSize();
+        // if an Insert will push a leaf node's
+        // data structure over its maximum bound number of keys,
+        // then we split the leaf data node
+        if (size >= maxKeyNum)
         {
-            lowerType *temp = new lowerType(maxKeyNum, capacity);
-            newNode->children.push_back(temp);
-        }
+            // The corresponding leaf level moDelete in RMI
+            // now becomes an inner level moDelete
+            AdaptiveLR *newNode = new AdaptiveLR(maxKeyNum, this->childNumber, capacity);
+            vector<pair<double, double>> dataset;
+            ((lowerType *)this->children[preIdx])->GetDataset(&dataset);
+            newNode->m_firstStageNetwork.Train(dataset);
 
-        // The data from the original leaf node is then
-        // distributed to the newly created children leaf nodes
-        // according to the original nodeÃ¢â‚¬â„¢s moDelete.
-        vector<vector<pair<double, double>>> perSubDataset;
-        vector<pair<double, double>> temp;
-        for (int i = 0; i < this->childNumber; i++)
-            perSubDataset.push_back(temp);
-        for (int i = 0; i < dataset.size(); i++)
-        {
-            double pre = newNode->m_firstStageNetwork.Predict(dataset[i].first);
-            pre = pre * (this->childNumber - 1);
-            int pIdx = static_cast<int>(pre);
-            perSubDataset[pIdx].push_back(dataset[i]);
-        }
+            // a number of children leaf level moDeletes are created
+            for (int i = 0; i < this->childNumber; i++)
+            {
+                lowerType *temp = new lowerType(maxKeyNum, capacity);
+                newNode->children.push_back(temp);
+                newNode->children_is_leaf.push_back(true);
+            }
 
-        // Each of the children leaf nodes trains its own
-        // moDelete on its portion of the data.
-        for (int i = 0; i < this->childNumber; i++)
-            newNode->children[i]->Train(perSubDataset[i]);
-        this->children[preIdx] = (lowerType *)newNode;
-        return ((AdaptiveLR *)this->children[preIdx])->Insert(data);
+            // The data from the original leaf node is then
+            // distributed to the newly created children leaf nodes
+            // according to the original nodeÃ¢â‚¬â„¢s moDelete.
+            vector<vector<pair<double, double>>> perSubDataset;
+            vector<pair<double, double>> temp;
+            for (int i = 0; i < this->childNumber; i++)
+                perSubDataset.push_back(temp);
+            for (int i = 0; i < dataset.size(); i++)
+            {
+                double pre = newNode->m_firstStageNetwork.Predict(dataset[i].first);
+                pre = pre * (this->childNumber - 1);
+                int pIdx = static_cast<int>(pre);
+                perSubDataset[pIdx].push_back(dataset[i]);
+            }
+
+            // Each of the children leaf nodes trains its own
+            // moDelete on its portion of the data.
+            for (int i = 0; i < this->childNumber; i++)
+                ((lowerType *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
+            this->children[preIdx] = newNode;
+            this->children_is_leaf[preIdx] = false;
+            return ((AdaptiveLR *)this->children[preIdx])->Insert(data);
+        }
     }
-    else if (this->children[preIdx]->IsLeaf() == false)
+    else
         return ((AdaptiveLR *)this->children[preIdx])->Insert(data);
-    return this->children[preIdx]->Insert(data);
+    return ((lowerType *)this->children[preIdx])->Insert(data);
 }
 
 template <typename lowerType>
