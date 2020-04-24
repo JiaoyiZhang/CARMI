@@ -57,9 +57,9 @@ class Net : public BasicModel
 public:
 	Net(){};
 
-	void train(const vector<pair<double, double>> &dataset, params param);
+	void Train(const vector<pair<double, double>> &dataset, params param);
 
-	double predict(double key); // return the key's index
+	double Predict(double key); // return the key's index
 
 	vector<double> Relu(vector<double> input);
 
@@ -71,7 +71,7 @@ private:
 };
 
 // train the Network
-void Net::train(const vector<pair<double, double>> &dataset, params param)
+void Net::Train(const vector<pair<double, double>> &dataset, params param)
 {
 	vector<pair<double, double>> m_dataset = dataset;
 	vector<double> index;
@@ -141,11 +141,11 @@ void Net::train(const vector<pair<double, double>> &dataset, params param)
 	if ((m_dataset.size() / totalLoss) > 60 && totalLoss > 100)
 	{
 		cout << "RETRAIN" << endl;
-		train(dataset, param);
+		Train(dataset, param);
 	}
 }
 
-double Net::predict(double key)
+double Net::Predict(double key)
 {
 	double p = b2;
 	// vector<double> firstLayerResult;

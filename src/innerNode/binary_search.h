@@ -22,14 +22,14 @@ public:
         }
     }
 
-    void init(const vector<pair<double, double>> &dataset);
+    void Initialize(const vector<pair<double, double>> &dataset);
 
-    pair<double, double> find(double key);
-    bool insert(pair<double, double> data);
-    bool del(double key);
-    bool update(pair<double, double> data);
+    pair<double, double> Find(double key);
+    bool Insert(pair<double, double> data);
+    bool Delete(double key);
+    bool Update(pair<double, double> data);
 
-    static long double getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
 
 protected:
     vector<double> index;
@@ -37,7 +37,7 @@ protected:
 };
 
 template <typename lowerType>
-void BinarySearchNode<lowerType>::init(const vector<pair<double, double>> &dataset)
+void BinarySearchNode<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -62,12 +62,12 @@ void BinarySearchNode<lowerType>::init(const vector<pair<double, double>> &datas
 
     cout << "train next stage" << endl;
     for (int i = 0; i < childNumber; i++)
-        children[i]->train(perSubDataset[i]);
+        children[i]->Train(perSubDataset[i]);
     cout << "End train" << endl;
 }
 
 template <typename lowerType>
-pair<double, double> BinarySearchNode<lowerType>::find(double key)
+pair<double, double> BinarySearchNode<lowerType>::Find(double key)
 {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -84,12 +84,12 @@ pair<double, double> BinarySearchNode<lowerType>::find(double key)
         else
             break;
     }
-    if (children[mid]->isLeaf() == false)
-        return ((BinarySearchNode *)children[mid])->find(key);
-    return children[mid]->find(key);
+    if (children[mid]->IsLeaf() == false)
+        return ((BinarySearchNode *)children[mid])->Find(key);
+    return children[mid]->Find(key);
 }
 template <typename lowerType>
-bool BinarySearchNode<lowerType>::update(pair<double, double> data)
+bool BinarySearchNode<lowerType>::Update(pair<double, double> data)
 {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -106,13 +106,13 @@ bool BinarySearchNode<lowerType>::update(pair<double, double> data)
         else
             break;
     }
-    if (children[mid]->isLeaf() == false)
-        return ((BinarySearchNode *)children[mid])->update(data);
-    return children[mid]->update(data);
+    if (children[mid]->IsLeaf() == false)
+        return ((BinarySearchNode *)children[mid])->Update(data);
+    return children[mid]->Update(data);
 }
 
 template <typename lowerType>
-bool BinarySearchNode<lowerType>::del(double key)
+bool BinarySearchNode<lowerType>::Delete(double key)
 {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -129,13 +129,13 @@ bool BinarySearchNode<lowerType>::del(double key)
         else
             break;
     }
-    if (children[mid]->isLeaf() == false)
-        return ((BinarySearchNode *)children[mid])->del(key);
-    return children[mid]->del(key);
+    if (children[mid]->IsLeaf() == false)
+        return ((BinarySearchNode *)children[mid])->Delete(key);
+    return children[mid]->Delete(key);
 }
 
 template <typename lowerType>
-bool BinarySearchNode<lowerType>::insert(pair<double, double> data)
+bool BinarySearchNode<lowerType>::Insert(pair<double, double> data)
 {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -152,15 +152,15 @@ bool BinarySearchNode<lowerType>::insert(pair<double, double> data)
         else
             break;
     }
-    return children[mid]->insert(data);
+    return children[mid]->Insert(data);
 }
 
 template <typename lowerType>
-long double BinarySearchNode<lowerType>::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double BinarySearchNode<lowerType>::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
-    double initCost = (log(childNum) / log(2)) * dataset.size();
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tinitCost is:" << initCost << endl;
-    long double totalCost = initCost;
+    double InitializeCost = (log(childNum) / log(2)) * dataset.size();
+    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
@@ -178,7 +178,7 @@ long double BinarySearchNode<lowerType>::getCost(const btree::btree_map<double, 
     perSubDataset.push_back(tmp);
 
     for (int i = 0; i < childNum; i++)
-        totalCost += lowerType::getCost(cntTree, perSubDataset[i]);
+        totalCost += lowerType::GetCost(cntTree, perSubDataset[i]);
     cout << "sub tree get cost finish!" << endl;
     return totalCost;
 }
@@ -195,11 +195,11 @@ public:
         capacity = cap;
     }
 
-    void init(const vector<pair<double, double>> &dataset);
+    void Initialize(const vector<pair<double, double>> &dataset);
 
-    bool insert(pair<double, double> data);
+    bool Insert(pair<double, double> data);
 
-    static long double getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
 
 private:
     int capacity;   // the current maximum capacity of the leaf node data
@@ -208,7 +208,7 @@ private:
 };
 
 template <typename lowerType>
-void AdaptiveBin<lowerType>::init(const vector<pair<double, double>> &dataset)
+void AdaptiveBin<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -241,7 +241,7 @@ void AdaptiveBin<lowerType>::init(const vector<pair<double, double>> &dataset)
             // so we create a new inner node and
             // recursively call Initialize on the new node.
             AdaptiveBin *child = new AdaptiveBin(this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
-            child->init(perSubDataset[i]);
+            child->Initialize(perSubDataset[i]);
             this->children.push_back((lowerType *)child);
         }
         else
@@ -249,7 +249,7 @@ void AdaptiveBin<lowerType>::init(const vector<pair<double, double>> &dataset)
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
             lowerType *child = new lowerType(maxKeyNum, this->m_secondStageParams, capacity);
-            child->train(perSubDataset[i]);
+            child->Train(perSubDataset[i]);
             this->children.push_back(child);
         }
     }
@@ -257,7 +257,7 @@ void AdaptiveBin<lowerType>::init(const vector<pair<double, double>> &dataset)
 }
 
 template <typename lowerType>
-bool AdaptiveBin<lowerType>::insert(pair<double, double> data)
+bool AdaptiveBin<lowerType>::Insert(pair<double, double> data)
 {
     int start_idx = 0;
     int end_idx = this->childNumber - 1;
@@ -274,20 +274,20 @@ bool AdaptiveBin<lowerType>::insert(pair<double, double> data)
         else
             break;
     }
-    int size = this->children[mid]->getSize();
+    int size = this->children[mid]->GetSize();
 
-    // if an insert will push a leaf node's
+    // if an Insert will push a leaf node's
     // data structure over its maximum bound number of keys,
     // then we split the leaf data node
-    if (this->children[mid]->isLeaf() && size >= maxKeyNum)
+    if (this->children[mid]->IsLeaf() && size >= maxKeyNum)
     {
-        // The corresponding leaf level model in RMI
-        // now becomes an inner level model
+        // The corresponding leaf level moDelete in RMI
+        // now becomes an inner level moDelete
         AdaptiveBin *newNode = new AdaptiveBin(this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
         vector<pair<double, double>> dataset;
-        this->children[mid]->getDataset(dataset);
+        this->children[mid]->GetDataset(dataset);
 
-        // a number of children leaf level models are created
+        // a number of children leaf level moDeletes are created
         for (int i = 0; i < this->childNumber; i++)
         {
             lowerType *temp = new lowerType(maxKeyNum, this->m_secondStageParams, capacity);
@@ -296,7 +296,7 @@ bool AdaptiveBin<lowerType>::insert(pair<double, double> data)
 
         // The data from the original leaf node is then
         // distributed to the newly created children leaf nodes
-        // according to the original nodeÃ¢â‚¬â„¢s model.
+        // according to the original nodeÃ¢â‚¬â„¢s moDelete.
         vector<vector<pair<double, double>>> perSubDataset;
         vector<pair<double, double>> tmp;
         for (int i = 0; i < dataset.size(); i++)
@@ -316,23 +316,23 @@ bool AdaptiveBin<lowerType>::insert(pair<double, double> data)
         }
 
         // Each of the children leaf nodes trains its own
-        // model on its portion of the data.
+        // moDelete on its portion of the data.
         for (int i = 0; i < this->childNumber; i++)
-            newNode->children[i]->train(perSubDataset[i]);
+            newNode->children[i]->Train(perSubDataset[i]);
         this->children[mid] = (lowerType *)newNode;
-        return ((AdaptiveBin *)this->children[mid])->insert(data);
+        return ((AdaptiveBin *)this->children[mid])->Insert(data);
     }
-    else if (this->children[mid]->isLeaf() == false)
-        return ((AdaptiveBin *)this->children[mid])->insert(data);
-    return this->children[mid]->insert(data);
+    else if (this->children[mid]->IsLeaf() == false)
+        return ((AdaptiveBin *)this->children[mid])->Insert(data);
+    return this->children[mid]->Insert(data);
 }
 
 template <typename lowerType>
-long double AdaptiveBin<lowerType>::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double AdaptiveBin<lowerType>::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
-    double initCost = (log(childNum) / log(2)) * dataset.size();
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tinitCost is:" << initCost << endl;
-    long double totalCost = initCost;
+    double InitializeCost = (log(childNum) / log(2)) * dataset.size();
+    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    long double totalCost = InitializeCost;
     // cout << " DatasetSize is : " << dataset.size() << endl;
     if (dataset.size() == 0)
         return 0;
@@ -354,9 +354,9 @@ long double AdaptiveBin<lowerType>::getCost(const btree::btree_map<double, pair<
     for (int i = 0; i < childNum; i++)
     {
         if (perSubDataset[i].size() > maxNum)
-            totalCost += AdaptiveBin<lowerType>::getCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
+            totalCost += AdaptiveBin<lowerType>::GetCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
         else
-            totalCost += lowerType::getCost(cntTree, perSubDataset[i]);
+            totalCost += lowerType::GetCost(cntTree, perSubDataset[i]);
     }
     cout << "sub tree get cost finish!" << endl;
     return totalCost;

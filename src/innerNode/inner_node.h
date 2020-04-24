@@ -19,14 +19,14 @@ public:
         isLeafNode = false;
         childNumber = childNum;
     }
-    bool isLeaf() { return isLeafNode; }
+    bool IsLeaf() { return isLeafNode; }
 
-    virtual void init(const vector<pair<double, double>> &dataset){};
+    virtual void Initialize(const vector<pair<double, double>> &dataset){};
 
-    virtual pair<double, double> find(double key){};
-    virtual bool insert(pair<double, double> data){};
-    virtual bool del(double key){};
-    virtual bool update(pair<double, double> data){};
+    virtual pair<double, double> Find(double key){};
+    virtual bool Insert(pair<double, double> data){};
+    virtual bool Delete(double key){};
+    virtual bool Update(pair<double, double> data){};
 
 protected:
     vector<BasicLeafNode *> children; // store the lower nodes

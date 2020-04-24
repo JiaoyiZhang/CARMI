@@ -15,22 +15,22 @@ public:
         maxNegativeError = 0;
     }
 
-    void train(const vector<pair<double, double>> &dataset);
+    void Train(const vector<pair<double, double>> &dataset);
 
-    pair<double, double> find(double key);
-    bool insert(pair<double, double> data);
-    bool del(double key);
-    bool update(pair<double, double> data);
+    pair<double, double> Find(double key);
+    bool Insert(pair<double, double> data);
+    bool Delete(double key);
+    bool Update(pair<double, double> data);
 
-    static long double getCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset);
 
 private:
-    int m_maxInsertNumber; // the maximum number of inserts
+    int m_maxInsertNumber; // the maximum number of Inserts
     int maxPositiveError;
     int maxNegativeError;
 };
 
-void ArrayNode::train(const vector<pair<double, double>> &dataset)
+void ArrayNode::Train(const vector<pair<double, double>> &dataset)
 {
     m_dataset = dataset;
     m_datasetSize = m_dataset.size();
@@ -40,13 +40,13 @@ void ArrayNode::train(const vector<pair<double, double>> &dataset)
         return p1.first < p2.first;
     });
 
-    model->train(m_dataset, parameter);
+    model->Train(m_dataset, parameter);
     int maxError = 0;
     double p;
     for (int i = 0; i < m_datasetSize; i++)
     {
-        p = model->predict(m_dataset[i].first);
-        // cout << "In array, train: i:" << i << "\tkey:" << m_dataset[i].first << "\tp:" << p << "\tnew p:" << p * (m_datasetSize - 1) << endl;
+        p = model->Predict(m_dataset[i].first);
+        // cout << "In array, Train: i:" << i << "\tkey:" << m_dataset[i].first << "\tp:" << p << "\tnew p:" << p * (m_datasetSize - 1) << endl;
         p *= m_datasetSize - 1;
         int error = i - p;
         if (error > maxPositiveError)
@@ -62,10 +62,10 @@ void ArrayNode::train(const vector<pair<double, double>> &dataset)
     maxNegativeError--;
 }
 
-pair<double, double> ArrayNode::find(double key)
+pair<double, double> ArrayNode::Find(double key)
 {
-    // use learnedIndex to find the data
-    double p = model->predict(key);
+    // use learnedIndex to Find the data
+    double p = model->Predict(key);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first == key)
     {
@@ -108,10 +108,10 @@ pair<double, double> ArrayNode::find(double key)
     }
 }
 
-bool ArrayNode::insert(pair<double, double> data)
+bool ArrayNode::Insert(pair<double, double> data)
 {
-    // use learnedIndex to find the data
-    double p = model->predict(data.first);
+    // use learnedIndex to Find the data
+    double p = model->Predict(data.first);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
 
     // exponential search
@@ -161,7 +161,7 @@ bool ArrayNode::insert(pair<double, double> data)
             start_idx = mid + 1;
     }
 
-    // insert data
+    // Insert data
     m_dataset.push_back(m_dataset[m_datasetSize - 1]);
     m_datasetSize++;
     for (int i = m_datasetSize - 2; i > preIdx; i--)
@@ -183,16 +183,16 @@ bool ArrayNode::insert(pair<double, double> data)
     }
 
     // If the current number is greater than the maximum,
-    // the child node needs to be retrained
+    // the child node needs to be reTrained
     if (m_datasetSize >= m_maxInsertNumber)
-        train(m_dataset);
+        Train(m_dataset);
     return true;
 }
 
-bool ArrayNode::del(double key)
+bool ArrayNode::Delete(double key)
 {
-    // use learnedIndex to find the data
-    double p = model->predict(key);
+    // use learnedIndex to Find the data
+    double p = model->Predict(key);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first != key)
     {
@@ -237,10 +237,10 @@ bool ArrayNode::del(double key)
     return true;
 }
 
-bool ArrayNode::update(pair<double, double> data)
+bool ArrayNode::Update(pair<double, double> data)
 {
-    // use learnedIndex to find the data
-    double p = model->predict(data.first);
+    // use learnedIndex to Find the data
+    double p = model->Predict(data.first);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first != data.first)
     {
@@ -282,7 +282,7 @@ bool ArrayNode::update(pair<double, double> data)
     return true;
 }
 
-long double ArrayNode::getCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)
+long double ArrayNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)
 {
     int datasetSize = dataset.size();
     if (datasetSize == 0)

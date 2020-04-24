@@ -19,7 +19,7 @@ public:
         num = initRatio * 10;
     }
 
-    void generateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
+    void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
 
 private:
     int totalSize;
@@ -29,7 +29,7 @@ private:
     int num;
 };
 
-void UniformDataset::generateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
+void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
     // create dataset randomly
     // std::default_random_engine generator;

@@ -19,7 +19,7 @@ public:
         num = initRatio * 10;
     }
 
-    void generateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
+    void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
 
 private:
     int totalSize;
@@ -29,7 +29,7 @@ private:
     int num;
 };
 
-void LognormalDataset::generateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
+void LognormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
     float maxValue = totalSize;
 

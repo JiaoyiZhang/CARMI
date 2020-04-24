@@ -26,9 +26,9 @@ public:
         m_datasetSize = 0;
         model = new LinearRegression();
     }
-    bool isLeaf() { return isLeafNode; }
-    int getSize() { return m_datasetSize; }
-    void getDataset(vector<pair<double, double>> &dataset)
+    bool IsLeaf() { return isLeafNode; }
+    int GetSize() { return m_datasetSize; }
+    void GetDataset(vector<pair<double, double>> &dataset)
     {
         for (int i = 0; i < m_dataset.size(); i++)
         {
@@ -37,20 +37,12 @@ public:
         }
     }
 
-    void chooseModel(int cnt)
-    {
-        if (cnt == 0)
-            model = new LinearRegression();
-        else if (cnt == 1)
-            model = new Net();
-    }
+    virtual void Train(const vector<pair<double, double>> &dataset){};
 
-    virtual void train(const vector<pair<double, double>> &dataset){};
-
-    virtual pair<double, double> find(double key){};
-    virtual bool insert(pair<double, double> data){};
-    virtual bool del(double key){};
-    virtual bool update(pair<double, double> data){};
+    virtual pair<double, double> Find(double key){};
+    virtual bool Insert(pair<double, double> data){};
+    virtual bool Delete(double key){};
+    virtual bool Update(pair<double, double> data){};
 
 protected:
     bool isLeafNode;

@@ -55,7 +55,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
         int threshold = 1000;
         int capacity = 800;
         cout << "threhold is:" << threshold << "\tcapacity:" << capacity << endl;
-        long double tmpCost = LRNode<ArrayNode>::getCost(cntTree, i, dataset, capacity, threshold);
+        long double tmpCost = LRNode<ArrayNode>::GetCost(cntTree, i, dataset, capacity, threshold);
         cout << "tmpCost is: " << tmpCost << "    minCost: " << minCost << "    minNum: " << minNum << endl;
         if (tmpCost < minCost)
         {
@@ -77,7 +77,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     QueryPerformanceFrequency(&c);
     for (int i = 0; i < dataset.size(); i++)
     {
-        root->find(dataset[i].first);
+        root->Find(dataset[i].first);
     }
     QueryPerformanceCounter(&e);
     cout << "Find time:" << (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart / (float)dataset.size() << endl;

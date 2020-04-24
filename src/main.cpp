@@ -59,42 +59,42 @@ void createModel()
     params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
 
     lr_array = LRNode<ArrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
-    lr_array.init(dataset);
+    lr_array.Initialize(dataset);
     cout << "lr_array init over!" << endl;
     cout << "****************" << endl;
 
     lr_ga = LRNode<GappedArray>(firstStageParams, secondStageParams, 1000, 15, 800);
-    lr_ga.init(dataset);
+    lr_ga.Initialize(dataset);
     cout << "lr_ga init over!" << endl;
     cout << "****************" << endl;
 
     nn_array = NetworkNode<ArrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
-    nn_array.init(dataset);
+    nn_array.Initialize(dataset);
     cout << "nn_array init over!" << endl;
     cout << "****************" << endl;
 
     nn_ga = NetworkNode<GappedArray>(firstStageParams, secondStageParams, 10000, 15, 800);
-    nn_ga.init(dataset);
+    nn_ga.Initialize(dataset);
     cout << "nn_ga init over!" << endl;
     cout << "****************" << endl;
 
     div_array = DivisionNode<ArrayNode>(secondStageParams, 1000, 15, 800);
-    div_array.init(dataset);
+    div_array.Initialize(dataset);
     cout << "div_array init over!" << endl;
     cout << "****************" << endl;
 
     div_ga = DivisionNode<GappedArray>(secondStageParams, 10000, 15, 800);
-    div_ga.init(dataset);
+    div_ga.Initialize(dataset);
     cout << "div_ga init over!" << endl;
     cout << "****************" << endl;
 
     bin_array = BinarySearchNode<ArrayNode>(secondStageParams, 1000, 15, 800);
-    bin_array.init(dataset);
+    bin_array.Initialize(dataset);
     cout << "bin_array init over!" << endl;
     cout << "****************" << endl;
 
     bin_ga = BinarySearchNode<GappedArray>(secondStageParams, 1000, 15, 800);
-    bin_ga.init(dataset);
+    bin_ga.Initialize(dataset);
     cout << "bin_ga init over!" << endl;
     cout << "****************" << endl;
     /*
@@ -172,7 +172,7 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceFrequency(&c);
     for (int i = 0; i < dataset.size(); i++)
     {
-        auto res = obj.find(dataset[i].first);
+        auto res = obj.Find(dataset[i].first);
     }
     QueryPerformanceCounter(&e);
     time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -181,7 +181,7 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
-        obj.insert(insertDataset[i]);
+        obj.Insert(insertDataset[i]);
     }
     QueryPerformanceCounter(&e);
     time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -190,7 +190,7 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
-        obj.update({insertDataset[i].first, 1.11});
+        obj.Update({insertDataset[i].first, 1.11});
     }
     QueryPerformanceCounter(&e);
     time2 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -199,7 +199,7 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
-        obj.del(insertDataset[i].first);
+        obj.Delete(insertDataset[i].first);
     }
     QueryPerformanceCounter(&e);
     time3 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -220,7 +220,7 @@ int main()
 {
     // generateDataset: uniform dataset
     UniformDataset uniData = UniformDataset(datasetSize, 0.9);
-    uniData.generateDataset(dataset, insertDataset);
+    uniData.GenerateDataset(dataset, insertDataset);
 
     // // generateDataset: lognormal dataset
     // lognormalDataset logData = lognormalDataset(datasetSize, 0.9);
