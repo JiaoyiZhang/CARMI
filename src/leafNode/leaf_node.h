@@ -19,13 +19,6 @@ public:
         m_datasetSize = 0;
         model = new LinearRegression();
     }
-    BasicLeafNode(params p)
-    {
-        parameter = p;
-        isLeafNode = true;
-        m_datasetSize = 0;
-        model = new LinearRegression();
-    }
     bool IsLeaf() { return isLeafNode; }
     int GetSize() { return m_datasetSize; }
     void GetDataset(vector<pair<double, double>> &dataset)
@@ -50,7 +43,6 @@ protected:
     vector<pair<double, double>> m_dataset;
     int m_datasetSize;
 
-    params parameter;
     BasicModel *model;
 };
 

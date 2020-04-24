@@ -7,7 +7,7 @@
 class GappedArray : public BasicLeafNode
 {
 public:
-    GappedArray(int maxKeyNumber, params p, int cap) : BasicLeafNode(p)
+    GappedArray(int maxKeyNumber, int cap) : BasicLeafNode()
     {
         maxKeyNum = maxKeyNumber;
         density = 0.75;
@@ -45,7 +45,7 @@ void GappedArray::Train(const vector<pair<double, double>> &subDataset)
         m_dataset = vector<pair<double, double>>(maxKeyNum, pair<double, double>{-1, -1});
         return;
     }
-    model->Train(subDataset, parameter);
+    model->Train(subDataset);
     vector<pair<double, double>> newDataset(maxKeyNum, pair<double, double>{-1, -1});
     while (m_datasetSize > capacity)
         capacity /= density;
@@ -61,7 +61,7 @@ void GappedArray::Train(const vector<pair<double, double>> &subDataset)
         }
     }
     m_dataset = newDataset;
-    model->Train(m_dataset, parameter);
+    model->Train(m_dataset);
 }
 
 pair<double, double> GappedArray::Find(double key)
@@ -405,7 +405,7 @@ void GappedArray::Expand()
 {
     if (capacity == maxKeyNum)
     {
-        model->Train(m_dataset, parameter);
+        model->Train(m_dataset);
         return;
     }
     int newSize = capacity / density;
@@ -416,7 +416,7 @@ void GappedArray::Expand()
         newSize = maxKeyNum;
     }
     // reTraining the node's linear model on the existing keys
-    model->Train(m_dataset, parameter);
+    model->Train(m_dataset);
 
     // rescaling the model to Predict positions in the expanded array
     capacity = newSize;

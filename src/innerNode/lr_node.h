@@ -9,18 +9,12 @@ class LRNode : public BasicInnerNode
 {
 public:
     LRNode() : BasicInnerNode(){};
-    LRNode(params firstStageParams, params secondStageParams, int childNum) : BasicInnerNode(childNum)
+    LRNode(int childNum) : BasicInnerNode(childNum){};
+    LRNode(int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
     {
-        m_firstStageParams = firstStageParams;
-        m_secondStageParams = secondStageParams;
-    }
-    LRNode(params firstStageParams, params secondStageParams, int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
-    {
-        m_firstStageParams = firstStageParams;
-        m_secondStageParams = secondStageParams;
 
         for (int i = 0; i < childNumber; i++)
-            children.push_back(new lowerType(threshold, m_secondStageParams, maxInsertNumber));
+            children.push_back(new lowerType(threshold, maxInsertNumber));
     }
 
     void Initialize(const vector<pair<double, double>> &dataset);
@@ -59,8 +53,6 @@ public:
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
 
 protected:
-    params m_firstStageParams;                                 // parameters of lr
-    params m_secondStageParams;                                // parameters of lower nodes
     LinearRegression m_firstStageNetwork = LinearRegression(); // lr of the first stage
 };
 
@@ -71,7 +63,7 @@ void LRNode<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
         return;
 
     cout << "train first stage" << endl;
-    m_firstStageNetwork.Train(dataset, m_firstStageParams);
+    m_firstStageNetwork.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNumber; i++)
@@ -104,8 +96,7 @@ long double LRNode<lowerType>::GetCost(const btree::btree_map<double, pair<int, 
         return 0;
 
     LinearRegression tmpNet = LinearRegression();
-    params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
-    tmpNet.Train(dataset, firstStageParams);
+    tmpNet.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
@@ -129,7 +120,7 @@ class AdaptiveLR : public LRNode<lowerType>
 {
 public:
     AdaptiveLR() : LRNode<lowerType>(){};
-    AdaptiveLR(params firstStageParams, params secondStageParams, int maxKey, int childNum, int cap) : LRNode<lowerType>(firstStageParams, secondStageParams, childNum)
+    AdaptiveLR(int maxKey, int childNum, int cap) : LRNode<lowerType>(childNum)
     {
         maxKeyNum = maxKey;
         density = 0.75;
@@ -156,7 +147,7 @@ void AdaptiveLR<lowerType>::Initialize(const vector<pair<double, double>> &datas
 
     cout << "train first stage" << endl;
     // first train the node's linear moDelete using its assigned keys
-    this->m_firstStageNetwork.Train(dataset, this->m_firstStageParams);
+    this->m_firstStageNetwork.Train(dataset);
     //  use the moDelete to divide the keys into some number of partitions
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -184,7 +175,7 @@ void AdaptiveLR<lowerType>::Initialize(const vector<pair<double, double>> &datas
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            AdaptiveLR *child = new AdaptiveLR(this->m_firstStageParams, this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
+            AdaptiveLR *child = new AdaptiveLR(maxKeyNum, this->childNumber, capacity);
             child->Initialize(perSubDataset[i]);
             this->children.push_back((lowerType *)child);
         }
@@ -192,7 +183,7 @@ void AdaptiveLR<lowerType>::Initialize(const vector<pair<double, double>> &datas
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
-            lowerType *child = new lowerType(maxKeyNum, this->m_secondStageParams, capacity);
+            lowerType *child = new lowerType(maxKeyNum, capacity);
             child->Train(perSubDataset[i]);
             this->children.push_back(child);
         }
@@ -214,15 +205,15 @@ bool AdaptiveLR<lowerType>::Insert(pair<double, double> data)
     {
         // The corresponding leaf level moDelete in RMI
         // now becomes an inner level moDelete
-        AdaptiveLR *newNode = new AdaptiveLR(this->m_firstStageParams,this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
+        AdaptiveLR *newNode = new AdaptiveLR(maxKeyNum, this->childNumber, capacity);
         vector<pair<double, double>> dataset;
         this->children[preIdx]->GetDataset(dataset);
-        newNode->m_firstStageNetwork.Train(dataset, this->m_firstStageParams);
+        newNode->m_firstStageNetwork.Train(dataset);
 
         // a number of children leaf level moDeletes are created
         for (int i = 0; i < this->childNumber; i++)
         {
-            lowerType *temp = new lowerType(maxKeyNum, this->m_secondStageParams, capacity);
+            lowerType *temp = new lowerType(maxKeyNum, capacity);
             newNode->children.push_back(temp);
         }
 
@@ -263,8 +254,7 @@ long double AdaptiveLR<lowerType>::GetCost(const btree::btree_map<double, pair<i
         return 0;
 
     LinearRegression tmpNet = LinearRegression();
-    params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
-    tmpNet.Train(dataset, firstStageParams);
+    tmpNet.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)

@@ -66,7 +66,7 @@ class Net : public BasicModel
 public:
 	Net(){};
 
-	void Train(const vector<pair<double, double>> &dataset, const params param);
+	void Train(const vector<pair<double, double>> &dataset);
 
 	double Predict(double key); // return the key's index
 
@@ -78,7 +78,7 @@ private:
 };
 
 // train the Network
-void Net::Train(const vector<pair<double, double>> &dataset, const params param)
+void Net::Train(const vector<pair<double, double>> &dataset)
 {
 	vector<pair<double, double>> m_dataset = dataset;
 	vector<double> index;
@@ -97,7 +97,7 @@ void Net::Train(const vector<pair<double, double>> &dataset, const params param)
 		// initialize the parameters
 		std::default_random_engine gen;
 		std::normal_distribution<double> dis(1, 3);
-		for (int i = 0; i < param.neuronNumber; i++)
+		for (int i = 0; i < neuron_number; i++)
 		{
 			W1.push_back(dis(gen));
 			W2.push_back(dis(gen));
@@ -105,7 +105,7 @@ void Net::Train(const vector<pair<double, double>> &dataset, const params param)
 		}
 		b2 = 0.91;
 
-		for (int epoch = 0; epoch < param.maxEpoch; epoch++)
+		for (int epoch = 0; epoch < max_epoch; epoch++)
 		{
 			unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 			shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
@@ -125,7 +125,7 @@ void Net::Train(const vector<pair<double, double>> &dataset, const params param)
 
 					if (p < 0)
 						p = 0;
-					if (p > 1)
+					else if (p > 1)
 						p = 1;
 
 					// calculate the loss
@@ -137,13 +137,13 @@ void Net::Train(const vector<pair<double, double>> &dataset, const params param)
 					{
 						if (tempFLR[j] > 0)
 						{
-							W1[j] = W1[j] - param.learningRate1 * x * W2[j] * (p - y);
-							b1[j] = b1[j] - param.learningRate2 * W2[j] * (p - y);
+							W1[j] = W1[j] - learning_rate * x * W2[j] * (p - y);
+							b1[j] = b1[j] - learning_rate * W2[j] * (p - y);
 						}
 					}
 					// update W2 and b2
-					W2 = add(W2, (multiply(-param.learningRate1, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
-					b2 = b2 - param.learningRate2 * (p - y);
+					W2 = add(W2, (multiply(-learning_rate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
+					b2 = b2 - learning_rate * (p - y);
 				}
 			}
 		}
@@ -159,7 +159,7 @@ double Net::Predict(double key)
 	}
 	if (p < 0)
 		p = 0;
-	if (p > 1)
+	else if (p > 1)
 		p = 1;
 	return p;
 }

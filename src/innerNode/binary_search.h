@@ -8,17 +8,12 @@ class BinarySearchNode : public BasicInnerNode
 {
 public:
     BinarySearchNode() : BasicInnerNode(){};
-    BinarySearchNode(params secondStageParams, int childNum) : BasicInnerNode(childNum)
+    BinarySearchNode(int childNum) : BasicInnerNode(childNum){};
+    BinarySearchNode(int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
     {
-        m_secondStageParams = secondStageParams;
-    }
-    BinarySearchNode(params secondStageParams, int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
-    {
-        m_secondStageParams = secondStageParams;
-
         for (int i = 0; i < childNumber; i++)
         {
-            children.push_back(new lowerType(threshold, m_secondStageParams, maxInsertNumber));
+            children.push_back(new lowerType(threshold, maxInsertNumber));
         }
     }
 
@@ -33,7 +28,6 @@ public:
 
 protected:
     vector<double> index;
-    params m_secondStageParams; // parameters of lower nodes
 };
 
 template <typename lowerType>
@@ -188,7 +182,7 @@ class AdaptiveBin : public BinarySearchNode<lowerType>
 {
 public:
     AdaptiveBin() : BinarySearchNode<lowerType>(){};
-    AdaptiveBin(params secondStageParams, int maxKey, int childNum, int cap) : BinarySearchNode<lowerType>(secondStageParams, childNum)
+    AdaptiveBin(int maxKey, int childNum, int cap) : BinarySearchNode<lowerType>(childNum)
     {
         maxKeyNum = maxKey;
         density = 0.75;
@@ -240,7 +234,7 @@ void AdaptiveBin<lowerType>::Initialize(const vector<pair<double, double>> &data
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            AdaptiveBin *child = new AdaptiveBin(this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
+            AdaptiveBin *child = new AdaptiveBin(maxKeyNum, this->childNumber, capacity);
             child->Initialize(perSubDataset[i]);
             this->children.push_back((lowerType *)child);
         }
@@ -248,7 +242,7 @@ void AdaptiveBin<lowerType>::Initialize(const vector<pair<double, double>> &data
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
-            lowerType *child = new lowerType(maxKeyNum, this->m_secondStageParams, capacity);
+            lowerType *child = new lowerType(maxKeyNum, capacity);
             child->Train(perSubDataset[i]);
             this->children.push_back(child);
         }
@@ -283,14 +277,14 @@ bool AdaptiveBin<lowerType>::Insert(pair<double, double> data)
     {
         // The corresponding leaf level moDelete in RMI
         // now becomes an inner level moDelete
-        AdaptiveBin *newNode = new AdaptiveBin(this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
+        AdaptiveBin *newNode = new AdaptiveBin(maxKeyNum, this->childNumber, capacity);
         vector<pair<double, double>> dataset;
         this->children[mid]->GetDataset(dataset);
 
         // a number of children leaf level moDeletes are created
         for (int i = 0; i < this->childNumber; i++)
         {
-            lowerType *temp = new lowerType(maxKeyNum, this->m_secondStageParams, capacity);
+            lowerType *temp = new lowerType(maxKeyNum, capacity);
             newNode->children.push_back(temp);
         }
 

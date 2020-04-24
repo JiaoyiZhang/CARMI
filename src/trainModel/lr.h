@@ -18,7 +18,7 @@ public:
         theta1 = 0.0001;
         theta2 = 0.666;
     }
-    void Train(const vector<pair<double, double>> &dataset, const params param);
+    void Train(const vector<pair<double, double>> &dataset);
     double Predict(double key);
 
 private:
@@ -26,7 +26,7 @@ private:
     double theta2;
 };
 
-void LinearRegression::Train(const vector<pair<double, double>> &dataset, const params param)
+void LinearRegression::Train(const vector<pair<double, double>> &dataset)
 {
     int actualSize = 0;
     vector<double> index;

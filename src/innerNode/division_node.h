@@ -8,16 +8,11 @@ class DivisionNode : public BasicInnerNode
 {
 public:
     DivisionNode() : BasicInnerNode(){};
-    DivisionNode(params secondStageParams, int childNum) : BasicInnerNode(childNum)
+    DivisionNode(int childNum) : BasicInnerNode(childNum){};
+    DivisionNode(int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
     {
-        m_secondStageParams = secondStageParams;
-    }
-    DivisionNode(params secondStageParams, int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
-    {
-        m_secondStageParams = secondStageParams;
-
         for (int i = 0; i < childNumber; i++)
-            children.push_back(new lowerType(threshold, m_secondStageParams, maxInsertNumber));
+            children.push_back(new lowerType(threshold, maxInsertNumber));
     }
 
     void Initialize(const vector<pair<double, double>> &dataset);
@@ -31,7 +26,6 @@ public:
 
 protected:
     float value;
-    params m_secondStageParams; // parameters of lower nodes
 };
 
 template <typename lowerType>
@@ -147,7 +141,7 @@ class AdaptiveDiv : public DivisionNode<lowerType>
 {
 public:
     AdaptiveDiv() : DivisionNode<lowerType>(){};
-    AdaptiveDiv(params secondStageParams, int maxKey, int childNum, int cap) : DivisionNode<lowerType>(secondStageParams, childNum)
+    AdaptiveDiv(int maxKey, int childNum, int cap) : DivisionNode<lowerType>(childNum)
     {
         maxKeyNum = maxKey;
         density = 0.75;
@@ -196,7 +190,7 @@ void AdaptiveDiv<lowerType>::Initialize(const vector<pair<double, double>> &data
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            AdaptiveDiv *child = new AdaptiveDiv(this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
+            AdaptiveDiv *child = new AdaptiveDiv(maxKeyNum, this->childNumber, capacity);
             child->Initialize(perSubDataset[i]);
             this->children.push_back((lowerType *)child);
         }
@@ -204,7 +198,7 @@ void AdaptiveDiv<lowerType>::Initialize(const vector<pair<double, double>> &data
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
-            lowerType *child = new lowerType(maxKeyNum, this->m_secondStageParams, capacity);
+            lowerType *child = new lowerType(maxKeyNum, capacity);
             child->Train(perSubDataset[i]);
             this->children.push_back(child);
         }
@@ -230,7 +224,7 @@ bool AdaptiveDiv<lowerType>::Insert(pair<double, double> data)
     {
         // The corresponding leaf level moDelete in RMI
         // now becomes an inner level moDelete
-        AdaptiveDiv *newNode = new AdaptiveDiv(this->m_secondStageParams, maxKeyNum, this->childNumber, capacity);
+        AdaptiveDiv *newNode = new AdaptiveDiv(maxKeyNum, this->childNumber, capacity);
         vector<pair<double, double>> dataset;
         this->children[preIdx]->GetDataset(dataset);
 
@@ -244,7 +238,7 @@ bool AdaptiveDiv<lowerType>::Insert(pair<double, double> data)
         // a number of children leaf level moDeletes are created
         for (int i = 0; i < this->childNumber; i++)
         {
-            lowerType *temp = new lowerType(maxKeyNum, this->m_secondStageParams, capacity);
+            lowerType *temp = new lowerType(maxKeyNum, capacity);
             newNode->children.push_back(temp);
         }
 

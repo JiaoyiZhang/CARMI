@@ -50,84 +50,45 @@ void createModel()
     for (int i = 0; i < dataset.size(); i++)
         btreemap.insert(dataset[i]);
 
-    // // lognormalDistribution params
-    // params firstStageParams(0.001, 100000, 8, 0.0001, 0.666);
-    // params secondStageParams(0.001, 100000, 8, 0.0001, 0.666);
-
-    // uniformDistrubution params
-    params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
-    params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
-
-    lr_array = LRNode<ArrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
+    lr_array = LRNode<ArrayNode>(1000, 15, 800);
     lr_array.Initialize(dataset);
     cout << "lr_array init over!" << endl;
     cout << "****************" << endl;
 
-    lr_ga = LRNode<GappedArray>(firstStageParams, secondStageParams, 1000, 15, 800);
+    lr_ga = LRNode<GappedArray>(1000, 15, 800);
     lr_ga.Initialize(dataset);
     cout << "lr_ga init over!" << endl;
     cout << "****************" << endl;
 
-    nn_array = NetworkNode<ArrayNode>(firstStageParams, secondStageParams, 1000, 15, 800);
+    nn_array = NetworkNode<ArrayNode>(1000, 15, 800);
     nn_array.Initialize(dataset);
     cout << "nn_array init over!" << endl;
     cout << "****************" << endl;
 
-    nn_ga = NetworkNode<GappedArray>(firstStageParams, secondStageParams, 10000, 15, 800);
+    nn_ga = NetworkNode<GappedArray>(10000, 15, 800);
     nn_ga.Initialize(dataset);
     cout << "nn_ga init over!" << endl;
     cout << "****************" << endl;
 
-    div_array = DivisionNode<ArrayNode>(secondStageParams, 1000, 15, 800);
+    div_array = DivisionNode<ArrayNode>(1000, 15, 800);
     div_array.Initialize(dataset);
     cout << "div_array init over!" << endl;
     cout << "****************" << endl;
 
-    div_ga = DivisionNode<GappedArray>(secondStageParams, 10000, 15, 800);
+    div_ga = DivisionNode<GappedArray>(10000, 15, 800);
     div_ga.Initialize(dataset);
     cout << "div_ga init over!" << endl;
     cout << "****************" << endl;
 
-    bin_array = BinarySearchNode<ArrayNode>(secondStageParams, 1000, 15, 800);
+    bin_array = BinarySearchNode<ArrayNode>(1000, 15, 800);
     bin_array.Initialize(dataset);
     cout << "bin_array init over!" << endl;
     cout << "****************" << endl;
 
-    bin_ga = BinarySearchNode<GappedArray>(secondStageParams, 1000, 15, 800);
+    bin_ga = BinarySearchNode<GappedArray>(1000, 15, 800);
     bin_ga.Initialize(dataset);
     cout << "bin_ga init over!" << endl;
     cout << "****************" << endl;
-    /*
-        // ARMI_normal = adaptiveRMI<normalNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 15, 800);
-        ARMI_normal = adaptiveRMI<normalNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1500, 12, 800);
-        ARMI_normal.initialize(dataset);
-        cout << "ARMI_normal init over!" << endl;
-        cout << "****************" << endl;
-
-        // SCALE_normal = scaleModel<normalNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-        SCALE_normal = scaleModel<normalNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-        SCALE_normal.initialize(dataset);
-        cout << "SCALE_normal init over!" << endl;
-        cout << "****************" << endl;
-
-        // SRMI_gapped = staticRMI<gappedNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 2000, 15, 800);
-        SRMI_gapped = staticRMI<gappedNode<linearRegression>, linearRegression>(dataset, firstStageParams, secondStageParams, 5000, 15, 4600);
-        SRMI_gapped.train();
-        cout << "SRMI_gapped init over!" << endl;
-        cout << "****************" << endl;
-
-        // ARMI_gapped = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 15, 800);
-        ARMI_gapped = adaptiveRMI<gappedNode<linearRegression>, linearRegression>(firstStageParams, secondStageParams, 1000, 12, 800);
-        ARMI_gapped.initialize(dataset);
-        cout << "ARMI_gapped init over!" << endl;
-        cout << "****************" << endl;
-
-        // SCALE_gapped = scaleModel<gappedNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-        SCALE_gapped = scaleModel<gappedNode<linearRegression>>(secondStageParams, 1000, 100, 800);
-        SCALE_gapped.initialize(dataset);
-        cout << "SCALE_gapped init over!" << endl;
-        cout << "****************" << endl;
-    */
 }
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)

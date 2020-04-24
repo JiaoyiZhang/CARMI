@@ -8,7 +8,7 @@ using namespace std;
 class ArrayNode : public BasicLeafNode
 {
 public:
-    ArrayNode(int maxInsertNumber, params p, int threshold) : BasicLeafNode(p)
+    ArrayNode(int maxInsertNumber, int threshold) : BasicLeafNode()
     {
         m_maxInsertNumber = maxInsertNumber;
         maxPositiveError = 0;
@@ -40,7 +40,7 @@ void ArrayNode::Train(const vector<pair<double, double>> &dataset)
         return p1.first < p2.first;
     });
 
-    model->Train(m_dataset, parameter);
+    model->Train(m_dataset);
     int maxError = 0;
     double p;
     for (int i = 0; i < m_datasetSize; i++)

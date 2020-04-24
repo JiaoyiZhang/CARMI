@@ -35,14 +35,6 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     for (int i = 0; i < cnt.size(); i++)
         cntTree.insert({dataset[i].first, cnt[i]}); // <key, <read, write>>
 
-    // // lognormalDistribution params
-    // params firstStageParams(0.001, 100000, 8, 0.0001, 0.666);
-    // params secondStageParams(0.001, 100000, 8, 0.0001, 0.666);
-
-    // uniformDistrubution params
-    params firstStageParams(0.00001, 500, 8, 0.0001, 0.00001);
-    params secondStageParams(0.0000001, 1, 10000, 8, 0.0, 0.0);
-
     // Find the minimum childNum
     long double minCost = 1e100;
     int minNum = 0;
@@ -68,7 +60,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     // Rebuild the tree according to the calculated most suitable childNum
     int threshold = float(dataset.size() * 1.4) / minNum;
     int capacity = threshold * 0.8;
-    LRNode<ArrayNode> *root = new LRNode<ArrayNode>(firstStageParams, secondStageParams, threshold, minNum, capacity);
+    LRNode<ArrayNode> *root = new LRNode<ArrayNode>(threshold, minNum, capacity);
     cout << "Rebuild root over!" << endl;
 
     //test
