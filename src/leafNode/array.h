@@ -42,13 +42,11 @@ void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
 
     model->Train(m_dataset);
     int maxError = 0;
-    double p;
     for (int i = 0; i < m_datasetSize; i++)
     {
-        p = model->Predict(m_dataset[i].first);
-        // cout << "In array, Train: i:" << i << "\tkey:" << m_dataset[i].first << "\tp:" << p << "\tnew p:" << p * (m_datasetSize - 1) << endl;
-        p *= m_datasetSize - 1;
-        int error = i - p;
+        double p = model->Predict(m_dataset[i].first);
+        int preIdx = static_cast<int>(p * (m_datasetSize - 1));
+        int error = i - preIdx;
         if (error > maxPositiveError)
             maxPositiveError = error;
         if (error < maxNegativeError)
