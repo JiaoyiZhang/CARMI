@@ -46,7 +46,7 @@ void BinarySearchNode<lowerType>::Initialize(const vector<pair<double, double>> 
         {
             perSubDataset.push_back(tmp);
             index.push_back(dataset[i].first);
-            tmp = vector<pair<double, double>>();
+            tmp.clear();
         }
     }
     if (index.size() == childNumber - 1)
