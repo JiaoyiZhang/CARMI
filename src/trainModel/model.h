@@ -10,8 +10,8 @@ class BasicModel
 public:
     BasicModel(){};
 
-    virtual void Train(vector<pair<double, double>> dataset, params param){};
-    virtual double Predict(double key){};
+    virtual void Train(const vector<pair<double, double>> &dataset, const params param) = 0;
+    virtual double Predict(double key) = 0;
 };
 
 #endif

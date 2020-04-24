@@ -18,7 +18,7 @@ public:
         theta1 = 0.0001;
         theta2 = 0.666;
     }
-    void Train(vector<pair<double, double>> dataset, params param);
+    void Train(const vector<pair<double, double>> &dataset, const params param);
     double Predict(double key);
 
 private:
@@ -26,7 +26,7 @@ private:
     double theta2;
 };
 
-void LinearRegression::Train(vector<pair<double, double>> dataset, params param)
+void LinearRegression::Train(const vector<pair<double, double>> &dataset, const params param)
 {
     int actualSize = 0;
     vector<double> index;
@@ -41,51 +41,19 @@ void LinearRegression::Train(vector<pair<double, double>> dataset, params param)
         cout << "This node is empty!" << endl;
         return;
     }
-    theta1 = param.initTheta1;
-    theta2 = param.initTheta2;
-    if (theta1 == 0.0)
-        theta1 = 1.0 / double(dataset.size());
-    if (theta2 == 0.0)
-        theta2 = theta1 * (1 - dataset[0].first);
-    double oldLoss = 0.0;
-    for (int i = 0; i < param.maxEpoch; i++)
+    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+    for (int i = 0; i < dataset.size(); i++)
     {
-        double error1 = 0.0;
-        double error2 = 0.0;
-        for (int j = 0; j < dataset.size(); j++)
+        if (dataset[i].first != -1)
         {
-            if (dataset[j].first != -1)
-            {
-                double p = theta1 * dataset[j].first + theta2;
-                p = (p > 1 ? 1 : p);
-                p = (p < 0 ? 0 : p);
-                error1 += (p - index[j]) * dataset[j].first;
-                error2 += p - index[j];
-            }
+            t1 += dataset[i].first * dataset[i].first;
+            t2 += dataset[i].first;
+            t3 += dataset[i].first * index[i];
+            t4 += index[i];
         }
-        theta1 = theta1 - param.learningRate1 * error1 / actualSize;
-        theta2 = theta2 - param.learningRate2 * error2 / actualSize;
-
-        double loss = 0.0;
-        for (int j = 0; j < dataset.size(); j++)
-        {
-            if (dataset[j].first != -1)
-            {
-                double p = theta1 * dataset[j].first + theta2;
-                p = (p > 1 ? 1 : p);
-                p = (p < 0 ? 0 : p);
-                loss += (p - index[j]) * (p - index[j]);
-            }
-        }
-        loss = loss / (actualSize * 2);
-        // cout << "\tepoch: " << i << "\tloss: " << loss << endl;
-        double diff = (oldLoss - loss) > 0 ? (oldLoss - loss) : (loss - oldLoss);
-        if (loss < 1e-3 || diff < 1e-6)
-            break;
-        oldLoss = loss;
     }
-    if (theta1 < 0)
-        theta1 = -theta1;
+    theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
+    theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
 }
 
 double LinearRegression::Predict(double key)
