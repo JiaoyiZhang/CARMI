@@ -9,5 +9,5 @@ add_library(cpp_btree STATIC ${cpp_btree_sources})
 target_include_directories(cpp_btree PUBLIC cpp_btree)
 set_target_properties(cpp_btree PROPERTIES LINKER_LANGUAGE CXX)
 
-add_executable(learned_index src/testMain.cpp)
+add_executable(learned_index src/main.cpp)
 target_link_libraries(learned_index cpp_btree)
