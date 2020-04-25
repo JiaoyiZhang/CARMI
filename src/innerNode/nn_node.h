@@ -74,13 +74,12 @@ void NetworkNode<lowerType>::Initialize(const vector<pair<double, double>> &data
     for (int i = 0; i < dataset.size(); i++)
     {
         double p = m_firstStageNetwork.Predict(dataset[i].first);
-        p = p * (childNumber - 1);
-        int preIdx = static_cast<int>(p);
+        int preIdx = static_cast<int>(p * (childNumber - 1));
         perSubDataset[preIdx].push_back(dataset[i]);
     }
     for (int i = 0; i < childNumber; i++)
     {
-        if (perSubDataset[i].size() == dataset.size())
+        if (perSubDataset[i].size() == dataset.size() / 2)
             return Initialize(dataset);
     }
 
