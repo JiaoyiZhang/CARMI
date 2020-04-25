@@ -8,11 +8,9 @@ using namespace std;
 class ArrayNode : public BasicLeafNode
 {
 public:
-    ArrayNode(int maxInsertNumber, int threshold) : BasicLeafNode()
+    ArrayNode(int maxNumber, int threshold) : BasicLeafNode()
     {
-        m_maxInsertNumber = maxInsertNumber;
-        maxPositiveError = 0;
-        maxNegativeError = 0;
+        m_maxNumber = maxNumber;
     }
 
     void SetDataset(const vector<pair<double, double>> &dataset);
@@ -25,9 +23,10 @@ public:
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset);
 
 private:
-    int m_maxInsertNumber; // the maximum number of Inserts
-    int maxPositiveError;
-    int maxNegativeError;
+    int BinarySearch(double key, int preIdx, int start, int end);
+    int ExponentialSearch(double key, int preIdx, int start, int end);
+
+    int m_maxNumber; // the maximum number of Inserts
 };
 
 void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
@@ -36,9 +35,9 @@ void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
     m_datasetSize = m_dataset.size();
     if (m_datasetSize == 0)
         return;
-    std::sort(m_dataset.begin(), m_dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
+    // std::sort(m_dataset.begin(), m_dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+    //     return p1.first < p2.first;
+    // });
 
     model->Train(m_dataset);
     int maxError = 0;
@@ -71,36 +70,10 @@ pair<double, double> ArrayNode::Find(double key)
     }
     else
     {
-        // binary search
         int start = max(0, preIdx + maxNegativeError);
         int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
-
-        int res = -1;
-        while (start <= end)
-        {
-            int mid = (start + end) / 2;
-            if (m_dataset[mid].first == key)
-            {
-                res = mid;
-                break;
-            }
-            else if (start == end)
-            {
-                if (m_dataset[end].first == key)
-                {
-                    res = end;
-                    break;
-                }
-                else
-                    break;
-            }
-            else if (m_dataset[mid].first > key)
-                end = mid;
-            else
-                start = mid + 1;
-        }
-
-        if (res != -1)
+        int res = SEARCH_METHOD(key, preIdx, start, end);
+        if (res != -1 && m_dataset[res].first == key)
             return m_dataset[res];
         return {};
     }
@@ -111,53 +84,10 @@ bool ArrayNode::Insert(pair<double, double> data)
     // use learnedIndex to Find the data
     double p = model->Predict(data.first);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
+    int start = max(0, preIdx + maxNegativeError);
+    int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
 
-    // exponential search
-    int start_idx;
-    int end_idx;
-    if (m_dataset[preIdx].first < data.first)
-    {
-        int i = 1;
-        while (preIdx + i < m_datasetSize && m_dataset[preIdx + i].first < data.first)
-            i *= 2;
-        start_idx = preIdx + i / 2;
-        end_idx = min(preIdx + i, m_datasetSize - 1);
-    }
-    else
-    {
-        int i = 1;
-        while (preIdx - i >= 0 && m_dataset[preIdx - i].first >= data.first)
-            i *= 2;
-        start_idx = max(0, preIdx - i);
-        end_idx = preIdx - i / 2;
-    }
-    end_idx = min(end_idx, m_datasetSize - 1);
-
-    // binary search
-    while (start_idx <= end_idx)
-    {
-        int mid = (start_idx + end_idx) / 2;
-        if (mid == 0 && m_dataset[mid].first >= data.first)
-        {
-            preIdx = mid;
-            break;
-        }
-        if (mid == m_dataset.size() - 1 && m_dataset[mid].first < data.first)
-        {
-            m_dataset.push_back(data);
-            m_datasetSize++;
-            return true;
-        }
-        if (m_dataset[mid - 1].first < data.first && m_dataset[mid].first >= data.first)
-        {
-            preIdx = mid;
-            break;
-        }
-        if (m_dataset[mid].first > data.first)
-            end_idx = mid - 1;
-        else
-            start_idx = mid + 1;
-    }
+    preIdx = SEARCH_METHOD(data.first, preIdx, start, end);
 
     // Insert data
     m_dataset.push_back(m_dataset[m_datasetSize - 1]);
@@ -172,18 +102,20 @@ bool ArrayNode::Insert(pair<double, double> data)
     if (error > maxPositiveError)
     {
         maxPositiveError = error;
-        maxPositiveError++;
     }
     if (error < maxNegativeError)
     {
         maxNegativeError = error;
-        maxNegativeError--;
     }
+    maxNegativeError--;
+    maxPositiveError++;
 
     // If the current number is greater than the maximum,
-    // the child node needs to be reTrained
-    if (m_datasetSize >= m_maxInsertNumber)
+    // the child node needs to be retrained
+    if (m_maxNumber <= m_datasetSize)
+    {
         SetDataset(m_dataset);
+    }
     return true;
 }
 
@@ -194,36 +126,10 @@ bool ArrayNode::Delete(double key)
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first != key)
     {
-        // binary search
         int start = max(0, preIdx + maxNegativeError);
         int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
-
-        int res = -1;
-        while (start <= end)
-        {
-            int mid = (start + end) / 2;
-            if (m_dataset[mid].first == key)
-            {
-                res = mid;
-                break;
-            }
-            else if (start == end)
-            {
-                if (m_dataset[end].first == key)
-                {
-                    res = end;
-                    break;
-                }
-                else
-                    break;
-            }
-            else if (m_dataset[mid].first > key)
-                end = mid;
-            else
-                start = mid + 1;
-        }
-
-        if (res != -1)
+        int res = SEARCH_METHOD(key, preIdx, start, end);
+        if (res != -1 && m_dataset[res].first == key)
             preIdx = res;
         else
             return false;
@@ -242,42 +148,61 @@ bool ArrayNode::Update(pair<double, double> data)
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first != data.first)
     {
-        // binary search
         int start = max(0, preIdx + maxNegativeError);
         int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
-
-        int res = -1;
-        while (start <= end)
-        {
-            int mid = (start + end) / 2;
-            if (m_dataset[mid].first == data.first)
-            {
-                res = mid;
-                break;
-            }
-            else if (start == end)
-            {
-                if (m_dataset[end].first == data.first)
-                {
-                    res = end;
-                    break;
-                }
-                else
-                    break;
-            }
-            else if (m_dataset[mid].first > data.first)
-                end = mid;
-            else
-                start = mid + 1;
-        }
-
-        if (res != -1)
+        int res = SEARCH_METHOD(data.first, preIdx, start, end);
+        if (res != -1 && m_dataset[res].first == data.first)
             preIdx = res;
         else
             return false;
     }
     m_dataset[preIdx].second = data.second;
     return true;
+}
+
+int ArrayNode::BinarySearch(double key, int preIdx, int start, int end)
+{
+    int res = -1;
+    while (start <= end)
+    {
+        int mid = (start + end) / 2;
+        if ((m_dataset[mid].first >= key) && (mid == 0 || m_dataset[mid - 1].first < key))
+            return mid;
+        else if ((mid == m_dataset.size() - 1) && (m_dataset[mid].first < key))
+            return mid + 1;
+        else if ((start == end) && (m_dataset[end].first == key))
+            return end;
+        else if (m_dataset[mid].first > key)
+            end = mid - 1;
+        else
+            start = mid + 1;
+    }
+    return res;
+}
+
+int ArrayNode::ExponentialSearch(double key, int preIdx, int start, int end)
+{
+    // exponential search
+    int start_idx;
+    int end_idx;
+    if (m_dataset[preIdx].first < key)
+    {
+        int i = 1;
+        while (preIdx + i < m_datasetSize && m_dataset[preIdx + i].first < key)
+            i *= 2;
+        start_idx = preIdx + i / 2;
+        end_idx = min(preIdx + i, m_datasetSize - 1);
+    }
+    else
+    {
+        int i = 1;
+        while (preIdx - i >= 0 && m_dataset[preIdx - i].first >= key)
+            i *= 2;
+        start_idx = max(0, preIdx - i);
+        end_idx = preIdx - i / 2;
+    }
+    end_idx = min(end_idx, m_datasetSize - 1);
+    return BinarySearch(key, preIdx, start_idx, end_idx);
 }
 
 long double ArrayNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)

@@ -1,8 +1,12 @@
 #ifndef LEAF_NODE_H
 #define LEAF_NODE_H
 
+#define SEARCH_METHOD(key, preIdx, start, end) BinarySearch(key, preIdx, start, end)
+// #define SEARCH_METHOD(key, preIdx, start, end) ExponentialSearch(key, preIdx, start, end)
+
 #include <vector>
 #include <algorithm>
+#include "leaf_node_creator.h"
 #include "../params.h"
 #include "../trainModel/model.h"
 #include "../trainModel/lr.h"
@@ -16,6 +20,8 @@ public:
     BasicLeafNode()
     {
         m_datasetSize = 0;
+        maxPositiveError = 0;
+        maxNegativeError = 0;
         model = new LinearRegression();
     }
     int GetSize() { return m_datasetSize; }
@@ -40,6 +46,9 @@ protected:
     int m_datasetSize;
 
     BasicModel *model;
+
+    int maxPositiveError;
+    int maxNegativeError;
 };
 
 #endif
