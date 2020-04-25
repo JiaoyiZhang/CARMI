@@ -50,7 +50,7 @@ void createModel()
     for (int i = 0; i < dataset.size(); i++)
         btreemap.insert(dataset[i]);
 
-    lr_array = LRNode<ArrayNode>(1000, 15, 800);
+    lr_array = LRNode<ArrayNode>(5000, 15, 800);
     lr_array.Initialize(dataset);
     cout << "lr_array init over!" << endl;
     cout << "****************" << endl;
@@ -60,7 +60,7 @@ void createModel()
     cout << "lr_ga init over!" << endl;
     cout << "****************" << endl;
 
-    nn_array = NetworkNode<ArrayNode>(1000, 15, 800);
+    nn_array = NetworkNode<ArrayNode>(10000, 15, 800);
     nn_array.Initialize(dataset);
     cout << "nn_array init over!" << endl;
     cout << "****************" << endl;
@@ -133,7 +133,7 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceFrequency(&c);
     for (int i = 0; i < dataset.size(); i++)
     {
-        auto res = obj.Find(dataset[i].first);
+        obj.Find(dataset[i].first);
     }
     QueryPerformanceCounter(&e);
     time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
