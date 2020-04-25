@@ -33,13 +33,13 @@ public:
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
             return ((BasicInnerNode *)children[preIdx])->Find(key);
-        return ((BasicLeafNode*)children[preIdx])->Find(key);
+        return ((BasicLeafNode *)children[preIdx])->Find(key);
     }
     bool Insert(pair<double, double> data)
     {
         double p = m_firstStageNetwork.Predict(data.first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        return ((BasicLeafNode*)children[preIdx])->Insert(data);
+        return ((BasicLeafNode *)children[preIdx])->Insert(data);
     }
     bool Delete(double key)
     {
@@ -47,7 +47,7 @@ public:
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
             return ((BasicInnerNode *)children[preIdx])->Delete(key);
-        return ((BasicLeafNode*)children[preIdx])->Delete(key);
+        return ((BasicLeafNode *)children[preIdx])->Delete(key);
     }
     bool Update(pair<double, double> data)
     {
@@ -55,7 +55,7 @@ public:
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
             return ((BasicInnerNode *)children[preIdx])->Update(data);
-        return ((BasicLeafNode*)children[preIdx])->Update(data);
+        return ((BasicLeafNode *)children[preIdx])->Update(data);
     }
 
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
@@ -63,7 +63,6 @@ public:
 protected:
     LinearRegression m_firstStageNetwork = LinearRegression(); // lr of the first stage
 };
-
 
 void LRNode::Initialize(const vector<pair<double, double>> &dataset)
 {
@@ -94,7 +93,6 @@ void LRNode::Initialize(const vector<pair<double, double>> &dataset)
     cout << "End train" << endl;
 }
 
-
 long double LRNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double InitializeCost = 2;
@@ -123,7 +121,6 @@ long double LRNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntT
     return totalCost;
 }
 
-
 class AdaptiveLR : public LRNode
 {
 public:
@@ -147,60 +144,70 @@ private:
     int maxKeyNum;  // the maximum amount of data
 };
 
-
 void AdaptiveLR::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
 
     cout << "train first stage" << endl;
-    // first train the node's linear moDelete using its assigned keys
+    // first train the node's linear model using its assigned keys
     this->m_firstStageNetwork.Train(dataset);
-    //  use the moDelete to divide the keys into some number of partitions
-    vector<vector<pair<double, double>>> perSubDataset;
-    vector<pair<double, double>> tmp;
-    for (int i = 0; i < this->childNumber; i++)
-        perSubDataset.push_back(tmp);
-
-    for (int i = 0; i < dataset.size(); i++)
+    for (int i = 0; i < childNumber; i++)
     {
-        double p = this->m_firstStageNetwork.Predict(dataset[i].first);
-        p = p * (this->childNumber - 1);
-        int preIdx = static_cast<int>(p);
-        perSubDataset[preIdx].push_back(dataset[i]);
+        children.push_back(LeafNodeCreator(LOWER_ID0, maxKeyNum, capacity));
+        children_is_leaf.push_back(true);
     }
-    for (int i = 0; i < this->childNumber; i++)
-        if (perSubDataset[i].size() == dataset.size())
-            return Initialize(dataset);
+    auto tmpDataset = dataset;
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    shuffle(tmpDataset.begin(), tmpDataset.end(), default_random_engine(seed));
+    for (int i = 0; i < tmpDataset.size(); i++)
+        Insert(tmpDataset[i]);
+    /*
+        //  use the model to divide the keys into some number of partitions
+        vector<vector<pair<double, double>>> perSubDataset;
+        vector<pair<double, double>> tmp;
+        for (int i = 0; i < this->childNumber; i++)
+            perSubDataset.push_back(tmp);
 
-    // then iterate through the partitions in sorted order
-    cout << "train second stage" << endl;
-    for (int i = 0; i < this->childNumber; i++)
-    {
-        if (perSubDataset[i].size() > maxKeyNum)
+        for (int i = 0; i < dataset.size(); i++)
         {
-            // If a partition has more than the maximum bound number of
-            // keys, then this partition is oversized,
-            // so we create a new inner node and
-            // recursively call Initialize on the new node.
-            UPPER_TYPE0 *child = (UPPER_TYPE0 *)InnerNodeCreator(UPPER_ID0, maxKeyNum, this->childNumber, capacity);
-            child->Initialize(perSubDataset[i]);
-            this->children.push_back(child);
-            this->children_is_leaf.push_back(false);
+            double p = this->m_firstStageNetwork.Predict(dataset[i].first);
+            p = p * (this->childNumber - 1);
+            int preIdx = static_cast<int>(p);
+            perSubDataset[preIdx].push_back(dataset[i]);
         }
-        else
+        for (int i = 0; i < this->childNumber; i++)
+            if (perSubDataset[i].size() == dataset.size())
+                return Initialize(dataset);
+
+        // then iterate through the partitions in sorted order
+        cout << "train second stage" << endl;
+        for (int i = 0; i < this->childNumber; i++)
         {
-            // Otherwise, the partition is under the maximum bound number of keys,
-            // so we could just make this partition a leaf node
-            LOWER_TYPE0 *child = (LOWER_TYPE0 *)LeafNodeCreator(LOWER_ID0, maxKeyNum, capacity);
-            child->SetDataset(perSubDataset[i]);
-            this->children.push_back(child);
-            this->children_is_leaf.push_back(true);
+            if (perSubDataset[i].size() > maxKeyNum)
+            {
+                // If a partition has more than the maximum bound number of
+                // keys, then this partition is oversized,
+                // so we create a new inner node and
+                // recursively call Initialize on the new node.
+                UPPER_TYPE0 *child = (UPPER_TYPE0 *)InnerNodeCreator(UPPER_ID0, maxKeyNum, this->childNumber, capacity);
+                child->Initialize(perSubDataset[i]);
+                this->children.push_back(child);
+                this->children_is_leaf.push_back(false);
+            }
+            else
+            {
+                // Otherwise, the partition is under the maximum bound number of keys,
+                // so we could just make this partition a leaf node
+                LOWER_TYPE0 *child = (LOWER_TYPE0 *)LeafNodeCreator(LOWER_ID0, maxKeyNum, capacity);
+                child->SetDataset(perSubDataset[i]);
+                this->children.push_back(child);
+                this->children_is_leaf.push_back(true);
+            }
         }
-    }
+    */
     cout << "End train" << endl;
 }
-
 
 bool AdaptiveLR::Insert(pair<double, double> data)
 {
@@ -224,7 +231,7 @@ bool AdaptiveLR::Insert(pair<double, double> data)
             // a number of children leaf level moDeletes are created
             for (int i = 0; i < this->childNumber; i++)
             {
-            LOWER_TYPE0 *temp = (LOWER_TYPE0 *)LeafNodeCreator(LOWER_ID0, maxKeyNum, capacity);
+                LOWER_TYPE0 *temp = (LOWER_TYPE0 *)LeafNodeCreator(LOWER_ID0, maxKeyNum, capacity);
                 newNode->children.push_back(temp);
                 newNode->children_is_leaf.push_back(true);
             }
@@ -255,9 +262,8 @@ bool AdaptiveLR::Insert(pair<double, double> data)
     }
     else
         return ((BasicInnerNode *)this->children[preIdx])->Insert(data);
-    return ((BasicLeafNode*)this->children[preIdx])->Insert(data);
+    return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
-
 
 long double AdaptiveLR::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {

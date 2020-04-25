@@ -7,6 +7,8 @@
 #include "../leafNode/leaf_node.h"
 #include "../leafNode/array.h"
 #include "../leafNode/gapped_array.h"
+#include <chrono>
+#include <random>
 using namespace std;
 
 extern void *InnerNodeCreator(int innerNodeType, int maxKeyNum, int childNum, int capacity);

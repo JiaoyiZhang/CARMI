@@ -209,44 +209,51 @@ void AdaptiveBin::Initialize(const vector<pair<double, double>> &dataset)
     vector<pair<double, double>> tmp;
     for (int i = 0; i < dataset.size(); i++)
     {
-        tmp.push_back(dataset[i]);
+        // tmp.push_back(dataset[i]);
         if ((i + 1) % (dataset.size() / this->childNumber) == 0)
         {
-            perSubDataset.push_back(tmp);
+            // perSubDataset.push_back(tmp);
             this->index.push_back(dataset[i].first);
-            tmp = vector<pair<double, double>>();
+            // tmp = vector<pair<double, double>>();
         }
     }
     if (this->index.size() == this->childNumber - 1)
     {
-        perSubDataset.push_back(tmp);
+        // perSubDataset.push_back(tmp);
         this->index.push_back(dataset[dataset.size() - 1].first);
     }
 
-    cout << "train next stage" << endl;
-    for (int i = 0; i < this->childNumber; i++)
-    {
-        if (perSubDataset[i].size() > maxKeyNum)
+    auto tmpDataset = dataset;
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    shuffle(tmpDataset.begin(), tmpDataset.end(), default_random_engine(seed));
+    for (int i = 0; i < tmpDataset.size(); i++)
+        Insert(tmpDataset[i]);
+    /*
+        cout << "train next stage" << endl;
+        for (int i = 0; i < this->childNumber; i++)
         {
-            // If a partition has more than the maximum bound number of
-            // keys, then this partition is oversized,
-            // so we create a new inner node and
-            // recursively call Initialize on the new node.
-            UPPER_TYPE3 *child = (UPPER_TYPE3 *)InnerNodeCreator(UPPER_ID3, maxKeyNum, this->childNumber, capacity);
-            child->Initialize(perSubDataset[i]);
-            this->children.push_back(child);
-            this->children_is_leaf.push_back(false);
+            if (perSubDataset[i].size() > maxKeyNum)
+            {
+                // If a partition has more than the maximum bound number of
+                // keys, then this partition is oversized,
+                // so we create a new inner node and
+                // recursively call Initialize on the new node.
+                UPPER_TYPE3 *child = (UPPER_TYPE3 *)InnerNodeCreator(UPPER_ID3, maxKeyNum, this->childNumber, capacity);
+                child->Initialize(perSubDataset[i]);
+                this->children.push_back(child);
+                this->children_is_leaf.push_back(false);
+            }
+            else
+            {
+                // Otherwise, the partition is under the maximum bound number of keys,
+                // so we could just make this partition a leaf node
+                LOWER_TYPE3 *child = (LOWER_TYPE3 *)LeafNodeCreator(LOWER_ID3, maxKeyNum, capacity);
+                child->SetDataset(perSubDataset[i]);
+                this->children.push_back(child);
+                this->children_is_leaf.push_back(true);
+            }
         }
-        else
-        {
-            // Otherwise, the partition is under the maximum bound number of keys,
-            // so we could just make this partition a leaf node
-            LOWER_TYPE3 *child = (LOWER_TYPE3 *)LeafNodeCreator(LOWER_ID3, maxKeyNum, capacity);
-            child->SetDataset(perSubDataset[i]);
-            this->children.push_back(child);
-            this->children_is_leaf.push_back(true);
-        }
-    }
+    */
     cout << "End train" << endl;
 }
 
