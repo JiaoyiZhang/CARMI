@@ -99,11 +99,15 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 		std::normal_distribution<double> dis(1, 3);
 		for (int i = 0; i < neuron_number; i++)
 		{
-			W1.push_back(dis(gen));
-			W2.push_back(dis(gen));
-			b1.push_back(1);
+			// W1.push_back(dis(gen));
+			// W2.push_back(dis(gen));
+			W1.push_back(0.0001);
+			W2.push_back(0.0001);
+			// b1.push_back(1);
+			b1.push_back(0);
 		}
-		b2 = 0.91;
+		// b2 = 0.91;
+		b2 = 0;
 
 		for (int epoch = 0; epoch < max_epoch; epoch++)
 		{
