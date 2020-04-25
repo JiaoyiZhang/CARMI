@@ -7,9 +7,6 @@
 #include "./innerNode/binary_search.h"
 #include "./innerNode/division_node.h"
 
-#include "./leafNode/leaf_node.h"
-#include "./leafNode/array.h"
-#include "./leafNode/gapped_array.h"
 
 #include "./dataset/lognormal_distribution.h"
 #include "./dataset/uniform_distribution.h"
@@ -19,6 +16,7 @@
 #include <random>
 #include <windows.h>
 #include <iostream>
+
 using namespace std;
 
 int datasetSize = 10000;
@@ -27,67 +25,74 @@ vector<pair<double, double>> insertDataset;
 
 btree::btree_map<double, double> btreemap;
 
-LRNode<ArrayNode> lr_array;
-LRNode<GappedArray> lr_ga;
-NetworkNode<ArrayNode> nn_array;
-NetworkNode<GappedArray> nn_ga;
-DivisionNode<ArrayNode> div_array;
-DivisionNode<GappedArray> div_ga;
-BinarySearchNode<ArrayNode> bin_array;
-BinarySearchNode<GappedArray> bin_ga;
+LRNode lr;
+NetworkNode nn;
+DivisionNode division;
+BinarySearchNode bin;
 
-AdaptiveLR<ArrayNode> ada_lr_array;
-AdaptiveLR<GappedArray> ada_lr_ga;
-AdaptiveNN<ArrayNode> ada_nn_array;
-AdaptiveNN<GappedArray> ada_nn_ga;
-AdaptiveDiv<ArrayNode> ada_div_array;
-AdaptiveDiv<GappedArray> ada_div_ga;
-AdaptiveBin<ArrayNode> ada_bin_array;
-AdaptiveBin<GappedArray> ada_bin_ga;
+AdaptiveLR ada_lr;
+AdaptiveNN ada_nn;
+AdaptiveDiv ada_div;
+AdaptiveBin ada_bin;
 
+void *InnerNodeCreator(int innerNodeType, int maxKeyNum, int childNum, int capacity)
+{
+    void *newNode;
+    switch (innerNodeType)
+    {
+    case 0:
+        newNode = new AdaptiveLR(maxKeyNum, childNum, capacity);
+        break;
+    case 1:
+        newNode = new AdaptiveNN(maxKeyNum, childNum, capacity);
+        break;
+    case 2:
+        newNode = new AdaptiveDiv(maxKeyNum, childNum, capacity);
+        break;
+    case 3:
+        newNode = new AdaptiveBin(maxKeyNum, childNum, capacity);
+        break;
+    }
+    return newNode;
+}
+
+void *LeafNodeCreator(int leafNodeType, int maxKeyNum, int capacity)
+{
+    void *newNode;
+    switch (leafNodeType)
+    {
+    case 0:
+        newNode = new ArrayNode(maxKeyNum, capacity);
+        break;
+    case 1:
+        newNode = new GappedArray(maxKeyNum, capacity);
+        break;
+    }
+    return newNode;
+}
 void createModel()
 {
     for (int i = 0; i < dataset.size(); i++)
         btreemap.insert(dataset[i]);
 
-    lr_array = LRNode<ArrayNode>(5000, 15, 800);
-    lr_array.Initialize(dataset);
-    cout << "lr_array init over!" << endl;
+    lr = LRNode(5000, 15, 800);
+    lr.Initialize(dataset);
+    cout << "lr init over!" << endl;
     cout << "****************" << endl;
 
-    lr_ga = LRNode<GappedArray>(1000, 15, 800);
-    lr_ga.Initialize(dataset);
-    cout << "lr_ga init over!" << endl;
+    nn = NetworkNode(10000, 15, 800);
+    nn.Initialize(dataset);
+    cout << "nn init over!" << endl;
     cout << "****************" << endl;
 
-    nn_array = NetworkNode<ArrayNode>(10000, 15, 800);
-    nn_array.Initialize(dataset);
-    cout << "nn_array init over!" << endl;
+    division = DivisionNode(10000, 15, 800);
+    division.Initialize(dataset);
+    cout << "div init over!" << endl;
     cout << "****************" << endl;
 
-    nn_ga = NetworkNode<GappedArray>(10000, 15, 800);
-    nn_ga.Initialize(dataset);
-    cout << "nn_ga init over!" << endl;
-    cout << "****************" << endl;
-
-    div_array = DivisionNode<ArrayNode>(1000, 15, 800);
-    div_array.Initialize(dataset);
-    cout << "div_array init over!" << endl;
-    cout << "****************" << endl;
-
-    div_ga = DivisionNode<GappedArray>(10000, 15, 800);
-    div_ga.Initialize(dataset);
-    cout << "div_ga init over!" << endl;
-    cout << "****************" << endl;
-
-    bin_array = BinarySearchNode<ArrayNode>(1000, 15, 800);
-    bin_array.Initialize(dataset);
-    cout << "bin_array init over!" << endl;
-    cout << "****************" << endl;
-
-    bin_ga = BinarySearchNode<GappedArray>(1000, 15, 800);
-    bin_ga.Initialize(dataset);
-    cout << "bin_ga init over!" << endl;
+    bin = BinarySearchNode(1000, 15, 800);
+    bin.Initialize(dataset);
+    cout << "bin init over!" << endl;
     cout << "****************" << endl;
 }
 
@@ -189,14 +194,10 @@ int main()
 
     createModel();
     double btree_time0 = 0.0, btree_time1 = 0.0, btree_time2 = 0.0, btree_time3 = 0.0;
-    double lr_array_time0 = 0.0, lr_array_time1 = 0.0, lr_array_time2 = 0.0, lr_array_time3 = 0.0;
-    double lr_ga_time0 = 0.0, lr_ga_time1 = 0.0, lr_ga_time2 = 0.0, lr_ga_time3 = 0.0;
-    double nn_array_time0 = 0.0, nn_array_time1 = 0.0, nn_array_time2 = 0.0, nn_array_time3 = 0.0;
-    double nn_ga_time0 = 0.0, nn_ga_time1 = 0.0, nn_ga_time2 = 0.0, nn_ga_time3 = 0.0;
-    double div_array_time0 = 0.0, div_array_time1 = 0.0, div_array_time2 = 0.0, div_array_time3 = 0.0;
-    double div_ga_time0 = 0.0, div_ga_time1 = 0.0, div_ga_time2 = 0.0, div_ga_time3 = 0.0;
-    double bin_array_time0 = 0.0, bin_array_time1 = 0.0, bin_array_time2 = 0.0, bin_array_time3 = 0.0;
-    double bin_ga_time0 = 0.0, bin_ga_time1 = 0.0, bin_ga_time2 = 0.0, bin_ga_time3 = 0.0;
+    double lr_time0 = 0.0, lr_time1 = 0.0, lr_time2 = 0.0, lr_time3 = 0.0;
+    double nn_time0 = 0.0, nn_time1 = 0.0, nn_time2 = 0.0, nn_time3 = 0.0;
+    double div_time0 = 0.0, div_time1 = 0.0, div_time2 = 0.0, div_time3 = 0.0;
+    double bin_time0 = 0.0, bin_time1 = 0.0, bin_time2 = 0.0, bin_time3 = 0.0;
     int repetitions = 1;
     for (int i = 0; i < repetitions; i++)
     {
@@ -206,52 +207,28 @@ int main()
         printResult((i + 1), btree_time0, btree_time1, btree_time2, btree_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "lr_array:    " << i << endl;
-        test(lr_array, lr_array_time0, lr_array_time1, lr_array_time2, lr_array_time3);
+        cout << "lr:    " << i << endl;
+        test(lr, lr_time0, lr_time1, lr_time2, lr_time3);
         cout << endl;
-        printResult((i + 1), lr_array_time0, lr_array_time1, lr_array_time2, lr_array_time3);
+        printResult((i + 1), lr_time0, lr_time1, lr_time2, lr_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "lr_ga:    " << i << endl;
-        test(lr_ga, lr_ga_time0, lr_ga_time1, lr_ga_time2, lr_ga_time3);
+        cout << "nn:    " << i << endl;
+        test(nn, nn_time0, nn_time1, nn_time2, nn_time3);
         cout << endl;
-        printResult((i + 1), lr_ga_time0, lr_ga_time1, lr_ga_time2, lr_ga_time3);
+        printResult((i + 1), nn_time0, nn_time1, nn_time2, nn_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "nn_array:    " << i << endl;
-        test(nn_array, nn_array_time0, nn_array_time1, nn_array_time2, nn_array_time3);
+        cout << "div:    " << i << endl;
+        test(division, div_time0, div_time1, div_time2, div_time3);
         cout << endl;
-        printResult((i + 1), nn_array_time0, nn_array_time1, nn_array_time2, nn_array_time3);
+        printResult((i + 1), div_time0, div_time1, div_time2, div_time3);
         cout << "-------------------------------" << endl;
 
-        cout << "nn_ga:    " << i << endl;
-        test(nn_ga, nn_ga_time0, nn_ga_time1, nn_ga_time2, nn_ga_time3);
+        cout << "bin:    " << i << endl;
+        test(bin, bin_time0, bin_time1, bin_time2, bin_time3);
         cout << endl;
-        printResult((i + 1), nn_ga_time0, nn_ga_time1, nn_ga_time2, nn_ga_time3);
-        cout << "-------------------------------" << endl;
-
-        cout << "div_array:    " << i << endl;
-        test(div_array, div_array_time0, div_array_time1, div_array_time2, div_array_time3);
-        cout << endl;
-        printResult((i + 1), div_array_time0, div_array_time1, div_array_time2, div_array_time3);
-        cout << "-------------------------------" << endl;
-
-        cout << "div_ga:    " << i << endl;
-        test(div_ga, div_ga_time0, div_ga_time1, div_ga_time2, div_ga_time3);
-        cout << endl;
-        printResult((i + 1), div_ga_time0, div_ga_time1, div_ga_time2, div_ga_time3);
-        cout << "-------------------------------" << endl;
-
-        cout << "bin_array:    " << i << endl;
-        test(bin_array, bin_array_time0, bin_array_time1, bin_array_time2, bin_array_time3);
-        cout << endl;
-        printResult((i + 1), bin_array_time0, bin_array_time1, bin_array_time2, bin_array_time3);
-        cout << "-------------------------------" << endl;
-
-        cout << "bin_ga:    " << i << endl;
-        test(bin_ga, bin_ga_time0, bin_ga_time1, bin_ga_time2, bin_ga_time3);
-        cout << endl;
-        printResult((i + 1), bin_ga_time0, bin_ga_time1, bin_ga_time2, bin_ga_time3);
+        printResult((i + 1), bin_time0, bin_time1, bin_time2, bin_time3);
         cout << "-------------------------------" << endl;
 
         createModel();
@@ -260,29 +237,17 @@ int main()
     cout << "btreemap:" << endl;
     printResult(repetitions, btree_time0, btree_time1, btree_time2, btree_time3);
 
-    cout << "lr_array:" << endl;
-    printResult(repetitions, lr_array_time0, lr_array_time1, lr_array_time2, lr_array_time3);
+    cout << "lr:" << endl;
+    printResult(repetitions, lr_time0, lr_time1, lr_time2, lr_time3);
 
-    cout << "lr_ga:" << endl;
-    printResult(repetitions, lr_ga_time0, lr_ga_time1, lr_ga_time2, lr_ga_time3);
+    cout << "nn:" << endl;
+    printResult(repetitions, nn_time0, nn_time1, nn_time2, nn_time3);
 
-    cout << "nn_array:" << endl;
-    printResult(repetitions, nn_array_time0, nn_array_time1, nn_array_time2, nn_array_time3);
+    cout << "div:" << endl;
+    printResult(repetitions, div_time0, div_time1, div_time2, div_time3);
 
-    cout << "nn_ga:" << endl;
-    printResult(repetitions, nn_ga_time0, nn_ga_time1, nn_ga_time2, nn_ga_time3);
-
-    cout << "div_array:" << endl;
-    printResult(repetitions, div_array_time0, div_array_time1, div_array_time2, div_array_time3);
-
-    cout << "div_ga:" << endl;
-    printResult(repetitions, div_ga_time0, div_ga_time1, div_ga_time2, div_ga_time3);
-
-    cout << "bin_array:" << endl;
-    printResult(repetitions, bin_array_time0, bin_array_time1, bin_array_time2, bin_array_time3);
-
-    cout << "bin_ga:" << endl;
-    printResult(repetitions, bin_ga_time0, bin_ga_time1, bin_ga_time2, bin_ga_time3);
+    cout << "bin:" << endl;
+    printResult(repetitions, bin_time0, bin_time1, bin_time2, bin_time3);
 
     // vector<pair<double, double>> totalData;
     // for (int i = 0; i < dataset.size(); i++)

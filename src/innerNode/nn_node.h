@@ -3,8 +3,11 @@
 
 #include "inner_node.h"
 #include "../trainModel/nn.h"
+const int LOWER_ID1 = 0;
+const int UPPER_ID1 = 1;
+#define LOWER_TYPE1 ArrayNode
+#define UPPER_TYPE1 AdaptiveNN
 
-template <typename lowerType>
 class NetworkNode : public BasicInnerNode
 {
 public:
@@ -14,7 +17,7 @@ public:
     {
         for (int i = 0; i < childNumber; i++)
         {
-            children.push_back(new lowerType(threshold, maxInsertNumber));
+            children.push_back(LeafNodeCreator(LOWER_ID1, threshold, maxInsertNumber));
             children_is_leaf.push_back(true);
         }
     }
@@ -26,30 +29,30 @@ public:
         double p = m_firstStageNetwork.Predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
-            return ((NetworkNode *)children[preIdx])->Find(key);
-        return ((lowerType *)children[preIdx])->Find(key);
+            return ((BasicInnerNode *)children[preIdx])->Find(key);
+        return ((BasicLeafNode *)children[preIdx])->Find(key);
     }
     bool Insert(pair<double, double> data)
     {
         double p = m_firstStageNetwork.Predict(data.first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        return ((lowerType *)children[preIdx])->Insert(data);
+        return ((BasicLeafNode *)children[preIdx])->Insert(data);
     }
     bool Delete(double key)
     {
         double p = m_firstStageNetwork.Predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
-            return ((NetworkNode *)children[preIdx])->Delete(key);
-        return ((lowerType *)children[preIdx])->Delete(key);
+            return ((BasicInnerNode *)children[preIdx])->Delete(key);
+        return ((BasicLeafNode *)children[preIdx])->Delete(key);
     }
     bool Update(pair<double, double> data)
     {
         double p = m_firstStageNetwork.Predict(data.first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
-            return ((NetworkNode *)children[preIdx])->Update(data);
-        return ((lowerType *)children[preIdx])->Update(data);
+            return ((BasicInnerNode *)children[preIdx])->Update(data);
+        return ((BasicLeafNode *)children[preIdx])->Update(data);
     }
 
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
@@ -58,8 +61,7 @@ protected:
     Net m_firstStageNetwork = Net(); // network of the first stage
 };
 
-template <typename lowerType>
-void NetworkNode<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
+void NetworkNode::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -85,12 +87,11 @@ void NetworkNode<lowerType>::Initialize(const vector<pair<double, double>> &data
 
     cout << "train second stage" << endl;
     for (int i = 0; i < childNumber; i++)
-        ((lowerType *)children[i])->SetDataset(perSubDataset[i]);
+        ((BasicLeafNode *)children[i])->SetDataset(perSubDataset[i]);
     cout << "End train" << endl;
 }
 
-template <typename lowerType>
-long double NetworkNode<lowerType>::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double NetworkNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double InitializeCost = 16;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
@@ -113,17 +114,16 @@ long double NetworkNode<lowerType>::GetCost(const btree::btree_map<double, pair<
     }
 
     for (int i = 0; i < childNum; i++)
-        totalCost += lowerType::GetCost(cntTree, perSubDataset[i]);
+        totalCost += LOWER_TYPE1::GetCost(cntTree, perSubDataset[i]);
     cout << "sub tree get cost finish!" << endl;
     return totalCost;
 }
 
-template <typename lowerType>
-class AdaptiveNN : public NetworkNode<lowerType>
+class AdaptiveNN : public NetworkNode
 {
 public:
-    AdaptiveNN() : NetworkNode<lowerType>(){};
-    AdaptiveNN(int maxKey, int childNum, int cap) : NetworkNode<lowerType>(childNum)
+    AdaptiveNN() : NetworkNode(){};
+    AdaptiveNN(int maxKey, int childNum, int cap) : NetworkNode(childNum)
     {
         maxKeyNum = maxKey;
         density = 0.75;
@@ -142,8 +142,7 @@ private:
     int maxKeyNum;  // the maximum amount of data
 };
 
-template <typename lowerType>
-void AdaptiveNN<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
+void AdaptiveNN::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -179,8 +178,8 @@ void AdaptiveNN<lowerType>::Initialize(const vector<pair<double, double>> &datas
             // If a partition has more than the maximum bound number of
             // keys, then this partition is oversized,
             // so we create a new inner node and
-            // recursively call Initialize on the new node.
-            AdaptiveNN *child = new AdaptiveNN(maxKeyNum, this->childNumber, capacity);
+            // recursively call Initialize on the new node
+            UPPER_TYPE1 *child = (UPPER_TYPE1 *)InnerNodeCreator(UPPER_ID1, maxKeyNum, this->childNumber, capacity);
             child->Initialize(perSubDataset[i]);
             this->children.push_back(child);
             this->children_is_leaf.push_back(false);
@@ -189,7 +188,7 @@ void AdaptiveNN<lowerType>::Initialize(const vector<pair<double, double>> &datas
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
-            lowerType *child = new lowerType(maxKeyNum, capacity);
+            LOWER_TYPE1 *child = (LOWER_TYPE1 *)LeafNodeCreator(LOWER_ID1, maxKeyNum, capacity);
             child->SetDataset(perSubDataset[i]);
             this->children.push_back(child);
             this->children_is_leaf.push_back(true);
@@ -198,14 +197,13 @@ void AdaptiveNN<lowerType>::Initialize(const vector<pair<double, double>> &datas
     cout << "End train" << endl;
 }
 
-template <typename lowerType>
-bool AdaptiveNN<lowerType>::Insert(pair<double, double> data)
+bool AdaptiveNN::Insert(pair<double, double> data)
 {
     double p = this->m_firstStageNetwork.Predict(data.first);
     int preIdx = static_cast<int>(p * (this->childNumber - 1));
     if (this->children_is_leaf[preIdx] == true)
     {
-        int size = ((lowerType *)this->children[preIdx])->GetSize();
+        int size = ((BasicLeafNode *)this->children[preIdx])->GetSize();
 
         // if an Insert will push a leaf node's
         // data structure over its maximum bound number of keys,
@@ -214,15 +212,15 @@ bool AdaptiveNN<lowerType>::Insert(pair<double, double> data)
         {
             // The corresponding leaf level moDelete in RMI
             // now becomes an inner level moDelete
-            AdaptiveNN *newNode = new AdaptiveNN(maxKeyNum, this->childNumber, capacity);
+            UPPER_TYPE1 *newNode = (UPPER_TYPE1 *)InnerNodeCreator(UPPER_ID1, maxKeyNum, this->childNumber, capacity);
             vector<pair<double, double>> dataset;
-            ((lowerType *)this->children[preIdx])->GetDataset(&dataset);
+            ((BasicLeafNode *)this->children[preIdx])->GetDataset(&dataset);
             newNode->m_firstStageNetwork.Train(dataset);
 
             // a number of children leaf level moDeletes are created
             for (int i = 0; i < this->childNumber; i++)
             {
-                lowerType *temp = new lowerType(maxKeyNum, capacity);
+                LOWER_TYPE1 *temp = (LOWER_TYPE1 *)LeafNodeCreator(LOWER_ID1, maxKeyNum, capacity);
                 newNode->children.push_back(temp);
                 newNode->children_is_leaf.push_back(true);
             }
@@ -245,19 +243,18 @@ bool AdaptiveNN<lowerType>::Insert(pair<double, double> data)
             // Each of the children leaf nodes trains its own
             // moDelete on its portion of the data.
             for (int i = 0; i < this->childNumber; i++)
-                ((lowerType *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
+                ((BasicLeafNode *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
             this->children[preIdx] = newNode;
             this->children_is_leaf[preIdx] = false;
-            return ((AdaptiveNN *)this->children[preIdx])->Insert(data);
+            return ((BasicInnerNode *)this->children[preIdx])->Insert(data);
         }
     }
     else
-        return ((AdaptiveNN *)this->children[preIdx])->Insert(data);
-    return ((lowerType *)this->children[preIdx])->Insert(data);
+        return ((BasicInnerNode *)this->children[preIdx])->Insert(data);
+    return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
 
-template <typename lowerType>
-long double AdaptiveNN<lowerType>::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double AdaptiveNN::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double InitializeCost = 16;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
@@ -282,9 +279,9 @@ long double AdaptiveNN<lowerType>::GetCost(const btree::btree_map<double, pair<i
     for (int i = 0; i < childNum; i++)
     {
         if (perSubDataset[i].size() > maxNum)
-            totalCost += AdaptiveNN<lowerType>::GetCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
+            totalCost += UPPER_TYPE1::GetCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
         else
-            totalCost += lowerType::GetCost(cntTree, perSubDataset[i]);
+            totalCost += LOWER_TYPE1::GetCost(cntTree, perSubDataset[i]);
     }
     cout << "sub tree get cost finish!" << endl;
     return totalCost;

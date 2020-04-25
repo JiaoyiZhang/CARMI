@@ -2,8 +2,11 @@
 #define DIVISION_NODE_H
 
 #include "inner_node.h"
+const int LOWER_ID2 = 0;
+const int UPPER_ID2 = 2;
+#define LOWER_TYPE2 ArrayNode
+#define UPPER_TYPE2 AdaptiveDiv
 
-template <typename lowerType>
 class DivisionNode : public BasicInnerNode
 {
 public:
@@ -13,7 +16,7 @@ public:
     {
         for (int i = 0; i < childNumber; i++)
         {
-            children.push_back(new lowerType(threshold, maxInsertNumber));
+            children.push_back(LeafNodeCreator(LOWER_ID2, threshold, maxInsertNumber));
             children_is_leaf.push_back(true);
         }
     }
@@ -31,8 +34,7 @@ protected:
     float value;
 };
 
-template <typename lowerType>
-void DivisionNode<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
+void DivisionNode::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -55,12 +57,11 @@ void DivisionNode<lowerType>::Initialize(const vector<pair<double, double>> &dat
 
     cout << "train next stage" << endl;
     for (int i = 0; i < childNumber; i++)
-        ((lowerType *)children[i])->SetDataset(perSubDataset[i]);
+        ((BasicLeafNode *)children[i])->SetDataset(perSubDataset[i]);
     cout << "End train" << endl;
 }
 
-template <typename lowerType>
-pair<double, double> DivisionNode<lowerType>::Find(double key)
+pair<double, double> DivisionNode::Find(double key)
 {
     int preIdx = key / value;
     if (preIdx >= childNumber)
@@ -68,11 +69,11 @@ pair<double, double> DivisionNode<lowerType>::Find(double key)
     else if (preIdx < 0)
         preIdx = 0;
     if (children_is_leaf[preIdx] == false)
-        return ((DivisionNode *)children[preIdx])->Find(key);
-    return ((lowerType *)children[preIdx])->Find(key);
+        return ((BasicInnerNode *)children[preIdx])->Find(key);
+    return ((BasicLeafNode *)children[preIdx])->Find(key);
 }
-template <typename lowerType>
-bool DivisionNode<lowerType>::Update(pair<double, double> data)
+
+bool DivisionNode::Update(pair<double, double> data)
 {
     int preIdx = data.first / value;
     if (preIdx >= childNumber)
@@ -80,12 +81,11 @@ bool DivisionNode<lowerType>::Update(pair<double, double> data)
     else if (preIdx < 0)
         preIdx = 0;
     if (children_is_leaf[preIdx] == false)
-        return ((DivisionNode *)children[preIdx])->Update(data);
-    return ((lowerType *)children[preIdx])->Update(data);
+        return ((BasicInnerNode *)children[preIdx])->Update(data);
+    return ((BasicLeafNode *)children[preIdx])->Update(data);
 }
 
-template <typename lowerType>
-bool DivisionNode<lowerType>::Delete(double key)
+bool DivisionNode::Delete(double key)
 {
     int preIdx = key / value;
     if (preIdx >= childNumber)
@@ -93,23 +93,21 @@ bool DivisionNode<lowerType>::Delete(double key)
     else if (preIdx < 0)
         preIdx = 0;
     if (children_is_leaf[preIdx] == false)
-        return ((DivisionNode *)children[preIdx])->Delete(key);
-    return ((lowerType *)children[preIdx])->Delete(key);
+        return ((BasicInnerNode *)children[preIdx])->Delete(key);
+    return ((BasicLeafNode *)children[preIdx])->Delete(key);
 }
 
-template <typename lowerType>
-bool DivisionNode<lowerType>::Insert(pair<double, double> data)
+bool DivisionNode::Insert(pair<double, double> data)
 {
     int preIdx = data.first / value;
     if (preIdx >= childNumber)
         preIdx = childNumber - 1;
     else if (preIdx < 0)
         preIdx = 0;
-    return ((lowerType *)children[preIdx])->Insert(data);
+    return ((BasicLeafNode *)children[preIdx])->Insert(data);
 }
 
-template <typename lowerType>
-long double DivisionNode<lowerType>::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double DivisionNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double InitializeCost = (log(childNum) / log(2)) * dataset.size();
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
@@ -134,17 +132,16 @@ long double DivisionNode<lowerType>::GetCost(const btree::btree_map<double, pair
 
     cout << "train next stage" << endl;
     for (int i = 0; i < childNum; i++)
-        totalCost += lowerType::GetCost(cntTree, perSubDataset[i]);
+        totalCost += LOWER_TYPE2::GetCost(cntTree, perSubDataset[i]);
     cout << "sub tree get cost finish!" << endl;
     return totalCost;
 }
 
-template <typename lowerType>
-class AdaptiveDiv : public DivisionNode<lowerType>
+class AdaptiveDiv : public DivisionNode
 {
 public:
-    AdaptiveDiv() : DivisionNode<lowerType>(){};
-    AdaptiveDiv(int maxKey, int childNum, int cap) : DivisionNode<lowerType>(childNum)
+    AdaptiveDiv() : DivisionNode(){};
+    AdaptiveDiv(int maxKey, int childNum, int cap) : DivisionNode(childNum)
     {
         maxKeyNum = maxKey;
         density = 0.75;
@@ -163,8 +160,7 @@ private:
     int maxKeyNum;  // the maximum amount of data
 };
 
-template <typename lowerType>
-void AdaptiveDiv<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
+void AdaptiveDiv::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -193,16 +189,16 @@ void AdaptiveDiv<lowerType>::Initialize(const vector<pair<double, double>> &data
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            AdaptiveDiv *child = new AdaptiveDiv(maxKeyNum, this->childNumber, capacity);
+            UPPER_TYPE2 *child = (UPPER_TYPE2 *)InnerNodeCreator(UPPER_ID2, maxKeyNum, this->childNumber, capacity);
             child->Initialize(perSubDataset[i]);
-            this->children.push_back((lowerType *)child);
+            this->children.push_back(child);
             this->children_is_leaf.push_back(false);
         }
         else
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
-            lowerType *child = new lowerType(maxKeyNum, capacity);
+            LOWER_TYPE2 *child = (LOWER_TYPE2 *)LeafNodeCreator(LOWER_ID2, maxKeyNum, capacity);
             child->SetDataset(perSubDataset[i]);
             this->children.push_back(child);
             this->children_is_leaf.push_back(true);
@@ -211,8 +207,7 @@ void AdaptiveDiv<lowerType>::Initialize(const vector<pair<double, double>> &data
     cout << "End train" << endl;
 }
 
-template <typename lowerType>
-bool AdaptiveDiv<lowerType>::Insert(pair<double, double> data)
+bool AdaptiveDiv::Insert(pair<double, double> data)
 {
     int preIdx = data.first / this->value;
     if (preIdx >= this->childNumber)
@@ -222,7 +217,7 @@ bool AdaptiveDiv<lowerType>::Insert(pair<double, double> data)
 
     if (this->children_is_leaf[preIdx] == true)
     {
-        int size = ((lowerType *)this->children[preIdx])->GetSize();
+        int size = ((BasicLeafNode *)this->children[preIdx])->GetSize();
 
         // if an Insert will push a leaf node's
         // data structure over its maximum bound number of keys,
@@ -231,13 +226,10 @@ bool AdaptiveDiv<lowerType>::Insert(pair<double, double> data)
         {
             // The corresponding leaf level moDelete in RMI
             // now becomes an inner level moDelete
-            AdaptiveDiv *newNode = new AdaptiveDiv(maxKeyNum, this->childNumber, capacity);
+            UPPER_TYPE2 *newNode = (UPPER_TYPE2 *)InnerNodeCreator(UPPER_ID2, maxKeyNum, this->childNumber, capacity);
             vector<pair<double, double>> dataset;
-            ((lowerType *)this->children[preIdx])->GetDataset(&dataset);
+            ((BasicLeafNode *)this->children[preIdx])->GetDataset(&dataset);
 
-            std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-                return p1.first < p2.first;
-            });
             double maxValue = dataset[dataset.size() - 1].first;
             double minValue = dataset[0].first;
             this->value = float(maxValue - minValue) / float(this->childNumber);
@@ -245,7 +237,7 @@ bool AdaptiveDiv<lowerType>::Insert(pair<double, double> data)
             // a number of children leaf level moDeletes are created
             for (int i = 0; i < this->childNumber; i++)
             {
-                lowerType *temp = new lowerType(maxKeyNum, capacity);
+                LOWER_TYPE2 *temp = (LOWER_TYPE2 *)LeafNodeCreator(LOWER_ID2, maxKeyNum, capacity);
                 newNode->children.push_back(temp);
                 newNode->children_is_leaf.push_back(true);
             }
@@ -266,19 +258,18 @@ bool AdaptiveDiv<lowerType>::Insert(pair<double, double> data)
             // Each of the children leaf nodes trains its own
             // moDelete on its portion of the data.
             for (int i = 0; i < this->childNumber; i++)
-                ((lowerType *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
-            this->children[preIdx] = (lowerType *)newNode;
+                ((BasicLeafNode *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
+            this->children[preIdx] = newNode;
             this->children_is_leaf[preIdx] = false;
-            return ((AdaptiveDiv *)this->children[preIdx])->Insert(data);
+            return ((BasicInnerNode *)this->children[preIdx])->Insert(data);
         }
     }
     else
-        return ((AdaptiveDiv *)this->children[preIdx])->Insert(data);
-    return ((lowerType *)this->children[preIdx])->Insert(data);
+        return ((BasicInnerNode *)this->children[preIdx])->Insert(data);
+    return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
 
-template <typename lowerType>
-long double AdaptiveDiv<lowerType>::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double AdaptiveDiv::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double InitializeCost = (log(childNum) / log(2)) * dataset.size();
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
@@ -305,10 +296,10 @@ long double AdaptiveDiv<lowerType>::GetCost(const btree::btree_map<double, pair<
     {
         if (perSubDataset[i].size() > maxNum)
         {
-            totalCost += AdaptiveBin<lowerType>::GetCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
+            totalCost += UPPER_TYPE2::GetCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
         }
         else
-            totalCost += lowerType::GetCost(cntTree, perSubDataset[i]);
+            totalCost += LOWER_TYPE2::GetCost(cntTree, perSubDataset[i]);
     }
     cout << "sub tree get cost finish!" << endl;
     return totalCost;

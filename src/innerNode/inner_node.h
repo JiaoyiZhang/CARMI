@@ -3,10 +3,14 @@
 
 #include <vector>
 #include "../params.h"
-#include "../leafNode/leaf_node.h"
 #include "../../cpp-btree/btree_map.h"
+#include "../leafNode/leaf_node.h"
+#include "../leafNode/array.h"
+#include "../leafNode/gapped_array.h"
 using namespace std;
 
+extern void *InnerNodeCreator(int innerNodeType, int maxKeyNum, int childNum, int capacity);
+extern void *LeafNodeCreator(int leafNodeType, int maxKeyNum, int capacity);
 class BasicInnerNode
 {
 public:

@@ -47,7 +47,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
         int threshold = 1000;
         int capacity = 800;
         cout << "threhold is:" << threshold << "\tcapacity:" << capacity << endl;
-        long double tmpCost = LRNode<ArrayNode>::GetCost(cntTree, i, dataset, capacity, threshold);
+        long double tmpCost = LRNode::GetCost(cntTree, i, dataset, capacity, threshold);
         cout << "tmpCost is: " << tmpCost << "    minCost: " << minCost << "    minNum: " << minNum << endl;
         if (tmpCost < minCost)
         {
@@ -60,7 +60,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     // Rebuild the tree according to the calculated most suitable childNum
     int threshold = float(dataset.size() * 1.4) / minNum;
     int capacity = threshold * 0.8;
-    LRNode<ArrayNode> *root = new LRNode<ArrayNode>(threshold, minNum, capacity);
+    LRNode *root = new LRNode(threshold, minNum, capacity);
     cout << "Rebuild root over!" << endl;
 
     //test

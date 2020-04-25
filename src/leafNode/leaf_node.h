@@ -6,7 +6,6 @@
 
 #include <vector>
 #include <algorithm>
-#include "leaf_node_creator.h"
 #include "../params.h"
 #include "../trainModel/model.h"
 #include "../trainModel/lr.h"

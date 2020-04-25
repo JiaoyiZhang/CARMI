@@ -4,7 +4,13 @@
 #include "inner_node.h"
 #include "../trainModel/lr.h"
 
-template <typename lowerType>
+#define LOWER_TYPE0 ArrayNode
+// #define LOWER_TYPE0 GappedArray
+#define UPPER_TYPE0 AdaptiveLR
+
+const int LOWER_ID0 = 0;
+const int UPPER_ID0 = 0;
+
 class LRNode : public BasicInnerNode
 {
 public:
@@ -14,7 +20,7 @@ public:
     {
         for (int i = 0; i < childNumber; i++)
         {
-            children.push_back(new lowerType(threshold, maxInsertNumber));
+            children.push_back(LeafNodeCreator(LOWER_ID0, threshold, maxInsertNumber));
             children_is_leaf.push_back(true);
         }
     }
@@ -26,30 +32,30 @@ public:
         double p = m_firstStageNetwork.Predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
-            return ((LRNode *)children[preIdx])->Find(key);
-        return ((lowerType *)children[preIdx])->Find(key);
+            return ((BasicInnerNode *)children[preIdx])->Find(key);
+        return ((BasicLeafNode*)children[preIdx])->Find(key);
     }
     bool Insert(pair<double, double> data)
     {
         double p = m_firstStageNetwork.Predict(data.first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        return ((lowerType *)children[preIdx])->Insert(data);
+        return ((BasicLeafNode*)children[preIdx])->Insert(data);
     }
     bool Delete(double key)
     {
         double p = m_firstStageNetwork.Predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
-            return ((LRNode *)children[preIdx])->Delete(key);
-        return ((lowerType *)children[preIdx])->Delete(key);
+            return ((BasicInnerNode *)children[preIdx])->Delete(key);
+        return ((BasicLeafNode*)children[preIdx])->Delete(key);
     }
     bool Update(pair<double, double> data)
     {
         double p = m_firstStageNetwork.Predict(data.first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
         if (children_is_leaf[preIdx] == false)
-            return ((LRNode *)children[preIdx])->Update(data);
-        return ((lowerType *)children[preIdx])->Update(data);
+            return ((BasicInnerNode *)children[preIdx])->Update(data);
+        return ((BasicLeafNode*)children[preIdx])->Update(data);
     }
 
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
@@ -58,8 +64,8 @@ protected:
     LinearRegression m_firstStageNetwork = LinearRegression(); // lr of the first stage
 };
 
-template <typename lowerType>
-void LRNode<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
+
+void LRNode::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -84,12 +90,12 @@ void LRNode<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
 
     cout << "train second stage" << endl;
     for (int i = 0; i < childNumber; i++)
-        ((lowerType *)children[i])->SetDataset(perSubDataset[i]);
+        ((BasicLeafNode *)children[i])->SetDataset(perSubDataset[i]);
     cout << "End train" << endl;
 }
 
-template <typename lowerType>
-long double LRNode<lowerType>::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+
+long double LRNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double InitializeCost = 2;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
@@ -112,17 +118,17 @@ long double LRNode<lowerType>::GetCost(const btree::btree_map<double, pair<int, 
     }
 
     for (int i = 0; i < childNum; i++)
-        totalCost += lowerType::GetCost(cntTree, perSubDataset[i]);
+        totalCost += LOWER_TYPE0::GetCost(cntTree, perSubDataset[i]);
     cout << "sub tree get cost finish!" << endl;
     return totalCost;
 }
 
-template <typename lowerType>
-class AdaptiveLR : public LRNode<lowerType>
+
+class AdaptiveLR : public LRNode
 {
 public:
-    AdaptiveLR() : LRNode<lowerType>(){};
-    AdaptiveLR(int maxKey, int childNum, int cap) : LRNode<lowerType>(childNum)
+    AdaptiveLR() : LRNode(){};
+    AdaptiveLR(int maxKey, int childNum, int cap) : LRNode(childNum)
     {
         maxKeyNum = maxKey;
         density = 0.75;
@@ -141,8 +147,8 @@ private:
     int maxKeyNum;  // the maximum amount of data
 };
 
-template <typename lowerType>
-void AdaptiveLR<lowerType>::Initialize(const vector<pair<double, double>> &dataset)
+
+void AdaptiveLR::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -177,7 +183,7 @@ void AdaptiveLR<lowerType>::Initialize(const vector<pair<double, double>> &datas
             // keys, then this partition is oversized,
             // so we create a new inner node and
             // recursively call Initialize on the new node.
-            AdaptiveLR *child = new AdaptiveLR(maxKeyNum, this->childNumber, capacity);
+            UPPER_TYPE0 *child = (UPPER_TYPE0 *)InnerNodeCreator(UPPER_ID0, maxKeyNum, this->childNumber, capacity);
             child->Initialize(perSubDataset[i]);
             this->children.push_back(child);
             this->children_is_leaf.push_back(false);
@@ -186,7 +192,7 @@ void AdaptiveLR<lowerType>::Initialize(const vector<pair<double, double>> &datas
         {
             // Otherwise, the partition is under the maximum bound number of keys,
             // so we could just make this partition a leaf node
-            lowerType *child = new lowerType(maxKeyNum, capacity);
+            LOWER_TYPE0 *child = (LOWER_TYPE0 *)LeafNodeCreator(LOWER_ID0, maxKeyNum, capacity);
             child->SetDataset(perSubDataset[i]);
             this->children.push_back(child);
             this->children_is_leaf.push_back(true);
@@ -195,14 +201,14 @@ void AdaptiveLR<lowerType>::Initialize(const vector<pair<double, double>> &datas
     cout << "End train" << endl;
 }
 
-template <typename lowerType>
-bool AdaptiveLR<lowerType>::Insert(pair<double, double> data)
+
+bool AdaptiveLR::Insert(pair<double, double> data)
 {
     double p = this->m_firstStageNetwork.Predict(data.first);
     int preIdx = static_cast<int>(p * (this->childNumber - 1));
     if (this->children_is_leaf[preIdx] == true)
     {
-        int size = ((lowerType *)this->children[preIdx])->GetSize();
+        int size = ((BasicLeafNode *)this->children[preIdx])->GetSize();
         // if an Insert will push a leaf node's
         // data structure over its maximum bound number of keys,
         // then we split the leaf data node
@@ -210,15 +216,15 @@ bool AdaptiveLR<lowerType>::Insert(pair<double, double> data)
         {
             // The corresponding leaf level moDelete in RMI
             // now becomes an inner level moDelete
-            AdaptiveLR *newNode = new AdaptiveLR(maxKeyNum, this->childNumber, capacity);
+            UPPER_TYPE0 *newNode = (UPPER_TYPE0 *)InnerNodeCreator(UPPER_ID0, maxKeyNum, this->childNumber, capacity);
             vector<pair<double, double>> dataset;
-            ((lowerType *)this->children[preIdx])->GetDataset(&dataset);
+            ((BasicLeafNode *)this->children[preIdx])->GetDataset(&dataset);
             newNode->m_firstStageNetwork.Train(dataset);
 
             // a number of children leaf level moDeletes are created
             for (int i = 0; i < this->childNumber; i++)
             {
-                lowerType *temp = new lowerType(maxKeyNum, capacity);
+            LOWER_TYPE0 *temp = (LOWER_TYPE0 *)LeafNodeCreator(LOWER_ID0, maxKeyNum, capacity);
                 newNode->children.push_back(temp);
                 newNode->children_is_leaf.push_back(true);
             }
@@ -241,19 +247,19 @@ bool AdaptiveLR<lowerType>::Insert(pair<double, double> data)
             // Each of the children leaf nodes trains its own
             // moDelete on its portion of the data.
             for (int i = 0; i < this->childNumber; i++)
-                ((lowerType *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
+                ((BasicLeafNode *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
             this->children[preIdx] = newNode;
             this->children_is_leaf[preIdx] = false;
-            return ((AdaptiveLR *)this->children[preIdx])->Insert(data);
+            return ((BasicInnerNode *)this->children[preIdx])->Insert(data);
         }
     }
     else
-        return ((AdaptiveLR *)this->children[preIdx])->Insert(data);
-    return ((lowerType *)this->children[preIdx])->Insert(data);
+        return ((BasicInnerNode *)this->children[preIdx])->Insert(data);
+    return ((BasicLeafNode*)this->children[preIdx])->Insert(data);
 }
 
-template <typename lowerType>
-long double AdaptiveLR<lowerType>::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+
+long double AdaptiveLR::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
 {
     double InitializeCost = 16;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
@@ -278,9 +284,9 @@ long double AdaptiveLR<lowerType>::GetCost(const btree::btree_map<double, pair<i
     for (int i = 0; i < childNum; i++)
     {
         if (perSubDataset[i].size() > maxNum)
-            totalCost += AdaptiveLR<lowerType>::GetCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
+            totalCost += UPPER_TYPE0::GetCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
         else
-            totalCost += lowerType::GetCost(cntTree, perSubDataset[i]);
+            totalCost += LOWER_TYPE0::GetCost(cntTree, perSubDataset[i]);
     }
     cout << "sub tree get cost finish!" << endl;
     return totalCost;
