@@ -7,7 +7,6 @@
 #include "./innerNode/binary_search.h"
 #include "./innerNode/division_node.h"
 
-
 #include "./dataset/lognormal_distribution.h"
 #include "./dataset/uniform_distribution.h"
 #include "reconstruction.h"
@@ -77,21 +76,29 @@ void createModel()
 
     lr = LRNode(5000, 15, 800);
     lr.Initialize(dataset);
+    // ada_lr = AdaptiveLR(1000, 15, 800);
+    // ada_lr.Initialize(dataset);
     cout << "lr init over!" << endl;
     cout << "****************" << endl;
 
     nn = NetworkNode(10000, 15, 800);
     nn.Initialize(dataset);
+    // ada_nn = AdaptiveNN(1000, 15, 800);
+    // ada_nn.Initialize(dataset);
     cout << "nn init over!" << endl;
     cout << "****************" << endl;
 
     division = DivisionNode(10000, 15, 800);
     division.Initialize(dataset);
+    // ada_div = AdaptiveDiv(10000, 15, 800);
+    // ada_div.Initialize(dataset);
     cout << "div init over!" << endl;
     cout << "****************" << endl;
 
     bin = BinarySearchNode(1000, 15, 800);
     bin.Initialize(dataset);
+    // ada_bin = AdaptiveBin(1000, 15, 800);
+    // ada_bin.Initialize(dataset);
     cout << "bin init over!" << endl;
     cout << "****************" << endl;
 }
@@ -138,7 +145,11 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceFrequency(&c);
     for (int i = 0; i < dataset.size(); i++)
     {
-        obj.Find(dataset[i].first);
+        cout << "Find : i:" << i << "\tkey:" << dataset[i].first << "\t";
+        auto res = obj.Find(dataset[i].first);
+        cout << "\tvalue:" << res.second << endl;
+        if (res.second != dataset[i].first * 10)
+            cout << "Something wrong with find!" << endl;
     }
     QueryPerformanceCounter(&e);
     time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -147,7 +158,12 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
+        cout << "Insert : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
         obj.Insert(insertDataset[i]);
+        auto res = obj.Find(insertDataset[i].first);
+        cout << "\tvalue:" << res.second << endl;
+        if (res.second != insertDataset[i].first * 10)
+            cout << "Something wrong with insert!" << endl;
     }
     QueryPerformanceCounter(&e);
     time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -156,7 +172,12 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
+        cout << "Update : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
         obj.Update({insertDataset[i].first, 1.11});
+        auto res = obj.Find(insertDataset[i].first);
+        cout << "\tvalue:" << res.second << endl;
+        if (res.second != 1.11)
+            cout << "Something wrong with update!" << endl;
     }
     QueryPerformanceCounter(&e);
     time2 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -165,7 +186,12 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
+        cout << "Delete : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
         obj.Delete(insertDataset[i].first);
+        auto res = obj.Find(insertDataset[i].first);
+        cout << "\tvalue:" << res.second << endl;
+        if (res.second != 0)
+            cout << "Something wrong with delete!" << endl;
     }
     QueryPerformanceCounter(&e);
     time3 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;

@@ -40,7 +40,6 @@ void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
     // });
 
     model->Train(m_dataset);
-    int maxError = 0;
     for (int i = 0; i < m_datasetSize; i++)
     {
         double p = model->Predict(m_dataset[i].first);
@@ -50,10 +49,6 @@ void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
             maxPositiveError = error;
         if (error < maxNegativeError)
             maxNegativeError = error;
-        if (error < 0)
-            error = -error;
-        if (error > maxError)
-            maxError = error;
     }
     maxPositiveError++;
     maxNegativeError--;
@@ -81,7 +76,6 @@ pair<double, double> ArrayNode::Find(double key)
 
 bool ArrayNode::Insert(pair<double, double> data)
 {
-    // use learnedIndex to Find the data
     double p = model->Predict(data.first);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     int start = max(0, preIdx + maxNegativeError);
@@ -100,13 +94,9 @@ bool ArrayNode::Insert(pair<double, double> data)
     int pre = static_cast<int>(p * (m_datasetSize - 1));
     int error = preIdx - pre;
     if (error > maxPositiveError)
-    {
         maxPositiveError = error;
-    }
     if (error < maxNegativeError)
-    {
         maxNegativeError = error;
-    }
     maxNegativeError--;
     maxPositiveError++;
 
