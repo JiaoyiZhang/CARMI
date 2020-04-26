@@ -4,11 +4,11 @@
 #include "inner_node.h"
 #include "../trainModel/lr.h"
 
-#define LOWER_TYPE0 ArrayNode
-// #define LOWER_TYPE0 GappedArray
+// #define LOWER_TYPE0 ArrayNode
+#define LOWER_TYPE0 GappedArray
 #define UPPER_TYPE0 AdaptiveLR
 
-const int LOWER_ID0 = 0;
+const int LOWER_ID0 = 1;
 const int UPPER_ID0 = 0;
 
 class LRNode : public BasicInnerNode
@@ -160,52 +160,27 @@ void AdaptiveLR::Initialize(const vector<pair<double, double>> &dataset)
     auto tmpDataset = dataset;
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(tmpDataset.begin(), tmpDataset.end(), default_random_engine(seed));
+    vector<vector<pair<double, double>>> perSubDataset;
+    vector<pair<double, double>> tmp;
+    for (int i = 0; i < this->childNumber; i++)
+        perSubDataset.push_back(tmp);
     for (int i = 0; i < tmpDataset.size(); i++)
-        Insert(tmpDataset[i]);
-    /*
-        //  use the model to divide the keys into some number of partitions
-        vector<vector<pair<double, double>>> perSubDataset;
-        vector<pair<double, double>> tmp;
-        for (int i = 0; i < this->childNumber; i++)
-            perSubDataset.push_back(tmp);
-
-        for (int i = 0; i < dataset.size(); i++)
+    {
+        double p = this->m_firstStageNetwork.Predict(tmpDataset[i].first);
+        int preIdx = static_cast<int>(p * (this->childNumber - 1));
+        if (perSubDataset[preIdx].size() < 100)
+            perSubDataset[preIdx].push_back(tmpDataset[i]);
+        else if (perSubDataset[preIdx].size() == 100)
         {
-            double p = this->m_firstStageNetwork.Predict(dataset[i].first);
-            p = p * (this->childNumber - 1);
-            int preIdx = static_cast<int>(p);
-            perSubDataset[preIdx].push_back(dataset[i]);
+            perSubDataset[preIdx].push_back(tmpDataset[i]);
+            std::sort(perSubDataset[preIdx].begin(), perSubDataset[preIdx].end(), [](pair<double, double> p1, pair<double, double> p2) {
+                return p1.first < p2.first;
+            });
+            ((BasicLeafNode *)this->children[preIdx])->SetDataset(perSubDataset[preIdx]);
         }
-        for (int i = 0; i < this->childNumber; i++)
-            if (perSubDataset[i].size() == dataset.size())
-                return Initialize(dataset);
-
-        // then iterate through the partitions in sorted order
-        cout << "train second stage" << endl;
-        for (int i = 0; i < this->childNumber; i++)
-        {
-            if (perSubDataset[i].size() > maxKeyNum)
-            {
-                // If a partition has more than the maximum bound number of
-                // keys, then this partition is oversized,
-                // so we create a new inner node and
-                // recursively call Initialize on the new node.
-                UPPER_TYPE0 *child = (UPPER_TYPE0 *)InnerNodeCreator(UPPER_ID0, maxKeyNum, this->childNumber, capacity);
-                child->Initialize(perSubDataset[i]);
-                this->children.push_back(child);
-                this->children_is_leaf.push_back(false);
-            }
-            else
-            {
-                // Otherwise, the partition is under the maximum bound number of keys,
-                // so we could just make this partition a leaf node
-                LOWER_TYPE0 *child = (LOWER_TYPE0 *)LeafNodeCreator(LOWER_ID0, maxKeyNum, capacity);
-                child->SetDataset(perSubDataset[i]);
-                this->children.push_back(child);
-                this->children_is_leaf.push_back(true);
-            }
-        }
-    */
+        else
+            Insert(tmpDataset[i]);
+    }
     cout << "End train" << endl;
 }
 

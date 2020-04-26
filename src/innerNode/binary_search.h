@@ -3,9 +3,9 @@
 
 #include "inner_node.h"
 
-const int LOWER_ID3 = 0;
+const int LOWER_ID3 = 1;
 const int UPPER_ID3 = 3;
-#define LOWER_TYPE3 ArrayNode
+#define LOWER_TYPE3 GappedArray
 #define UPPER_TYPE3 AdaptiveBin
 
 class BinarySearchNode : public BasicInnerNode
@@ -204,56 +204,59 @@ void AdaptiveBin::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
+    cout << "train first stage" << endl;
 
-    vector<vector<pair<double, double>>> perSubDataset;
-    vector<pair<double, double>> tmp;
     for (int i = 0; i < dataset.size(); i++)
     {
-        // tmp.push_back(dataset[i]);
         if ((i + 1) % (dataset.size() / this->childNumber) == 0)
-        {
-            // perSubDataset.push_back(tmp);
             this->index.push_back(dataset[i].first);
-            // tmp = vector<pair<double, double>>();
-        }
     }
     if (this->index.size() == this->childNumber - 1)
-    {
-        // perSubDataset.push_back(tmp);
         this->index.push_back(dataset[dataset.size() - 1].first);
+
+    for (int i = 0; i < childNumber; i++)
+    {
+        children.push_back(LeafNodeCreator(LOWER_ID3, maxKeyNum, capacity));
+        children_is_leaf.push_back(true);
     }
 
     auto tmpDataset = dataset;
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(tmpDataset.begin(), tmpDataset.end(), default_random_engine(seed));
+    vector<vector<pair<double, double>>> perSubDataset;
+    vector<pair<double, double>> tmp;
+    for (int i = 0; i < this->childNumber; i++)
+        perSubDataset.push_back(tmp);
     for (int i = 0; i < tmpDataset.size(); i++)
-        Insert(tmpDataset[i]);
-    /*
-        cout << "train next stage" << endl;
-        for (int i = 0; i < this->childNumber; i++)
+    {
+        int start_idx = 0;
+        int end_idx = this->childNumber - 1;
+        int mid;
+        while (start_idx <= end_idx)
         {
-            if (perSubDataset[i].size() > maxKeyNum)
-            {
-                // If a partition has more than the maximum bound number of
-                // keys, then this partition is oversized,
-                // so we create a new inner node and
-                // recursively call Initialize on the new node.
-                UPPER_TYPE3 *child = (UPPER_TYPE3 *)InnerNodeCreator(UPPER_ID3, maxKeyNum, this->childNumber, capacity);
-                child->Initialize(perSubDataset[i]);
-                this->children.push_back(child);
-                this->children_is_leaf.push_back(false);
-            }
+            mid = (start_idx + end_idx) / 2;
+            if ((this->index[mid] >= tmpDataset[i].first && (this->index[mid - 1] < tmpDataset[i].first || mid == 0)) || mid == this->childNumber - 1)
+                break;
+            if (this->index[mid] < tmpDataset[i].first)
+                start_idx = mid + 1;
+            else if (this->index[mid] > tmpDataset[i].first)
+                end_idx = mid;
             else
-            {
-                // Otherwise, the partition is under the maximum bound number of keys,
-                // so we could just make this partition a leaf node
-                LOWER_TYPE3 *child = (LOWER_TYPE3 *)LeafNodeCreator(LOWER_ID3, maxKeyNum, capacity);
-                child->SetDataset(perSubDataset[i]);
-                this->children.push_back(child);
-                this->children_is_leaf.push_back(true);
-            }
+                break;
         }
-    */
+        if (perSubDataset[mid].size() < 100)
+            perSubDataset[mid].push_back(tmpDataset[i]);
+        else if (perSubDataset[mid].size() == 100)
+        {
+            perSubDataset[mid].push_back(tmpDataset[i]);
+            std::sort(perSubDataset[mid].begin(), perSubDataset[mid].end(), [](pair<double, double> p1, pair<double, double> p2) {
+                return p1.first < p2.first;
+            });
+            ((BasicLeafNode *)this->children[mid])->SetDataset(perSubDataset[mid]);
+        }
+        else
+            Insert(tmpDataset[i]);
+    }
     cout << "End train" << endl;
 }
 
@@ -334,7 +337,6 @@ long double AdaptiveBin::GetCost(const btree::btree_map<double, pair<int, int>> 
     double InitializeCost = (log(childNum) / log(2)) * dataset.size();
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
-    // cout << " DatasetSize is : " << dataset.size() << endl;
     if (dataset.size() == 0)
         return 0;
 
