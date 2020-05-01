@@ -2,17 +2,17 @@
 #define GAPPED_ARRAY_H
 
 #include "leaf_node.h"
+#include <float.h>
 #include <algorithm>
 
 class GappedArray : public BasicLeafNode
 {
 public:
-    GappedArray(int maxKeyNumber, int cap) : BasicLeafNode()
+    GappedArray(int cap) : BasicLeafNode()
     {
-        maxKeyNum = maxKeyNumber;
         density = 0.5;
         capacity = cap;
-        maxIndex = 0;
+        maxIndex = -2;
     }
     void SetDataset(const vector<pair<double, double>> &subDataset);
 
@@ -26,42 +26,36 @@ public:
 private:
     int BinarySearch(double key, int p, int start, int end);
     int ExponentialSearch(double key, int p, int start, int end);
-    int Search(double key, int p);                                                                    // return the index of key
-    void InsertData(vector<pair<double, double>> *vec, pair<double, double> data, int idx, int &cnt); // Insert data into new vector
+    int Search(double key, int p);
 
-    void Expand(); // expand the vector when m_datasetSize / capacity >= density
 private:
     int maxIndex;   // tht index of the last one
     int capacity;   // the current maximum capacity of the leaf node data
     double density; // the maximum density of the leaf node data
-    int maxKeyNum;  // the maximum amount of data
 };
 
 void GappedArray::SetDataset(const vector<pair<double, double>> &subDataset)
 {
-    m_datasetSize = subDataset.size();
-    if (m_datasetSize == 0)
+    while ((float(subDataset.size()) / capacity > density))
     {
-        m_dataset = vector<pair<double, double>>(capacity, pair<double, double>{-1, -1});
-        return;
+        int newSize = capacity / density;
+        capacity = newSize;
     }
-    model->Train(subDataset);
-    while (float(m_datasetSize) / capacity > density)
-        capacity /= density;
-    capacity = capacity > maxKeyNum ? maxKeyNum : capacity;
+    m_datasetSize = 0;
+
     vector<pair<double, double>> newDataset(capacity, pair<double, double>{-1, -1});
-    for (int i = 0; i < m_datasetSize; i++)
+    maxIndex = -2;
+    for (int i = 0; i < subDataset.size(); i++)
     {
-        if (subDataset[i].first != -1)
+        if ((subDataset[i].first != -1) && (subDataset[i].second != DBL_MIN))
         {
-            double p = model->Predict(subDataset[i].first);
-            int preIdx = static_cast<int>(p * (capacity - 1));
-            InsertData(&newDataset, subDataset[i], preIdx, maxIndex);
+            maxIndex += 2;
+            newDataset[maxIndex] = subDataset[i];
+            m_datasetSize++;
         }
     }
     m_dataset = newDataset;
     model->Train(m_dataset);
-    int maxError = 0;
     for (int i = 0; i < m_dataset.size(); i++)
     {
         if (m_dataset[i].first != -1)
@@ -73,10 +67,6 @@ void GappedArray::SetDataset(const vector<pair<double, double>> &subDataset)
                 maxPositiveError = error;
             if (error < maxNegativeError)
                 maxNegativeError = error;
-            if (error < 0)
-                error = -error;
-            if (error > maxError)
-                maxError = error;
         }
     }
     maxPositiveError++;
@@ -85,19 +75,38 @@ void GappedArray::SetDataset(const vector<pair<double, double>> &subDataset)
 
 pair<double, double> GappedArray::Find(double key)
 {
+    // cout << endl;
+    // for (int i = 0; i <= maxIndex; i++)
+    // {
+    //     cout << i << ":" << m_dataset[i].first << ";   ";
+    //     if ((i + 1) % 20 == 0)
+    //         cout << endl;
+    // }
+    // cout << endl;
+
     double p = model->Predict(key);
     int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == key)
         return m_dataset[preIdx];
     else
     {
-        // int res = Search(key, preIdx);
         int start = max(0, preIdx + maxNegativeError);
         int end = min(maxIndex, preIdx + maxPositiveError);
+        // cout << "start:" << start << "\tstart.key:" << m_dataset[start].first << "; \tend:" << end << "\tend.key:" << m_dataset[end].first << endl;
         int res = SEARCH_METHOD(key, preIdx, start, end);
-        if (res == -1 || m_dataset[res].first != key)
-            return {};
-        return m_dataset[res];
+        // cout << "First find: key:" << key << "; \tpreIdx:" << preIdx << "\tpreIdx.key:" << m_dataset[preIdx].first << endl;
+
+        if (res <= start)
+            res = SEARCH_METHOD(key, preIdx, 0, start);
+        else if (res >= end)
+        {
+            res = SEARCH_METHOD(key, preIdx, res, maxIndex);
+            if (res > maxIndex)
+                return {};
+        }
+        if (m_dataset[res].first == key)
+            return m_dataset[res];
+        return {};
     }
 }
 
@@ -115,7 +124,15 @@ bool GappedArray::Update(pair<double, double> data)
         int start = max(0, preIdx + maxNegativeError);
         int end = min(maxIndex, preIdx + maxPositiveError);
         int res = SEARCH_METHOD(data.first, preIdx, start, end);
-        if (res == -1 || m_dataset[res].first != data.first)
+        if (res <= start)
+            res = SEARCH_METHOD(data.first, preIdx, 0, start);
+        else if (res >= end)
+        {
+            res = SEARCH_METHOD(data.first, preIdx, res, maxIndex);
+            if (res > maxIndex)
+                return false;
+        }
+        if (m_dataset[res].first != data.first)
             return false;
         m_dataset[res].second = data.second;
         return true;
@@ -124,156 +141,100 @@ bool GappedArray::Update(pair<double, double> data)
 
 bool GappedArray::Delete(double key)
 {
+    // DBL_MIN means the data has been deleted
+    // when a data has been deleted, data.second == DBL_MIN
     double p = model->Predict(key);
     int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == key)
     {
-        m_dataset[preIdx] = {-1, -1};
+        m_dataset[preIdx].second = DBL_MIN;
         m_datasetSize--;
+        if (preIdx == maxIndex)
+            maxIndex--;
+        return true;
     }
     else
     {
         int start = max(0, preIdx + maxNegativeError);
         int end = min(maxIndex, preIdx + maxPositiveError);
         int res = SEARCH_METHOD(key, preIdx, start, end);
-        if (res == -1 || m_dataset[res].first != key)
+
+        if (res <= start)
+            res = SEARCH_METHOD(key, preIdx, 0, start);
+        else if (res >= end)
+        {
+            res = SEARCH_METHOD(key, preIdx, res, maxIndex);
+            if (res > maxIndex)
+                return false;
+        }
+        if (m_dataset[res].first != key)
             return false;
         m_datasetSize--;
-        m_dataset[res] = {-1, -1};
-        preIdx = res;
-    }
-    if (preIdx == maxIndex)
-        maxIndex--;
-    else
-    {
-        bool isMove = false;
-        if ((preIdx > 0 && m_dataset[preIdx - 1].first == -1) || (m_dataset[preIdx + 1].first == -1))
-        {
-            int i = preIdx + 1;
-            if (m_dataset[preIdx - 1].first == -1)
-                i++;
-            while ((i + 1) <= maxIndex)
-            {
-                m_dataset[i] = m_dataset[i + 1];
-                if (m_dataset[i + 1].first != -1 && m_dataset[i + 2].first != -1)
-                {
-                    m_dataset[i + 1] = {-1, -1};
-                    break;
-                }
-                i++;
-            }
-            if ((i + 1) == maxIndex + 1)
-            {
-                m_dataset[i] = {-1, -1};
-                maxIndex--;
-            }
-        }
+        m_dataset[res].second = DBL_MIN;
+        if (res == maxIndex)
+            maxIndex--;
+        return true;
     }
 }
 
 bool GappedArray::Insert(pair<double, double> data)
 {
-    if ((capacity < maxKeyNum) && (float(m_datasetSize) / capacity > density))
+    if ((float(m_datasetSize) / capacity > density))
     {
         // If an additional Insertion results in crossing the density
         // then we expand the gapped array
-        Expand();
+        SetDataset(m_dataset);
     }
 
-    double p = model->Predict(data.first);
-    int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_datasetSize == 0)
     {
-        m_dataset[preIdx] = data;
+        m_dataset = vector<pair<double, double>>(capacity, pair<double, double>{-1, -1});
+        m_dataset[0] = data;
         m_datasetSize++;
         maxIndex = 0;
+        SetDataset(m_dataset);
         return true;
     }
+    double p = model->Predict(data.first);
+    int preIdx = static_cast<int>(p * (maxIndex + 2));
 
-    int start_idx = 0, end_idx = maxIndex;
-    bool isViolative = false;
-    for (int i = preIdx - 1; i >= 0; i--)
-    {
-        if (m_dataset[i].first != -1 && m_dataset[i].first > data.first)
-        {
-            end_idx = i;
-            isViolative = true;
-            break;
-        }
-    }
-    for (int i = preIdx; i <= maxIndex; i++)
-    {
-        if (m_dataset[i].first != -1 && m_dataset[i].first < data.first)
-        {
-            start_idx = i;
-            isViolative = true;
-            break;
-        }
-    }
-    if (isViolative)
-    {
-        if (m_dataset[0].first != -1 && m_dataset[0].first > data.first)
-            preIdx = 0;
-        else if (m_dataset[0].first == -1 && m_dataset[1].first != -1 && m_dataset[1].first > data.first)
-            preIdx = 1;
-        else if (m_dataset[maxIndex].first < data.first)
-            preIdx = maxIndex + 1;
-        else
-        {
-            preIdx = SEARCH_METHOD(data.first, preIdx, start_idx, end_idx);
-        }
-    }
+    int start = max(0, preIdx + maxNegativeError);
+    int end = min(maxIndex, preIdx + maxPositiveError);
+    preIdx = SEARCH_METHOD(data.first, preIdx, start, end);
+    if (preIdx <= start)
+        preIdx = SEARCH_METHOD(data.first, preIdx, 0, start);
+    else if (preIdx >= end)
+        preIdx = SEARCH_METHOD(data.first, preIdx, preIdx, maxIndex);
+
 
     // if the Insertion position is a gap,
     //  then we Insert the element into the gap and are done
     if (m_dataset[preIdx].first == -1)
     {
-        int empty = 0;
-        int i;
-        for (i = preIdx - 1; i >= 0; i--)
-        {
-            if (m_dataset[i].first == -1)
-                empty++;
-            else
-                break;
-        }
-        if (empty > 1)
-        {
-            m_dataset[i + 2] = data;
-            m_datasetSize++;
-            maxIndex = max(maxIndex, i + 2);
-            // updata error
-            int pre = static_cast<int>(p * (capacity - 1));
-            int error = preIdx - pre;
-            if (error > maxPositiveError)
-                maxPositiveError = error;
-            if (error < maxNegativeError)
-                maxNegativeError = error;
-            maxNegativeError--;
-            maxPositiveError++;
-            return true;
-        }
-        if (i == -1)
-            preIdx = 0;
         m_dataset[preIdx] = data;
         m_datasetSize++;
         maxIndex = max(maxIndex, preIdx);
-        // updata error
-        int pre = static_cast<int>(p * (capacity - 1));
-        int error = preIdx - pre;
-        if (error > maxPositiveError)
-            maxPositiveError = error;
-        if (error < maxNegativeError)
-            maxNegativeError = error;
-        maxNegativeError--;
-        maxPositiveError++;
         return true;
     }
     else
     {
+        if (m_dataset[preIdx].second == DBL_MIN)
+        {
+            m_dataset[preIdx] = data;
+            m_datasetSize++;
+            maxIndex = max(maxIndex, preIdx);
+            return true;
+        }
+        if (preIdx == maxIndex && m_dataset[maxIndex].first < data.first)
+        {
+            m_dataset[++maxIndex] = data;
+            m_datasetSize++;
+            return true;
+        }
         // If the Insertion position is not a gap, we make
         // a gap at the Insertion position by shifting the elements
         // by one position in the direction of the closest gap
+
         int i = preIdx + 1;
         while (m_dataset[i].first != -1)
             i++;
@@ -296,15 +257,6 @@ bool GappedArray::Insert(pair<double, double> data)
         m_dataset[preIdx] = data;
         m_datasetSize++;
         maxIndex = max(maxIndex, preIdx);
-        // updata error
-        int pre = static_cast<int>(p * (capacity - 1));
-        int error = preIdx - pre;
-        if (error > maxPositiveError)
-            maxPositiveError = error;
-        if (error < maxNegativeError)
-            maxNegativeError = error;
-        maxNegativeError--;
-        maxPositiveError++;
         return true;
     }
     return false;
@@ -315,44 +267,29 @@ int GappedArray::BinarySearch(double key, int preIdx, int start_idx, int end_idx
     // use binary search to find
     while (start_idx < end_idx)
     {
+        if (m_dataset[start_idx].first == -1)
+            start_idx--;
+        if (m_dataset[end_idx].first == -1)
+            end_idx++;
         int mid = (start_idx + end_idx) >> 1;
         if (m_dataset[mid].first == -1)
         {
             int left = max(start_idx, mid - 1);
             int right = min(end_idx, mid + 1);
-            if (m_dataset[left].first < key && m_dataset[right].first >= key)
-            {
-                return mid + 1;
-            }
-            else if (m_dataset[left].first >= key)
+            if (m_dataset[left].first >= key)
                 end_idx = left;
-            else if (m_dataset[right].first < key)
+            else
                 start_idx = right;
         }
         else
         {
-            int left = (m_dataset[mid - 1].first == -1) ? mid - 2 : mid - 1;
-            left = max(start_idx, left);
-            int right = min(end_idx, mid);
-            if ((left == right) || (m_dataset[right].first == -1))
-                right++;
-            if ((m_dataset[left].first < key) && (m_dataset[right].first >= key))
-            {
-                return right;
-            }
-            else if (m_dataset[left].first >= key)
-                end_idx = left;
-            else if (m_dataset[right].first < key)
-                start_idx = right;
+            if (m_dataset[mid].first >= key)
+                end_idx = mid;
+            else
+                start_idx = mid + 1;
         }
-        if (m_dataset[start_idx].first == -1)
-            start_idx--;
-        if (m_dataset[end_idx].first == -1)
-            end_idx++;
     }
-    if (start_idx == end_idx)
-        preIdx = end_idx;
-    return preIdx;
+    return start_idx;
 }
 /*
 search the index of key
@@ -365,6 +302,12 @@ int GappedArray::ExponentialSearch(double key, int p, int start, int end)
     // exponential search
     int offset = 1;
     int i = start;
+    if (m_dataset[i].first == -1)
+    {
+        i--;
+        if (i < 0)
+            i = 1;
+    }
     while (i <= end && m_dataset[i].first < key)
     {
         i = start + offset;
@@ -377,175 +320,6 @@ int GappedArray::ExponentialSearch(double key, int p, int start, int end)
     if (m_dataset[start].first == -1)
         start++;
     return BinarySearch(key, p, start, end);
-}
-/*
-int GappedArray::Search(double key, int p)
-{
-    // exponential search
-    int start_idx, end_idx;
-    while (m_dataset[p].first == -1)
-    {
-        p++;
-        if (p > maxIndex)
-            p = 0;
-    }
-    if (m_dataset[p].first > key)
-    {
-        int offset = 1;
-        int i = p;
-        while (i >= 0 && m_dataset[i].first > key)
-        {
-            if (offset == 0)
-                return -1;
-            i = p - offset;
-            offset = offset << 1;
-            i = max(0, i);
-            if (m_dataset[i].first == -1)
-                i++;
-        }
-        start_idx = i;
-        end_idx = (p - (offset >> 2)) < 0 ? 0 : p - (offset >> 2);
-        if (m_dataset[end_idx].first == -1)
-            end_idx++;
-    }
-    else if (m_dataset[p].first < key)
-    {
-        int offset = 1;
-        int i = p;
-        while (i <= maxIndex && m_dataset[i].first < key)
-        {
-            i = p + offset;
-            offset = offset << 1;
-            i = min(i, maxIndex);
-            if (m_dataset[i].first == -1)
-                i++;
-        }
-        start_idx = (p + offset >> 2) > maxIndex ? maxIndex : (p + offset >> 2);
-        end_idx = i;
-        if (m_dataset[start_idx].first == -1)
-            start_idx++;
-    }
-    else
-    {
-        return p;
-    }
-
-    // binary search
-    while (start_idx <= end_idx)
-    {
-        int mid = (start_idx + end_idx) >> 1;
-        if (m_dataset[mid].first == -1)
-            mid++;
-        if (start_idx == end_idx)
-        {
-            if (key == m_dataset[start_idx].first)
-                return start_idx;
-            else
-                return -1;
-        }
-        double tmp = m_dataset[mid].first;
-        if (key < tmp)
-            end_idx = mid - 1;
-        else if (key > tmp)
-            start_idx = mid + 1;
-        else
-            return mid;
-    }
-    return -1;
-}
-*/
-
-// expand the vector when m_datasetSize / capacity >= density
-void GappedArray::Expand()
-{
-    if (capacity == maxKeyNum)
-    {
-        model->Train(m_dataset);
-        return;
-    }
-    int newSize = capacity / density;
-    while (float(m_datasetSize) / newSize >= density)
-        newSize /= density;
-    if (newSize > maxKeyNum)
-    {
-        newSize = maxKeyNum;
-    }
-    // reTraining the node's linear model on the existing keys
-    model->Train(m_dataset);
-
-    // rescaling the model to Predict positions in the expanded array
-    capacity = newSize;
-
-    // do model-based Inserts of all the elements
-    // in this node using the reTrained RMI
-    vector<pair<double, double>> newDataset(newSize, pair<double, double>{-1, -1});
-    int cnt = 0;
-    for (int i = 0; i < newSize; i++)
-    {
-        if (m_dataset[i].first != -1)
-        {
-            double p = model->Predict(m_dataset[i].first);
-            int maxIdx = max(capacity, m_datasetSize);
-            int preIdx = static_cast<int>(p * (maxIdx - 1));
-            InsertData(&newDataset, m_dataset[i], p, cnt);
-        }
-    }
-    maxIndex = cnt;
-    m_dataset = newDataset;
-}
-
-/*
-vec: Insert data into the new vector
-idx: Insertion position
-cnt: current maxIndex of data in the vector
-*/
-
-void GappedArray::InsertData(vector<pair<double, double>> *vec, pair<double, double> data, int idx, int &cnt)
-{
-    if (idx < cnt)
-        idx = cnt + 1;
-    while (vec->at(idx).first != -1 && idx < capacity)
-    {
-        idx++;
-    }
-    if (idx == capacity)
-    {
-        int j = idx - 1;
-        while (vec->at(j).first != -1)
-            j--;
-        for (; j < idx - 1; j++)
-        {
-            vec[j] = vec[j + 1];
-        }
-        idx--;
-    }
-    int empty = 0;
-    int i;
-    for (i = idx - 1; i >= 0; i--)
-    {
-        if (vec->at(i).first == -1)
-            empty++;
-        else
-        {
-            break;
-        }
-    }
-    if (empty > 1)
-    {
-        vec->at(i + 2) = data;
-        cnt = i + 2;
-        return;
-    }
-    if (i == -1)
-    {
-        vec->at(0) = data;
-        cnt = 0;
-    }
-    else
-    {
-        vec->at(idx) = data;
-        cnt = idx;
-    }
 }
 
 long double GappedArray::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)
