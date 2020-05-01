@@ -36,9 +36,8 @@ void LinearRegression::Train(const vector<pair<double, double>> &dataset)
             actualSize++;
         index.push_back(double(i) / double(dataset.size()));
     }
-    if (actualSize == 0)
+    if (actualSize == 0 || actualSize < 10)
     {
-        cout << "This node is empty!" << endl;
         return;
     }
     double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
