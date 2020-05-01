@@ -8,9 +8,10 @@ using namespace std;
 class ArrayNode : public BasicLeafNode
 {
 public:
-    ArrayNode(int maxNumber, int threshold) : BasicLeafNode()
+    ArrayNode(int maxNumber) : BasicLeafNode()
     {
         m_maxNumber = maxNumber;
+        writeTimes = 0;
     }
 
     void SetDataset(const vector<pair<double, double>> &dataset);
@@ -27,6 +28,7 @@ private:
     int ExponentialSearch(double key, int preIdx, int start, int end);
 
     int m_maxNumber; // the maximum number of Inserts
+    int writeTimes;
 };
 
 void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
@@ -35,9 +37,6 @@ void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
     m_datasetSize = m_dataset.size();
     if (m_datasetSize == 0)
         return;
-    // std::sort(m_dataset.begin(), m_dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-    //     return p1.first < p2.first;
-    // });
 
     model->Train(m_dataset);
     for (int i = 0; i < m_datasetSize; i++)
@@ -52,11 +51,11 @@ void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
     }
     maxPositiveError++;
     maxNegativeError--;
+    writeTimes = 0;
 }
 
 pair<double, double> ArrayNode::Find(double key)
 {
-    // use learnedIndex to Find the data
     double p = model->Predict(key);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first == key)
@@ -68,14 +67,9 @@ pair<double, double> ArrayNode::Find(double key)
         int start = max(0, preIdx + maxNegativeError);
         int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
         int res = SEARCH_METHOD(key, preIdx, start, end);
-        if (start < res && res < end)
-        {
-            if (m_dataset[res].first == key)
-                return m_dataset[res];
-        }
-        else if (res <= start)
+        if (res <= start)
             res = SEARCH_METHOD(key, preIdx, 0, start);
-        else
+        else if (res >= end)
         {
             res = SEARCH_METHOD(key, preIdx, res, m_datasetSize - 1);
             if (res >= m_datasetSize)
@@ -89,37 +83,50 @@ pair<double, double> ArrayNode::Find(double key)
 
 bool ArrayNode::Insert(pair<double, double> data)
 {
+    if (m_datasetSize == 0)
+    {
+        m_dataset.push_back(data);
+        m_datasetSize++;
+        writeTimes++;
+        SetDataset(m_dataset);
+        return true;
+    }
     double p = model->Predict(data.first);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     int start = max(0, preIdx + maxNegativeError);
     int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
 
     preIdx = SEARCH_METHOD(data.first, preIdx, start, end);
-    if (start < preIdx && preIdx < end)
-    {
-    }
-    else if (preIdx <= start)
+    if (preIdx <= start)
         preIdx = SEARCH_METHOD(data.first, preIdx, 0, start);
-    else
+    else if (preIdx >= end)
         preIdx = SEARCH_METHOD(data.first, preIdx, preIdx, m_datasetSize - 1);
 
     // Insert data
+    if (preIdx == m_datasetSize - 1 && m_dataset[preIdx].first < data.first)
+    {
+        m_dataset.push_back(data);
+        m_datasetSize++;
+        writeTimes++;
+        return true;
+    }
     m_dataset.push_back(m_dataset[m_datasetSize - 1]);
     m_datasetSize++;
     for (int i = m_datasetSize - 2; i > preIdx; i--)
         m_dataset[i] = m_dataset[i - 1];
     m_dataset[preIdx] = data;
 
+    writeTimes++;
+
     // If the current number is greater than the maximum,
     // the child node needs to be retrained
-    if (m_maxNumber <= m_datasetSize)
+    if (writeTimes >= m_datasetSize || writeTimes > m_maxNumber)
         SetDataset(m_dataset);
     return true;
 }
 
 bool ArrayNode::Delete(double key)
 {
-    // use learnedIndex to Find the data
     double p = model->Predict(key);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first != key)
@@ -134,12 +141,9 @@ bool ArrayNode::Delete(double key)
             int start = max(0, preIdx + maxNegativeError);
             int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
             int res = SEARCH_METHOD(key, preIdx, start, end);
-            if (start < res && res < end)
-            {
-            }
-            else if (res <= start)
+            if (res <= start)
                 res = SEARCH_METHOD(key, preIdx, 0, start);
-            else
+            else if (res >= end)
             {
                 res = SEARCH_METHOD(key, preIdx, res, m_datasetSize - 1);
                 if (res >= m_datasetSize)
@@ -155,12 +159,12 @@ bool ArrayNode::Delete(double key)
         m_dataset[i] = m_dataset[i + 1];
     m_datasetSize--;
     m_dataset.pop_back();
+    writeTimes++;
     return true;
 }
 
 bool ArrayNode::Update(pair<double, double> data)
 {
-    // use learnedIndex to Find the data
     double p = model->Predict(data.first);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first != data.first)
@@ -175,12 +179,9 @@ bool ArrayNode::Update(pair<double, double> data)
             int start = max(0, preIdx + maxNegativeError);
             int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
             int res = SEARCH_METHOD(data.first, preIdx, start, end);
-            if (start < res && res < end)
-            {
-            }
-            else if (res <= start)
+            if (res <= start)
                 res = SEARCH_METHOD(data.first, preIdx, 0, start);
-            else
+            else if (res >= end)
             {
                 res = SEARCH_METHOD(data.first, preIdx, res, m_datasetSize - 1);
                 if (res >= m_datasetSize)
