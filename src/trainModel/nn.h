@@ -1,14 +1,18 @@
 #ifndef NN_H
 #define NN_H
 
-#include "../params.h"
 #include "model.h"
+#include "../params.h"
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <chrono>
 #include <random>
 using namespace std;
+
+extern const int kMaxEpoch;
+extern const double kLearningRate;
+extern const int kNeuronNumber;
 
 // (1, k) * (k, 1)
 inline double mul(vector<double> a, vector<double> b)
@@ -97,7 +101,7 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 		// initialize the parameters
 		std::default_random_engine gen;
 		std::normal_distribution<double> dis(1, 3);
-		for (int i = 0; i < neuron_number; i++)
+		for (int i = 0; i < kNeuronNumber; i++)
 		{
 			// W1.push_back(dis(gen));
 			// W2.push_back(dis(gen));
@@ -109,7 +113,7 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 		// b2 = 0.91;
 		b2 = 0;
 
-		for (int epoch = 0; epoch < max_epoch; epoch++)
+		for (int epoch = 0; epoch < kMaxEpoch; epoch++)
 		{
 			unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 			shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
@@ -141,13 +145,13 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 					{
 						if (tempFLR[j] > 0)
 						{
-							W1[j] = W1[j] - learning_rate * x * W2[j] * (p - y);
-							b1[j] = b1[j] - learning_rate * W2[j] * (p - y);
+							W1[j] = W1[j] - kLearningRate * x * W2[j] * (p - y);
+							b1[j] = b1[j] - kLearningRate * W2[j] * (p - y);
 						}
 					}
 					// update W2 and b2
-					W2 = add(W2, (multiply(-learning_rate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
-					b2 = b2 - learning_rate * (p - y);
+					W2 = add(W2, (multiply(-kLearningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
+					b2 = b2 - kLearningRate * (p - y);
 				}
 			}
 		}
