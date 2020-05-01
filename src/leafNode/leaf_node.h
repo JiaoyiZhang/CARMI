@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <float.h>
 #include "../params.h"
 #include "../trainModel/model.h"
 #include "../trainModel/lr.h"
@@ -28,7 +29,7 @@ public:
     {
         for (int i = 0; i < m_dataset.size(); i++)
         {
-            if (m_dataset[i].first != -1)
+            if (m_dataset[i].first != -1 && m_dataset[i].second != DBL_MIN)
                 dataset->push_back(m_dataset[i]);
         }
     }
