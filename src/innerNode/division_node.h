@@ -2,137 +2,46 @@
 #define DIVISION_NODE_H
 
 #include "inner_node.h"
-const int LOWER_ID2 = 1;
-const int UPPER_ID2 = 2;
-#define LOWER_TYPE2 GappedArray
-#define UPPER_TYPE2 AdaptiveDiv
+#include "../trainModel/division.h"
+
+extern BasicInnerNode *InnerNodeCreator(int innerNodeType, int childNum);
 
 class DivisionNode : public BasicInnerNode
 {
 public:
     DivisionNode() : BasicInnerNode(){};
-    DivisionNode(int childNum) : BasicInnerNode(childNum){};
-    DivisionNode(int threshold, int childNum, int maxInsertNumber) : BasicInnerNode(childNum)
+    DivisionNode(int childNum) : BasicInnerNode(childNum)
     {
-        for (int i = 0; i < childNumber; i++)
-        {
-            children.push_back(LeafNodeCreator(LOWER_ID2, threshold, maxInsertNumber));
-            children_is_leaf.push_back(true);
-        }
+        model = new DivisionModel(childNum);
     }
 
-    void Initialize(const vector<pair<double, double>> &dataset);
-
-    pair<double, double> Find(double key);
-    bool Insert(pair<double, double> data);
-    bool Delete(double key);
-    bool Update(pair<double, double> data);
-
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
-
-protected:
-    float value;
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
 };
 
-void DivisionNode::Initialize(const vector<pair<double, double>> &dataset)
+long double DivisionNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
 {
-    if (dataset.size() == 0)
-        return;
-
-    cout << "train first stage" << endl;
-    double maxValue = dataset[dataset.size() - 1].first;
-    double minValue = dataset[0].first;
-    value = float(maxValue - minValue) / float(childNumber);
-
-    vector<vector<pair<double, double>>> perSubDataset;
-    vector<pair<double, double>> tmp;
-    for (int i = 0; i < childNumber; i++)
-        perSubDataset.push_back(tmp);
-    for (int i = 0; i < dataset.size(); i++)
-    {
-        int preIdx = float(dataset[i].first) / value;
-        preIdx = min(preIdx, childNumber - 1);
-        perSubDataset[preIdx].push_back(dataset[i]);
-    }
-
-    cout << "train next stage" << endl;
-    for (int i = 0; i < childNumber; i++)
-        ((BasicLeafNode *)children[i])->SetDataset(perSubDataset[i]);
-    cout << "End train" << endl;
-}
-
-pair<double, double> DivisionNode::Find(double key)
-{
-    int preIdx = key / value;
-    if (preIdx >= childNumber)
-        preIdx = childNumber - 1;
-    else if (preIdx < 0)
-        preIdx = 0;
-    if (children_is_leaf[preIdx] == false)
-        return ((BasicInnerNode *)children[preIdx])->Find(key);
-    return ((BasicLeafNode *)children[preIdx])->Find(key);
-}
-
-bool DivisionNode::Update(pair<double, double> data)
-{
-    int preIdx = data.first / value;
-    if (preIdx >= childNumber)
-        preIdx = childNumber - 1;
-    else if (preIdx < 0)
-        preIdx = 0;
-    if (children_is_leaf[preIdx] == false)
-        return ((BasicInnerNode *)children[preIdx])->Update(data);
-    return ((BasicLeafNode *)children[preIdx])->Update(data);
-}
-
-bool DivisionNode::Delete(double key)
-{
-    int preIdx = key / value;
-    if (preIdx >= childNumber)
-        preIdx = childNumber - 1;
-    else if (preIdx < 0)
-        preIdx = 0;
-    if (children_is_leaf[preIdx] == false)
-        return ((BasicInnerNode *)children[preIdx])->Delete(key);
-    return ((BasicLeafNode *)children[preIdx])->Delete(key);
-}
-
-bool DivisionNode::Insert(pair<double, double> data)
-{
-    int preIdx = data.first / value;
-    if (preIdx >= childNumber)
-        preIdx = childNumber - 1;
-    else if (preIdx < 0)
-        preIdx = 0;
-    return ((BasicLeafNode *)children[preIdx])->Insert(data);
-}
-
-long double DivisionNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
-{
-    double InitializeCost = (log(childNum) / log(2)) * dataset.size();
+    double InitializeCost = 2;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
-    double maxValue = dataset[dataset.size() - 1].first;
-    double minValue = dataset[0].first;
-    float value = float(maxValue - minValue) / float(childNum);
-
+    DivisionModel tmpNet = DivisionModel(childNum);
+    tmpNet.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        int preIdx = float(dataset[i].first) / value;
-        preIdx = min(preIdx, childNum - 1);
+        double p = tmpNet.Predict(dataset[i].first);
+        p = p * (childNum - 1);
+        int preIdx = static_cast<int>(p);
         perSubDataset[preIdx].push_back(dataset[i]);
     }
 
-    cout << "train next stage" << endl;
     for (int i = 0; i < childNum; i++)
-        totalCost += LOWER_TYPE2::GetCost(cntTree, perSubDataset[i]);
+        totalCost += LEAF_NODE_TYPE::GetCost(cntTree, perSubDataset[i]);
     cout << "sub tree get cost finish!" << endl;
     return totalCost;
 }
@@ -141,23 +50,16 @@ class AdaptiveDiv : public DivisionNode
 {
 public:
     AdaptiveDiv() : DivisionNode(){};
-    AdaptiveDiv(int maxKey, int childNum, int cap) : DivisionNode(childNum)
+    AdaptiveDiv(int childNum) : DivisionNode(childNum)
     {
-        maxKeyNum = maxKey;
-        density = 0.75;
-        capacity = cap;
+        model = new DivisionModel(childNum);
     }
 
     void Initialize(const vector<pair<double, double>> &dataset);
 
     bool Insert(pair<double, double> data);
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum);
-
-private:
-    int capacity;   // the current maximum capacity of the leaf node data
-    double density; // the maximum density of the leaf node data
-    int maxKeyNum;  // the maximum amount of data
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
 };
 
 void AdaptiveDiv::Initialize(const vector<pair<double, double>> &dataset)
@@ -166,93 +68,63 @@ void AdaptiveDiv::Initialize(const vector<pair<double, double>> &dataset)
         return;
 
     cout << "train first stage" << endl;
-    double maxValue = dataset[dataset.size() - 1].first;
-    double minValue = dataset[0].first;
-    this->value = float(maxValue - minValue) / float(this->childNumber);
-
+    this->model->Train(dataset);
     for (int i = 0; i < childNumber; i++)
     {
-        children.push_back(LeafNodeCreator(LOWER_ID2, maxKeyNum, capacity));
+        children.push_back(LeafNodeCreator(kLeafNodeID));
         children_is_leaf.push_back(true);
     }
-
     auto tmpDataset = dataset;
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(tmpDataset.begin(), tmpDataset.end(), default_random_engine(seed));
-    vector<vector<pair<double, double>>> perSubDataset;
-    vector<pair<double, double>> tmp;
-    for (int i = 0; i < this->childNumber; i++)
-        perSubDataset.push_back(tmp);
     for (int i = 0; i < tmpDataset.size(); i++)
-    {
-        int preIdx = float(tmpDataset[i].first) / this->value;
-        preIdx = min(preIdx, this->childNumber - 1);
-        if (perSubDataset[preIdx].size() < 100)
-            perSubDataset[preIdx].push_back(tmpDataset[i]);
-        else if (perSubDataset[preIdx].size() == 100)
-        {
-            perSubDataset[preIdx].push_back(tmpDataset[i]);
-            std::sort(perSubDataset[preIdx].begin(), perSubDataset[preIdx].end(), [](pair<double, double> p1, pair<double, double> p2) {
-                return p1.first < p2.first;
-            });
-            ((BasicLeafNode *)this->children[preIdx])->SetDataset(perSubDataset[preIdx]);
-        }
-        else
-            Insert(tmpDataset[i]);
-    }
+        Insert(tmpDataset[i]);
     cout << "End train" << endl;
 }
 
 bool AdaptiveDiv::Insert(pair<double, double> data)
 {
-    int preIdx = data.first / this->value;
-    if (preIdx >= this->childNumber)
-        preIdx = this->childNumber - 1;
-    else if (preIdx < 0)
-        preIdx = 0;
-
+    double p = this->model->Predict(data.first);
+    int preIdx = static_cast<int>(p * (this->childNumber - 1));
     if (this->children_is_leaf[preIdx] == true)
     {
         int size = ((BasicLeafNode *)this->children[preIdx])->GetSize();
-
         // if an Insert will push a leaf node's
         // data structure over its maximum bound number of keys,
         // then we split the leaf data node
-        if (size >= maxKeyNum)
+        if (size >= kMaxKeyNum)
         {
-            // The corresponding leaf level moDelete in RMI
-            // now becomes an inner level moDelete
-            UPPER_TYPE2 *newNode = (UPPER_TYPE2 *)InnerNodeCreator(UPPER_ID2, maxKeyNum, this->childNumber, capacity);
+            // The corresponding leaf level model in RMI
+            // now becomes an inner level model
+            AdaptiveDiv *newNode = (AdaptiveDiv *)InnerNodeCreator(kInnerNodeID, this->childNumber);
             vector<pair<double, double>> dataset;
             ((BasicLeafNode *)this->children[preIdx])->GetDataset(&dataset);
+            newNode->model->Train(dataset);
 
-            double maxValue = dataset[dataset.size() - 1].first;
-            double minValue = dataset[0].first;
-            this->value = float(maxValue - minValue) / float(this->childNumber);
-
-            // a number of children leaf level moDeletes are created
+            // a number of children leaf level model are created
             for (int i = 0; i < this->childNumber; i++)
             {
-                LOWER_TYPE2 *temp = (LOWER_TYPE2 *)LeafNodeCreator(LOWER_ID2, maxKeyNum, capacity);
+                LEAF_NODE_TYPE *temp = (LEAF_NODE_TYPE *)LeafNodeCreator(kLeafNodeID);
                 newNode->children.push_back(temp);
                 newNode->children_is_leaf.push_back(true);
             }
 
             // The data from the original leaf node is then
             // distributed to the newly created children leaf nodes
-            // according to the original nodeÃ¢â‚¬â„¢s moDelete.
+            // according to the original node model.
             vector<vector<pair<double, double>>> perSubDataset;
             vector<pair<double, double>> temp;
             for (int i = 0; i < this->childNumber; i++)
                 perSubDataset.push_back(temp);
             for (int i = 0; i < dataset.size(); i++)
             {
-                int pIdx = data.first / this->value;
+                double pre = newNode->model->Predict(dataset[i].first);
+                int pIdx = static_cast<int>(pre * (this->childNumber - 1));
                 perSubDataset[pIdx].push_back(dataset[i]);
             }
 
             // Each of the children leaf nodes trains its own
-            // moDelete on its portion of the data.
+            // model on its portion of the data.
             for (int i = 0; i < this->childNumber; i++)
                 ((BasicLeafNode *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
             this->children[preIdx] = newNode;
@@ -265,37 +137,33 @@ bool AdaptiveDiv::Insert(pair<double, double> data)
     return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
 
-long double AdaptiveDiv::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset, int cap, int maxNum)
+long double AdaptiveDiv::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = (log(childNum) / log(2)) * dataset.size();
+    double InitializeCost = 16;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
-    double maxValue = dataset[dataset.size() - 1].first;
-    double minValue = dataset[0].first;
-    float value = float(maxValue - minValue) / float(childNum);
-
+    DivisionModel tmpNet = DivisionModel(childNum);
+    tmpNet.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        int preIdx = float(dataset[i].first) / value;
-        preIdx = min(preIdx, childNum - 1);
+        double p = tmpNet.Predict(dataset[i].first);
+        int preIdx = static_cast<int>(p * (childNum - 1));
         perSubDataset[preIdx].push_back(dataset[i]);
     }
 
     for (int i = 0; i < childNum; i++)
     {
-        if (perSubDataset[i].size() > maxNum)
-        {
-            totalCost += UPPER_TYPE2::GetCost(cntTree, childNum, perSubDataset[i], cap, maxNum);
-        }
+        if (perSubDataset[i].size() > kMaxKeyNum)
+            totalCost += AdaptiveDiv::GetCost(cntTree, childNum, perSubDataset[i]);
         else
-            totalCost += LOWER_TYPE2::GetCost(cntTree, perSubDataset[i]);
+            totalCost += LEAF_NODE_TYPE::GetCost(cntTree, perSubDataset[i]);
     }
     cout << "sub tree get cost finish!" << endl;
     return totalCost;
