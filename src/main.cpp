@@ -1,6 +1,3 @@
-#include "./trainModel/lr.h"
-#include "./trainModel/nn.h"
-
 #include "./innerNode/inner_node.h"
 #include "./innerNode/nn_node.h"
 #include "./innerNode/lr_node.h"
@@ -15,6 +12,10 @@
 #include <random>
 #include <windows.h>
 #include <iostream>
+#include "./leafNode/array.h"
+#include "./leafNode/gapped_array.h"
+#include "inner_noded_creator.h"
+#include "leaf_node_creator.h"
 
 using namespace std;
 
@@ -34,74 +35,8 @@ AdaptiveNN ada_nn;
 AdaptiveDiv ada_div;
 AdaptiveBin ada_bin;
 
-void *InnerNodeCreator(int innerNodeType, int maxKeyNum, int childNum, int capacity)
-{
-    void *newNode;
-    switch (innerNodeType)
-    {
-    case 0:
-        newNode = new AdaptiveLR(maxKeyNum, childNum, capacity);
-        break;
-    case 1:
-        newNode = new AdaptiveNN(maxKeyNum, childNum, capacity);
-        break;
-    case 2:
-        newNode = new AdaptiveDiv(maxKeyNum, childNum, capacity);
-        break;
-    case 3:
-        newNode = new AdaptiveBin(maxKeyNum, childNum, capacity);
-        break;
-    }
-    return newNode;
-}
-
-void *LeafNodeCreator(int leafNodeType, int maxKeyNum, int capacity)
-{
-    void *newNode;
-    switch (leafNodeType)
-    {
-    case 0:
-        newNode = new ArrayNode(maxKeyNum, capacity);
-        break;
-    case 1:
-        newNode = new GappedArray(maxKeyNum, capacity);
-        break;
-    }
-    return newNode;
-}
-void createModel()
-{
-    for (int i = 0; i < dataset.size(); i++)
-        btreemap.insert(dataset[i]);
-
-    lr = LRNode(5000, 15, 800);
-    lr.Initialize(dataset);
-    // ada_lr = AdaptiveLR(1000, 15, 800);
-    // ada_lr.Initialize(dataset);
-    cout << "lr init over!" << endl;
-    cout << "****************" << endl;
-
-    nn = NetworkNode(10000, 15, 800);
-    nn.Initialize(dataset);
-    // ada_nn = AdaptiveNN(1000, 15, 800);
-    // ada_nn.Initialize(dataset);
-    cout << "nn init over!" << endl;
-    cout << "****************" << endl;
-
-    division = DivisionNode(10000, 15, 800);
-    division.Initialize(dataset);
-    // ada_div = AdaptiveDiv(10000, 15, 800);
-    // ada_div.Initialize(dataset);
-    cout << "div init over!" << endl;
-    cout << "****************" << endl;
-
-    bin = BinarySearchNode(1000, 15, 800);
-    bin.Initialize(dataset);
-    // ada_bin = AdaptiveBin(1000, 15, 800);
-    // ada_bin.Initialize(dataset);
-    cout << "bin init over!" << endl;
-    cout << "****************" << endl;
-}
+int kLeafNodeID = 0;
+int kInnerNodeID = 0;
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)
 {
@@ -164,6 +99,7 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
         cout << "\tvalue:" << res.second << endl;
         if (res.second != insertDataset[i].first * 10)
             cout << "Something wrong with insert!" << endl;
+        cout << endl;
     }
     QueryPerformanceCounter(&e);
     time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -190,7 +126,7 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
         obj.Delete(insertDataset[i].first);
         auto res = obj.Find(insertDataset[i].first);
         cout << "\tvalue:" << res.second << endl;
-        if (res.second != 0)
+        if (res.second != 0 && res.second != DBL_MIN)
             cout << "Something wrong with delete!" << endl;
     }
     QueryPerformanceCounter(&e);
@@ -218,7 +154,6 @@ int main()
     // lognormalDataset logData = lognormalDataset(datasetSize, 0.9);
     // logData.generateDataset(dataset, insertDataset);
 
-    createModel();
     double btree_time0 = 0.0, btree_time1 = 0.0, btree_time2 = 0.0, btree_time3 = 0.0;
     double lr_time0 = 0.0, lr_time1 = 0.0, lr_time2 = 0.0, lr_time3 = 0.0;
     double nn_time0 = 0.0, nn_time1 = 0.0, nn_time2 = 0.0, nn_time3 = 0.0;
@@ -227,37 +162,72 @@ int main()
     int repetitions = 1;
     for (int i = 0; i < repetitions; i++)
     {
+        btree::btree_map<double, double> btree;
+        for (int i = 0; i < dataset.size(); i++)
+            btree.insert(dataset[i]);
+        btreemap = btree;
         cout << "btree:    " << i << endl;
         btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
         cout << endl;
         printResult((i + 1), btree_time0, btree_time1, btree_time2, btree_time3);
         cout << "-------------------------------" << endl;
 
+        kInnerNodeID = 0;
+        // lr = LRNode(15);
+        // lr.Initialize(dataset);
+        ada_lr = AdaptiveLR(15);
+        ada_lr.Initialize(dataset);
+        cout << "lr init over!" << endl;
+        cout << "****************" << endl;
         cout << "lr:    " << i << endl;
-        test(lr, lr_time0, lr_time1, lr_time2, lr_time3);
+        // test(lr, lr_time0, lr_time1, lr_time2, lr_time3);
+        test(ada_lr, lr_time0, lr_time1, lr_time2, lr_time3);
         cout << endl;
         printResult((i + 1), lr_time0, lr_time1, lr_time2, lr_time3);
         cout << "-------------------------------" << endl;
 
+        kInnerNodeID = 1;
+        nn = NetworkNode(15);
+        nn.Initialize(dataset);
+        // ada_nn = AdaptiveNN(15);
+        // ada_nn.Initialize(dataset);
+        cout << "nn init over!" << endl;
+        cout << "****************" << endl;
         cout << "nn:    " << i << endl;
         test(nn, nn_time0, nn_time1, nn_time2, nn_time3);
+        // test(ada_nn, nn_time0, nn_time1, nn_time2, nn_time3);
         cout << endl;
         printResult((i + 1), nn_time0, nn_time1, nn_time2, nn_time3);
         cout << "-------------------------------" << endl;
 
+        kInnerNodeID = 2;
+        division = DivisionNode(15);
+        division.Initialize(dataset);
+        // ada_div = AdaptiveDiv(15);
+        // ada_div.Initialize(dataset);
+        cout << "div init over!" << endl;
+        cout << "****************" << endl;
         cout << "div:    " << i << endl;
         test(division, div_time0, div_time1, div_time2, div_time3);
+        // test(ada_div, div_time0, div_time1, div_time2, div_time3);
         cout << endl;
         printResult((i + 1), div_time0, div_time1, div_time2, div_time3);
         cout << "-------------------------------" << endl;
 
+        kInnerNodeID = 3;
+        bin = BinarySearchNode(15);
+        bin.Initialize(dataset);
+        // ada_bin = AdaptiveBin(15);
+        // ada_bin.Initialize(dataset);
+        cout << "bin init over!" << endl;
+        cout << "****************" << endl;
+
         cout << "bin:    " << i << endl;
         test(bin, bin_time0, bin_time1, bin_time2, bin_time3);
+        // test(ada_bin, bin_time0, bin_time1, bin_time2, bin_time3);
         cout << endl;
         printResult((i + 1), bin_time0, bin_time1, bin_time2, bin_time3);
         cout << "-------------------------------" << endl;
-
-        createModel();
     }
 
     cout << "btreemap:" << endl;
