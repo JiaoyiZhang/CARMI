@@ -35,8 +35,9 @@ AdaptiveNN ada_nn;
 AdaptiveDiv ada_div;
 AdaptiveBin ada_bin;
 
-int kLeafNodeID = 0;
+int kLeafNodeID = 1;
 int kInnerNodeID = 0;
+int kNeuronNumber = 8;
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)
 {
@@ -80,11 +81,12 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceFrequency(&c);
     for (int i = 0; i < dataset.size(); i++)
     {
-        cout << "Find : i:" << i << "\tkey:" << dataset[i].first << "\t";
-        auto res = obj.Find(dataset[i].first);
-        cout << "\tvalue:" << res.second << endl;
-        if (res.second != dataset[i].first * 10)
-            cout << "Something wrong with find!" << endl;
+        // cout << "Find : i:" << i << "\tkey:" << dataset[i].first << "\t";
+        obj.Find(dataset[i].first);
+        // auto res = obj.Find(dataset[i].first);
+        // cout << "\tvalue:" << res.second << endl;
+        // if (res.second != dataset[i].first * 10)
+        //     cout << "Something wrong with find!" << endl;
     }
     QueryPerformanceCounter(&e);
     time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -93,13 +95,13 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
-        cout << "Insert : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
+        // cout << "Insert : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
         obj.Insert(insertDataset[i]);
-        auto res = obj.Find(insertDataset[i].first);
-        cout << "\tvalue:" << res.second << endl;
-        if (res.second != insertDataset[i].first * 10)
-            cout << "Something wrong with insert!" << endl;
-        cout << endl;
+        // auto res = obj.Find(insertDataset[i].first);
+        // cout << "\tvalue:" << res.second << endl;
+        // if (res.second != insertDataset[i].first * 10)
+        //     cout << "Something wrong with insert!" << endl;
+        // cout << endl;
     }
     QueryPerformanceCounter(&e);
     time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -108,12 +110,12 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
-        cout << "Update : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
+        // cout << "Update : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
         obj.Update({insertDataset[i].first, 1.11});
-        auto res = obj.Find(insertDataset[i].first);
-        cout << "\tvalue:" << res.second << endl;
-        if (res.second != 1.11)
-            cout << "Something wrong with update!" << endl;
+        // auto res = obj.Find(insertDataset[i].first);
+        // cout << "\tvalue:" << res.second << endl;
+        // if (res.second != 1.11)
+        //     cout << "Something wrong with update!" << endl;
     }
     QueryPerformanceCounter(&e);
     time2 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -122,12 +124,12 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
     {
-        cout << "Delete : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
+        // cout << "Delete : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
         obj.Delete(insertDataset[i].first);
-        auto res = obj.Find(insertDataset[i].first);
-        cout << "\tvalue:" << res.second << endl;
-        if (res.second != 0 && res.second != DBL_MIN)
-            cout << "Something wrong with delete!" << endl;
+        // auto res = obj.Find(insertDataset[i].first);
+        // cout << "\tvalue:" << res.second << endl;
+        // if (res.second != 0 && res.second != DBL_MIN)
+        //     cout << "Something wrong with delete!" << endl;
     }
     QueryPerformanceCounter(&e);
     time3 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
@@ -144,22 +146,14 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
     cout << "Delete time:" << time3 / (float)insertDataset.size() / float(r) << endl;
     cout << "***********************" << endl;
 }
-int main()
+
+void totalTest(bool isStatic, int repetitions)
 {
-    // generateDataset: uniform dataset
-    UniformDataset uniData = UniformDataset(datasetSize, 0.9);
-    uniData.GenerateDataset(dataset, insertDataset);
-
-    // // generateDataset: lognormal dataset
-    // lognormalDataset logData = lognormalDataset(datasetSize, 0.9);
-    // logData.generateDataset(dataset, insertDataset);
-
     double btree_time0 = 0.0, btree_time1 = 0.0, btree_time2 = 0.0, btree_time3 = 0.0;
     double lr_time0 = 0.0, lr_time1 = 0.0, lr_time2 = 0.0, lr_time3 = 0.0;
     double nn_time0 = 0.0, nn_time1 = 0.0, nn_time2 = 0.0, nn_time3 = 0.0;
     double div_time0 = 0.0, div_time1 = 0.0, div_time2 = 0.0, div_time3 = 0.0;
     double bin_time0 = 0.0, bin_time1 = 0.0, bin_time2 = 0.0, bin_time3 = 0.0;
-    int repetitions = 1;
     for (int i = 0; i < repetitions; i++)
     {
         btree::btree_map<double, double> btree;
@@ -173,58 +167,92 @@ int main()
         cout << "-------------------------------" << endl;
 
         kInnerNodeID = 0;
-        // lr = LRNode(15);
-        // lr.Initialize(dataset);
-        ada_lr = AdaptiveLR(15);
-        ada_lr.Initialize(dataset);
+        if (isStatic)
+        {
+            lr = LRNode(15);
+            lr.Initialize(dataset);
+        }
+        else
+        {
+            ada_lr = AdaptiveLR(15);
+            ada_lr.Initialize(dataset);
+        }
         cout << "lr init over!" << endl;
         cout << "****************" << endl;
+
         cout << "lr:    " << i << endl;
-        // test(lr, lr_time0, lr_time1, lr_time2, lr_time3);
-        test(ada_lr, lr_time0, lr_time1, lr_time2, lr_time3);
+        if (isStatic)
+            test(lr, lr_time0, lr_time1, lr_time2, lr_time3);
+        else
+            test(ada_lr, lr_time0, lr_time1, lr_time2, lr_time3);
         cout << endl;
         printResult((i + 1), lr_time0, lr_time1, lr_time2, lr_time3);
         cout << "-------------------------------" << endl;
 
         kInnerNodeID = 1;
-        nn = NetworkNode(15);
-        nn.Initialize(dataset);
-        // ada_nn = AdaptiveNN(15);
-        // ada_nn.Initialize(dataset);
+        if (isStatic)
+        {
+            nn = NetworkNode(15);
+            nn.Initialize(dataset);
+        }
+        else
+        {
+            ada_nn = AdaptiveNN(15);
+            ada_nn.Initialize(dataset);
+        }
         cout << "nn init over!" << endl;
         cout << "****************" << endl;
+
         cout << "nn:    " << i << endl;
-        test(nn, nn_time0, nn_time1, nn_time2, nn_time3);
-        // test(ada_nn, nn_time0, nn_time1, nn_time2, nn_time3);
+        if (isStatic)
+            test(nn, nn_time0, nn_time1, nn_time2, nn_time3);
+        else
+            test(ada_nn, nn_time0, nn_time1, nn_time2, nn_time3);
         cout << endl;
         printResult((i + 1), nn_time0, nn_time1, nn_time2, nn_time3);
         cout << "-------------------------------" << endl;
 
         kInnerNodeID = 2;
-        division = DivisionNode(15);
-        division.Initialize(dataset);
-        // ada_div = AdaptiveDiv(15);
-        // ada_div.Initialize(dataset);
+        if (isStatic)
+        {
+            division = DivisionNode(15);
+            division.Initialize(dataset);
+        }
+        else
+        {
+            ada_div = AdaptiveDiv(15);
+            ada_div.Initialize(dataset);
+        }
         cout << "div init over!" << endl;
         cout << "****************" << endl;
         cout << "div:    " << i << endl;
-        test(division, div_time0, div_time1, div_time2, div_time3);
-        // test(ada_div, div_time0, div_time1, div_time2, div_time3);
+        if (isStatic)
+            test(division, div_time0, div_time1, div_time2, div_time3);
+        else
+            test(ada_div, div_time0, div_time1, div_time2, div_time3);
         cout << endl;
         printResult((i + 1), div_time0, div_time1, div_time2, div_time3);
         cout << "-------------------------------" << endl;
 
         kInnerNodeID = 3;
-        bin = BinarySearchNode(15);
-        bin.Initialize(dataset);
-        // ada_bin = AdaptiveBin(15);
-        // ada_bin.Initialize(dataset);
+        if (isStatic)
+        {
+            bin = BinarySearchNode(15);
+            bin.Initialize(dataset);
+        }
+        else
+        {
+            ada_bin = AdaptiveBin(15);
+            ada_bin.Initialize(dataset);
+        }
         cout << "bin init over!" << endl;
         cout << "****************" << endl;
 
         cout << "bin:    " << i << endl;
-        test(bin, bin_time0, bin_time1, bin_time2, bin_time3);
-        // test(ada_bin, bin_time0, bin_time1, bin_time2, bin_time3);
+        if (isStatic)
+            test(bin, bin_time0, bin_time1, bin_time2, bin_time3);
+        else
+            test(ada_bin, bin_time0, bin_time1, bin_time2, bin_time3);
         cout << endl;
         printResult((i + 1), bin_time0, bin_time1, bin_time2, bin_time3);
         cout << "-------------------------------" << endl;
@@ -244,6 +272,29 @@ int main()
 
     cout << "bin:" << endl;
     printResult(repetitions, bin_time0, bin_time1, bin_time2, bin_time3);
+}
+
+int main()
+{
+    int repetitions = 100;
+    cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+    LognormalDataset logData = LognormalDataset(datasetSize, 0.9);
+    logData.GenerateDataset(dataset, insertDataset);
+    cout << "-------------Static inner nodes----------------" << endl;
+    totalTest(true, repetitions);
+    cout << "-------------Adaptive inner nodes----------------" << endl;
+    totalTest(false, repetitions);
+
+    dataset = vector<pair<double, double>>();
+    insertDataset = vector<pair<double, double>>();
+    kNeuronNumber = 1;
+    cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+    UniformDataset uniData = UniformDataset(datasetSize, 0.9);
+    uniData.GenerateDataset(dataset, insertDataset);
+    cout << "-------------Static inner nodes----------------" << endl;
+    totalTest(true, repetitions);
+    cout << "-------------Adaptive inner nodes----------------" << endl;
+    totalTest(false, repetitions);
 
     // vector<pair<double, double>> totalData;
     // for (int i = 0; i < dataset.size(); i++)

@@ -12,7 +12,7 @@ using namespace std;
 
 extern const int kMaxEpoch;
 extern const double kLearningRate;
-extern const int kNeuronNumber;
+extern int kNeuronNumber;
 
 // (1, k) * (k, 1)
 inline double mul(vector<double> a, vector<double> b)
