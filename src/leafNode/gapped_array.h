@@ -75,15 +75,6 @@ void GappedArray::SetDataset(const vector<pair<double, double>> &subDataset)
 
 pair<double, double> GappedArray::Find(double key)
 {
-    // cout << endl;
-    // for (int i = 0; i <= maxIndex; i++)
-    // {
-    //     cout << i << ":" << m_dataset[i].first << ";   ";
-    //     if ((i + 1) % 20 == 0)
-    //         cout << endl;
-    // }
-    // cout << endl;
-
     double p = model->Predict(key);
     int preIdx = static_cast<int>(p * (capacity - 1));
     if (m_dataset[preIdx].first == key)
@@ -92,9 +83,7 @@ pair<double, double> GappedArray::Find(double key)
     {
         int start = max(0, preIdx + maxNegativeError);
         int end = min(maxIndex, preIdx + maxPositiveError);
-        // cout << "start:" << start << "\tstart.key:" << m_dataset[start].first << "; \tend:" << end << "\tend.key:" << m_dataset[end].first << endl;
         int res = SEARCH_METHOD(key, preIdx, start, end);
-        // cout << "First find: key:" << key << "; \tpreIdx:" << preIdx << "\tpreIdx.key:" << m_dataset[preIdx].first << endl;
 
         if (res <= start)
             res = SEARCH_METHOD(key, preIdx, 0, start);
@@ -102,11 +91,11 @@ pair<double, double> GappedArray::Find(double key)
         {
             res = SEARCH_METHOD(key, preIdx, res, maxIndex);
             if (res > maxIndex)
-                return {};
+                return {DBL_MIN, DBL_MIN};
         }
         if (m_dataset[res].first == key)
             return m_dataset[res];
-        return {};
+        return {DBL_MIN, DBL_MIN};
     }
 }
 
@@ -205,7 +194,6 @@ bool GappedArray::Insert(pair<double, double> data)
         preIdx = SEARCH_METHOD(data.first, preIdx, 0, start);
     else if (preIdx >= end)
         preIdx = SEARCH_METHOD(data.first, preIdx, preIdx, maxIndex);
-
 
     // if the Insertion position is a gap,
     //  then we Insert the element into the gap and are done

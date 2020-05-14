@@ -56,6 +56,8 @@ void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
 
 pair<double, double> ArrayNode::Find(double key)
 {
+    if (m_datasetSize == 0)
+        return {};
     double p = model->Predict(key);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first == key)
