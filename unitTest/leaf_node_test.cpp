@@ -1,7 +1,7 @@
 #include "head.h"
 
-int datasetSize = 10000;
-int maxNum = 10001;
+int datasetSize = 1000000;
+int maxNum = 1000001;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
 
