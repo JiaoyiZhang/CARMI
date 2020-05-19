@@ -1,8 +1,11 @@
 #ifndef LEAF_NODE_H
 #define LEAF_NODE_H
 
-#define SEARCH_METHOD(key, preIdx, start, end) BinarySearch(key, preIdx, start, end)
-// #define SEARCH_METHOD(key, preIdx, start, end) ExponentialSearch(key, preIdx, start, end)
+#if kSearchMethod == 0
+    #define SEARCH_METHOD(key, preIdx, start, end) BinarySearch(key, preIdx, start, end)
+#else
+    #define SEARCH_METHOD(key, preIdx, start, end) ExponentialSearch(key, preIdx, start, end)
+#endif
 
 #include <vector>
 #include <algorithm>
