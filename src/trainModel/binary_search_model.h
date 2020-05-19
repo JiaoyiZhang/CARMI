@@ -38,24 +38,6 @@ void BinarySearchModel::Train(const vector<pair<double, double>> &dataset)
             }
         }
     }
-    if (index.size() == childNumber - 1)
-    {
-        if (dataset[dataset.size() - 1].first != -1)
-        {
-            index.push_back(dataset[dataset.size() - 1].first);
-        }
-        else
-        {
-            for (int j = dataset.size() - 2; j >= 0; j--)
-            {
-                if (dataset[j].first != -1)
-                {
-                    index.push_back(dataset[j].first);
-                    break;
-                }
-            }
-        }
-    }
 }
 
 double BinarySearchModel::Predict(double key)
