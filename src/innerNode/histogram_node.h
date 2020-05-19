@@ -2,23 +2,23 @@
 #define DIVISION_NODE_H
 
 #include "inner_node.h"
-#include "../trainModel/division.h"
+#include "../trainModel/histogram.h"
 
 extern BasicInnerNode *InnerNodeCreator(int innerNodeType, int childNum);
 
-class DivisionNode : public BasicInnerNode
+class HistogramNode : public BasicInnerNode
 {
 public:
-    DivisionNode() : BasicInnerNode(){};
-    DivisionNode(int childNum) : BasicInnerNode(childNum)
+    HistogramNode() : BasicInnerNode(){};
+    HistogramNode(int childNum) : BasicInnerNode(childNum)
     {
-        model = new DivisionModel(childNum);
+        model = new HistogramModel(childNum);
     }
 
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
 };
 
-long double DivisionNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double HistogramNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
 {
     double InitializeCost = 2;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
@@ -26,7 +26,7 @@ long double DivisionNode::GetCost(const btree::btree_map<double, pair<int, int>>
     if (dataset.size() == 0)
         return 0;
 
-    DivisionModel tmpNet = DivisionModel(childNum);
+    HistogramModel tmpNet = HistogramModel(childNum);
     tmpNet.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -46,13 +46,13 @@ long double DivisionNode::GetCost(const btree::btree_map<double, pair<int, int>>
     return totalCost;
 }
 
-class AdaptiveDiv : public DivisionNode
+class AdaptiveHis : public HistogramNode
 {
 public:
-    AdaptiveDiv() : DivisionNode(){};
-    AdaptiveDiv(int childNum) : DivisionNode(childNum)
+    AdaptiveHis() : HistogramNode(){};
+    AdaptiveHis(int childNum) : HistogramNode(childNum)
     {
-        model = new DivisionModel(childNum);
+        model = new HistogramModel(childNum);
     }
 
     void Initialize(const vector<pair<double, double>> &dataset);
@@ -62,7 +62,7 @@ public:
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
 };
 
-void AdaptiveDiv::Initialize(const vector<pair<double, double>> &dataset)
+void AdaptiveHis::Initialize(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
@@ -82,7 +82,7 @@ void AdaptiveDiv::Initialize(const vector<pair<double, double>> &dataset)
     cout << "End train" << endl;
 }
 
-bool AdaptiveDiv::Insert(pair<double, double> data)
+bool AdaptiveHis::Insert(pair<double, double> data)
 {
     double p = this->model->Predict(data.first);
     int preIdx = static_cast<int>(p * (this->childNumber - 1));
@@ -96,7 +96,7 @@ bool AdaptiveDiv::Insert(pair<double, double> data)
         {
             // The corresponding leaf level model in RMI
             // now becomes an inner level model
-            AdaptiveDiv *newNode = (AdaptiveDiv *)InnerNodeCreator(kInnerNodeID, this->childNumber);
+            AdaptiveHis *newNode = (AdaptiveHis *)InnerNodeCreator(kInnerNodeID, this->childNumber);
             vector<pair<double, double>> dataset;
             ((BasicLeafNode *)this->children[preIdx])->GetDataset(&dataset);
             newNode->model->Train(dataset);
@@ -137,7 +137,7 @@ bool AdaptiveDiv::Insert(pair<double, double> data)
     return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
 
-long double AdaptiveDiv::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double AdaptiveHis::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
 {
     double InitializeCost = 16;
     cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
@@ -145,7 +145,7 @@ long double AdaptiveDiv::GetCost(const btree::btree_map<double, pair<int, int>> 
     if (dataset.size() == 0)
         return 0;
 
-    DivisionModel tmpNet = DivisionModel(childNum);
+    HistogramModel tmpNet = HistogramModel(childNum);
     tmpNet.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -161,7 +161,7 @@ long double AdaptiveDiv::GetCost(const btree::btree_map<double, pair<int, int>> 
     for (int i = 0; i < childNum; i++)
     {
         if (perSubDataset[i].size() > kMaxKeyNum)
-            totalCost += AdaptiveDiv::GetCost(cntTree, childNum, perSubDataset[i]);
+            totalCost += AdaptiveHis::GetCost(cntTree, childNum, perSubDataset[i]);
         else
             totalCost += LEAF_NODE_TYPE::GetCost(cntTree, perSubDataset[i]);
     }

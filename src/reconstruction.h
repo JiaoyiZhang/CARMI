@@ -8,7 +8,7 @@
 #include "./innerNode/nn_node.h"
 #include "./innerNode/lr_node.h"
 #include "./innerNode/binary_search.h"
-#include "./innerNode/division_node.h"
+#include "./innerNode/histogram_node.h"
 
 #include "./leafNode/leaf_node.h"
 #include "./leafNode/array.h"
@@ -47,7 +47,7 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
         int threshold = 1000;
         int capacity = 800;
         cout << "threhold is:" << threshold << "\tcapacity:" << capacity << endl;
-        long double tmpCost = DivisionNode::GetCost(cntTree, i, dataset);
+        long double tmpCost = HistogramNode::GetCost(cntTree, i, dataset);
         cout << "tmpCost is: " << tmpCost << "    minCost: " << minCost << "    minNum: " << minNum << endl;
         if (tmpCost < minCost)
         {
