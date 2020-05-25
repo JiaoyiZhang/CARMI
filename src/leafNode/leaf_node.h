@@ -36,6 +36,15 @@ public:
                 dataset->push_back(m_dataset[i]);
         }
     }
+    void GetTotalDataset(vector<pair<double, double>> *dataset)
+    {
+        for (int i = 0; i < m_dataset.size(); i++)
+        {
+            dataset->push_back(m_dataset[i]);
+        }
+    }
+    int GetPositiveError(){return maxPositiveError;}
+    int GetNegativeError(){return maxNegativeError;}
 
     virtual void SetDataset(const vector<pair<double, double>> &dataset) = 0;
 

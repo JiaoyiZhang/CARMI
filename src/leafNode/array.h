@@ -23,10 +23,18 @@ public:
 
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset);
 
-private:
     int BinarySearch(double key, int preIdx, int start, int end);
     int ExponentialSearch(double key, int preIdx, int start, int end);
 
+    // designed for gtest
+    int GetPredictIndex(double key)
+    {
+        double p = model->Predict(key);
+        int preIdx = static_cast<int>(p * (m_datasetSize - 1));
+        return preIdx;
+    }
+
+private:
     int m_maxNumber; // the maximum number of Inserts
     int writeTimes;
 };
@@ -68,6 +76,7 @@ pair<double, double> ArrayNode::Find(double key)
     {
         int start = max(0, preIdx + maxNegativeError);
         int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+        start = min(start, end);
         int res = SEARCH_METHOD(key, preIdx, start, end);
         if (res <= start)
             res = SEARCH_METHOD(key, preIdx, 0, start);
@@ -97,6 +106,7 @@ bool ArrayNode::Insert(pair<double, double> data)
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     int start = max(0, preIdx + maxNegativeError);
     int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+    start = min(start, end);
 
     preIdx = SEARCH_METHOD(data.first, preIdx, start, end);
     if (preIdx <= start)
@@ -135,14 +145,12 @@ bool ArrayNode::Delete(double key)
     {
         int start = max(0, preIdx + maxNegativeError);
         int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+        start = min(start, end);
         int res = SEARCH_METHOD(key, preIdx, start, end);
-        if (res != -1 && m_dataset[res].first == key)
+        if (m_dataset[res].first == key)
             preIdx = res;
         else
         {
-            int start = max(0, preIdx + maxNegativeError);
-            int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
-            int res = SEARCH_METHOD(key, preIdx, start, end);
             if (res <= start)
                 res = SEARCH_METHOD(key, preIdx, 0, start);
             else if (res >= end)
@@ -173,14 +181,12 @@ bool ArrayNode::Update(pair<double, double> data)
     {
         int start = max(0, preIdx + maxNegativeError);
         int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+        start = min(start, end);
         int res = SEARCH_METHOD(data.first, preIdx, start, end);
-        if (res != -1 && m_dataset[res].first == data.first)
+        if (m_dataset[res].first == data.first)
             preIdx = res;
         else
         {
-            int start = max(0, preIdx + maxNegativeError);
-            int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
-            int res = SEARCH_METHOD(data.first, preIdx, start, end);
             if (res <= start)
                 res = SEARCH_METHOD(data.first, preIdx, 0, start);
             else if (res >= end)

@@ -23,10 +23,17 @@ public:
 
     static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset);
 
-private:
     int BinarySearch(double key, int p, int start, int end);
     int ExponentialSearch(double key, int p, int start, int end);
-    int Search(double key, int p);
+
+    // designed for gtest
+    int GetPredictIndex(double key)
+    {
+        double p = model->Predict(key);
+        int preIdx = static_cast<int>(p * (capacity - 1));
+        return preIdx;
+    }
+    int GetMaxIndex(){return maxIndex;}
 
 private:
     int maxIndex;   // tht index of the last one
@@ -36,7 +43,7 @@ private:
 
 void GappedArray::SetDataset(const vector<pair<double, double>> &subDataset)
 {
-    while ((float(subDataset.size()) / capacity > density))
+    while ((float(subDataset.size()) / float(capacity) > density))
     {
         int newSize = capacity / density;
         capacity = newSize;
@@ -83,6 +90,7 @@ pair<double, double> GappedArray::Find(double key)
     {
         int start = max(0, preIdx + maxNegativeError);
         int end = min(maxIndex, preIdx + maxPositiveError);
+        start = min(start, end);
         int res = SEARCH_METHOD(key, preIdx, start, end);
 
         if (res <= start)
@@ -112,6 +120,7 @@ bool GappedArray::Update(pair<double, double> data)
     {
         int start = max(0, preIdx + maxNegativeError);
         int end = min(maxIndex, preIdx + maxPositiveError);
+        start = min(start, end);
         int res = SEARCH_METHOD(data.first, preIdx, start, end);
         if (res <= start)
             res = SEARCH_METHOD(data.first, preIdx, 0, start);
@@ -146,6 +155,7 @@ bool GappedArray::Delete(double key)
     {
         int start = max(0, preIdx + maxNegativeError);
         int end = min(maxIndex, preIdx + maxPositiveError);
+        start = min(start, end);
         int res = SEARCH_METHOD(key, preIdx, start, end);
 
         if (res <= start)
@@ -189,6 +199,7 @@ bool GappedArray::Insert(pair<double, double> data)
 
     int start = max(0, preIdx + maxNegativeError);
     int end = min(maxIndex, preIdx + maxPositiveError);
+    start = min(start, end);
     preIdx = SEARCH_METHOD(data.first, preIdx, start, end);
     if (preIdx <= start)
         preIdx = SEARCH_METHOD(data.first, preIdx, 0, start);
@@ -329,4 +340,6 @@ long double GappedArray::GetCost(const btree::btree_map<double, pair<int, int>> 
     }
     return totalCost;
 }
+
+
 #endif
