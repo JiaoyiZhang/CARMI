@@ -21,7 +21,7 @@ public:
     bool Update(pair<double, double> data);
     bool Delete(double key);
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, const vector<pair<double, double>> &dataset);
 
     int BinarySearch(double key, int p, int start, int end);
     int ExponentialSearch(double key, int p, int start, int end);
@@ -321,7 +321,7 @@ int GappedArray::ExponentialSearch(double key, int p, int start, int end)
     return BinarySearch(key, p, start, end);
 }
 
-long double GappedArray::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)
+long double GappedArray::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, const vector<pair<double, double>> &dataset)
 {
     int datasetSize = dataset.size();
     if (datasetSize == 0)
@@ -329,8 +329,8 @@ long double GappedArray::GetCost(const btree::btree_map<double, pair<int, int>> 
 
     // calculate cost
     long double totalCost = 0;
-    double READCOST = log(datasetSize) / log(6);
-    double WRITECOST = 3.5 * READCOST;
+    double READCOST = 8;
+    double WRITECOST = READCOST + 2;
     for (int i = 0; i < datasetSize; i++)
     {
         pair<int, int> tmp = (cntTree.find(dataset[i].first))->second;

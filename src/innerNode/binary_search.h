@@ -15,26 +15,29 @@ public:
         BasicInnerNode::model = new BinarySearchModel(childNum);
     }
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset);
 };
 
-long double BinarySearchNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double BinarySearchNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = 2;
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    // space consumption: 8 * childNum
+    // calculation: log(childNum + 1) / log(2)
+    // here is (8 * childNum)/10 + log(childNum + 1) / log(2)
+    double InitializeCost = (8 * childNum) / 10 + log(childNum + 1) / log(2);
+    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
-    BinarySearchModel tmpNet = BinarySearchModel(childNum);
-    tmpNet.Train(dataset);
+    BinarySearchModel tmpModel = BinarySearchModel(childNum);
+    tmpModel.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        double p = tmpNet.Predict(dataset[i].first);
+        double p = tmpModel.Predict(dataset[i].first);
         p = p * (childNum - 1);
         int preIdx = static_cast<int>(p);
         perSubDataset[preIdx].push_back(dataset[i]);
@@ -59,7 +62,7 @@ public:
 
     bool Insert(pair<double, double> data);
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset);
 };
 
 void AdaptiveBin::Initialize(const vector<pair<double, double>> &dataset)
@@ -140,23 +143,26 @@ bool AdaptiveBin::Insert(pair<double, double> data)
     return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
 
-long double AdaptiveBin::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double AdaptiveBin::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = 16;
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    // space consumption: 8 * childNum
+    // calculation: log(childNum + 1) / log(2)
+    // here is (8 * childNum)/10 + log(childNum + 1) / log(2)
+    double InitializeCost = (8 * childNum) / 10 + log(childNum + 1) / log(2);
+    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
-    BinarySearchModel tmpNet = BinarySearchModel(childNum);
-    tmpNet.Train(dataset);
+    BinarySearchModel tmpModel = BinarySearchModel(childNum);
+    tmpModel.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        double p = tmpNet.Predict(dataset[i].first);
+        double p = tmpModel.Predict(dataset[i].first);
         int preIdx = static_cast<int>(p * (childNum - 1));
         perSubDataset[preIdx].push_back(dataset[i]);
     }

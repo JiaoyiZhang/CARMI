@@ -21,7 +21,7 @@ public:
     bool Delete(double key);
     bool Update(pair<double, double> data);
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, const vector<pair<double, double>> &dataset);
 
     int BinarySearch(double key, int preIdx, int start, int end);
     int ExponentialSearch(double key, int preIdx, int start, int end);
@@ -243,7 +243,7 @@ int ArrayNode::ExponentialSearch(double key, int preIdx, int start, int end)
     return BinarySearch(key, preIdx, start_idx, end_idx);
 }
 
-long double ArrayNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, vector<pair<double, double>> &dataset)
+long double ArrayNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, const vector<pair<double, double>> &dataset)
 {
     int datasetSize = dataset.size();
     if (datasetSize == 0)
@@ -251,8 +251,8 @@ long double ArrayNode::GetCost(const btree::btree_map<double, pair<int, int>> &c
 
     // calculate cost
     long double totalCost = 0;
-    double READCOST = 1.2;
-    double WRITECOST = 3.5;
+    double READCOST = 4;
+    double WRITECOST = READCOST + (datasetSize + 1) / 2;
     for (int i = 0; i < datasetSize; i++)
     {
         pair<int, int> tmp = (cntTree.find(dataset[i].first))->second;

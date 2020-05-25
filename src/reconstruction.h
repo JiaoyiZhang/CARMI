@@ -23,6 +23,12 @@
 #include <vector>
 using namespace std;
 
+long double CalculateCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
+{
+    long double tmpCost = HistogramNode::GetCost(cntTree, childNum, dataset);
+    return tmpCost;
+}
+
 void reconstruction(const vector<pair<double, double>> &data, const vector<pair<int, int>> &cnt)
 {
     cout << endl;
@@ -39,15 +45,11 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     long double minCost = 1e100;
     int minNum = 0;
     int maxChildNum = dataset.size() / 50;
+    long double tmpCost;
     for (int i = 2; i < maxChildNum; i++)
     {
         cout << "calculate childNum :" << i << endl;
-        // int threshold = float(dataset.size() * 1.2) / i;
-        // int capacity = threshold * 0.8;
-        int threshold = 1000;
-        int capacity = 800;
-        cout << "threhold is:" << threshold << "\tcapacity:" << capacity << endl;
-        long double tmpCost = HistogramNode::GetCost(cntTree, i, dataset);
+        tmpCost = CalculateCost(cntTree, i, dataset);
         cout << "tmpCost is: " << tmpCost << "    minCost: " << minCost << "    minNum: " << minNum << endl;
         if (tmpCost < minCost)
         {
@@ -58,21 +60,8 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     cout << "find the minimum childNum: " << minNum << endl;
 
     // Rebuild the tree according to the calculated most suitable childNum
-    int threshold = float(dataset.size() * 1.4) / minNum;
-    int capacity = threshold * 0.8;
-    LRNode *root = new LRNode(minNum);
+    HistogramNode *root = new HistogramNode(minNum);
     cout << "Rebuild root over!" << endl;
-
-    // //test
-    // LARGE_INTEGER s, e, c;
-    // QueryPerformanceCounter(&s);
-    // QueryPerformanceFrequency(&c);
-    // for (int i = 0; i < dataset.size(); i++)
-    // {
-    //     ((BasicInnerNode *)root)->Find(dataset[i].first);
-    // }
-    // QueryPerformanceCounter(&e);
-    // cout << "Find time:" << (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart / (float)dataset.size() << endl;
 }
 
 #endif

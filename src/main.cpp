@@ -83,60 +83,31 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
     timespec t1, t2;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
     for (int i = 0; i < dataset.size(); i++)
-    {
-        // cout << "Find : i:" << i << "\tkey:" << dataset[i].first << "\t";
         obj.Find(dataset[i].first);
-        // auto res = obj.Find(dataset[i].first);
-        // cout << "\tvalue:" << res.second << endl;
-        // if (res.second != dataset[i].first * 10)
-        //     cout << "Something wrong with find!" << endl;
-    }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
     time0 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
     cout << "Find time:" << time0 << endl;
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
     for (int i = 0; i < insertDataset.size(); i++)
-    {
-        // cout << "Insert : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
-        obj.Insert(insertDataset[i]);
-        // auto res = obj.Find(insertDataset[i].first);
-        // cout << "\tvalue:" << res.second << endl;
-        // if (res.second != insertDataset[i].first * 10)
-        //     cout << "Something wrong with insert!" << endl;
-        // cout << endl;
-    }
+        obj.Insert(insertDataset[i]);    
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
     time1 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
     cout << "Insert time:" << time1 << endl;
 
-    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
-    // for (int i = 0; i < insertDataset.size(); i++)
-    // {
-    //     // cout << "Update : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
-    //     obj.Update({insertDataset[i].first, 1.11});
-    //     // auto res = obj.Find(insertDataset[i].first);
-    //     // cout << "\tvalue:" << res.second << endl;
-    //     // if (res.second != 1.11)
-    //     //     cout << "Something wrong with update!" << endl;
-    // }
-    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    // time2 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
-    // cout << "Update time:" << time1 << endl;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    for (int i = 0; i < insertDataset.size(); i++)
+        obj.Update({insertDataset[i].first, 1.11});
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    time2 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    cout << "Update time:" << time1 << endl;
 
-    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
-    // for (int i = 0; i < insertDataset.size(); i++)
-    // {
-    //     // cout << "Delete : i:" << i << "\tkey:" << insertDataset[i].first << "\t";
-    //     obj.Delete(insertDataset[i].first);
-    //     // auto res = obj.Find(insertDataset[i].first);
-    //     // cout << "\tvalue:" << res.second << endl;
-    //     // if (res.second != 0 && res.second != DBL_MIN)
-    //     //     cout << "Something wrong with delete!" << endl;
-    // }
-    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    // time3 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
-    // cout << "Delete time:" << time1 << endl;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    for (int i = 0; i < insertDataset.size(); i++)
+        obj.Delete(insertDataset[i].first);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    time3 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    cout << "Delete time:" << time1 << endl;
     cout << endl;
 }
 

@@ -15,26 +15,29 @@ public:
         model = new LinearRegression();
     }
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset);
 };
 
-long double LRNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double LRNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = 2;
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    // space consumption: 16
+    // calculation: 2
+    // here is 16/10 + 2
+    double InitializeCost = 3.6;
+    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
-    LinearRegression tmpNet = LinearRegression();
-    tmpNet.Train(dataset);
+    LinearRegression tmpModel = LinearRegression();
+    tmpModel.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        double p = tmpNet.Predict(dataset[i].first);
+        double p = tmpModel.Predict(dataset[i].first);
         p = p * (childNum - 1);
         int preIdx = static_cast<int>(p);
         perSubDataset[preIdx].push_back(dataset[i]);
@@ -58,7 +61,7 @@ public:
 
     bool Insert(pair<double, double> data);
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset);
 };
 
 void AdaptiveLR::Initialize(const vector<pair<double, double>> &dataset)
@@ -138,23 +141,26 @@ bool AdaptiveLR::Insert(pair<double, double> data)
     return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
 
-long double AdaptiveLR::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double AdaptiveLR::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = 16;
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    // space consumption: 16
+    // calculation: 2
+    // here is 16/10 + 2
+    double InitializeCost = 3.6;
+    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
-    LinearRegression tmpNet = LinearRegression();
-    tmpNet.Train(dataset);
+    LinearRegression tmpModel = LinearRegression();
+    tmpModel.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        double p = tmpNet.Predict(dataset[i].first);
+        double p = tmpModel.Predict(dataset[i].first);
         int preIdx = static_cast<int>(p * (childNum - 1));
         perSubDataset[preIdx].push_back(dataset[i]);
     }

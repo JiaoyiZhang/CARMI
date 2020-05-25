@@ -15,13 +15,16 @@ public:
         model = new Net();
     }
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset);
 };
 
-long double NetworkNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double NetworkNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = 2;
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    // space consumption: 8 + 24 * k
+    // calculation: 3 * k + 1
+    // here is (8+24*8)/10 + 3*8+1
+    double InitializeCost = 45;
+    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
@@ -58,7 +61,7 @@ public:
 
     bool Insert(pair<double, double> data);
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset);
 };
 
 void AdaptiveNN::Initialize(const vector<pair<double, double>> &dataset)
@@ -138,10 +141,13 @@ bool AdaptiveNN::Insert(pair<double, double> data)
     return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
 
-long double AdaptiveNN::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double AdaptiveNN::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = 16;
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    // space consumption: 8 + 24 * k
+    // calculation: 3 * k + 1
+    // here is (8+24*8)/10 + 3*8+1
+    double InitializeCost = 45;
+    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;

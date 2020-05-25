@@ -15,26 +15,29 @@ public:
         model = new HistogramModel(childNum);
     }
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset);
 };
 
-long double HistogramNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double HistogramNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = 2;
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    // space consumption: 804
+    // calculation: 2
+    // here is 804/10 + 2
+    double InitializeCost = 82.4;
+    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
-    HistogramModel tmpNet = HistogramModel(childNum);
-    tmpNet.Train(dataset);
+    HistogramModel tmpModel = HistogramModel(childNum);
+    tmpModel.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        double p = tmpNet.Predict(dataset[i].first);
+        double p = tmpModel.Predict(dataset[i].first);
         p = p * (childNum - 1);
         int preIdx = static_cast<int>(p);
         perSubDataset[preIdx].push_back(dataset[i]);
@@ -59,7 +62,7 @@ public:
 
     bool Insert(pair<double, double> data);
 
-    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset);
+    static long double GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset);
 };
 
 void AdaptiveHis::Initialize(const vector<pair<double, double>> &dataset)
@@ -139,23 +142,26 @@ bool AdaptiveHis::Insert(pair<double, double> data)
     return ((BasicLeafNode *)this->children[preIdx])->Insert(data);
 }
 
-long double AdaptiveHis::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, vector<pair<double, double>> &dataset)
+long double AdaptiveHis::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    double InitializeCost = 16;
-    cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
+    // space consumption: 804
+    // calculation: 2
+    // here is 804/10 + 2
+    double InitializeCost = 82.4;
+    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
     long double totalCost = InitializeCost;
     if (dataset.size() == 0)
         return 0;
 
-    HistogramModel tmpNet = HistogramModel(childNum);
-    tmpNet.Train(dataset);
+    HistogramModel tmpModel = HistogramModel(childNum);
+    tmpModel.Train(dataset);
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        double p = tmpNet.Predict(dataset[i].first);
+        double p = tmpModel.Predict(dataset[i].first);
         int preIdx = static_cast<int>(p * (childNum - 1));
         perSubDataset[preIdx].push_back(dataset[i]);
     }
