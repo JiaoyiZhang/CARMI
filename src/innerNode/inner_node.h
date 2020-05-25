@@ -13,9 +13,9 @@ using namespace std;
 extern int kLeafNodeID;
 extern int kInnerNodeID;
 
-extern const int kThreshold;
+extern int kThreshold;
 extern const double kDensity;
-extern const int kMaxKeyNum;
+extern int kMaxKeyNum;
 
 extern BasicLeafNode *LeafNodeCreator(int leafNodeType);
 
@@ -27,6 +27,17 @@ public:
     {
         childNumber = childNum;
     }
+
+    // designed for test
+    int GetChildNum(){return children_is_leaf.size();}
+    void GetChildSet(vector<pair<double, double>> *v, double key)
+    {
+        double p = model->Predict(key);
+        int preIdx = static_cast<int>(p * (childNumber - 1));
+        cout<<"PreIdx is:"<<preIdx<<endl;
+        ((BasicLeafNode *)children[preIdx])->GetTotalDataset(v);
+    }
+    void GetLeafNode(double key);
 
     void Initialize(const vector<pair<double, double>> &dataset);
 
@@ -100,5 +111,50 @@ void BasicInnerNode::Initialize(const vector<pair<double, double>> &dataset)
     cout << "End train" << endl;
 }
 
+
+void BasicInnerNode::GetLeafNode(double key)
+{
+    double p = model->Predict(key);
+    int preIdx = static_cast<int>(p * (childNumber - 1));
+    if (children_is_leaf[preIdx] == false)
+        return ((BasicInnerNode *)children[preIdx])->GetLeafNode(key);
+    else
+    {
+        cout<<"PreIdx is:"<<preIdx<<endl;
+        vector<pair<double, double>> subDataset;
+        ((BasicLeafNode *)children[preIdx])->GetTotalDataset(&subDataset);
+        cout<<"subDataset is:"<<endl;
+        for(int i=0;i<subDataset.size();i++)
+        {
+            cout<<i<<":"<<subDataset[i].first<<"    ";
+            if((i+1)%10==0)
+                cout<<endl;
+        }
+        cout<<endl;
+        int pIdx = ((GappedArray *)children[preIdx])->GetPredictIndex(key);
+        int maxPositiveError = ((BasicLeafNode *)children[preIdx])->GetPositiveError();
+        int maxNegativeError = ((BasicLeafNode *)children[preIdx])->GetNegativeError();
+        int maxIndex = ((GappedArray *)children[preIdx])->GetMaxIndex();
+        cout<<"preIdx in leaf node:"<<pIdx<<endl;
+        cout<<"maxPositiveError:"<<maxPositiveError<<endl;
+        cout<<"maxNegativeError:"<<maxNegativeError<<endl;
+        cout<<"maxIndex:"<<maxIndex<<endl;
+        int start = max(0, pIdx + maxNegativeError);
+        int end = min(maxIndex, pIdx + maxPositiveError);
+        int res = ((GappedArray *)children[preIdx])->BinarySearch(key, pIdx, start, end);
+        cout<<"First res:"<<res<<endl;
+        if (res <= start)
+        {
+            cout<<"res <= start"<<endl;
+            res = ((GappedArray *)children[preIdx])->BinarySearch(key, pIdx, 0, start);
+        }
+        else if (res >= end)
+        {
+            cout<<"res >= end"<<endl;
+            res = ((GappedArray *)children[preIdx])->BinarySearch(key, pIdx, res, maxIndex);
+        }
+        cout<<"Final res:"<<res<<endl;
+    }
+}
 
 #endif

@@ -78,7 +78,9 @@ void AdaptiveHis::Initialize(const vector<pair<double, double>> &dataset)
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(tmpDataset.begin(), tmpDataset.end(), default_random_engine(seed));
     for (int i = 0; i < tmpDataset.size(); i++)
-        Insert(tmpDataset[i]);
+    {  
+        Insert(tmpDataset[i]); 
+    }
     cout << "End train" << endl;
 }
 

@@ -78,25 +78,8 @@ void AdaptiveBin::Initialize(const vector<pair<double, double>> &dataset)
     auto tmpDataset = dataset;
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(tmpDataset.begin(), tmpDataset.end(), default_random_engine(seed));
-    // vector<vector<pair<double, double>>> perSubDataset;
-    // vector<pair<double, double>> tmp;
-    // for (int i = 0; i < this->childNumber; i++)
-    //     perSubDataset.push_back(tmp);
     for (int i = 0; i < tmpDataset.size(); i++)
     {
-        double p = this->model->Predict(tmpDataset[i].first);
-        int preIdx = static_cast<int>(p * (this->childNumber - 1));
-        // if (perSubDataset[preIdx].size() < 100)
-        //     perSubDataset[preIdx].push_back(tmpDataset[i]);
-        // else if (perSubDataset[preIdx].size() == 100)
-        // {
-        //     perSubDataset[preIdx].push_back(tmpDataset[i]);
-        //     std::sort(perSubDataset[preIdx].begin(), perSubDataset[preIdx].end(), [](pair<double, double> p1, pair<double, double> p2) {
-        //         return p1.first < p2.first;
-        //     });
-        //     ((BasicLeafNode *)this->children[preIdx])->SetDataset(perSubDataset[preIdx]);
-        // }
-        // else
         Insert(tmpDataset[i]);
     }
     cout << "End train" << endl;
