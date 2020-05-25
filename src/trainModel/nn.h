@@ -74,6 +74,24 @@ public:
 
 	double Predict(double key); // return the key's index
 
+	// designed for test
+	void GetW1(vector<double> &w)
+	{
+		for(int i=0;i<kNeuronNumber;i++)
+			w.push_back(W1[i]);
+	}
+	void GetW2(vector<double> &w)
+	{
+		for(int i=0;i<kNeuronNumber;i++)
+			w.push_back(W2[i]);
+	}
+	void Getb1(vector<double> &b)
+	{
+		for(int i=0;i<kNeuronNumber;i++)
+			b.push_back(b1[i]);
+	}
+	double Getb2(){return b2;}
+
 private:
 	vector<double> W1;
 	vector<double> W2;
@@ -96,25 +114,26 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 	}
 
 	double totalLoss = 0.0;
+	// initialize the parameters
+	//std::default_random_engine gen;
+	//std::normal_distribution<double> dis(1, 3);
+	for (int i = 0; i < kNeuronNumber; i++)
+	{
+		// W1.push_back(dis(gen));
+		// W2.push_back(dis(gen));
+		W1.push_back(0.000001);
+		W2.push_back(0.000001);
+		// b1.push_back(1);
+		b1.push_back(0);
+	}
+	// b2 = 0.91;
+	b2 = 0;
 	do
 	{
-		// initialize the parameters
-		std::default_random_engine gen;
-		std::normal_distribution<double> dis(1, 3);
-		for (int i = 0; i < kNeuronNumber; i++)
-		{
-			// W1.push_back(dis(gen));
-			// W2.push_back(dis(gen));
-			W1.push_back(0.0001);
-			W2.push_back(0.0001);
-			// b1.push_back(1);
-			b1.push_back(0);
-		}
-		// b2 = 0.91;
-		b2 = 0;
-
 		for (int epoch = 0; epoch < kMaxEpoch; epoch++)
 		{
+    		// timespec t1, t2;
+    		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
 			unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 			shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
 			shuffle(index.begin(), index.end(), default_random_engine(seed));
@@ -154,8 +173,11 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 					b2 = b2 - kLearningRate * (p - y);
 				}
 			}
+    		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+			// cout<<"epoch:"<<epoch<<"\ttotalLoss is:"<<totalLoss<<endl;
+    		// cout << "Train time:" << ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0) << "ms" <<endl; // ms
 		}
-	} while ((m_dataset.size() / totalLoss) > 60 && totalLoss > 100);
+	} while ((m_dataset.size() / totalLoss) < 100 && totalLoss > 100000);
 }
 
 double Net::Predict(double key)

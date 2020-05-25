@@ -9,7 +9,7 @@ BasicLeafNode *LeafNodeCreator(int leafNodeType)
     switch (leafNodeType)
     {
     case 0:
-        newNode = new ArrayNode(kThreshold);
+        newNode = new ArrayNode(kMaxKeyNum);
         break;
     case 1:
         newNode = new GappedArray(kThreshold);

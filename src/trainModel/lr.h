@@ -21,6 +21,10 @@ public:
     void Train(const vector<pair<double, double>> &dataset);
     double Predict(double key);
 
+    // designed for test
+    double GetTheta1(){return theta1;}
+    double GetTheta2(){return theta2;}
+
 private:
     double theta1;
     double theta2;

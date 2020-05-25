@@ -19,7 +19,7 @@
 
 #include <algorithm>
 #include <iostream>
-#include <windows.h>
+// #include <windows.h>
 #include <vector>
 using namespace std;
 
@@ -63,16 +63,16 @@ void reconstruction(const vector<pair<double, double>> &data, const vector<pair<
     LRNode *root = new LRNode(minNum);
     cout << "Rebuild root over!" << endl;
 
-    //test
-    LARGE_INTEGER s, e, c;
-    QueryPerformanceCounter(&s);
-    QueryPerformanceFrequency(&c);
-    for (int i = 0; i < dataset.size(); i++)
-    {
-        ((BasicInnerNode *)root)->Find(dataset[i].first);
-    }
-    QueryPerformanceCounter(&e);
-    cout << "Find time:" << (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart / (float)dataset.size() << endl;
+    // //test
+    // LARGE_INTEGER s, e, c;
+    // QueryPerformanceCounter(&s);
+    // QueryPerformanceFrequency(&c);
+    // for (int i = 0; i < dataset.size(); i++)
+    // {
+    //     ((BasicInnerNode *)root)->Find(dataset[i].first);
+    // }
+    // QueryPerformanceCounter(&e);
+    // cout << "Find time:" << (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart / (float)dataset.size() << endl;
 }
 
 #endif
