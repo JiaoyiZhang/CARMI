@@ -1,6 +1,6 @@
-#include "head.h"
+#include "../head.h"
 
-int datasetSize = 10000;
+int datasetSize = 1000000;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
 
@@ -8,19 +8,28 @@ int kLeafNodeID = 1;
 int kInnerNodeID = 1;
 int kNeuronNumber = 8;
 
-int childNum = 15;
+int childNum = 25;
+int kThreshold = 1000;
+int kMaxKeyNum = 200000;
 
 LognormalDataset logData = LognormalDataset(datasetSize, 0.9);
 
-TEST(TestFind, Find)
+TEST(TestInit, Init)
 {
     logData.GenerateDataset(dataset, insertDataset);
+    NetworkNode *node = new NetworkNode(childNum);
+    node->Initialize(dataset);
+    EXPECT_EQ(childNum, node->GetChildNum());
+}
+
+TEST(TestFind, Find)
+{
     NetworkNode *node = new NetworkNode(childNum);
     node->Initialize(dataset);
     for (int i = 0; i < dataset.size(); i++)
     {
         auto res = node->Find(dataset[i].first);
-        EXPECT_EQ(dataset[i], res);
+        EXPECT_EQ(dataset[i], res)<<"find wrong! i:"<<i<<endl;
     }
 }
 
@@ -32,7 +41,7 @@ TEST(TestInsert, Insert)
     {
         node->Insert(insertDataset[i]);
         auto res = node->Find(insertDataset[i].first);
-        EXPECT_EQ(insertDataset[i], res);
+        EXPECT_EQ(insertDataset[i], res)<<"insert wrong! i:"<<i<<endl;
     }
 }
 
@@ -44,7 +53,7 @@ TEST(TestDelete, Delete)
     {
         node->Delete(dataset[i].first);
         auto res = node->Find(dataset[i].first);
-        EXPECT_EQ(DBL_MIN, res.second);
+        EXPECT_EQ(DBL_MIN, res.second)<<"delete wrong! i:"<<i<<endl;
     }
 }
 
@@ -56,10 +65,17 @@ TEST(TestUpdate, Update)
     {
         node->Update({dataset[i].first, 1.11});
         auto res = node->Find(dataset[i].first);
-        EXPECT_EQ(1.11, res.second);
+        EXPECT_EQ(1.11, res.second)<<"update wrong! i:"<<i<<endl;
     }
 }
 
+
+TEST(TestAdaptiveInit, AdaptiveInit)
+{
+    AdaptiveNN *node = new AdaptiveNN(childNum);
+    node->Initialize(dataset);
+    EXPECT_EQ(childNum, node->GetChildNum());
+}
 
 TEST(TestAdaptiveFind, AdaptiveFind)
 {
@@ -68,7 +84,7 @@ TEST(TestAdaptiveFind, AdaptiveFind)
     for (int i = 0; i < dataset.size(); i++)
     {
         auto res = node->Find(dataset[i].first);
-        EXPECT_EQ(dataset[i], res);
+        EXPECT_EQ(dataset[i], res)<<"find wrong! i:"<<i<<endl;
     }
 }
 
@@ -80,7 +96,7 @@ TEST(TestAdaptiveInsert, AdaptiveInsert)
     {
         node->Insert(insertDataset[i]);
         auto res = node->Find(insertDataset[i].first);
-        EXPECT_EQ(insertDataset[i], res);
+        EXPECT_EQ(insertDataset[i], res)<<"insert wrong! i:"<<i<<endl;
     }
 }
 
@@ -92,7 +108,7 @@ TEST(TestAdaptiveDelete, AdaptiveDelete)
     {
         node->Delete(dataset[i].first);
         auto res = node->Find(dataset[i].first);
-        EXPECT_EQ(DBL_MIN, res.second);
+        EXPECT_EQ(DBL_MIN, res.second)<<"delete wrong! i:"<<i<<endl;
     }
 }
 
@@ -104,6 +120,6 @@ TEST(TestAdaptiveUpdate, AdaptiveUpdate)
     {
         node->Update({dataset[i].first, 1.11});
         auto res = node->Find(dataset[i].first);
-        EXPECT_EQ(1.11, res.second);
+        EXPECT_EQ(1.11, res.second)<<"update wrong! i:"<<i<<endl;
     }
 }
