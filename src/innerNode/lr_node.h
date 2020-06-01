@@ -20,12 +20,9 @@ public:
 
 long double LRNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    // space consumption: 16
-    // calculation: 2
-    // here is 16/10 + 2
-    double InitializeCost = 3.6;
-    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
-    long double totalCost = InitializeCost;
+    double spaceCost = 16.0 * kRate;
+    double calculationCost = 2.0 * (1 - kRate);
+    long double totalCost = spaceCost + calculationCost * dataset.size();
     if (dataset.size() == 0)
         return 0;
 
@@ -44,10 +41,12 @@ long double LRNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntT
     }
 
     for (int i = 0; i < childNum; i++)
+    {
         totalCost += LEAF_NODE_TYPE::GetCost(cntTree, perSubDataset[i]);
-    cout << "sub tree get cost finish!" << endl;
+    }
     return totalCost;
 }
+
 class AdaptiveLR : public LRNode
 {
 public:
@@ -143,12 +142,9 @@ bool AdaptiveLR::Insert(pair<double, double> data)
 
 long double AdaptiveLR::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    // space consumption: 16
-    // calculation: 2
-    // here is 16/10 + 2
-    double InitializeCost = 3.6;
-    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
-    long double totalCost = InitializeCost;
+    double spaceCost = 16 * kRate;
+    double calculationCost = 2 * (1 - kRate);
+    long double totalCost = spaceCost + calculationCost * dataset.size();
     if (dataset.size() == 0)
         return 0;
 

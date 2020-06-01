@@ -20,12 +20,9 @@ public:
 
 long double HistogramNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    // space consumption: 804
-    // calculation: 2
-    // here is 804/10 + 2
-    double InitializeCost = 82.4;
-    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
-    long double totalCost = InitializeCost;
+    double spaceCost = 804 * kRate;
+    double calculationCost = 2 * (1 - kRate);
+    long double totalCost = spaceCost + calculationCost * dataset.size();
     if (dataset.size() == 0)
         return 0;
 
@@ -144,12 +141,9 @@ bool AdaptiveHis::Insert(pair<double, double> data)
 
 long double AdaptiveHis::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    // space consumption: 804
-    // calculation: 2
-    // here is 804/10 + 2
-    double InitializeCost = 82.4;
-    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
-    long double totalCost = InitializeCost;
+    double spaceCost = 804 * kRate;
+    double calculationCost = 2 * (1 - kRate);
+    long double totalCost = spaceCost + calculationCost * dataset.size();
     if (dataset.size() == 0)
         return 0;
 

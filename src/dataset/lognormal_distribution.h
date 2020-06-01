@@ -16,7 +16,8 @@ public:
         initSize = total * initRatio;
         insertSize = totalSize - initSize;
 
-        num = initRatio * 10;
+        // num = initRatio * 10;
+        num = initRatio / (1 - initRatio);
     }
 
     void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
@@ -38,6 +39,9 @@ void LognormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset
     std::lognormal_distribution<double> distribution(0.0, 2.0);
     vector<double> ds;
 
+    initDataset.clear();
+    insertDataset.clear();
+
     for (int i = 0; i < totalSize; i++)
     {
         ds.push_back(distribution(generator));
@@ -57,10 +61,10 @@ void LognormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset
         else
         {
             insertDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-            if (cnt == 10)
-                cnt = 0;
+            cnt = 0;
         }
     }
+    cout<<"Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
 }
 
 #endif

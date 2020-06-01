@@ -16,7 +16,8 @@ public:
         initSize = total * initRatio;
         insertSize = totalSize - initSize;
 
-        num = initRatio * 10;
+        // num = initRatio * 10;
+        num = initRatio / (1 - initRatio);
     }
 
     void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
@@ -42,10 +43,10 @@ void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
         else
         {
             insertDataset.push_back({double(i), double(i) * 10});
-            if (cnt == 10)
-                cnt = 0;
+            cnt = 0;
         }
     }
+    cout<<"Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
 }
 
 #endif

@@ -19,13 +19,10 @@ public:
 };
 
 long double BinarySearchNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
-{
-    // space consumption: 8 * childNum
-    // calculation: log(childNum + 1) / log(2)
-    // here is (8 * childNum)/10 + log(childNum + 1) / log(2)
-    double InitializeCost = (8 * childNum) / 10 + log(childNum + 1) / log(2);
-    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
-    long double totalCost = InitializeCost;
+{    
+    double spaceCost = 8 * childNum * kRate;
+    double calculationCost = (log(childNum + 1) / log(2)) * (1 - kRate);
+    long double totalCost = spaceCost + calculationCost * dataset.size();
     if (dataset.size() == 0)
         return 0;
 
@@ -145,12 +142,9 @@ bool AdaptiveBin::Insert(pair<double, double> data)
 
 long double AdaptiveBin::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    // space consumption: 8 * childNum
-    // calculation: log(childNum + 1) / log(2)
-    // here is (8 * childNum)/10 + log(childNum + 1) / log(2)
-    double InitializeCost = (8 * childNum) / 10 + log(childNum + 1) / log(2);
-    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
-    long double totalCost = InitializeCost;
+    double spaceCost = 8 * childNum * kRate;
+    double calculationCost = (log(childNum + 1) / log(2)) * (1 - kRate);
+    long double totalCost = spaceCost + calculationCost * dataset.size();
     if (dataset.size() == 0)
         return 0;
 

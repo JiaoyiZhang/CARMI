@@ -20,12 +20,9 @@ public:
 
 long double NetworkNode::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    // space consumption: 8 + 24 * k
-    // calculation: 3 * k + 1
-    // here is (8+24*8)/10 + 3*8+1
-    double InitializeCost = 45;
-    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
-    long double totalCost = InitializeCost;
+    double spaceCost = 200 * kRate;
+    double calculationCost = 25 * (1 - kRate);
+    long double totalCost = spaceCost + calculationCost * dataset.size();
     if (dataset.size() == 0)
         return 0;
 
@@ -143,12 +140,9 @@ bool AdaptiveNN::Insert(pair<double, double> data)
 
 long double AdaptiveNN::GetCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
 {
-    // space consumption: 8 + 24 * k
-    // calculation: 3 * k + 1
-    // here is (8+24*8)/10 + 3*8+1
-    double InitializeCost = 45;
-    // cout << "child: " << childNum << "\tsize: " << dataset.size() << "\tInitializeCost is:" << InitializeCost << endl;
-    long double totalCost = InitializeCost;
+    double spaceCost = 200 * kRate;
+    double calculationCost = 25 * (1 - kRate);
+    long double totalCost = spaceCost + calculationCost * dataset.size();
     if (dataset.size() == 0)
         return 0;
 

@@ -15,6 +15,8 @@ extern int kInnerNodeID;
 
 extern int kThreshold;
 extern const double kDensity;
+extern const double kRate;
+extern const double kReadWriteRate;
 extern int kMaxKeyNum;
 
 extern BasicLeafNode *LeafNodeCreator(int leafNodeType);
@@ -38,6 +40,10 @@ public:
         ((BasicLeafNode *)children[preIdx])->GetTotalDataset(v);
     }
     void GetLeafNode(double key);
+
+    // designed for reconstruction
+    void PrintStructure();
+    void Rebuild(const vector<pair<double, double>> &dataset, const btree::btree_map<double, pair<int, int>> &cntTree);
 
     void Initialize(const vector<pair<double, double>> &dataset);
 
@@ -155,6 +161,83 @@ void BasicInnerNode::GetLeafNode(double key)
         }
         cout<<"Final res:"<<res<<endl;
     }
+}
+
+
+void BasicInnerNode::PrintStructure()
+{
+    cout << "Root!" << endl;
+    for(int i = 0; i < childNumber; i++)
+    {
+        if (children_is_leaf[i] == false)
+            cout<<"inner"<<"\t";
+        else
+            cout<<"leaf"<<"\t";
+    }
+    cout << endl;
+    for(int i = 0; i < childNumber; i++)
+    {
+        if (children_is_leaf[i] == false)
+        {
+            cout<<"child: "<<i<<endl;
+            ((BasicInnerNode *)children[i])->PrintStructure();
+        }
+    }
+}
+
+
+void BasicInnerNode::Rebuild(const vector<pair<double, double>> &dataset, const btree::btree_map<double, pair<int, int>> &cntTree)
+{
+    if (dataset.size() == 0)
+        return;
+
+    cout << "train first stage" << endl;
+    model->Train(dataset);
+    vector<vector<pair<double, double>>> perSubDataset;
+    vector<pair<double, double>> tmp;
+    for (int i = 0; i < childNumber; i++)
+        perSubDataset.push_back(tmp);
+
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        double p = model->Predict(dataset[i].first);
+        int preIdx = static_cast<int>(p * (childNumber - 1));
+        perSubDataset[preIdx].push_back(dataset[i]);
+    }
+
+    cout << "train second stage" << endl;
+    for (int i = 0; i < childNumber; i++)
+    {
+        if(perSubDataset[i].size() == 0)
+        {
+            cout<<"child "<<i<<" is empty, use array!"<<endl;
+            children.push_back(LeafNodeCreator(0));
+            children_is_leaf.push_back(true);
+            continue;
+        }
+        int readTimes = 0;
+        int writeTimes = 0;
+        for(int j = 0; j < perSubDataset[i].size(); j++)
+        {
+            pair<int, int> tmp = (cntTree.find(perSubDataset[i][j].first))->second;
+            readTimes += tmp.first;
+            writeTimes += tmp.second;
+        }
+        // choose leaf node type, 0:array, 1:gapped array
+        if(float(readTimes) / (readTimes + writeTimes) < kReadWriteRate)
+        {
+            cout<<"Leaf node "<<i<<"\t is gapped array!"<<endl;
+            children.push_back(LeafNodeCreator(1));
+        }
+        else
+        {
+            cout<<"Leaf node "<<i<<"\t is array!"<<endl;
+            children.push_back(LeafNodeCreator(0));
+        }
+        children_is_leaf.push_back(true);
+        ((BasicLeafNode *)children[i])->SetDataset(perSubDataset[i]);
+    }
+    cout << "End train" << endl;
 }
 
 #endif
