@@ -17,6 +17,12 @@
 #include "../../cpp-btree/btree_map.h"
 using namespace std;
 
+extern int kThreshold;
+extern const double kDensity;
+extern const double kRate;
+extern const double kReadWriteRate;
+extern int kMaxKeyNum;
+
 class BasicLeafNode
 {
 public:

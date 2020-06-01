@@ -248,16 +248,36 @@ long double ArrayNode::GetCost(const btree::btree_map<double, pair<int, int>> &c
     int datasetSize = dataset.size();
     if (datasetSize == 0)
         return 0;
+        
+    int leftError = 0;
+    int rightError = 0;
+    BasicModel *tmpModel = new LinearRegression();
+    tmpModel->Train(dataset);
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        if (dataset[i].first != -1)
+        {
+            double p = tmpModel->Predict(dataset[i].first);
+            int preIdx = static_cast<int>(p * (datasetSize - 1));
+            int error = i - preIdx;
+            if (error > rightError)
+                rightError = error;
+            if (error < leftError)
+                leftError = error;
+        }
+    }
+    rightError++;
+    leftError--;
 
     // calculate cost
-    long double totalCost = 0;
-    double READCOST = 4;
+    long double totalCost = 16.0 * kRate;
+    double READCOST = log(rightError-leftError+1) / log(2);
     double WRITECOST = READCOST + (datasetSize + 1) / 2;
     for (int i = 0; i < datasetSize; i++)
     {
         pair<int, int> tmp = (cntTree.find(dataset[i].first))->second;
-        double tmpRead = tmp.first * READCOST;
-        double tmpWrite = tmp.first * WRITECOST;
+        double tmpRead = tmp.first * READCOST * (1 - kRate);
+        double tmpWrite = tmp.second * WRITECOST * (1 - kRate);
         totalCost += tmpRead + tmpWrite;
     }
     return totalCost;
