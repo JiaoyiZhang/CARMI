@@ -41,7 +41,7 @@ int kInnerNodeID = 0;
 int kNeuronNumber = 8;
 
 int childNum = 25;
-int kThreshold = 1000;
+int kThreshold = 100000;
 int kMaxKeyNum = 200000;
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)
@@ -90,24 +90,24 @@ void test(type obj, double &time0, double &time1, double &time2, double &time3)
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
     for (int i = 0; i < insertDataset.size(); i++)
-        obj.Insert(insertDataset[i]);    
+        obj.Insert(insertDataset[i]);
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
     time1 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
     cout << "Insert time:" << time1 << endl;
 
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
-    for (int i = 0; i < insertDataset.size(); i++)
-        obj.Update({insertDataset[i].first, 1.11});
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    time2 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
-    cout << "Update time:" << time1 << endl;
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    // for (int i = 0; i < insertDataset.size(); i++)
+    //     obj.Update({insertDataset[i].first, 1.11});
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    // time2 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    // cout << "Update time:" << time1 << endl;
 
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
-    for (int i = 0; i < insertDataset.size(); i++)
-        obj.Delete(insertDataset[i].first);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    time3 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
-    cout << "Delete time:" << time1 << endl;
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    // for (int i = 0; i < insertDataset.size(); i++)
+    //     obj.Delete(insertDataset[i].first);
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    // time3 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    // cout << "Delete time:" << time1 << endl;
     cout << endl;
 }
 
@@ -121,6 +121,19 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
     cout << "***********************" << endl;
 }
 
+void printStructure()
+{
+    cout<<"print structure:"<<endl;
+    ada_lr.PrintStructure();
+    cout<<"//////////////////////////"<<endl;
+    ada_nn.PrintStructure();
+    cout<<"//////////////////////////"<<endl;
+    ada_his.PrintStructure();
+    cout<<"//////////////////////////"<<endl;
+    ada_bin.PrintStructure();
+    cout<<"//////////////////////////"<<endl;
+}
+
 void totalTest(bool isStatic, int repetitions)
 {
     double btree_time0 = 0.0, btree_time1 = 0.0, btree_time2 = 0.0, btree_time3 = 0.0;
@@ -131,8 +144,8 @@ void totalTest(bool isStatic, int repetitions)
     for (int i = 0; i < repetitions; i++)
     {
         btree::btree_map<double, double> btree;
-        for (int i = 0; i < dataset.size(); i++)
-            btree.insert(dataset[i]);
+        for (int l = 0; l < dataset.size(); l++)
+            btree.insert(dataset[l]);
         btreemap = btree;
         cout << "btree:    " << i << endl;
         btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
@@ -246,53 +259,112 @@ void totalTest(bool isStatic, int repetitions)
 
     cout << "bin:" << endl;
     printResult(repetitions, bin_time0, bin_time1, bin_time2, bin_time3);
+
+    // printStructure();
 }
+
+void testReconstructure(int testID, int repetitions)
+{
+    vector<pair<double, double>> totalData;
+    for (int i = 0; i < dataset.size(); i++)
+        totalData.push_back(dataset[i]);
+    for (int i = 0; i < insertDataset.size(); i++)
+        totalData.push_back(insertDataset[i]);
+    std::sort(totalData.begin(), totalData.end(), [](pair<double, double> p1, pair<double, double> p2) {
+        return p1.first < p2.first;
+    });
+    vector<pair<int, int>> cnt;
+    int r=0,w=0;
+    if(testID == 0)
+    {
+        // read:write = 1:10 (reconstructed from adaptive ga)
+        for (int i = 0; i < totalData.size(); i++)
+        {
+            if ((i + 1) % 10 == 0)
+            {
+                cnt.push_back({1, 1});
+                r+=1;
+                w+=1;
+            }
+            else
+            {
+                cnt.push_back({0, 1});
+                w+=1;
+            }
+        }
+    }
+    else if(testID == 1)
+    {
+        // almost all write
+        for (int i = 0; i < totalData.size(); i++)
+        {
+            if ((i + 1) % 10000 == 0)
+            {
+                cnt.push_back({1, 1});
+                r+=1;
+                w+=1;
+            }
+            else
+            {
+                cnt.push_back({0, 1});
+                w+=1;
+            }
+        }
+    }
+    else
+    {
+        for(int i = 0; i < 100000; i++)
+        {
+            cnt.push_back({0, 1});
+            w+=1;
+        }
+        for(int i = 100000; i < totalData.size(); i++)
+        {
+            cnt.push_back({1, 0});
+            r+=1;
+        }
+        
+    }
+    cout<<"total read times:"<<r<<endl;
+    cout<<"total write times:"<<w<<endl;
+    BasicInnerNode newRoot = reconstruction(totalData, cnt, dataset);
+
+    double root_time0 = 0.0, root_time1 = 0.0, root_time2 = 0.0, root_time3 = 0.0;
+    test(newRoot, root_time0, root_time1, root_time2, root_time3);
+    cout << endl;
+    printResult(1, root_time0, root_time1, root_time2, root_time3);
+    cout << "-------------------------------" << endl;
+}
+
 
 int main()
 {
-    int repetitions = 10;
+    int repetitions = 1;
     cout<<"kLeafNodeID:"<<kLeafNodeID<<"\tleafNodeType:"<<typeid(LEAF_NODE_TYPE).name()<<endl;
-    cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+    // cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
     LognormalDataset logData = LognormalDataset(datasetSize, 0.9);
-    logData.GenerateDataset(dataset, insertDataset);
-    cout << "-------------Static inner nodes----------------" << endl;
-    totalTest(true, repetitions);
+    // logData.GenerateDataset(dataset, insertDataset);
+    // cout << "-------------Static inner nodes----------------" << endl;
+    // totalTest(true, repetitions);
 
-    dataset = vector<pair<double, double>>();
-    insertDataset = vector<pair<double, double>>();
-    cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+    // dataset = vector<pair<double, double>>();
+    // insertDataset = vector<pair<double, double>>();
+    // cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
     UniformDataset uniData = UniformDataset(datasetSize, 0.9);
     uniData.GenerateDataset(dataset, insertDataset);
-    cout << "-------------Static inner nodes----------------" << endl;
-    totalTest(true, repetitions);
+    testReconstructure(0, repetitions);
+    // cout << "-------------Static inner nodes----------------" << endl;
+    // totalTest(true, repetitions);
 
     cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
     cout << "-------------Adaptive inner nodes----------------" << endl;
     totalTest(false, repetitions);
 
     cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-    logData = LognormalDataset(datasetSize, 0.9);
+    // logData = LognormalDataset(datasetSize, 0.9);
     logData.GenerateDataset(dataset, insertDataset);
+    testReconstructure(0, repetitions);
     cout << "-------------Adaptive inner nodes----------------" << endl;
     totalTest(false, repetitions);
-    
-    // vector<pair<double, double>> totalData;
-    // for (int i = 0; i < dataset.size(); i++)
-    //     totalData.push_back(dataset[i]);
-    // for (int i = 0; i < insertDataset.size(); i++)
-    //     totalData.push_back(insertDataset[i]);
-    // std::sort(totalData.begin(), totalData.end(), [](pair<double, double> p1, pair<double, double> p2) {
-    //     return p1.first < p2.first;
-    // });
-    // vector<pair<int, int>> cnt;
-    // for (int i = 0; i < datasetSize; i++)
-    // {
-    //     if ((i + 1) % 10 == 0)
-    //         cnt.push_back({0, 1});
-    //     else
-    //         cnt.push_back({1, 0});
-    // }
-    // reconstruction(totalData, cnt);
-
     return 0;
 }

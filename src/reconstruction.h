@@ -23,45 +23,58 @@
 #include <vector>
 using namespace std;
 
-long double CalculateCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &dataset)
+long double CalculateCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &data)
 {
-    long double tmpCost = HistogramNode::GetCost(cntTree, childNum, dataset);
+    long double tmpCost = LRNode::GetCost(cntTree, childNum, data);
     return tmpCost;
 }
 
-void reconstruction(const vector<pair<double, double>> &data, const vector<pair<int, int>> &cnt)
+BasicInnerNode reconstruction(const vector<pair<double, double>> &data, const vector<pair<int, int>> &cnt, const vector<pair<double, double>> &initData)
 {
     cout << endl;
     cout << "-------------------------------" << endl;
     cout << "Start reconstruction!" << endl;
 
-    int datasetSize = data.size();
-    vector<pair<double, double>> dataset = data;
+    int dataSize = data.size();
     btree::btree_map<double, pair<int, int>> cntTree;
     for (int i = 0; i < cnt.size(); i++)
-        cntTree.insert({dataset[i].first, cnt[i]}); // <key, <read, write>>
+    {
+        cntTree.insert({data[i].first, cnt[i]}); // <key, <read, write>>
+    }
 
     // Find the minimum childNum
     long double minCost = 1e100;
-    int minNum = 0;
-    int maxChildNum = dataset.size() / 50;
+    // int minNum = 0;
+    int minNum = 10;
+    int maxChildNum = 300;
     long double tmpCost;
+    timespec t1, t2;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
     for (int i = 2; i < maxChildNum; i++)
     {
-        cout << "calculate childNum :" << i << endl;
-        tmpCost = CalculateCost(cntTree, i, dataset);
-        cout << "tmpCost is: " << tmpCost << "    minCost: " << minCost << "    minNum: " << minNum << endl;
+        // cout << "calculate childNum :" << i << endl;
+        tmpCost = CalculateCost(cntTree, i, data);
+        // cout << "tmpCost is: " << tmpCost << "    minCost: " << minCost << "    minNum: " << minNum << endl;
         if (tmpCost < minCost)
         {
             minCost = tmpCost;
             minNum = i;
         }
     }
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    double time0 = ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
     cout << "find the minimum childNum: " << minNum << endl;
+    cout << "time:" << time0 << "ms" << endl;
 
     // Rebuild the tree according to the calculated most suitable childNum
-    HistogramNode *root = new HistogramNode(minNum);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    BasicInnerNode root = LRNode(minNum);
+    root.Rebuild(initData, cntTree);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    double time = ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    cout << "time:" << time << "ms" << endl;
     cout << "Rebuild root over!" << endl;
+    return root;
 }
 
 #endif

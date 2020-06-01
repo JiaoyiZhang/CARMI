@@ -12,8 +12,6 @@ extern const int kSearchMethod = 0;
 extern int kLeafNodeID;
 extern int kInnerNodeID;
 
-
-
 // 1,000,000
 extern const int kMaxEpoch = 40;
 extern const double kLearningRate = 0.0000001;
@@ -27,5 +25,7 @@ extern int kNeuronNumber;
 extern int kThreshold;
 extern int kMaxKeyNum;
 extern const double kDensity = 0.5;
+extern const double kReadWriteRate = 0.9;  // readTimes / (readTimes + writeTimes)
+extern const double kRate = 0.4;  // totalCost = space * kRate + time * (1 - kRate)
 
 #endif
