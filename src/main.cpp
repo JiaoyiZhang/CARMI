@@ -6,11 +6,14 @@
 
 #include "./dataset/lognormal_distribution.h"
 #include "./dataset/uniform_distribution.h"
+#include "./dataset/longitudes.h"
+#include "./dataset/longlat.h"
 #include "reconstruction.h"
 
 #include <algorithm>
 #include <random>
 // #include <windows.h>
+#include <windows.h>
 #include <time.h>
 #include <iostream>
 #include "./leafNode/array.h"
@@ -36,63 +39,82 @@ AdaptiveNN ada_nn;
 AdaptiveHis ada_his;
 AdaptiveBin ada_bin;
 
-int kLeafNodeID = 1;
+int kLeafNodeID = 0;
 int kInnerNodeID = 0;
 int kNeuronNumber = 8;
 
-int childNum = 25;
-int kThreshold = 100000;
-int kMaxKeyNum = 200000;
+int childNum = 45;
+// int kThreshold = 100000;
+// int kMaxKeyNum = 200000;
+int kThreshold = 600000;
+int kMaxKeyNum = 720000;
+double kRate = 0.4;
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)
 {
-    timespec t1, t2;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    // timespec t1, t2;
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    LARGE_INTEGER s, e, c;
+    QueryPerformanceFrequency(&c);
+    QueryPerformanceCounter(&s);
     for (int i = 0; i < dataset.size(); i++)
         btreemap.find(dataset[i].first);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    time0 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0); // ms
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    // time0 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0); // ms
+    QueryPerformanceCounter(&e);
+    time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
     cout << "Find time:" << time0 << endl;
 
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);    
+    QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
         btreemap.insert(insertDataset[i]);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    time1 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    // time1 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);    
+    QueryPerformanceCounter(&e);
+    time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
     cout << "Insert time:" << time1 << endl;
 
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
-    for (int i = 0; i < insertDataset.size(); i++)
-        btreemap.find(insertDataset[i].first);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    time2 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
-    cout << "Update time:" << time2 << endl;
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    // for (int i = 0; i < insertDataset.size(); i++)
+    //     btreemap.find(insertDataset[i].first);
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    // time2 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    // cout << "Update time:" << time2 << endl;
 
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
-    for (int i = 0; i < insertDataset.size(); i++)
-        btreemap.erase(insertDataset[i].first);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    time3 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
-    cout << "Delete time:" << time3 << endl;
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    // for (int i = 0; i < insertDataset.size(); i++)
+    //     btreemap.erase(insertDataset[i].first);
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    // time3 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    // cout << "Delete time:" << time3 << endl;
     cout << endl;
 }
 
 template <typename type>
 void test(type obj, double &time0, double &time1, double &time2, double &time3)
 {
-    timespec t1, t2;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    // timespec t1, t2;
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    LARGE_INTEGER s, e, c;
+    QueryPerformanceFrequency(&c);
+    QueryPerformanceCounter(&s);
     for (int i = 0; i < dataset.size(); i++)
         obj.Find(dataset[i].first);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    time0 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    // time0 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    QueryPerformanceCounter(&e);
+    time0 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
     cout << "Find time:" << time0 << endl;
 
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    QueryPerformanceCounter(&s);
     for (int i = 0; i < insertDataset.size(); i++)
         obj.Insert(insertDataset[i]);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    time1 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+    // time1 += ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    QueryPerformanceCounter(&e);
+    time1 += (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
     cout << "Insert time:" << time1 << endl;
 
     // clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
@@ -118,6 +140,7 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
     cout << "Insert time:" << time1 / (float)insertDataset.size() / float(r) << endl;
     cout << "Update time:" << time2 / (float)insertDataset.size() / float(r) << endl;
     cout << "Delete time:" << time3 / (float)insertDataset.size() / float(r) << endl;
+    cout << "Total time(find and insert):" << (time0 + time1) / (float)(dataset.size() + insertDataset.size()) / float(r) << endl;
     cout << "***********************" << endl;
 }
 
@@ -311,7 +334,7 @@ void testReconstructure(int testID, int repetitions)
             }
         }
     }
-    else
+    else if(testID == 2)
     {
         for(int i = 0; i < 100000; i++)
         {
@@ -323,48 +346,83 @@ void testReconstructure(int testID, int repetitions)
             cnt.push_back({1, 0});
             r+=1;
         }
-        
+    }
+    else
+    {
+        // read:write = 10:1 
+        for (int i = 0; i < totalData.size(); i++)
+        {
+            if ((i + 1) % 10 == 0)
+            {
+                cnt.push_back({0, 1});
+                r+=1;
+                w+=1;
+            }
+            else
+            {
+                cnt.push_back({1, 1});
+                w+=1;
+            }
+        }
     }
     cout<<"total read times:"<<r<<endl;
     cout<<"total write times:"<<w<<endl;
-    BasicInnerNode newRoot = reconstruction(totalData, cnt, dataset);
+    for(int i=0;i<10;i++)
+    {
+        kRate = 0.1 * (i + 1);
+        BasicInnerNode newRoot = reconstruction(totalData, cnt, dataset);
+    }
 
-    double root_time0 = 0.0, root_time1 = 0.0, root_time2 = 0.0, root_time3 = 0.0;
-    test(newRoot, root_time0, root_time1, root_time2, root_time3);
-    cout << endl;
-    printResult(1, root_time0, root_time1, root_time2, root_time3);
+    // double root_time0 = 0.0, root_time1 = 0.0, root_time2 = 0.0, root_time3 = 0.0;
+    // test(newRoot, root_time0, root_time1, root_time2, root_time3);
+    // cout << endl;
+    // printResult(1, root_time0, root_time1, root_time2, root_time3);
     cout << "-------------------------------" << endl;
 }
-
 
 int main()
 {
     int repetitions = 1;
     cout<<"kLeafNodeID:"<<kLeafNodeID<<"\tleafNodeType:"<<typeid(LEAF_NODE_TYPE).name()<<endl;
-    // cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+    LongitudesDataset longData = LongitudesDataset(0.9);
+    LonglatDataset latData = LonglatDataset(0.9);
     LognormalDataset logData = LognormalDataset(datasetSize, 0.9);
-    // logData.GenerateDataset(dataset, insertDataset);
-    // cout << "-------------Static inner nodes----------------" << endl;
-    // totalTest(true, repetitions);
-
-    // dataset = vector<pair<double, double>>();
-    // insertDataset = vector<pair<double, double>>();
-    // cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
     UniformDataset uniData = UniformDataset(datasetSize, 0.9);
-    uniData.GenerateDataset(dataset, insertDataset);
-    testReconstructure(0, repetitions);
-    // cout << "-------------Static inner nodes----------------" << endl;
-    // totalTest(true, repetitions);
 
-    cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-    cout << "-------------Adaptive inner nodes----------------" << endl;
-    totalTest(false, repetitions);
+    cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+    longData.GenerateDataset(dataset, insertDataset);
+    // testReconstructure(3, repetitions);
+    cout << "-------------Static inner nodes----------------" << endl;
+    totalTest(true, repetitions);
+
+    cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+    latData.GenerateDataset(dataset, insertDataset);
+    cout << "-------------Static inner nodes----------------" << endl;
+    totalTest(true, repetitions);
 
     cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-    // logData = LognormalDataset(datasetSize, 0.9);
     logData.GenerateDataset(dataset, insertDataset);
-    testReconstructure(0, repetitions);
-    cout << "-------------Adaptive inner nodes----------------" << endl;
-    totalTest(false, repetitions);
+    cout << "-------------Static inner nodes----------------" << endl;
+    totalTest(true, repetitions);
+
+    cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+    uniData.GenerateDataset(dataset, insertDataset);
+    cout << "-------------Static inner nodes----------------" << endl;
+    totalTest(true, repetitions);
+
+    // testReconstructure(0, repetitions);
+    // dataset = vector<pair<double, double>>();
+    // insertDataset = vector<pair<double, double>>();
+
+    // cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+    // cout << "-------------Adaptive inner nodes----------------" << endl;
+    // totalTest(false, repetitions);
+
+    // cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+    // logData = LognormalDataset(datasetSize, 0.9);
+    // logData.GenerateDataset(dataset, insertDataset);
+    // testReconstructure(0, repetitions);
+    // cout << "-------------Adaptive inner nodes----------------" << endl;
+    // totalTest(false, repetitions);
     return 0;
 }

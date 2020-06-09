@@ -128,56 +128,54 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 	}
 	// b2 = 0.91;
 	b2 = 0;
-	do
+	for (int epoch = 0; epoch < kMaxEpoch; epoch++)
 	{
-		for (int epoch = 0; epoch < kMaxEpoch; epoch++)
+		// timespec t1, t2;
+		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+		shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
+		shuffle(index.begin(), index.end(), default_random_engine(seed));
+		totalLoss = 0.0;
+
+		for (int i = 0; i < datasetSize; i++)
 		{
-    		// timespec t1, t2;
-    		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
-			unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-			shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
-			shuffle(index.begin(), index.end(), default_random_engine(seed));
-			totalLoss = 0.0;
-
-			for (int i = 0; i < datasetSize; i++)
+			if (m_dataset[i].first != -1)
 			{
-				if (m_dataset[i].first != -1)
+				// forward
+				double y = index[i];				   // the actual index
+				double x = double(m_dataset[i].first); // key
+				vector<double> tempFLR = add(multiply(x, W1), b1);
+				vector<double> firstLayerResult = Relu(tempFLR); // the result of first layer
+				double p = mul(firstLayerResult, W2) + b2;		 // the result of the nn
+
+				if (p < 0)
+					p = 0;
+				else if (p > 1)
+					p = 1;
+
+				// calculate the loss
+				totalLoss += 0.5 * (p - double(y)) * (p - double(y));
+
+				// backward propogation
+				// updata W1 and b1
+				for (int j = 0; j < W1.size(); j++)
 				{
-					// forward
-					double y = index[i];				   // the actual index
-					double x = double(m_dataset[i].first); // key
-					vector<double> tempFLR = add(multiply(x, W1), b1);
-					vector<double> firstLayerResult = Relu(tempFLR); // the result of first layer
-					double p = mul(firstLayerResult, W2) + b2;		 // the result of the nn
-
-					if (p < 0)
-						p = 0;
-					else if (p > 1)
-						p = 1;
-
-					// calculate the loss
-					totalLoss += 0.5 * (p - double(y)) * (p - double(y));
-
-					// backward propogation
-					// updata W1 and b1
-					for (int j = 0; j < W1.size(); j++)
+					if (tempFLR[j] > 0)
 					{
-						if (tempFLR[j] > 0)
-						{
-							W1[j] = W1[j] - kLearningRate * x * W2[j] * (p - y);
-							b1[j] = b1[j] - kLearningRate * W2[j] * (p - y);
-						}
+						W1[j] = W1[j] - kLearningRate * x * W2[j] * (p - y);
+						b1[j] = b1[j] - kLearningRate * W2[j] * (p - y);
 					}
-					// update W2 and b2
-					W2 = add(W2, (multiply(-kLearningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
-					b2 = b2 - kLearningRate * (p - y);
 				}
+				// update W2 and b2
+				W2 = add(W2, (multiply(-kLearningRate, multiply(p - y, firstLayerResult)))); // W2 = W2 - lr * firstLayerResult * (p - y)
+				b2 = b2 - kLearningRate * (p - y);
 			}
-    		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-			// cout<<"epoch:"<<epoch<<"\ttotalLoss is:"<<totalLoss<<endl;
-    		// cout << "Train time:" << ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0) << "ms" <<endl; // ms
 		}
-	} while ((m_dataset.size() / totalLoss) < 100 && totalLoss > 100000);
+		
+		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
+		// cout<<"epoch:"<<epoch<<"\ttotalLoss is:"<<totalLoss<<endl;
+		// cout << "Train time:" << ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0) << "ms" <<endl; // ms
+	}
 }
 
 double Net::Predict(double key)

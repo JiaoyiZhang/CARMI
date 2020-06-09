@@ -19,7 +19,7 @@ using namespace std;
 
 extern int kThreshold;
 extern const double kDensity;
-extern const double kRate;
+extern double kRate;
 extern const double kReadWriteRate;
 extern int kMaxKeyNum;
 

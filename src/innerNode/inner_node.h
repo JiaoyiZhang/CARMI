@@ -15,7 +15,7 @@ extern int kInnerNodeID;
 
 extern int kThreshold;
 extern const double kDensity;
-extern const double kRate;
+extern double kRate;
 extern const double kReadWriteRate;
 extern int kMaxKeyNum;
 
@@ -51,8 +51,8 @@ public:
     {
         double p = model->Predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        if (children_is_leaf[preIdx] == false)
-            return ((BasicInnerNode *)children[preIdx])->Find(key);
+        // if (children_is_leaf[preIdx] == false)
+        //     return ((BasicInnerNode *)children[preIdx])->Find(key);
         return ((BasicLeafNode *)children[preIdx])->Find(key);
     }
     bool Insert(pair<double, double> data)

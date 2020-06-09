@@ -28,13 +28,14 @@ private:
     float value;
     vector<double> table;
     int childNumber;
+    double minValue;
 };
 
 void HistogramModel::Train(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
-    double maxValue, minValue;
+    double maxValue;
     for (int i = 0; i < dataset.size(); i++)
     {
         if (dataset[i].first != -1)
@@ -56,7 +57,7 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset)
     {
         if (dataset[i].first != -1)
         {
-            int idx = float(dataset[i].first * 99.0) / (value * childNumber);
+            int idx = float((dataset[i].first-minValue) * 99.0) / (value * childNumber);
             table[idx]++;
         }
     }
@@ -69,10 +70,12 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset)
 
 double HistogramModel::Predict(double key)
 {
-    int idx = float(key * 99) / (value * childNumber);
+    int idx = float((key-minValue) * 99) / (value * childNumber);
+    if(idx < 0)
+        idx = 0;
+    if(idx > 99)
+        idx = 99;
     double p = table[idx];
-    p = p < 0 ? 0 : p;
-    p = p > 1 ? 1 : p;
     return p;
 }
 
