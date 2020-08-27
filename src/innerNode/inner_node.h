@@ -15,6 +15,7 @@ extern int kInnerNodeID;
 
 extern int kThreshold;
 extern const double kDensity;
+extern const int kAdaptiveChildNum;
 extern double kRate;
 extern const double kReadWriteRate;
 extern int kMaxKeyNum;
@@ -43,16 +44,17 @@ public:
 
     // designed for reconstruction
     void PrintStructure();
-    void Rebuild(const vector<pair<double, double>> &dataset, const btree::btree_map<double, pair<int, int>> &cntTree);
+    void Rebuild(const vector<pair<double, double>> &total, const vector<pair<double, double>> &dataset, const btree::btree_map<double, pair<int, int>> &cntTree);
 
     void Initialize(const vector<pair<double, double>> &dataset);
+    void Release();
 
     pair<double, double> Find(double key)
     {
         double p = model->Predict(key);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        // if (children_is_leaf[preIdx] == false)
-        //     return ((BasicInnerNode *)children[preIdx])->Find(key);
+        if (children_is_leaf[preIdx] == false)
+            return ((BasicInnerNode *)children[preIdx])->Find(key);
         return ((BasicLeafNode *)children[preIdx])->Find(key);
     }
     bool Insert(pair<double, double> data)
@@ -76,6 +78,79 @@ public:
         if (children_is_leaf[preIdx] == false)
             return ((BasicInnerNode *)children[preIdx])->Update(data);
         return ((BasicLeafNode *)children[preIdx])->Update(data);
+    }
+
+    double CalculateError(int num)
+    {
+        double error=0;
+        for(int i=0;i<childNumber;i++)
+        {
+            error += ((BasicLeafNode *)children[i])->CalculateError();            
+        }
+        cout<<"total error: "<<error<<endl;
+        cout<<"average error: "<<error/float(num);
+        return error;
+    }
+
+    int CalculateSpaceCost()
+    {
+        int cost = 5 * childNumber + 4;
+        switch (kInnerNodeID)
+        {
+        case 0:  // lr
+            cost += 16;
+            break;
+        case 1:  // nn
+            cost += 200;
+            break;
+        case 2:
+            cost += 16 * childNumber + 16;
+            break;
+        default:
+            cost += 8 * childNumber;
+            break;
+        }
+        for(int i=0;i<childNumber;i++)
+        {
+            if (children_is_leaf[i] == false)
+                cost += ((BasicInnerNode *)children[i])->CalculateSpaceCost();
+        }
+        cout<<"total space cost is: "<<float(cost) / 1048576.0<<endl;
+        return cost;
+    }
+
+    void UpdateError(const vector<pair<double, double>> &findDataset, const vector<pair<double, double>> &insertDataset)
+    {
+        vector<vector<pair<double, double>>> subFind, subInsert;
+        vector<pair<double, double>> tmp;
+        for (int i = 0; i < childNumber; i++)
+        {
+            subFind.push_back(tmp);
+            subInsert.push_back(tmp);
+        }
+
+        for (int i = 0; i < findDataset.size(); i++)
+        {
+            double p = model->Predict(findDataset[i].first);
+            int preIdx = static_cast<int>(p * (childNumber - 1));
+            subFind[preIdx].push_back(findDataset[i]);
+        }
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            double p = model->Predict(insertDataset[i].first);
+            int preIdx = static_cast<int>(p * (childNumber - 1));
+            subInsert[preIdx].push_back(insertDataset[i]);
+        }
+
+        double error = 0, size = 0;
+        for (int i = 0; i < childNumber; i++)
+        {
+            error += ((BasicLeafNode *)children[i])->UpdateError(subFind[i], subInsert[i]);
+            size += ((BasicLeafNode *)children[i])->GetSize()*((BasicLeafNode *)children[i])->GetSize();
+        }
+        cout<<"Final error is: "<<error<<"\t size is:"<<size<<endl;
+        cout << "average log error: " << error / findDataset.size() << endl;
+        cout << "average size: " << size / findDataset.size() << endl;     
     }
 
 protected:
@@ -112,8 +187,13 @@ void BasicInnerNode::Initialize(const vector<pair<double, double>> &dataset)
     }
 
     cout << "train second stage" << endl;
+    double total=0;
     for (int i = 0; i < childNumber; i++)
+    {
+        total += perSubDataset[i].size()*perSubDataset[i].size();
         ((BasicLeafNode *)children[i])->SetDataset(perSubDataset[i]);
+    }
+    cout<<"ave size:"<<float(total)/float(dataset.size())<<endl;
     cout << "End train" << endl;
 }
 
@@ -126,40 +206,18 @@ void BasicInnerNode::GetLeafNode(double key)
         return ((BasicInnerNode *)children[preIdx])->GetLeafNode(key);
     else
     {
-        cout<<"PreIdx is:"<<preIdx<<endl;
         vector<pair<double, double>> subDataset;
         ((BasicLeafNode *)children[preIdx])->GetTotalDataset(&subDataset);
-        cout<<"subDataset is:"<<endl;
-        for(int i=0;i<subDataset.size();i++)
-        {
-            cout<<i<<":"<<subDataset[i].first<<"    ";
-            if((i+1)%10==0)
-                cout<<endl;
-        }
-        cout<<endl;
         int pIdx = ((GappedArray *)children[preIdx])->GetPredictIndex(key);
-        int maxPositiveError = ((BasicLeafNode *)children[preIdx])->GetPositiveError();
-        int maxNegativeError = ((BasicLeafNode *)children[preIdx])->GetNegativeError();
+        int maxError = ((BasicLeafNode *)children[preIdx])->GetError();
         int maxIndex = ((GappedArray *)children[preIdx])->GetMaxIndex();
-        cout<<"preIdx in leaf node:"<<pIdx<<endl;
-        cout<<"maxPositiveError:"<<maxPositiveError<<endl;
-        cout<<"maxNegativeError:"<<maxNegativeError<<endl;
-        cout<<"maxIndex:"<<maxIndex<<endl;
-        int start = max(0, pIdx + maxNegativeError);
-        int end = min(maxIndex, pIdx + maxPositiveError);
+        int start = max(0, pIdx - maxError);
+        int end = min(maxIndex, pIdx + maxError);
         int res = ((GappedArray *)children[preIdx])->BinarySearch(key, pIdx, start, end);
-        cout<<"First res:"<<res<<endl;
         if (res <= start)
-        {
-            cout<<"res <= start"<<endl;
             res = ((GappedArray *)children[preIdx])->BinarySearch(key, pIdx, 0, start);
-        }
         else if (res >= end)
-        {
-            cout<<"res >= end"<<endl;
             res = ((GappedArray *)children[preIdx])->BinarySearch(key, pIdx, res, maxIndex);
-        }
-        cout<<"Final res:"<<res<<endl;
     }
 }
 
@@ -186,7 +244,7 @@ void BasicInnerNode::PrintStructure()
 }
 
 
-void BasicInnerNode::Rebuild(const vector<pair<double, double>> &dataset, const btree::btree_map<double, pair<int, int>> &cntTree)
+void BasicInnerNode::Rebuild(const vector<pair<double, double>> &total, const vector<pair<double, double>> &dataset, const btree::btree_map<double, pair<int, int>> &cntTree)
 {
     if (dataset.size() == 0)
         return;
@@ -198,11 +256,21 @@ void BasicInnerNode::Rebuild(const vector<pair<double, double>> &dataset, const 
     for (int i = 0; i < childNumber; i++)
         perSubDataset.push_back(tmp);
 
+    for (int i = 0; i < total.size(); i++)
+    {
+        double p = model->Predict(total[i].first);
+        int preIdx = static_cast<int>(p * (childNumber - 1));
+        perSubDataset[preIdx].push_back(total[i]);
+    }
+    vector<vector<pair<double, double>>> perSubInit;
+    for (int i = 0; i < childNumber; i++)
+        perSubInit.push_back(tmp);
+
     for (int i = 0; i < dataset.size(); i++)
     {
         double p = model->Predict(dataset[i].first);
         int preIdx = static_cast<int>(p * (childNumber - 1));
-        perSubDataset[preIdx].push_back(dataset[i]);
+        perSubInit[preIdx].push_back(dataset[i]);
     }
 
     cout << "train second stage" << endl;
@@ -210,8 +278,8 @@ void BasicInnerNode::Rebuild(const vector<pair<double, double>> &dataset, const 
     {
         if(perSubDataset[i].size() == 0)
         {
-            cout<<"child "<<i<<" is empty, use array!"<<endl;
-            children.push_back(LeafNodeCreator(0));
+            cout<<"child "<<i<<" is empty, use ga!"<<endl;
+            children.push_back(LeafNodeCreator(1));
             children_is_leaf.push_back(true);
             continue;
         }
@@ -224,6 +292,7 @@ void BasicInnerNode::Rebuild(const vector<pair<double, double>> &dataset, const 
             writeTimes += tmp.second;
         }
         // choose leaf node type, 0:array, 1:gapped array
+        cout<<"Leaf node "<<i<<":\t"<<"read:"<<readTimes<<"\twrite:"<<writeTimes<<"\t:"<<float(readTimes) / (readTimes + writeTimes)<<endl;
         if(float(readTimes) / (readTimes + writeTimes) < kReadWriteRate)
         {
             cout<<"Leaf node "<<i<<"\t is gapped array!"<<endl;
@@ -235,9 +304,15 @@ void BasicInnerNode::Rebuild(const vector<pair<double, double>> &dataset, const 
             children.push_back(LeafNodeCreator(0));
         }
         children_is_leaf.push_back(true);
-        ((BasicLeafNode *)children[i])->SetDataset(perSubDataset[i]);
+        ((BasicLeafNode *)children[i])->SetDataset(perSubInit[i]);
     }
     cout << "End train" << endl;
 }
 
+void BasicInnerNode::Release()
+{
+    vector<void *>().swap(children);
+    vector<bool>().swap(children_is_leaf);
+    delete model;
+}
 #endif

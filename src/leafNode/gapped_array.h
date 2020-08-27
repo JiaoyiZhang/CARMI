@@ -15,6 +15,8 @@ public:
         maxIndex = -2;
     }
     void SetDataset(const vector<pair<double, double>> &subDataset);
+    double CalculateError();
+    double UpdateError(const vector<pair<double, double>> &findDataset, const vector<pair<double, double>> &insertDataset);
 
     pair<double, double> Find(double key);
     bool Insert(pair<double, double> data);
@@ -69,15 +71,27 @@ void GappedArray::SetDataset(const vector<pair<double, double>> &subDataset)
         {
             double p = model->Predict(m_dataset[i].first);
             int preIdx = static_cast<int>(p * (capacity - 1));
-            int error = i - preIdx;
-            if (error > maxPositiveError)
-                maxPositiveError = error;
-            if (error < maxNegativeError)
-                maxNegativeError = error;
+            int e = abs(i - preIdx);
+            if (e > error)
+                error = e;
         }
     }
-    maxPositiveError++;
-    maxNegativeError--;
+    error++;
+}
+
+double GappedArray::CalculateError()
+{
+    double error = 0;    
+    for (int i = 0; i < capacity; i++)
+    {
+        if (m_dataset[i].first != -1)
+        {
+            double p = model->Predict(m_dataset[i].first);
+            int preIdx = static_cast<int>(p * (capacity - 1));
+            error += abs(i - preIdx);
+        }
+    }
+    return error;
 }
 
 pair<double, double> GappedArray::Find(double key)
@@ -88,8 +102,8 @@ pair<double, double> GappedArray::Find(double key)
         return m_dataset[preIdx];
     else
     {
-        int start = max(0, preIdx + maxNegativeError);
-        int end = min(maxIndex, preIdx + maxPositiveError);
+        int start = max(0, preIdx - error);
+        int end = min(maxIndex, preIdx + error);
         start = min(start, end);
         int res = SEARCH_METHOD(key, preIdx, start, end);
 
@@ -118,8 +132,8 @@ bool GappedArray::Update(pair<double, double> data)
     }
     else
     {
-        int start = max(0, preIdx + maxNegativeError);
-        int end = min(maxIndex, preIdx + maxPositiveError);
+        int start = max(0, preIdx - error);
+        int end = min(maxIndex, preIdx + error);
         start = min(start, end);
         int res = SEARCH_METHOD(data.first, preIdx, start, end);
         if (res <= start)
@@ -153,8 +167,8 @@ bool GappedArray::Delete(double key)
     }
     else
     {
-        int start = max(0, preIdx + maxNegativeError);
-        int end = min(maxIndex, preIdx + maxPositiveError);
+        int start = max(0, preIdx - error);
+        int end = min(maxIndex, preIdx + error);
         start = min(start, end);
         int res = SEARCH_METHOD(key, preIdx, start, end);
 
@@ -197,8 +211,8 @@ bool GappedArray::Insert(pair<double, double> data)
     double p = model->Predict(data.first);
     int preIdx = static_cast<int>(p * (maxIndex + 2));
 
-    int start = max(0, preIdx + maxNegativeError);
-    int end = min(maxIndex, preIdx + maxPositiveError);
+    int start = max(0, preIdx - error);
+    int end = min(maxIndex, preIdx + error);
     start = min(start, end);
     preIdx = SEARCH_METHOD(data.first, preIdx, start, end);
     if (preIdx <= start)
@@ -368,4 +382,54 @@ long double GappedArray::GetCost(const btree::btree_map<double, pair<int, int>> 
 }
 
 
+double GappedArray::UpdateError(const vector<pair<double, double>> &findDataset, const vector<pair<double, double>> &insertDataset)
+{
+    if(findDataset.size() == 0 && insertDataset.size() == 0)
+        return 0;
+        
+    if(error > 1000)
+        return (log(error) / log(2)) * m_datasetSize;
+    vector<pair<double, double>> dataset;
+    for(int i=0;i<m_dataset.size();i++)
+        dataset.push_back(m_dataset[i]);
+    int newError = error;
+    int cap = capacity;
+    int size = m_datasetSize;
+    int maxIdx = maxIndex;
+    
+    LARGE_INTEGER s, e, c;
+    double time = 999999999;
+    for(int i = error; i >= 0; i--)
+    {
+        error = i;
+        QueryPerformanceFrequency(&c);  
+        QueryPerformanceCounter(&s);
+        for (int i = 0; i < findDataset.size(); i++)
+            Find(findDataset[i].first);
+        for (int i = 0; i < insertDataset.size(); i++)
+            Insert(insertDataset[i]);
+        QueryPerformanceCounter(&e);
+        double tmpTime = (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+        if(tmpTime < time)
+        {
+            time = tmpTime;
+            newError = error;
+        }
+        m_dataset.clear();
+        for(int i=0;i<dataset.size();i++)
+            m_dataset.push_back(dataset[i]);
+        m_datasetSize=size;
+        maxIndex = maxIdx;
+        capacity = cap;
+    }
+    error = newError;
+    if(error == 0)
+        return 0;
+    // cout<<"After update errornegative error is: "<<maxNegativeError<<"\tpositive error is: "<<maxPositiveError<<endl;
+    // // cout<<"The shortest time is: "<<time<<"\taverage: "<<time / float(insertDataset.size()+findDataset.size())<<endl;
+    // cout<<"newP - newN :"<<newP - newN<<endl;
+    // cout<<"log(newp-newn): "<<log(newP - newN)<<endl;
+    // cout<<"final error is: " << error<<"\n";
+    return (log(error) / log(2)) * m_datasetSize;
+}
 #endif

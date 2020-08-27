@@ -10,6 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <float.h>
+#include <windows.h>
 #include "../params.h"
 #include "../trainModel/model.h"
 #include "../trainModel/lr.h"
@@ -29,8 +30,7 @@ public:
     BasicLeafNode()
     {
         m_datasetSize = 0;
-        maxPositiveError = 0;
-        maxNegativeError = 0;
+        error = 0;
         model = new LinearRegression();
     }
     int GetSize() { return m_datasetSize; }
@@ -49,15 +49,16 @@ public:
             dataset->push_back(m_dataset[i]);
         }
     }
-    int GetPositiveError(){return maxPositiveError;}
-    int GetNegativeError(){return maxNegativeError;}
+    int GetError(){return error;}
 
     virtual void SetDataset(const vector<pair<double, double>> &dataset) = 0;
+    virtual double UpdateError(const vector<pair<double, double>> &findDataset, const vector<pair<double, double>> &insertDataset) = 0;
 
     virtual pair<double, double> Find(double key) = 0;
     virtual bool Insert(pair<double, double> data) = 0;
     virtual bool Delete(double key) = 0;
     virtual bool Update(pair<double, double> data) = 0;
+    virtual double CalculateError() = 0;
 
 protected:
     vector<pair<double, double>> m_dataset;
@@ -65,8 +66,6 @@ protected:
 
     BasicModel *model;
 
-    int maxPositiveError;
-    int maxNegativeError;
+    int error;
 };
-
 #endif

@@ -6,24 +6,23 @@
 class BinarySearchModel : public BasicModel
 {
 public:
-    BinarySearchModel(int childNum) 
-    { 
-        childNumber = childNum; 
-        for(int i=0;i<childNum;i++)
+    BinarySearchModel(int childNum)
+    {
+        childNumber = childNum;
+        for (int i = 0; i < childNum; i++)
             index.push_back(0);
     }
     void Train(const vector<pair<double, double>> &dataset);
     double Predict(double key);
 
-
     // designed for test
     void GetIndex(vector<double> &v)
     {
-        for(int i=0;i<childNumber;i++)
+        for (int i = 0; i < childNumber; i++)
             v.push_back(index[i]);
     }
-    int GetChildNum(){return childNumber;}
-    
+    int GetChildNum() { return childNumber; }
+
 private:
     vector<double> index;
     int childNumber;
@@ -34,8 +33,9 @@ void BinarySearchModel::Train(const vector<pair<double, double>> &dataset)
     if (dataset.size() == 0)
         return;
     index.clear();
-    int value = dataset.size() / childNumber;
-    for (int i = value - 1; i < dataset.size(); i += value)
+    float value = float(dataset.size()) / childNumber;
+    int cnt = 1;
+    for (int i = value * cnt - 1; i < dataset.size(); i = value * (++cnt) - 1)
     {
         if (dataset[i].first != -1)
         {
@@ -68,7 +68,7 @@ double BinarySearchModel::Predict(double key)
         else
             end_idx = mid;
     }
-    double p = float(mid) / childNumber;
+    double p = float(end_idx + 1) / childNumber;
     p = p < 0 ? 0 : p;
     p = p > 1 ? 1 : p;
     return p;

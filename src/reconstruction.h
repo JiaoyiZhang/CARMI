@@ -19,17 +19,16 @@
 
 #include <algorithm>
 #include <iostream>
-// #include <windows.h>
 #include <vector>
 using namespace std;
 
 long double CalculateCost(const btree::btree_map<double, pair<int, int>> &cntTree, int childNum, const vector<pair<double, double>> &data)
 {
-    long double tmpCost = LRNode::GetCost(cntTree, childNum, data);
+    long double tmpCost = BinarySearchNode::GetCost(cntTree, childNum, data);
     return tmpCost;
 }
 
-BasicInnerNode reconstruction(const vector<pair<double, double>> &data, const vector<pair<int, int>> &cnt, const vector<pair<double, double>> &initData)
+BasicInnerNode reconstruction(const vector<pair<double, double>> &data, const vector<pair<int, int>> &cnt, const vector<pair<double, double>> &initData, int num)
 {
     cout << endl;
     cout << "-------------------------------" << endl;
@@ -44,12 +43,13 @@ BasicInnerNode reconstruction(const vector<pair<double, double>> &data, const ve
 
     // Find the minimum childNum
     long double minCost = 1e100;
-    // int minNum = 0;
     int minNum = 10;
     int maxChildNum = 300;
     long double tmpCost;
-    timespec t1, t2;
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
+    cout<<"kRate:"<<kRate<<endl;
+    LARGE_INTEGER s, e, c;
+    QueryPerformanceFrequency(&c);
+    QueryPerformanceCounter(&s);
     for (int i = 2; i < maxChildNum; i++)
     {
         // cout << "calculate childNum :" << i << endl;
@@ -61,18 +61,14 @@ BasicInnerNode reconstruction(const vector<pair<double, double>> &data, const ve
             minNum = i;
         }
     }
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    double time0 = ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
+    QueryPerformanceCounter(&e);
+    double time0 = (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
     cout << "find the minimum childNum: " << minNum << endl;
     cout << "time:" << time0 << "ms" << endl;
 
-    // Rebuild the tree according to the calculated most suitable childNum
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
-    BasicInnerNode root = LRNode(minNum);
-    root.Rebuild(initData, cntTree);
-    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-    double time = ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0);
-    cout << "time:" << time << "ms" << endl;
+    // // Rebuild the tree according to the calculated most suitable childNum
+    BasicInnerNode root = BinarySearchNode(num);
+    root.Rebuild(data, initData, cntTree);
     cout << "Rebuild root over!" << endl;
     return root;
 }

@@ -15,6 +15,8 @@ public:
     }
 
     void SetDataset(const vector<pair<double, double>> &dataset);
+    double CalculateError();
+    double UpdateError(const vector<pair<double, double>> &findDataset, const vector<pair<double, double>> &insertDataset);
 
     pair<double, double> Find(double key);
     bool Insert(pair<double, double> data);
@@ -51,15 +53,24 @@ void ArrayNode::SetDataset(const vector<pair<double, double>> &dataset)
     {
         double p = model->Predict(m_dataset[i].first);
         int preIdx = static_cast<int>(p * (m_datasetSize - 1));
-        int error = i - preIdx;
-        if (error > maxPositiveError)
-            maxPositiveError = error;
-        if (error < maxNegativeError)
-            maxNegativeError = error;
+        int e = abs(i - preIdx);
+        if (e > error)
+            error = e;
     }
-    maxPositiveError++;
-    maxNegativeError--;
+    error++;
     writeTimes = 0;
+}
+
+double ArrayNode::CalculateError()
+{
+    double error = 0;    
+    for (int i = 0; i < m_datasetSize; i++)
+    {
+        double p = model->Predict(m_dataset[i].first);
+        int preIdx = static_cast<int>(p * (m_datasetSize - 1));
+        error += abs(i - preIdx);
+    }
+    return error;
 }
 
 pair<double, double> ArrayNode::Find(double key)
@@ -74,8 +85,8 @@ pair<double, double> ArrayNode::Find(double key)
     }
     else
     {
-        int start = max(0, preIdx + maxNegativeError);
-        int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+        int start = max(0, preIdx - error);
+        int end = min(m_datasetSize - 1, preIdx + error);
         start = min(start, end);
         int res = SEARCH_METHOD(key, preIdx, start, end);
         if (res <= start)
@@ -104,8 +115,8 @@ bool ArrayNode::Insert(pair<double, double> data)
     }
     double p = model->Predict(data.first);
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
-    int start = max(0, preIdx + maxNegativeError);
-    int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+    int start = max(0, preIdx - error);
+    int end = min(m_datasetSize - 1, preIdx + error);
     start = min(start, end);
 
     preIdx = SEARCH_METHOD(data.first, preIdx, start, end);
@@ -143,8 +154,8 @@ bool ArrayNode::Delete(double key)
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first != key)
     {
-        int start = max(0, preIdx + maxNegativeError);
-        int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+        int start = max(0, preIdx - error);
+        int end = min(m_datasetSize - 1, preIdx + error);
         start = min(start, end);
         int res = SEARCH_METHOD(key, preIdx, start, end);
         if (m_dataset[res].first == key)
@@ -179,8 +190,8 @@ bool ArrayNode::Update(pair<double, double> data)
     int preIdx = static_cast<int>(p * (m_datasetSize - 1));
     if (m_dataset[preIdx].first != data.first)
     {
-        int start = max(0, preIdx + maxNegativeError);
-        int end = min(m_datasetSize - 1, preIdx + maxPositiveError);
+        int start = max(0, preIdx - error);
+        int end = min(m_datasetSize - 1, preIdx + error);
         start = min(start, end);
         int res = SEARCH_METHOD(data.first, preIdx, start, end);
         if (m_dataset[res].first == data.first)
@@ -281,6 +292,52 @@ long double ArrayNode::GetCost(const btree::btree_map<double, pair<int, int>> &c
         totalCost += tmpRead + tmpWrite;
     }
     return totalCost;
+}
+
+double ArrayNode::UpdateError(const vector<pair<double, double>> &findDataset, const vector<pair<double, double>> &insertDataset)
+{
+    if(findDataset.size() == 0 && insertDataset.size() == 0)
+        return 0;
+        
+    if(error > 1000)
+        return (log(error) / log(2)) * m_datasetSize;
+    vector<pair<double, double>> dataset;
+    for(int i=0;i<m_dataset.size();i++)
+        dataset.push_back(m_dataset[i]);
+    int newError = error;
+    
+    LARGE_INTEGER s, e, c;
+    double time = 999999999;
+    for(int i = error; i >= 0; i--)
+    {
+        error = i;
+        QueryPerformanceFrequency(&c);  
+        QueryPerformanceCounter(&s);
+        for (int i = 0; i < findDataset.size(); i++)
+            Find(findDataset[i].first);
+        for (int i = 0; i < insertDataset.size(); i++)
+            Insert(insertDataset[i]);
+        QueryPerformanceCounter(&e);
+        double tmpTime = (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+        if(tmpTime < time)
+        {
+            time = tmpTime;
+            newError = error;
+        }
+        m_dataset.clear();
+        for(int i=0;i<dataset.size();i++)
+            m_dataset.push_back(dataset[i]);
+        m_datasetSize=dataset.size();
+    }
+    error = newError;
+    if(error == 0)
+        return 0;
+    // cout<<"After update errornegative error is: "<<maxNegativeError<<"\tpositive error is: "<<maxPositiveError<<endl;
+    // // cout<<"The shortest time is: "<<time<<"\taverage: "<<time / float(insertDataset.size()+findDataset.size())<<endl;
+    // cout<<"newP - newN :"<<newP - newN<<endl;
+    // cout<<"log(newp-newn): "<<log(newP - newN)<<endl;
+    // cout<<"final error is: " << error<<endl;
+    return (log(error) / log(2)) * m_datasetSize;
 }
 
 #endif

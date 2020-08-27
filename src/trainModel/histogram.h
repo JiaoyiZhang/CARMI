@@ -8,9 +8,10 @@ class HistogramModel : public BasicModel
 public:
     HistogramModel(int childNum)
     {
-        childNumber = childNum;
+        childNumber = childNum * 2;
         value = 1;
-        for (int i = 0; i < 100; i++)
+        minValue = 0;
+        for (int i = 0; i < childNumber; i++)
             table.push_back(0);
     }
     void Train(const vector<pair<double, double>> &dataset);
@@ -52,17 +53,17 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset)
             break;
         }
     }
-    value = float(maxValue - minValue) / float(childNumber);
+    value = float(maxValue - minValue) / (childNumber-1);
     for (int i = 0; i < dataset.size(); i++)
     {
         if (dataset[i].first != -1)
         {
-            int idx = float((dataset[i].first-minValue) * 99.0) / (value * childNumber);
+            int idx = float(dataset[i].first-minValue) / value;
             table[idx]++;
         }
     }
     table[0] = float(table[0]) / dataset.size();
-    for (int i = 1; i < 100; i++)
+    for (int i = 1; i < childNumber; i++)
     {
         table[i] = table[i - 1] + float(table[i]) / dataset.size();
     }
@@ -70,11 +71,11 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset)
 
 double HistogramModel::Predict(double key)
 {
-    int idx = float((key-minValue) * 99) / (value * childNumber);
+    int idx = float(key-minValue) / value;
     if(idx < 0)
         idx = 0;
-    if(idx > 99)
-        idx = 99;
+    if(idx > childNumber - 1)
+        idx = childNumber - 1;
     double p = table[idx];
     return p;
 }

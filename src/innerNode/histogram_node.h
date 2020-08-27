@@ -98,13 +98,13 @@ bool AdaptiveHis::Insert(pair<double, double> data)
         {
             // The corresponding leaf level model in RMI
             // now becomes an inner level model
-            AdaptiveHis *newNode = (AdaptiveHis *)InnerNodeCreator(kInnerNodeID, this->childNumber);
+            AdaptiveHis *newNode = (AdaptiveHis *)InnerNodeCreator(kInnerNodeID, kAdaptiveChildNum);
             vector<pair<double, double>> dataset;
             ((BasicLeafNode *)this->children[preIdx])->GetDataset(&dataset);
             newNode->model->Train(dataset);
 
             // a number of children leaf level model are created
-            for (int i = 0; i < this->childNumber; i++)
+            for (int i = 0; i < kAdaptiveChildNum; i++)
             {
                 LEAF_NODE_TYPE *temp = (LEAF_NODE_TYPE *)LeafNodeCreator(kLeafNodeID);
                 newNode->children.push_back(temp);
@@ -116,18 +116,18 @@ bool AdaptiveHis::Insert(pair<double, double> data)
             // according to the original node model.
             vector<vector<pair<double, double>>> perSubDataset;
             vector<pair<double, double>> temp;
-            for (int i = 0; i < this->childNumber; i++)
+            for (int i = 0; i < kAdaptiveChildNum; i++)
                 perSubDataset.push_back(temp);
             for (int i = 0; i < dataset.size(); i++)
             {
                 double pre = newNode->model->Predict(dataset[i].first);
-                int pIdx = static_cast<int>(pre * (this->childNumber - 1));
+                int pIdx = static_cast<int>(pre * (kAdaptiveChildNum - 1));
                 perSubDataset[pIdx].push_back(dataset[i]);
             }
 
             // Each of the children leaf nodes trains its own
             // model on its portion of the data.
-            for (int i = 0; i < this->childNumber; i++)
+            for (int i = 0; i < kAdaptiveChildNum; i++)
                 ((BasicLeafNode *)(newNode->children[i]))->SetDataset(perSubDataset[i]);
             this->children[preIdx] = newNode;
             this->children_is_leaf[preIdx] = false;

@@ -13,11 +13,19 @@ public:
     LognormalDataset(int total, double initRatio)
     {
         totalSize = total;
-        initSize = total * initRatio;
-        insertSize = totalSize - initSize;
-
-        // num = initRatio * 10;
-        num = initRatio / (1 - initRatio);
+        if(initRatio == 0)
+        {// several leaf nodes are inserted
+            insertSize = 0;
+            initSize = 0;
+        }
+        else if(initRatio == 1)
+            num = -1;
+        else
+        {
+            initSize = total * initRatio;
+            insertSize = totalSize - initSize;
+            num = initRatio / (1 - initRatio);
+        }
     }
 
     void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
@@ -50,18 +58,39 @@ void LognormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset
 
     double maxV = ds[ds.size() - 1];
     double factor = maxValue / maxV;
-    int cnt = 0;
-    for (int i = 0; i < ds.size(); i++)
+    if(initSize == 0)
     {
-        cnt++;
-        if (cnt <= num)
+        int i = 0;
+        for(; i < 0.6 * totalSize; i++)
+            initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+        for(; i < 0.9 * totalSize; i+=2)
         {
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-        }
-        else
-        {
             insertDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-            cnt = 0;
+        }
+        for(; i < totalSize; i++)
+            initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+    }
+	else if(num == -1)
+	{
+		for (int i = 0; i < ds.size(); i++)
+            initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+	}
+    else
+    {
+        int cnt = 0;
+        for (int i = 0; i < ds.size(); i++)
+        {
+            cnt++;
+            if (cnt <= num)
+            {
+                initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+            }
+            else
+            {
+                insertDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+                cnt = 0;
+            }
         }
     }
     cout<<"Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;

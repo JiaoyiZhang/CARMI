@@ -130,8 +130,6 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 	b2 = 0;
 	for (int epoch = 0; epoch < kMaxEpoch; epoch++)
 	{
-		// timespec t1, t2;
-		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t1);
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
 		shuffle(index.begin(), index.end(), default_random_engine(seed));
@@ -171,10 +169,6 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 				b2 = b2 - kLearningRate * (p - y);
 			}
 		}
-		
-		// clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
-		// cout<<"epoch:"<<epoch<<"\ttotalLoss is:"<<totalLoss<<endl;
-		// cout << "Train time:" << ((t2.tv_sec - t1.tv_sec)*1000.0 + float(t2.tv_nsec - t1.tv_nsec)/1000000.0) << "ms" <<endl; // ms
 	}
 }
 
