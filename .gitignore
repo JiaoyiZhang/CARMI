@@ -2,3 +2,5 @@
 build/*
 CMakeFiles/*
 .vscode/*
+./src/dataset/iranLat.csv
+./src/dataset/iranLon.csv
