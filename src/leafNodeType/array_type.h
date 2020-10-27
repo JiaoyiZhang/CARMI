@@ -3,14 +3,10 @@
 
 
 #include "../params.h"
-#include "trainModel/binary_search_model.h"
-#include "trainModel/histogram.h"
-#include "trainModel/lr.h"
-#include "trainModel/nn.h"
+#include "../trainModel/lr.h"
 #include <vector>
 using namespace std;
 
-extern vector<void *> index;  // store the entire index
 
 class ArrayType
 {

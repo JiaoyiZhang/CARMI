@@ -102,18 +102,6 @@ private:
 // train the Network
 void Net::Train(const vector<pair<double, double>> &dataset)
 {
-	vector<pair<double, double>> m_dataset = dataset;
-	vector<double> index;
-	int datasetSize = m_dataset.size();
-	if (datasetSize == 0)
-		return;
-	for (int i = 0; i < m_dataset.size(); i++)
-	{
-		if (m_dataset[i].first != -1)
-			index.push_back(double(i) / double(datasetSize));
-	}
-
-	double totalLoss = 0.0;
 	// initialize the parameters
 	//std::default_random_engine gen;
 	//std::normal_distribution<double> dis(1, 3);
@@ -128,6 +116,18 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 	}
 	// b2 = 0.91;
 	b2 = 0;
+	vector<pair<double, double>> m_dataset = dataset;
+	vector<double> index;
+	int datasetSize = m_dataset.size();
+	if (datasetSize == 0 || datasetSize < 20)
+		return;
+	for (int i = 0; i < m_dataset.size(); i++)
+	{
+		if (m_dataset[i].first != -1)
+			index.push_back(double(i) / double(datasetSize));
+	}
+
+	double totalLoss = 0.0;
 	for (int epoch = 0; epoch < kMaxEpoch; epoch++)
 	{
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();

@@ -6,6 +6,7 @@
 class BinarySearchModel : public BasicModel
 {
 public:
+    BinarySearchModel(){};
     BinarySearchModel(int childNum)
     {
         childNumber = childNum;

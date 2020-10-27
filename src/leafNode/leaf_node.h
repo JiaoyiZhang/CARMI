@@ -10,7 +10,7 @@
 #include <vector>
 #include <algorithm>
 #include <float.h>
-#include <windows.h>
+// #include <windows.h>
 #include "../params.h"
 #include "../trainModel/model.h"
 #include "../trainModel/lr.h"

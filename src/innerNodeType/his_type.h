@@ -1,17 +1,18 @@
 #ifndef HIS_TYPE_H
 #define HIS_TYPE_H
 
+
 #include "../params.h"
-#include "trainModel/binary_search_model.h"
-#include "trainModel/histogram.h"
-#include "trainModel/lr.h"
-#include "trainModel/nn.h"
-#include "leafNodeType/array_type.h"
-#include "leafNodeType/ga_type.h"
+#include "../trainModel/binary_search_model.h"
+#include "../trainModel/histogram.h"
+#include "../trainModel/lr.h"
+#include "../trainModel/nn.h"
+#include "../leafNodeType/array_type.h"
+#include "../leafNodeType/ga_type.h"
 #include <vector>
 using namespace std;
 
-extern vector<void *> index;  // store the entire index
+extern vector<void *> INDEX;  // store the entire INDEX
 
 class HisType
 {
@@ -30,7 +31,7 @@ public:
 };
 
 
-void HisType::Initialize(const vector<pair<double, double>> &dataset, int childNum)
+inline void HisType::Initialize(const vector<pair<double, double>> &dataset, int childNum)
 {
     if (dataset.size() == 0)
         return;
@@ -54,19 +55,19 @@ void HisType::Initialize(const vector<pair<double, double>> &dataset, int childN
         case 0:
             for(int i=0;i<childNumber;i++)
             {
-                index.push_back((void *)new ArrayType(kThreshold));
-                int idx = index.size()-1;
-                child.push_back((kLeafNodeID << 28) + idx);
-                ((ArrayType*)(index[idx]))->SetDataset(perSubDataset[i]);
+                INDEX.push_back((void *)new ArrayType(kThreshold));
+                int idx = INDEX.size()-1;
+                child.push_back(0x40000000 + idx);
+                ((ArrayType*)(INDEX[idx]))->SetDataset(perSubDataset[i]);
             }
             break;
         case 1:
             for(int i=0;i<childNumber;i++)
             {
-                index.push_back((void *)new GappedArrayType(kThreshold));
-                int idx = index.size()-1;
-                child.push_back((kLeafNodeID << 28) + idx);
-                ((GappedArrayType*)(index[idx]))->SetDataset(perSubDataset[i]);
+                INDEX.push_back((void *)new GappedArrayType(kThreshold));
+                int idx = INDEX.size()-1;
+                child.push_back(0x50000000 + idx);
+                ((GappedArrayType*)(INDEX[idx]))->SetDataset(perSubDataset[i]);
             }
             break;
     }

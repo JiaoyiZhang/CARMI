@@ -3,10 +3,9 @@
 #include "leafNode/array.h"
 #include "leafNode/gapped_array.h"
 
-// #define LEAF_NODE_TYPE ArrayNode
-#define LEAF_NODE_TYPE GappedArray
+#define LEAF_NODE_TYPE ArrayNode
+// #define LEAF_NODE_TYPE GappedArray
 
-extern vector<void *> index;
 
 // 0:binary search; 1:exponential search
 extern const int kSearchMethod = 0; 

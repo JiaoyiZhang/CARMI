@@ -306,19 +306,20 @@ double ArrayNode::UpdateError(const vector<pair<double, double>> &findDataset, c
         dataset.push_back(m_dataset[i]);
     int newError = error;
     
-    LARGE_INTEGER s, e, c;
+    // LARGE_INTEGER s, e, c;
     double time = 999999999;
     for(int i = error; i >= 0; i--)
     {
         error = i;
-        QueryPerformanceFrequency(&c);  
-        QueryPerformanceCounter(&s);
+        // QueryPerformanceFrequency(&c);  
+        // QueryPerformanceCounter(&s);
         for (int i = 0; i < findDataset.size(); i++)
             Find(findDataset[i].first);
         for (int i = 0; i < insertDataset.size(); i++)
             Insert(insertDataset[i]);
-        QueryPerformanceCounter(&e);
-        double tmpTime = (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+        // QueryPerformanceCounter(&e);
+        // double tmpTime = (double)(e.QuadPart - s.QuadPart) / (double)c.QuadPart;
+        double tmpTime = 1;
         if(tmpTime < time)
         {
             time = tmpTime;

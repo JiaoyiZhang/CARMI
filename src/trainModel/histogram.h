@@ -6,6 +6,7 @@
 class HistogramModel : public BasicModel
 {
 public:
+    HistogramModel(){};
     HistogramModel(int childNum)
     {
         childNumber = childNum * 2;
