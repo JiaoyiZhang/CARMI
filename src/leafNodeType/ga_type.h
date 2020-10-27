@@ -4,6 +4,7 @@
 
 #include "../params.h"
 #include "../trainModel/lr.h"
+#include <float.h>
 #include <vector>
 using namespace std;
 
@@ -20,9 +21,9 @@ public:
         capacity = cap;
         maxIndex = -2;
     }
-    void SetDataset(const vector<pair<double, double>> &dataset);
+    void SetDataset(const vector<pair<double, double> > &dataset);
 
-    vector<pair<double, double>> m_dataset;
+    vector<pair<double, double> > m_dataset;
     LinearRegression model;
     int m_datasetSize;
     int error;
@@ -32,7 +33,7 @@ public:
     double density; // the maximum density of the leaf node data
 };
 
-void GappedArrayType::SetDataset(const vector<pair<double, double>> &subDataset)
+void GappedArrayType::SetDataset(const vector<pair<double, double> > &subDataset)
 {
     while ((float(subDataset.size()) / float(capacity) > density))
     {
@@ -41,7 +42,7 @@ void GappedArrayType::SetDataset(const vector<pair<double, double>> &subDataset)
     }
     m_datasetSize = 0;
 
-    vector<pair<double, double>> newDataset(capacity, pair<double, double>{-1, -1});
+    vector<pair<double, double> > newDataset(capacity, pair<double, double>{-1, -1});
     maxIndex = -2;
     for (int i = 0; i < subDataset.size(); i++)
     {

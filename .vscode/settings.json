@@ -54,7 +54,18 @@
         "xtree": "cpp",
         "ctime": "cpp",
         "iomanip": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "__locale": "cpp",
+        "__bit_reference": "cpp",
+        "__split_buffer": "cpp",
+        "filesystem": "cpp",
+        "deque": "cpp",
+        "__functional_base": "cpp",
+        "__functional_base_03": "cpp",
+        "__hash_table": "cpp",
+        "__tree": "cpp",
+        "__tuple": "cpp",
+        "any": "cpp"
     },
     "C_Cpp.default.configurationProvider": "go2sh.cmake-integration"
 }

@@ -1,10 +1,10 @@
 #ifndef PARAMS
 #define PARAMS
-#include "leafNode/array.h"
-#include "leafNode/gapped_array.h"
+// #include "leafNode/array.h"
+// #include "leafNode/gapped_array.h"
 
-#define LEAF_NODE_TYPE ArrayNode
-// #define LEAF_NODE_TYPE GappedArray
+// #define LEAF_NODE_TYPE ArrayNode
+// // #define LEAF_NODE_TYPE GappedArray
 
 
 // 0:binary search; 1:exponential search
@@ -16,9 +16,6 @@ extern int kInnerNodeID;
 // 1,000,000
 extern const int kMaxEpoch = 20;
 extern const double kLearningRate = 0.0000001;
-extern clock_t start;
-extern clock_t finish;
-extern double duration;
 
 extern int kNeuronNumber;
 extern const int kAdaptiveChildNum = 40;

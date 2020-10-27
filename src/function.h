@@ -9,6 +9,7 @@
 #include "leafNodeType/ga_type.h"
 #include "leafNodeType/array_type.h"
 #include "inlineFunction.h"
+#include <float.h>
 #include <vector>
 using namespace std;
 

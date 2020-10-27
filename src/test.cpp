@@ -7,15 +7,11 @@
 #include "./dataset/longitudes.h"
 #include "./dataset/longlat.h"
 #include "reconstruction.h"
-
+#include "../cpp-btree/btree_map.h"
 #include <algorithm>
 #include <random>
 #include <time.h>
 #include <iostream>
-#include "./leafNode/array.h"
-#include "./leafNode/gapped_array.h"
-#include "inner_node_creator.h"
-#include "leaf_node_creator.h"
 
 using namespace std;
 
@@ -336,7 +332,7 @@ void experiment(int repetitions, double initRatio, bool isStatic, bool calculate
 
 int main()
 {
-    cout<<"kLeafNodeID:"<<kLeafNodeID<<"\tleafNodeType:"<<typeid(LEAF_NODE_TYPE).name()<<endl;
+    cout<<"kLeafNodeID:"<<kLeafNodeID<<endl;
     // if(kLeafNodeID == 1)
     // {
     //     kThreshold = 256;  // ga
@@ -349,7 +345,7 @@ int main()
     // }
     cout<<"kThreshold is: "<<kThreshold<<endl;
     int repetitions = 1;
-    bool isStatic = false;
+    bool isStatic = true;
     bool calculateTime = false;
     cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
     experiment(repetitions, 0.9, isStatic, calculateTime);
