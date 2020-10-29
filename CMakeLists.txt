@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 project(learned_index)
 set(CMAKE_CXX_STANDARD 11)
-
+# enable_language(ASM)
 # SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wignored-attributes")
-
+# add_compile_options(-fno-elide-constructors) #关闭编译器优化
 file(GLOB cpp_btree_sources cpp-btree/*.h)
 # add_library(cpp_btree STATIC ${cpp_btree_sources})
 # target_include_directories(cpp_btree PUBLIC cpp_btree)

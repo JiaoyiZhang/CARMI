@@ -72,7 +72,19 @@ public:
 
 	void Train(const vector<pair<double, double>> &dataset);
 
-	double Predict(double key); // return the key's index
+	double Predict(double key)  // return the key's index
+	{
+		double p = b2;
+		for (int i = 0; i < W1.size(); i++)
+		{
+			p += max(0.0, key *W1[i] + b1[i]) * W2[i];
+		}
+		if (p < 0)
+			p = 0;
+		else if (p > 1)
+			p = 1;
+		return p;
+	}
 
 	// designed for test
 	void GetW1(vector<double> &w)
@@ -170,19 +182,5 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 			}
 		}
 	}
-}
-
-double Net::Predict(double key)
-{
-	double p = b2;
-	for (int i = 0; i < W1.size(); i++)
-	{
-		p += max(double(0), key *W1[i] + b1[i]) * W2[i];
-	}
-	if (p < 0)
-		p = 0;
-	else if (p > 1)
-		p = 1;
-	return p;
 }
 #endif
