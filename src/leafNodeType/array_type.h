@@ -42,7 +42,6 @@ void ArrayType::SetDataset(const vector<pair<double, double>> &dataset)
     for (int i = 0; i < m_datasetSize; i++)
     {
         int p = model.Predict(m_dataset[i].first);
-        // int preIdx = static_cast<int>(p * (m_datasetSize - 1));
         int e = abs(i - p);
         if (e > error)
             error = e;

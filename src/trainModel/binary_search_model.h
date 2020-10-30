@@ -28,9 +28,6 @@ public:
             else
                 end_idx = mid;
         }
-        // double p = float(end_idx + 1) / childNumber;
-        // p = p < 0 ? 0 : p;
-        // p = p > 1 ? 1 : p;
         return end_idx;
     }
 

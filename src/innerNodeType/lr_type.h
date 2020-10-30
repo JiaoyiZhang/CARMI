@@ -46,7 +46,6 @@ inline void LRType::Initialize(const vector<pair<double, double> > &dataset)
     for (int i = 0; i < dataset.size(); i++)
     {
         int p = model.Predict(dataset[i].first);
-        // int preIdx = static_cast<int>(p * (childNum - 1));
         perSubDataset[p].push_back(dataset[i]);
     }
     ofstream outFile;

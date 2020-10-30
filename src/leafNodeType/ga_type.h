@@ -60,7 +60,6 @@ void GappedArrayType::SetDataset(const vector<pair<double, double> > &subDataset
         if (m_dataset[i].first != -1)
         {
             int p = model.Predict(m_dataset[i].first);
-            // int preIdx = static_cast<int>(p * (capacity - 1));
             int e = abs(i - p);
             if (e > error)
                 error = e;

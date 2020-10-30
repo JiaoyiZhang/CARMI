@@ -29,13 +29,6 @@ extern vector<BSType> BSVector;
 extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
-//////////////////////////////
-vector<int> test_int;
-vector<float> test_float;
-int rep = 10000000;
-int sum_int = 0;
-float sum_float = 0.0;
-//////////////////////////////
 int kLeafNodeID = 0;
 int kInnerNodeID = 0;
 int kNeuronNumber = 8;
@@ -97,10 +90,7 @@ void totalTest(int repetitions, bool mode)
         for (int l = 0; l < dataset.size(); l++)
             btree.insert(dataset[l]);
         btreemap = btree;
-        // cout << "btree:    " << rep << endl;
         btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
-        // cout << endl;
-        // cout << "-------------------------------" << endl;
 
         for(int j=0;j<4;j++)
         {
@@ -119,7 +109,7 @@ void totalTest(int repetitions, bool mode)
                 e = clock();
                 double time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][0] += time0;
-                cout<<"TIme0:"<<time0 / (float)dataset.size() <<endl;
+                cout<<"Find time:"<<time0 / (float)dataset.size() <<endl;
 
                 s = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
@@ -152,15 +142,10 @@ void totalTest(int repetitions, bool mode)
                 s = clock();
                 for (int i = 0; i < dataset.size(); i++)
                 {
-                    // cout<<i;
                     auto res = Find(dataset[i].first);
                     if(res.second != dataset[i].first * 10)
                         cout<<"Find failed:\ti:"<<i<<"\t"<<dataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;   
-                    // cout<< ";\t";
-                    // if((i+1)%10000 == 0)
-                    //     cout<<endl;
                 }
-                // cout<<endl;
                 e = clock();
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][0] += time0;
@@ -169,30 +154,20 @@ void totalTest(int repetitions, bool mode)
                 s = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
-                    // cout<<i;
                     auto r = Insert(insertDataset[i]);
                     if(!r)
                         cout<<"Insert failed:\ti:"<< i << "\t" <<insertDataset[i].first<<endl;
                     auto res = Find(insertDataset[i].first);
                     if(res.second != insertDataset[i].first * 10)
                         cout<<"Find failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;   
-                    // cout<< ";\t";
-                    // if((i+1)%10000 == 0)
-                    //     cout<<endl;   
                 }
-                // cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
-                    // cout<<i;
                     auto res = Find(insertDataset[i].first);
                     if(res.second != insertDataset[i].first * 10)
                         cout<<"Find Insert failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
-                    // cout<< ";\t";
-                    // if((i+1)%10000 == 0)
-                    //     cout<<endl;
                 }
-                // cout<<endl;
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][1] += time0;
                 cout<<"check INSERT over!"<<endl;
@@ -201,28 +176,19 @@ void totalTest(int repetitions, bool mode)
                 s = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
-                    // cout<<i;
                     auto r = Update({insertDataset[i].first, 1.11});
                     if(!r)
                         cout<<"Update failed:\ti:"<< i << "\t" <<insertDataset[i].first<<endl;
                     auto res = Find(insertDataset[i].first);
                     if(res.second != 1.11)
                         cout<<"After Update failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
-                    // cout<< ";\t";
-                    // if((i+1)%10000 == 0)
-                    //     cout<<endl;
                 }
-                // cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
-                    // cout<<i;
                     auto res = Find(insertDataset[i].first);
                     if(res.second != 1.11)
                         cout<<"Find Update failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
-                    // cout<< ";\t";
-                    // if((i+1)%10000 == 0)
-                    //     cout<<endl;
                 }
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][2] += time0;
@@ -232,34 +198,23 @@ void totalTest(int repetitions, bool mode)
                 s = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
-                    // cout<<i;
                     auto r = Delete(insertDataset[i].first);
                     if(!r)
                         cout<<"Delete failed:\ti:"<< i << "\t" <<insertDataset[i].first<<endl;
                     auto res = Find(insertDataset[i].first);
                     if(res.second == insertDataset[i].first * 10)
                         cout<<"After Delete failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
-                    // cout<< ";\t";
-                    // if((i+1)%10000 == 0)
-                    //     cout<<endl;
                 }
-                // cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
-                    // cout<<i;
                     auto res = Find(insertDataset[i].first);
                     if(res.second == insertDataset[i].first * 10)
                         cout<<"Find Delete failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
-                    // cout<< ";\t";
-                    // if((i+1)%10000 == 0)
-                    //     cout<<endl;
                 }
-                // cout<<endl;
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][3] += time0;
                 cout<<"check DELETE over!"<<endl;
-                // INDEX.clear();
                 cout << "-------------------------------" << endl;
             }
             vector<LRType>().swap(LRVector);
@@ -291,8 +246,8 @@ void experiment(int repetitions, double initRatio, bool calculateTime)
 {
     cout<<"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
     cout<<"initRatio is: "<<initRatio<<endl;
-    // LongitudesDataset longData = LongitudesDataset(initRatio);
-    // LonglatDataset latData = LonglatDataset(initRatio);
+    LongitudesDataset longData = LongitudesDataset(initRatio);
+    LonglatDataset latData = LonglatDataset(initRatio);
     LognormalDataset logData = LognormalDataset(datasetSize, initRatio);
     UniformDataset uniData = UniformDataset(datasetSize, initRatio);
     NormalDataset norData = NormalDataset(datasetSize, initRatio);
@@ -302,133 +257,31 @@ void experiment(int repetitions, double initRatio, bool calculateTime)
     cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
     uniData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
-    // testReconstructure(0, repetitions);
 
     cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
     expData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
-    // totalTest(false, repetitions);
 
     cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
     norData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
-    // testReconstructure(2, repetitions);
 
     cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
     logData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
-    // testReconstructure(0, repetitions);
     
-    // childNum = 70125;
-    // cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-    // latData.GenerateDataset(dataset, insertDataset);
-    // totalTest(repetitions, calculateTime);
-    // // testReconstructure(2, repetitions);
+    childNum = 70125;
+    cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+    latData.GenerateDataset(dataset, insertDataset);
+    totalTest(repetitions, calculateTime);
     
-    // cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-    // longData.GenerateDataset(dataset, insertDataset);
-    // totalTest(repetitions, calculateTime);
-    // testReconstructure(2, repetitions);
-}
-
-void calculateTime(int sum_int, int i)
-{
-    sum_int = sum_int + test_int[i];
+    cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+    longData.GenerateDataset(dataset, insertDataset);
+    totalTest(repetitions, calculateTime);
 }
 
 int main()
 {
-    {
-        // for(int i=0;i<rep;i++)
-        // {
-        //     test_int.push_back(i*i);
-        //     test_float.push_back(i+3.1415926535898);
-        // }
-        // clock_t s, f;
-        // int mid = (rep / 2) * (rep / 2);
-        // sum_int = 0;
-        // unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-        // shuffle(test_int.begin(), test_int.end(), default_random_engine(seed));
-        // s = clock();
-        // for(int i=0;i<rep;i++)
-        // {
-        //     if(test_int[i]>mid)
-        //         sum_int = sum_int + test_int[i];
-        // }
-        // f = clock();
-        // double unsorted = (double)(f - s) / rep / CLOCKS_PER_SEC;
-        // cout<<"unsorted time :"<<unsorted<<endl;
-
-        // sum_int = 0;
-        // sort(test_int.begin(), test_int.end());
-        // s = clock();
-        // for(int i=0;i<rep;i++)
-        // {
-        //     if(test_int[i]>mid)
-        //         sum_int = sum_int + test_int[i];
-        // }
-        // f = clock();
-        // double sorted = (double)(f - s) / rep / CLOCKS_PER_SEC;
-        // cout<<"sorted time :"<<sorted<<endl;
-
-        // sum_int = 0;
-        // s = clock();
-        // for(int i=0;i<rep;i++)
-        // {
-        //     sum_int = sum_int + test_int[i];
-        // }
-        // f = clock();
-        // double integer_time = (double)(f - s) / rep / CLOCKS_PER_SEC;
-        // cout<<"Integer time in Main():"<<integer_time<<endl;
-
-        // sum_int = 0;
-        // s = clock();
-        // for(int i=0;i<rep;i++)
-        //     calculateTime(sum_int, i);
-        // f = clock();
-        // double func = (double)(f - s) / rep / CLOCKS_PER_SEC;
-        // cout<<"f:"<<f<<"\ns:"<<s<<"\nclock:"<<CLOCKS_PER_SEC<<endl;
-        // cout<<"Integer time in function():"<<func<<endl;
-
-        // sum_int = 0;
-        // s = clock();
-        // for(int i=0;i<rep;i++)
-        // {
-        //     sum_int = test_int[i];
-        // }
-        // f = clock();
-        // double assign = (double)(f - s) / rep / CLOCKS_PER_SEC;
-        // cout<<"assign time in Main():"<<assign<<endl;
-        // cout<<"Integer time after: "<<integer_time - assign<<endl;
-
-        // sum_float = 0.0;
-        // s = clock();
-        // for(int i=0;i<rep;i++)
-        // {
-        //     sum_float = sum_float + test_float[i];
-        // }
-        // f = clock();
-        // double float_time = (double)(f - s) / rep / CLOCKS_PER_SEC;
-        // cout<<"float time in Main():"<<float_time<<endl;
-
-        // sum_float = 0.0;
-        // s = clock();
-        // for(int i=0;i<rep;i++)
-        // {
-        //     sum_float = test_float[i];
-        // }
-        // f = clock();
-        // double float_assign = (double)(f - s) / rep / CLOCKS_PER_SEC;
-        // cout<<"assign time in Main():"<<float_assign<<endl;
-        // cout<<"float time after: "<<float_time - float_assign<<endl;
-
-        // cout<<"\t"<<"unsorted / sorted: "<<float(unsorted) / sorted<<endl;
-        // cout<<"\t"<<"function / main: "<<float(func) / integer_time<<endl;
-        // cout<<"\t"<<"float / int (with assign): "<<float(float_time ) / float(integer_time)<<endl;
-        // cout<<"\t"<<"float / int: "<<float(float_time - float_assign) / float(integer_time - assign)<<endl;
-
-    }
-
     cout<<"kLeafNodeID:"<<kLeafNodeID<<endl;
     if(kLeafNodeID == 1)
     {
@@ -445,9 +298,9 @@ int main()
     bool calculateTime = false;
     cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
     experiment(repetitions, 0.9, calculateTime);
-    // experiment(repetitions, 1, isStatic);  // read-only
-    // experiment(repetitions, 0.5, isStatic);  // balance
-    // experiment(repetitions, 0, isStatic);  // partial
+    experiment(repetitions, 1, calculateTime);  // read-only
+    experiment(repetitions, 0.5, calculateTime);  // balance
+    experiment(repetitions, 0, calculateTime);  // partial
 
 
     ofstream outFile;

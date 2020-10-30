@@ -95,7 +95,6 @@ public:
 		{
 			if(key > PositiveSegment[i].point)
 				p += (key * PositiveSegment[i].W1 + PositiveSegment[i].b) * PositiveSegment[i].W2;
-			// p += max(0.0, key *W1[i] + b1[i]) * W2[i];
 		}
 		for (int i = 0; i < NegativeSegment.size(); i++)
 		{
@@ -129,11 +128,7 @@ void Net::Train(const vector<pair<double, double>> &dataset, int len)
 		W1.push_back(dis(gen));
 		W2.push_back(dis(gen));
 		b1.push_back(1);
-		// W1.push_back(0.000001);
-		// W2.push_back(0.000001);
-		// b1.push_back(0);
 	}
-	// b2 = 0.91;
 	b2 = 0;
 	vector<pair<double, double>> m_dataset = dataset;
 	vector<double> index;
@@ -202,17 +197,5 @@ void Net::Train(const vector<pair<double, double>> &dataset, int len)
 			NegativeSegment.push_back(parameter(- (b1[i] / W1[i]), W1[i], b1[i], W2[i]*len));
 	}
 	b2 *= len;
-	// cout<<"NN params:"<<endl;
-	// cout<<"Positive:"<<endl;
-	// for(int i=0;i<PositiveSegment.size();i++)
-	// {
-	// 	cout<<i<<": "<<"point: "<<PositiveSegment[i].point<<"\tW1: "<<PositiveSegment[i].W1<<"\tb1:"<<PositiveSegment[i].b<<"\tW2:"<<PositiveSegment[i].W2<<endl;
-	// }
-	// cout<<"Negative:"<<endl;
-	// for(int i=0;i<NegativeSegment.size();i++)
-	// {
-	// 	cout<<i<<": "<<"point: "<<NegativeSegment[i].point<<"\tW1: "<<NegativeSegment[i].W1<<"\tb1:"<<NegativeSegment[i].b<<"\tW2:"<<NegativeSegment[i].W2<<endl;
-	// }
-	// cout<<"b2:"<<b2<<endl;
 }
 #endif
