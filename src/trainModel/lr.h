@@ -18,12 +18,13 @@ public:
         theta1 = 0.0001;
         theta2 = 0.666;
     }
-    void Train(const vector<pair<double, double> > &dataset);
-    double Predict(double key)
+    void Train(const vector<pair<double, double> > &dataset, int len);
+    int Predict(double key)
     {
-        double p = theta1 * key + theta2;
+        // return the predicted idx in the children
+        int p = theta1 * key + theta2;
         p = p < 0 ? 0 : p;
-        p = p > 1 ? 1 : p;
+        p = p > length ? length : p;
         return p;
     }
 
@@ -32,12 +33,14 @@ public:
     double GetTheta2(){return theta2;}
 
 private:
+    int length;
     double theta1;
     double theta2;
 };
 
-void LinearRegression::Train(const vector<pair<double, double> > &dataset)
+void LinearRegression::Train(const vector<pair<double, double> > &dataset, int len)
 {
+    length = len - 1;
     int actualSize = 0;
     vector<double> index;
     for (int i = 0; i < dataset.size(); i++)
@@ -63,5 +66,7 @@ void LinearRegression::Train(const vector<pair<double, double> > &dataset)
     }
     theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
     theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
+    theta1 *= len;
+    theta2 *= len;
 }
 #endif

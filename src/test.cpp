@@ -102,20 +102,13 @@ void totalTest(int repetitions, bool mode)
         // cout << endl;
         // cout << "-------------------------------" << endl;
 
-        for(int j=1;j<2;j++)
+        for(int j=0;j<4;j++)
         {
             kInnerNodeID = j;
             cout<<"childNum is: "<<childNum<<endl;
             cout << "repetition:" << rep << "\troot type:" << kInnerNodeID << endl;
             Initialize(dataset, childNum);
             cout << "index init over!" << endl;
-            vector<LRType>().swap(LRVector);
-            vector<NNType>().swap(NNVector);
-            vector<HisType>().swap(HisVector);
-            vector<BSType>().swap(BSVector);
-            vector<ArrayType>().swap(ArrayVector);
-            vector<GappedArrayType>().swap(GAVector);
-            break;
 
             if(mode)
             {
@@ -167,7 +160,7 @@ void totalTest(int repetitions, bool mode)
                     // if((i+1)%10000 == 0)
                     //     cout<<endl;
                 }
-                cout<<endl;
+                // cout<<endl;
                 e = clock();
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][0] += time0;
@@ -187,7 +180,7 @@ void totalTest(int repetitions, bool mode)
                     // if((i+1)%10000 == 0)
                     //     cout<<endl;   
                 }
-                cout<<endl;
+                // cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
@@ -199,7 +192,7 @@ void totalTest(int repetitions, bool mode)
                     // if((i+1)%10000 == 0)
                     //     cout<<endl;
                 }
-                cout<<endl;
+                // cout<<endl;
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][1] += time0;
                 cout<<"check INSERT over!"<<endl;
@@ -219,7 +212,7 @@ void totalTest(int repetitions, bool mode)
                     // if((i+1)%10000 == 0)
                     //     cout<<endl;
                 }
-                cout<<endl;
+                // cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
@@ -250,7 +243,7 @@ void totalTest(int repetitions, bool mode)
                     // if((i+1)%10000 == 0)
                     //     cout<<endl;
                 }
-                cout<<endl;
+                // cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
@@ -262,7 +255,7 @@ void totalTest(int repetitions, bool mode)
                     // if((i+1)%10000 == 0)
                     //     cout<<endl;
                 }
-                cout<<endl;
+                // cout<<endl;
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][3] += time0;
                 cout<<"check DELETE over!"<<endl;
@@ -455,6 +448,17 @@ int main()
     // experiment(repetitions, 1, isStatic);  // read-only
     // experiment(repetitions, 0.5, isStatic);  // balance
     // experiment(repetitions, 0, isStatic);  // partial
+
+
+    ofstream outFile;
+    outFile.open("nn.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("lr.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("his.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("bin.csv", ios::out);
+    outFile<<"\n";
 
     return 0;
 }

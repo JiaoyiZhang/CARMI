@@ -10,6 +10,7 @@
 #include "../leafNodeType/array_type.h"
 #include "../leafNodeType/ga_type.h"
 #include <vector>
+#include <fstream>
 using namespace std;
 
 extern vector<ArrayType> ArrayVector;
@@ -24,7 +25,7 @@ public:
         childNumber = c;
         model = HistogramModel(c);
     }
-    void Initialize(const vector<pair<double, double> > &dataset, int childNum);
+    void Initialize(const vector<pair<double, double> > &dataset);
 
     vector<int> child;
     HistogramModel model;
@@ -32,23 +33,35 @@ public:
 };
 
 
-inline void HisType::Initialize(const vector<pair<double, double> > &dataset, int childNum)
+inline void HisType::Initialize(const vector<pair<double, double> > &dataset)
 {
     if (dataset.size() == 0)
         return;
 
-    model.Train(dataset);
+    model.Train(dataset, childNumber);
 
     vector<vector<pair<double, double> > > perSubDataset;
     vector<pair<double, double> > tmp;
-    for (int i = 0; i < childNum; i++)
+    for (int i = 0; i < childNumber; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        double p = model.Predict(dataset[i].first);
-        int preIdx = static_cast<int>(p * (childNum - 1));
-        perSubDataset[preIdx].push_back(dataset[i]);
+        int p = model.Predict(dataset[i].first);
+        // int preIdx = static_cast<int>(p * (childNum - 1));
+        perSubDataset[p].push_back(dataset[i]);
     }
+    ofstream outFile;
+    outFile.open("his.csv", ios::app);
+    outFile<<"---------------------------------------------------"<<endl;
+    for(int i=0;i<childNumber;i++)
+    {
+        outFile<<i<<":"<<perSubDataset[i].size()<<"\t";
+        if((i+1)%10 == 0)
+            outFile<<endl;
+    }
+    outFile<<endl;
+    outFile<<endl;
+    outFile<<endl;    
 
     cout << "train second stage" << endl;
     switch (kLeafNodeID)

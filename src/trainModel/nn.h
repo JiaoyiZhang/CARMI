@@ -86,9 +86,9 @@ class Net : public BasicModel
 public:
 	Net(){};
 
-	void Train(const vector<pair<double, double>> &dataset);
+	void Train(const vector<pair<double, double>> &dataset, int len);
 
-	double Predict(double key)  // return the key's index
+	int Predict(double key)  // return the index in children
 	{
 		double p = b2;
 		for (int i = 0; i < PositiveSegment.size(); i++)
@@ -104,20 +104,22 @@ public:
 		}
 		if (p < 0)
 			p = 0;
-		else if (p > 1)
-			p = 1;
-		return p;
+		else if (p > length)
+			p = length;
+		return int(p);
 	}
 
 private:
+	int length;
 	vector<parameter> PositiveSegment;
 	vector<parameter> NegativeSegment;
 	double b2;
 };
 
 // train the Network
-void Net::Train(const vector<pair<double, double>> &dataset)
+void Net::Train(const vector<pair<double, double>> &dataset, int len)
 {
+	length = len - 1;
 	// initialize the parameters
 	std::default_random_engine gen;
 	std::normal_distribution<double> dis(1, 3);
@@ -195,10 +197,11 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 	for(int i=0;i<W1.size();i++)
 	{
 		if(W1[i]>0)
-			PositiveSegment.push_back(parameter(- (b1[i] / W1[i]), W1[i], b1[i], W2[i]));
+			PositiveSegment.push_back(parameter(- (b1[i] / W1[i]), W1[i], b1[i], W2[i]*len));
 		else
-			NegativeSegment.push_back(parameter(- (b1[i] / W1[i]), W1[i], b1[i], W2[i]));
+			NegativeSegment.push_back(parameter(- (b1[i] / W1[i]), W1[i], b1[i], W2[i]*len));
 	}
+	b2 *= len;
 	// cout<<"NN params:"<<endl;
 	// cout<<"Positive:"<<endl;
 	// for(int i=0;i<PositiveSegment.size();i++)

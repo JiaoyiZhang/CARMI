@@ -13,8 +13,26 @@ public:
         for (int i = 0; i < childNum; i++)
             index.push_back(0);
     }
-    void Train(const vector<pair<double, double>> &dataset);
-    double Predict(double key);
+    void Train(const vector<pair<double, double>> &dataset, int len);
+    int Predict(double key)
+    {
+
+        int start_idx = 0;
+        int end_idx = childNumber - 1;
+        int mid;
+        while (start_idx < end_idx)
+        {
+            mid = (start_idx + end_idx) / 2;
+            if (index[mid] < key)
+                start_idx = mid + 1;
+            else
+                end_idx = mid;
+        }
+        // double p = float(end_idx + 1) / childNumber;
+        // p = p < 0 ? 0 : p;
+        // p = p > 1 ? 1 : p;
+        return end_idx;
+    }
 
     // designed for test
     void GetIndex(vector<double> &v)
@@ -29,7 +47,7 @@ private:
     int childNumber;
 };
 
-void BinarySearchModel::Train(const vector<pair<double, double>> &dataset)
+void BinarySearchModel::Train(const vector<pair<double, double>> &dataset, int len)
 {
     if (dataset.size() == 0)
         return;
@@ -54,25 +72,6 @@ void BinarySearchModel::Train(const vector<pair<double, double>> &dataset)
             }
         }
     }
-}
-
-double BinarySearchModel::Predict(double key)
-{
-    int start_idx = 0;
-    int end_idx = childNumber - 1;
-    int mid;
-    while (start_idx < end_idx)
-    {
-        mid = (start_idx + end_idx) / 2;
-        if (index[mid] < key)
-            start_idx = mid + 1;
-        else
-            end_idx = mid;
-    }
-    double p = float(end_idx + 1) / childNumber;
-    p = p < 0 ? 0 : p;
-    p = p > 1 ? 1 : p;
-    return p;
 }
 
 #endif

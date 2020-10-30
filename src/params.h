@@ -16,7 +16,7 @@ extern int kInnerNodeID;
 // 1,000,000
 extern const int kMaxEpoch = 20;
 // extern const double kLearningRate = 0.0000001;
-extern const double kLearningRate = 0.00001;
+extern const double kLearningRate = 0.0000001;
 
 extern int kNeuronNumber;
 extern const int kAdaptiveChildNum = 40;

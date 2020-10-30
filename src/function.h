@@ -37,26 +37,26 @@ void Initialize(const vector<pair<double, double> > &dataset, int childNum)
     {
     case 0:
         LRVector.push_back(LRType(childNum));
-        LRVector[0].Initialize(dataset, childNum);
+        LRVector[0].Initialize(dataset);
         break;
     case 1:
         NNVector.push_back(NNType(childNum));
-        NNVector[0].Initialize(dataset, childNum);
+        NNVector[0].Initialize(dataset);
         break;
     case 2:
         HisVector.push_back(HisType(childNum));
-        HisVector[0].Initialize(dataset, childNum);
+        HisVector[0].Initialize(dataset);
         break;
     case 3:
         BSVector.push_back(BSType(childNum));
-        BSVector[0].Initialize(dataset, childNum);
+        BSVector[0].Initialize(dataset);
         break;
     }
 }
 
 pair<double, double> Find(double key)
 {
-    double p;
+    // int p;
     int idx = 0;  // idx in the INDEX
     int content;
     int type = kInnerNodeID;
@@ -69,8 +69,8 @@ pair<double, double> Find(double key)
         case 0:
         {
             auto node = LRVector[idx];
-            p = node.model.Predict(key);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // // p = node.model.Predict(key);
+            content = node.child[node.model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
             // p = ((LRType *)currentNode)->model.Predict(key);// 1.88622e-08
@@ -85,8 +85,8 @@ pair<double, double> Find(double key)
         case 1:
         {
             auto node = NNVector[idx];
-            p = node.model.Predict(key);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // // p = node.model.Predict(key);
+            content = node.child[node.model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
             // p = ((NNType *)currentNode)->model.Predict(key);
@@ -100,8 +100,8 @@ pair<double, double> Find(double key)
         case 2:
         {
             auto node = HisVector[idx];
-            p = node.model.Predict(key);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // // p = node.model.Predict(key);
+            content = node.child[node.model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
             // p = ((HisType *)currentNode)->model.Predict(key);
@@ -116,8 +116,8 @@ pair<double, double> Find(double key)
         case 3:
         {
             auto node = BSVector[idx];
-            p = node.model.Predict(key);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // // p = node.model.Predict(key);
+            content = node.child[node.model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
             // p = ((BSType *)currentNode)->model.Predict(key);
@@ -145,8 +145,8 @@ pair<double, double> Find(double key)
 
             if (leaf.m_datasetSize == 0)
                 return {};
-            p = leaf.model.Predict(key);
-            idx = static_cast<int>(p * (leaf.m_datasetSize - 1));
+            // p = leaf.model.Predict(key);
+            idx = leaf.model.Predict(key);
             if (leaf.m_dataset[idx].first == key)
             {
                 return leaf.m_dataset[idx];
@@ -156,16 +156,27 @@ pair<double, double> Find(double key)
                 int start = max(0, idx - leaf.error);
                 int end = min(leaf.m_datasetSize - 1, idx + leaf.error);
                 start = min(start, end);
-                // 改成和边界条件比较，这样只有一次二分查找
-                int res = ArrayBinarySearch(leaf.m_dataset, key, start, end);
-                if (res <= start)
+                int res;
+                if(key <= leaf.m_dataset[start].first)
                     res = ArrayBinarySearch(leaf.m_dataset, key, 0, start);
-                else if (res >= end)
+                else if(key <= leaf.m_dataset[end].first)
+                    res = ArrayBinarySearch(leaf.m_dataset, key, start, end);
+                else
                 {
-                    res = ArrayBinarySearch(leaf.m_dataset, key, res, leaf.m_datasetSize - 1);
+                    res = ArrayBinarySearch(leaf.m_dataset, key, end, leaf.m_datasetSize - 1);
                     if (res >= leaf.m_datasetSize)
                         return {};
                 }
+                    
+                // int res = ArrayBinarySearch(leaf.m_dataset, key, start, end);
+                // if (res <= start)
+                //     res = ArrayBinarySearch(leaf.m_dataset, key, 0, start);
+                // else if (res >= end)
+                // {
+                //     res = ArrayBinarySearch(leaf.m_dataset, key, res, leaf.m_datasetSize - 1);
+                //     if (res >= leaf.m_datasetSize)
+                //         return {};
+                // }
                 if (leaf.m_dataset[res].first == key)
                     return leaf.m_dataset[res];
                 return {};
@@ -176,8 +187,8 @@ pair<double, double> Find(double key)
         case 5:
         {
             auto galeaf = GAVector[idx];
-            p = galeaf.model.Predict(key);
-            idx = static_cast<int>(p * (galeaf.capacity - 1));
+            // p = galeaf.model.Predict(key);
+            idx = galeaf.model.Predict(key);
             if (galeaf.m_dataset[idx].first == key)
                 return galeaf.m_dataset[idx];
             else
@@ -185,16 +196,29 @@ pair<double, double> Find(double key)
                 int start = max(0, idx - galeaf.error);
                 int end = min(galeaf.maxIndex, idx + galeaf.error);
                 start = min(start, end);
-                int res = GABinarySearch(galeaf.m_dataset, key, start, end);
-
-                if (res <= start)
+                
+                int res;
+                if(key <= galeaf.m_dataset[start].first)
                     res = GABinarySearch(galeaf.m_dataset, key, 0, start);
-                else if (res >= end)
+                else if(key <= galeaf.m_dataset[end].first)
+                    res = GABinarySearch(galeaf.m_dataset, key, start, end);
+                else
                 {
-                    res = GABinarySearch(galeaf.m_dataset, key, res, galeaf.maxIndex);
-                    if (res > galeaf.maxIndex)
+                    res = GABinarySearch(galeaf.m_dataset, key, end, galeaf.maxIndex - 1);
+                    if (res >= galeaf.maxIndex)
                         return {DBL_MIN, DBL_MIN};
                 }
+
+                // int res = GABinarySearch(galeaf.m_dataset, key, start, end);
+
+                // if (res <= start)
+                //     res = GABinarySearch(galeaf.m_dataset, key, 0, start);
+                // else if (res >= end)
+                // {
+                //     res = GABinarySearch(galeaf.m_dataset, key, res, galeaf.maxIndex);
+                //     if (res > galeaf.maxIndex)
+                //         return {DBL_MIN, DBL_MIN};
+                // }
                 if (galeaf.m_dataset[res].first == key)
                     return galeaf.m_dataset[res];
                 return {DBL_MIN, DBL_MIN};
@@ -208,7 +232,7 @@ pair<double, double> Find(double key)
 bool Insert(pair<double, double> data)
 {
     // cout<<"IN INSERT"<<endl;
-    double p;
+    // double p;
     int idx = 0;  // idx in the INDEX
     int content;
     int type = kInnerNodeID;
@@ -220,8 +244,8 @@ bool Insert(pair<double, double> data)
         case 0:
         {
             auto node = LRVector[idx];
-            p = node.model.Predict(data.first);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(data.first);
+            content = node.child[node.model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -229,8 +253,8 @@ bool Insert(pair<double, double> data)
         case 1:
         {
             auto node = NNVector[idx];
-            p = node.model.Predict(data.first);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(data.first);
+            content = node.child[node.model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -238,8 +262,8 @@ bool Insert(pair<double, double> data)
         case 2:
         {
             auto node = HisVector[idx];
-            p = node.model.Predict(data.first);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(data.first);
+            content = node.child[node.model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -247,8 +271,8 @@ bool Insert(pair<double, double> data)
         case 3:
         {
             auto node = BSVector[idx];
-            p = node.model.Predict(data.first);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(data.first);
+            content = node.child[node.model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -275,18 +299,24 @@ bool Insert(pair<double, double> data)
                 ArrayVector[idx] = leaf;
                 return true;
             }
-            p = leaf.model.Predict(data.first);
-            int preIdx = static_cast<int>(p * leaf.m_datasetSize - 1);
+            // p = leaf.model.Predict(data.first);
+            int preIdx = leaf.model.Predict(data.first);
             int start = max(0, preIdx - leaf.error);
             int end = min(leaf.m_datasetSize - 1, preIdx + leaf.error);
             start = min(start, end);
-
-            preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, start, end);
-            if (preIdx <= start)
+            
+            if(data.first <= leaf.m_dataset[start].first)
                 preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, 0, start);
-            else if (preIdx >= end)
-                preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, preIdx, leaf.m_datasetSize - 1);
-            // cout<<"now idx:"<<idx<<endl;
+            else if(data.first <= leaf.m_dataset[end].first)
+                preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, start, end);
+            else
+                preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, end, leaf.m_datasetSize - 1);
+
+            // preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, start, end);
+            // if (preIdx <= start)
+            //     preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, 0, start);
+            // else if (preIdx >= end)
+            //     preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, preIdx, leaf.m_datasetSize - 1);
 
             // Insert data
             if (preIdx == leaf.m_datasetSize - 1 && leaf.m_dataset[preIdx].first < data.first)
@@ -333,17 +363,25 @@ bool Insert(pair<double, double> data)
                     GAVector[idx] = galeaf;
                     return true;
                 }
-                p = galeaf.model.Predict(data.first);
-                int preIdx = static_cast<int>(p * (galeaf.maxIndex + 2));
+                // p = galeaf.model.Predict(data.first);
+                int preIdx = galeaf.model.Predict(data.first);
 
                 int start = max(0, preIdx - galeaf.error);
                 int end = min(galeaf.maxIndex, preIdx + galeaf.error);
                 start = min(start, end);
-                preIdx = GABinarySearch(galeaf.m_dataset, data.first, start, end);
-                if (preIdx <= start)
+                
+                if(data.first <= galeaf.m_dataset[start].first)
                     preIdx = GABinarySearch(galeaf.m_dataset, data.first, 0, start);
-                else if (preIdx >= end)
-                    preIdx = GABinarySearch(galeaf.m_dataset, data.first, preIdx, galeaf.maxIndex);
+                else if(data.first <= galeaf.m_dataset[end].first)
+                    preIdx = GABinarySearch(galeaf.m_dataset, data.first, start, end);
+                else
+                    preIdx = GABinarySearch(galeaf.m_dataset, data.first, end, galeaf.maxIndex);
+
+                // preIdx = GABinarySearch(galeaf.m_dataset, data.first, start, end);
+                // if (preIdx <= start)
+                //     preIdx = GABinarySearch(galeaf.m_dataset, data.first, 0, start);
+                // else if (preIdx >= end)
+                //     preIdx = GABinarySearch(galeaf.m_dataset, data.first, preIdx, galeaf.maxIndex);
 
                 // if the Insertion position is a gap,
                 //  then we Insert the element into the gap and are done
@@ -410,7 +448,7 @@ bool Insert(pair<double, double> data)
 
 bool Delete(double key)
 {
-    double p;
+    // double p;
     int idx = 0;  // idx in the INDEX
     int content;
     int type = kInnerNodeID;
@@ -421,8 +459,8 @@ bool Delete(double key)
         case 0:
         {
             auto node = LRVector[idx];
-            p = node.model.Predict(key);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(key);
+            content = node.child[node.model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -430,8 +468,8 @@ bool Delete(double key)
         case 1:
         {
             auto node = NNVector[idx];
-            p = node.model.Predict(key);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(key);
+            content = node.child[node.model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -439,8 +477,8 @@ bool Delete(double key)
         case 2:
         {
             auto node = HisVector[idx];
-            p = node.model.Predict(key);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(key);
+            content = node.child[node.model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -448,8 +486,8 @@ bool Delete(double key)
         case 3:
         {
             auto node = BSVector[idx];
-            p = node.model.Predict(key);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(key);
+            content = node.child[node.model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -457,31 +495,47 @@ bool Delete(double key)
         case 4:
         {
             auto leaf = ArrayVector[idx];
-            p = leaf.model.Predict(key);
-            int preIdx = static_cast<int>(p * (leaf.m_datasetSize - 1));
+            // p = leaf.model.Predict(key);
+            int preIdx = leaf.model.Predict(key);
             if (leaf.m_dataset[preIdx].first != key)
             {
                 int start = max(0, preIdx - leaf.error);
                 int end = min(leaf.m_datasetSize - 1, preIdx + leaf.error);
                 start = min(start, end);
-                int res = ArrayBinarySearch(leaf.m_dataset, key, start, end);
+                int res;
+                if(key <= leaf.m_dataset[start].first)
+                    res = ArrayBinarySearch(leaf.m_dataset, key, 0, start);
+                else if(key <= leaf.m_dataset[end].first)
+                    res = ArrayBinarySearch(leaf.m_dataset, key, start, end);
+                else
+                {
+                    res = ArrayBinarySearch(leaf.m_dataset, key, end, leaf.m_datasetSize - 1);
+                    if (res >= leaf.m_datasetSize)
+                        return false;
+                }
                 if (leaf.m_dataset[res].first == key)
                     preIdx = res;
                 else
-                {
-                    if (res <= start)
-                        res = ArrayBinarySearch(leaf.m_dataset, key, 0, start);
-                    else if (res >= end)
-                    {
-                        res = ArrayBinarySearch(leaf.m_dataset, key, res, leaf.m_datasetSize - 1);
-                        if (res >= leaf.m_datasetSize)
-                            return false;
-                    }
-                    if (leaf.m_dataset[res].first == key)
-                        preIdx = res;
-                    else
-                        return false;
-                }
+                    return false;
+
+                // int res = ArrayBinarySearch(leaf.m_dataset, key, start, end);
+                // if (leaf.m_dataset[res].first == key)
+                //     preIdx = res;
+                // else
+                // {
+                //     if (res <= start)
+                //         res = ArrayBinarySearch(leaf.m_dataset, key, 0, start);
+                //     else if (res >= end)
+                //     {
+                //         res = ArrayBinarySearch(leaf.m_dataset, key, res, leaf.m_datasetSize - 1);
+                //         if (res >= leaf.m_datasetSize)
+                //             return false;
+                //     }
+                //     if (leaf.m_dataset[res].first == key)
+                //         preIdx = res;
+                //     else
+                //         return false;
+                // }
             }
             for (int i = preIdx; i < leaf.m_datasetSize - 1; i++)
                 leaf.m_dataset[i] = leaf.m_dataset[i + 1];
@@ -497,8 +551,8 @@ bool Delete(double key)
             auto galeaf = GAVector[idx];
             // DBL_MIN means the data has been deleted
             // when a data has been deleted, data.second == DBL_MIN
-            p = galeaf.model.Predict(key);
-            int preIdx = static_cast<int>(p * (galeaf.capacity - 1));
+            // p = galeaf.model.Predict(key);
+            int preIdx = galeaf.model.Predict(key);
             if (galeaf.m_dataset[preIdx].first == key)
             {
                 galeaf.m_dataset[preIdx].second = DBL_MIN;
@@ -513,16 +567,29 @@ bool Delete(double key)
                 int start = max(0, preIdx - galeaf.error);
                 int end = min(galeaf.maxIndex, preIdx + galeaf.error);
                 start = min(start, end);
-                int res = GABinarySearch(galeaf.m_dataset, key, start, end);
 
-                if (res <= start)
+                int res;
+                if(key <= galeaf.m_dataset[start].first)
                     res = GABinarySearch(galeaf.m_dataset, key, 0, start);
-                else if (res >= end)
+                else if(key <= galeaf.m_dataset[end].first)
+                    res = GABinarySearch(galeaf.m_dataset, key, start, end);
+                else
                 {
-                    res = GABinarySearch(galeaf.m_dataset, key, res, galeaf.maxIndex);
+                    res = GABinarySearch(galeaf.m_dataset, key, end, galeaf.maxIndex);
                     if (res > galeaf.maxIndex)
                         return false;
                 }
+
+                // int res = GABinarySearch(galeaf.m_dataset, key, start, end);
+
+                // if (res <= start)
+                //     res = GABinarySearch(galeaf.m_dataset, key, 0, start);
+                // else if (res >= end)
+                // {
+                //     res = GABinarySearch(galeaf.m_dataset, key, res, galeaf.maxIndex);
+                //     if (res > galeaf.maxIndex)
+                //         return false;
+                // }
                 if (galeaf.m_dataset[res].first != key)
                     return false;
                 galeaf.m_datasetSize--;
@@ -540,7 +607,7 @@ bool Delete(double key)
 
 bool Update(pair<double, double> data)
 {
-    double p;
+    // double p;
     int idx = 0;  // idx in the INDEX
     int content;
     int type = kInnerNodeID;
@@ -551,8 +618,8 @@ bool Update(pair<double, double> data)
         case 0:
         {
             auto node = LRVector[idx];
-            p = node.model.Predict(data.first);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(data.first);
+            content = node.child[node.model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -560,8 +627,8 @@ bool Update(pair<double, double> data)
         case 1:
         {
             auto node = NNVector[idx];
-            p = node.model.Predict(data.first);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(data.first);
+            content = node.child[node.model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -569,8 +636,8 @@ bool Update(pair<double, double> data)
         case 2:
         {
             auto node = HisVector[idx];
-            p = node.model.Predict(data.first);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(data.first);
+            content = node.child[node.model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -578,8 +645,8 @@ bool Update(pair<double, double> data)
         case 3:
         {
             auto node = BSVector[idx];
-            p = node.model.Predict(data.first);
-            content = node.child[int(p * (node.childNumber - 1))];
+            // p = node.model.Predict(data.first);
+            content = node.child[node.model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -587,31 +654,45 @@ bool Update(pair<double, double> data)
         case 4:
         {
             auto leaf = ArrayVector[idx];
-            p = leaf.model.Predict(data.first);
-            int preIdx = static_cast<int>(p * (leaf.m_datasetSize - 1));
+            // p = leaf.model.Predict(data.first);
+            int preIdx = leaf.model.Predict(data.first);
             if (leaf.m_dataset[preIdx].first != data.first)
             {
                 int start = max(0, preIdx - leaf.error);
                 int end = min(leaf.m_datasetSize - 1, preIdx + leaf.error);
                 start = min(start, end);
-                int res = ArrayBinarySearch(leaf.m_dataset, data.first, start, end);
-                if (leaf.m_dataset[res].first == data.first)
-                    preIdx = res;
+                if(data.first <= leaf.m_dataset[start].first)
+                    preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, 0, start);
+                else if(data.first <= leaf.m_dataset[end].first)
+                    preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, start, end);
                 else
                 {
-                    if (res <= start)
-                        res = ArrayBinarySearch(leaf.m_dataset, data.first, 0, start);
-                    else if (res >= end)
-                    {
-                        res = ArrayBinarySearch(leaf.m_dataset, data.first, res, leaf.m_datasetSize - 1);
-                        if (res >= leaf.m_datasetSize)
-                            return false;
-                    }
-                    if (leaf.m_dataset[res].first == data.first)
-                        preIdx = res;
-                    else
+                    preIdx = ArrayBinarySearch(leaf.m_dataset, data.first, end, leaf.m_datasetSize - 1);
+                    if (preIdx >= leaf.m_datasetSize)
                         return false;
+
                 }
+                if (leaf.m_dataset[preIdx].first != data.first)
+                    return false;
+
+                // int res = ArrayBinarySearch(leaf.m_dataset, data.first, start, end);
+                // if (leaf.m_dataset[res].first == data.first)
+                //     preIdx = res;
+                // else
+                // {
+                //     if (res <= start)
+                //         res = ArrayBinarySearch(leaf.m_dataset, data.first, 0, start);
+                //     else if (res >= end)
+                //     {
+                //         res = ArrayBinarySearch(leaf.m_dataset, data.first, res, leaf.m_datasetSize - 1);
+                //         if (res >= leaf.m_datasetSize)
+                //             return false;
+                //     }
+                //     if (leaf.m_dataset[res].first == data.first)
+                //         preIdx = res;
+                //     else
+                //         return false;
+                // }
             }
             leaf.m_dataset[preIdx].second = data.second;
             ArrayVector[idx] = leaf;
@@ -621,8 +702,8 @@ bool Update(pair<double, double> data)
         case 5:
         {
             auto galeaf = GAVector[idx];
-            p = galeaf.model.Predict(data.first);
-            int preIdx = static_cast<int>(p * (galeaf.capacity - 1));
+            // p = galeaf.model.Predict(data.first);
+            int preIdx = galeaf.model.Predict(data.first);
             if (galeaf.m_dataset[preIdx].first == data.first)
             {
                 galeaf.m_dataset[preIdx].second = data.second;
@@ -634,18 +715,31 @@ bool Update(pair<double, double> data)
                 int start = max(0, preIdx - galeaf.error);
                 int end = min(galeaf.maxIndex, preIdx + galeaf.error);
                 start = min(start, end);
-                int res = GABinarySearch(galeaf.m_dataset, data.first, start, end);
-                if (res <= start)
-                    res = GABinarySearch(galeaf.m_dataset, data.first, 0, start);
-                else if (res >= end)
+
+                
+                if(data.first <= galeaf.m_dataset[start].first)
+                    preIdx = GABinarySearch(galeaf.m_dataset, data.first, 0, start);
+                else if(data.first <= galeaf.m_dataset[end].first)
+                    preIdx = GABinarySearch(galeaf.m_dataset, data.first, start, end);
+                else
                 {
-                    res = GABinarySearch(galeaf.m_dataset, data.first, res, galeaf.maxIndex);
-                    if (res > galeaf.maxIndex)
+                    preIdx = GABinarySearch(galeaf.m_dataset, data.first, end, galeaf.maxIndex);
+                    if (preIdx > galeaf.maxIndex)
                         return false;
                 }
-                if (galeaf.m_dataset[res].first != data.first)
+
+                // int res = GABinarySearch(galeaf.m_dataset, data.first, start, end);
+                // if (res <= start)
+                //     res = GABinarySearch(galeaf.m_dataset, data.first, 0, start);
+                // else if (res >= end)
+                // {
+                //     res = GABinarySearch(galeaf.m_dataset, data.first, res, galeaf.maxIndex);
+                //     if (res > galeaf.maxIndex)
+                //         return false;
+                // }
+                if (galeaf.m_dataset[preIdx].first != data.first)
                     return false;
-                galeaf.m_dataset[res].second = data.second;
+                galeaf.m_dataset[preIdx].second = data.second;
                 GAVector[idx] = galeaf;
                 return true;
             }
