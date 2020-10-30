@@ -22,7 +22,12 @@ vector<pair<double, double>> insertDataset;
 
 btree::btree_map<double, double> btreemap;
 
-extern vector<void *> INDEX;  // store the entire index
+extern vector<LRType> LRVector;
+extern vector<NNType> NNVector;
+extern vector<HisType> HisVector;
+extern vector<BSType> BSVector;
+extern vector<ArrayType> ArrayVector;
+extern vector<GappedArrayType> GAVector;
 
 //////////////////////////////
 vector<int> test_int;
@@ -92,18 +97,25 @@ void totalTest(int repetitions, bool mode)
         for (int l = 0; l < dataset.size(); l++)
             btree.insert(dataset[l]);
         btreemap = btree;
-        cout << "btree:    " << rep << endl;
+        // cout << "btree:    " << rep << endl;
         btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
-        cout << endl;
-        cout << "-------------------------------" << endl;
+        // cout << endl;
+        // cout << "-------------------------------" << endl;
 
-        for(int j=0;j<4;j++)
+        for(int j=1;j<2;j++)
         {
             kInnerNodeID = j;
             cout<<"childNum is: "<<childNum<<endl;
             cout << "repetition:" << rep << "\troot type:" << kInnerNodeID << endl;
             Initialize(dataset, childNum);
             cout << "index init over!" << endl;
+            vector<LRType>().swap(LRVector);
+            vector<NNType>().swap(NNVector);
+            vector<HisType>().swap(HisVector);
+            vector<BSType>().swap(BSVector);
+            vector<ArrayType>().swap(ArrayVector);
+            vector<GappedArrayType>().swap(GAVector);
+            break;
 
             if(mode)
             {
@@ -137,41 +149,57 @@ void totalTest(int repetitions, bool mode)
                 e = clock();
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][3] += time0;
-                INDEX.clear();
                 cout << "-------------------------------" << endl;
             }
             else
-            {   // check WRONG
+            {   
+                // check WRONG
                 clock_t s,e;
+                double time0;
                 s = clock();
                 for (int i = 0; i < dataset.size(); i++)
                 {
+                    // cout<<i;
                     auto res = Find(dataset[i].first);
                     if(res.second != dataset[i].first * 10)
-                        cout<<"Find failed:\ti:"<<i<<"\t"<<dataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
+                        cout<<"Find failed:\ti:"<<i<<"\t"<<dataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;   
+                    // cout<< ";\t";
+                    // if((i+1)%10000 == 0)
+                    //     cout<<endl;
                 }
+                cout<<endl;
                 e = clock();
-                double time0 = (double)(e - s) / CLOCKS_PER_SEC;
+                time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][0] += time0;
                 cout<<"check FIND over!"<<endl;
 
                 s = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
+                    // cout<<i;
                     auto r = Insert(insertDataset[i]);
                     if(!r)
                         cout<<"Insert failed:\ti:"<< i << "\t" <<insertDataset[i].first<<endl;
                     auto res = Find(insertDataset[i].first);
                     if(res.second != insertDataset[i].first * 10)
-                        cout<<"Find failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
+                        cout<<"Find failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;   
+                    // cout<< ";\t";
+                    // if((i+1)%10000 == 0)
+                    //     cout<<endl;   
                 }
+                cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
+                    // cout<<i;
                     auto res = Find(insertDataset[i].first);
                     if(res.second != insertDataset[i].first * 10)
                         cout<<"Find Insert failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
+                    // cout<< ";\t";
+                    // if((i+1)%10000 == 0)
+                    //     cout<<endl;
                 }
+                cout<<endl;
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][1] += time0;
                 cout<<"check INSERT over!"<<endl;
@@ -180,19 +208,28 @@ void totalTest(int repetitions, bool mode)
                 s = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
+                    // cout<<i;
                     auto r = Update({insertDataset[i].first, 1.11});
                     if(!r)
                         cout<<"Update failed:\ti:"<< i << "\t" <<insertDataset[i].first<<endl;
                     auto res = Find(insertDataset[i].first);
                     if(res.second != 1.11)
                         cout<<"After Update failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
+                    // cout<< ";\t";
+                    // if((i+1)%10000 == 0)
+                    //     cout<<endl;
                 }
+                cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
+                    // cout<<i;
                     auto res = Find(insertDataset[i].first);
                     if(res.second != 1.11)
                         cout<<"Find Update failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
+                    // cout<< ";\t";
+                    // if((i+1)%10000 == 0)
+                    //     cout<<endl;
                 }
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][2] += time0;
@@ -202,31 +239,42 @@ void totalTest(int repetitions, bool mode)
                 s = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
+                    // cout<<i;
                     auto r = Delete(insertDataset[i].first);
                     if(!r)
                         cout<<"Delete failed:\ti:"<< i << "\t" <<insertDataset[i].first<<endl;
                     auto res = Find(insertDataset[i].first);
                     if(res.second == insertDataset[i].first * 10)
                         cout<<"After Delete failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
+                    // cout<< ";\t";
+                    // if((i+1)%10000 == 0)
+                    //     cout<<endl;
                 }
+                cout<<endl;
                 e = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
+                    // cout<<i;
                     auto res = Find(insertDataset[i].first);
                     if(res.second == insertDataset[i].first * 10)
                         cout<<"Find Delete failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
+                    // cout<< ";\t";
+                    // if((i+1)%10000 == 0)
+                    //     cout<<endl;
                 }
+                cout<<endl;
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][3] += time0;
                 cout<<"check DELETE over!"<<endl;
                 // INDEX.clear();
                 cout << "-------------------------------" << endl;
             }
-            cout << "start to clear all"<<endl;
-            cout<<"index size is: "<<INDEX.size()<<endl;
-            ClearAll(0, kInnerNodeID);
-            INDEX.clear();
-            vector<void *>().swap(INDEX);
+            vector<LRType>().swap(LRVector);
+            vector<NNType>().swap(NNVector);
+            vector<HisType>().swap(HisVector);
+            vector<BSType>().swap(BSVector);
+            vector<ArrayType>().swap(ArrayVector);
+            vector<GappedArrayType>().swap(GAVector);
         }
     }
 
@@ -401,7 +449,7 @@ int main()
     }
     cout<<"kThreshold is: "<<kThreshold<<endl;
     int repetitions = 1;
-    bool calculateTime = true;
+    bool calculateTime = false;
     cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
     experiment(repetitions, 0.9, calculateTime);
     // experiment(repetitions, 1, isStatic);  // read-only

@@ -65,7 +65,8 @@
         "__hash_table": "cpp",
         "__tree": "cpp",
         "__tuple": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "__node_handle": "cpp"
     },
     "C_Cpp.default.configurationProvider": "go2sh.cmake-integration"
 }

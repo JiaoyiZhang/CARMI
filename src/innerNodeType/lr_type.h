@@ -13,7 +13,8 @@
 #include <vector>
 using namespace std;
 
-extern vector<void *> INDEX;  // store the entire INDEX
+extern vector<ArrayType> ArrayVector;
+extern vector<GappedArrayType> GAVector;
 
 class LRType
 {
@@ -23,22 +24,22 @@ public:
     {
         childNumber = c;
     }
-    void Initialize(const vector<pair<double, double>> &dataset, int childNum);
+    void Initialize(const vector<pair<double, double> > &dataset, int childNum);
 
     vector<int> child;
     LinearRegression model;
     int childNumber;
 };
 
-inline void LRType::Initialize(const vector<pair<double, double>> &dataset, int childNum)
+inline void LRType::Initialize(const vector<pair<double, double> > &dataset, int childNum)
 {
     if (dataset.size() == 0)
         return;
 
     model.Train(dataset);
 
-    vector<vector<pair<double, double>>> perSubDataset;
-    vector<pair<double, double>> tmp;
+    vector<vector<pair<double, double> > > perSubDataset;
+    vector<pair<double, double> > tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
@@ -54,19 +55,19 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset, int 
         case 0:
             for(int i=0;i<childNumber;i++)
             {
-                INDEX.push_back((void *)new ArrayType(kThreshold));
-                int idx = INDEX.size()-1;
-                child.push_back(0x40000000+ idx);
-                ((ArrayType*)(INDEX[idx]))->SetDataset(perSubDataset[i]);
+                ArrayVector.push_back(ArrayType(kThreshold));
+                int idx = ArrayVector.size()-1;
+                child.push_back(0x40000000 + idx);
+                ArrayVector[idx].SetDataset(perSubDataset[i]);
             }
             break;
         case 1:
             for(int i=0;i<childNumber;i++)
             {
-                INDEX.push_back((void *)new GappedArrayType(kThreshold));
-                int idx = INDEX.size()-1;
+                GAVector.push_back(GappedArrayType(kThreshold));
+                int idx = GAVector.size()-1;
                 child.push_back(0x50000000 + idx);
-                ((GappedArrayType*)(INDEX[idx]))->SetDataset(perSubDataset[i]);
+                GAVector[idx].SetDataset(perSubDataset[i]);
             }
             break;
     }

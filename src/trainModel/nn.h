@@ -65,6 +65,22 @@ inline vector<double> Relu(vector<double> input)
 	return input;
 }
 
+class parameter
+{
+public:
+	parameter(double p, double w1, double bias, double w2)
+	{
+		point = p;
+		W1 = w1;
+		W2 = w2;
+		b = bias;
+	}
+
+	double point;
+	double W1;
+	double b;
+	double W2;
+};
 class Net : public BasicModel
 {
 public:
@@ -75,9 +91,16 @@ public:
 	double Predict(double key)  // return the key's index
 	{
 		double p = b2;
-		for (int i = 0; i < W1.size(); i++)
+		for (int i = 0; i < PositiveSegment.size(); i++)
 		{
-			p += max(0.0, key *W1[i] + b1[i]) * W2[i];
+			if(key > PositiveSegment[i].point)
+				p += (key * PositiveSegment[i].W1 + PositiveSegment[i].b) * PositiveSegment[i].W2;
+			// p += max(0.0, key *W1[i] + b1[i]) * W2[i];
+		}
+		for (int i = 0; i < NegativeSegment.size(); i++)
+		{
+			if(key < NegativeSegment[i].point)
+				p += (key * NegativeSegment[i].W1 + NegativeSegment[i].b) * NegativeSegment[i].W2;
 		}
 		if (p < 0)
 			p = 0;
@@ -86,28 +109,9 @@ public:
 		return p;
 	}
 
-	// designed for test
-	void GetW1(vector<double> &w)
-	{
-		for(int i=0;i<kNeuronNumber;i++)
-			w.push_back(W1[i]);
-	}
-	void GetW2(vector<double> &w)
-	{
-		for(int i=0;i<kNeuronNumber;i++)
-			w.push_back(W2[i]);
-	}
-	void Getb1(vector<double> &b)
-	{
-		for(int i=0;i<kNeuronNumber;i++)
-			b.push_back(b1[i]);
-	}
-	double Getb2(){return b2;}
-
 private:
-	vector<double> W1;
-	vector<double> W2;
-	vector<double> b1;
+	vector<parameter> PositiveSegment;
+	vector<parameter> NegativeSegment;
 	double b2;
 };
 
@@ -115,16 +119,17 @@ private:
 void Net::Train(const vector<pair<double, double>> &dataset)
 {
 	// initialize the parameters
-	//std::default_random_engine gen;
-	//std::normal_distribution<double> dis(1, 3);
+	std::default_random_engine gen;
+	std::normal_distribution<double> dis(1, 3);
+	vector<double> W1, W2, b1;
 	for (int i = 0; i < kNeuronNumber; i++)
 	{
-		// W1.push_back(dis(gen));
-		// W2.push_back(dis(gen));
-		W1.push_back(0.000001);
-		W2.push_back(0.000001);
-		// b1.push_back(1);
-		b1.push_back(0);
+		W1.push_back(dis(gen));
+		W2.push_back(dis(gen));
+		b1.push_back(1);
+		// W1.push_back(0.000001);
+		// W2.push_back(0.000001);
+		// b1.push_back(0);
 	}
 	// b2 = 0.91;
 	b2 = 0;
@@ -142,6 +147,8 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 	double totalLoss = 0.0;
 	for (int epoch = 0; epoch < kMaxEpoch; epoch++)
 	{
+		clock_t s, f;
+		s = clock();
 		unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 		shuffle(m_dataset.begin(), m_dataset.end(), default_random_engine(seed));
 		shuffle(index.begin(), index.end(), default_random_engine(seed));
@@ -181,6 +188,28 @@ void Net::Train(const vector<pair<double, double>> &dataset)
 				b2 = b2 - kLearningRate * (p - y);
 			}
 		}
+		f = clock();
+		// cout<<"epoch "<<epoch<<": time: "<<(float)(f-s) / CLOCKS_PER_SEC<<endl;
 	}
+	// record the split points
+	for(int i=0;i<W1.size();i++)
+	{
+		if(W1[i]>0)
+			PositiveSegment.push_back(parameter(- (b1[i] / W1[i]), W1[i], b1[i], W2[i]));
+		else
+			NegativeSegment.push_back(parameter(- (b1[i] / W1[i]), W1[i], b1[i], W2[i]));
+	}
+	// cout<<"NN params:"<<endl;
+	// cout<<"Positive:"<<endl;
+	// for(int i=0;i<PositiveSegment.size();i++)
+	// {
+	// 	cout<<i<<": "<<"point: "<<PositiveSegment[i].point<<"\tW1: "<<PositiveSegment[i].W1<<"\tb1:"<<PositiveSegment[i].b<<"\tW2:"<<PositiveSegment[i].W2<<endl;
+	// }
+	// cout<<"Negative:"<<endl;
+	// for(int i=0;i<NegativeSegment.size();i++)
+	// {
+	// 	cout<<i<<": "<<"point: "<<NegativeSegment[i].point<<"\tW1: "<<NegativeSegment[i].W1<<"\tb1:"<<NegativeSegment[i].b<<"\tW2:"<<NegativeSegment[i].W2<<endl;
+	// }
+	// cout<<"b2:"<<b2<<endl;
 }
 #endif
