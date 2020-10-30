@@ -51,18 +51,22 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
 
 void btree_test(double &time0, double &time1, double &time2, double &time3)
 {
+    cout<<"btree:"<<endl;
     clock_t s,e;
     s = clock();
     for (int i = 0; i < dataset.size(); i++)
         btreemap.find(dataset[i].first);
     e = clock();
     time0 += (double)(e - s) / CLOCKS_PER_SEC;
+    cout<<"Find time:"<<(double)(e - s) / CLOCKS_PER_SEC / (float)dataset.size() <<endl;
   
     s = clock();
     for (int i = 0; i < insertDataset.size(); i++)
         btreemap.insert(insertDataset[i]);  
     e = clock();
     time1 += (double)(e - s) / CLOCKS_PER_SEC;
+    cout<<"Insert time:"<<(double)(e - s) / CLOCKS_PER_SEC / (float)insertDataset.size() <<endl;
+
 
     // QueryPerformanceCounter(&s);
     // for (int i = 0; i < insertDataset.size(); i++)
@@ -117,21 +121,22 @@ void totalTest(int repetitions, bool mode)
                 e = clock();
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][1] += time0;
+                cout<<"Insert time:"<<time0 / (float)insertDataset.size() <<endl;
 
-                s = clock();
-                for (int i = 0; i < insertDataset.size(); i++)
-                    Update({insertDataset[i].first, 1.11});
-                e = clock();
-                time0 = (double)(e - s) / CLOCKS_PER_SEC;
-                time[j][2] += time0;
+                // s = clock();
+                // for (int i = 0; i < insertDataset.size(); i++)
+                //     Update({insertDataset[i].first, 1.11});
+                // e = clock();
+                // time0 = (double)(e - s) / CLOCKS_PER_SEC;
+                // time[j][2] += time0;
 
 
-                s = clock();
-                for (int i = 0; i < insertDataset.size(); i++)
-                    Delete(insertDataset[i].first);
-                e = clock();
-                time0 = (double)(e - s) / CLOCKS_PER_SEC;
-                time[j][3] += time0;
+                // s = clock();
+                // for (int i = 0; i < insertDataset.size(); i++)
+                //     Delete(insertDataset[i].first);
+                // e = clock();
+                // time0 = (double)(e - s) / CLOCKS_PER_SEC;
+                // time[j][3] += time0;
                 cout << "-------------------------------" << endl;
             }
             else
@@ -282,25 +287,29 @@ void experiment(int repetitions, double initRatio, bool calculateTime)
 
 int main()
 {
-    cout<<"kLeafNodeID:"<<kLeafNodeID<<endl;
-    if(kLeafNodeID == 1)
+    for(int l = 0; l < 2; l++)
     {
-        kThreshold = 256;  // ga
-        // kMaxKeyNum = 256;
+        kLeafNodeID = l;
+        cout<<"kLeafNodeID:"<<(kLeafNodeID ? "Gapped array leaf node\n" : "Array leaf node\n")<<endl;
+        if(kLeafNodeID == 1)
+        {
+            kThreshold = 256;  // ga
+            // kMaxKeyNum = 256;
+        }
+        else
+        {
+            kThreshold = 50000;  // array
+            // kMaxKeyNum = 6000;
+        }
+        cout<<"kThreshold is: "<<kThreshold<<endl;
+        int repetitions = 1;
+        bool calculateTime = true;
+        cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
+        experiment(repetitions, 0.9, calculateTime);
+        experiment(repetitions, 1, calculateTime);  // read-only
+        experiment(repetitions, 0.5, calculateTime);  // balance
+        experiment(repetitions, 0, calculateTime);  // partial
     }
-    else
-    {
-        kThreshold = 50000;  // array
-        // kMaxKeyNum = 6000;
-    }
-    cout<<"kThreshold is: "<<kThreshold<<endl;
-    int repetitions = 1;
-    bool calculateTime = false;
-    cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
-    experiment(repetitions, 0.9, calculateTime);
-    experiment(repetitions, 1, calculateTime);  // read-only
-    experiment(repetitions, 0.5, calculateTime);  // balance
-    experiment(repetitions, 0, calculateTime);  // partial
 
 
     ofstream outFile;

@@ -13,7 +13,6 @@ extern const int kMaxEpoch = 20;
 extern const double kLearningRate = 0.0000001;
 
 extern int kNeuronNumber;
-extern const int kAdaptiveChildNum = 40;
 
 extern int kThreshold;
 extern int kMaxKeyNum;
