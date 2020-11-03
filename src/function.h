@@ -65,7 +65,6 @@ pair<double, double> Find(double key)
         {
         case 0:
         {
-            // 6.38ns
             content = LRVector[idx].child[LRVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;

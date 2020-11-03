@@ -55,4 +55,4 @@ We divided the source code into five parts: dataset, innerNode, leafNode, trainM
 
 This code is based on C++.
 
-Main dependencies is **cpp-btree**.
+Main dependencies is [**STX-btree**](github.com/bingmann/stx-btree).
