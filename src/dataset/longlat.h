@@ -91,7 +91,7 @@ void LonglatDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
 			}
 		}
 	}
-	cout << "Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
+	cout << "longlat: Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
 }
 
 #endif

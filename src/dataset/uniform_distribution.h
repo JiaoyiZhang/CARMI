@@ -77,7 +77,7 @@ void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
             }
         }
     }
-    cout<<"Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
+    cout<<"uniform: Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
 }
 
 #endif

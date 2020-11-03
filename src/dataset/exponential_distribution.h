@@ -93,7 +93,7 @@ void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDatas
             }
         }
     }
-    cout<<"Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
+    cout<<"exponential: Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
 }
 
 #endif

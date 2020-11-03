@@ -93,7 +93,7 @@ void NormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset, v
             }
         }
     }
-    cout<<"Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
+    cout<<"normal: Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
 }
 
 #endif

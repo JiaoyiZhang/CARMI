@@ -11,6 +11,7 @@
 #include "inlineFunction.h"
 #include <float.h>
 #include <vector>
+#include <math.h>
 using namespace std;
 
 vector<LRType> LRVector;
@@ -542,6 +543,21 @@ bool Update(pair<double, double> data)
         break;
         }
     }
+}
+
+long double GetEntropy(int size)
+{
+    // the entropy of each type of leaf node is the same
+    long double entropy = 0.0;
+    for(int i=0;i<ArrayVector.size();i++)
+    {
+        if(ArrayVector[i].m_datasetSize != 0)
+        {
+            auto p = double(ArrayVector[i].m_datasetSize) / size;
+            entropy += p * (-log(p) / log(2));
+        }
+    }
+    return entropy;
 }
 
 #endif

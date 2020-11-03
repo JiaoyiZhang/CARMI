@@ -93,7 +93,7 @@ void LognormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset
             }
         }
     }
-    cout<<"Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
+    cout<<"lognormal: Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
 }
 
 #endif

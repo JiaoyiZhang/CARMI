@@ -23,8 +23,10 @@ public:
     {
         // return the predicted idx in the children
         int p = theta1 * key + theta2;
-        p = p < 0 ? 0 : p;
-        p = p > length ? length : p;
+        if(p < 0)
+            p = 0;
+        else if(p > length)
+            p = length;
         return p;
     }
 

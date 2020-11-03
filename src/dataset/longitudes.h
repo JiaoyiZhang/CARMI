@@ -91,7 +91,7 @@ void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDatase
 			}
 		}
 	}
-	cout << "Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
+	cout << "longitudes: Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
 }
 
 #endif

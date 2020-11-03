@@ -48,18 +48,18 @@ inline void NNType::Initialize(const vector<pair<double, double> > &dataset)
         int p = model.Predict(dataset[i].first);
         perSubDataset[p].push_back(dataset[i]);
     }
-    ofstream outFile;
-    outFile.open("nn.csv", ios::app);
-    outFile<<"---------------------------------------------------"<<endl;
-    for(int i=0;i<childNumber;i++)
-    {
-        outFile<<i<<":"<<perSubDataset[i].size()<<"\t";
-        if((i+1)%10 == 0)
-            outFile<<endl;
-    }
-    outFile<<endl;
-    outFile<<endl;
-    outFile<<endl;    
+    // ofstream outFile;
+    // outFile.open("nn.csv", ios::app);
+    // outFile<<"---------------------------------------------------"<<endl;
+    // for(int i=0;i<childNumber;i++)
+    // {
+    //     outFile<<i<<":"<<perSubDataset[i].size()<<"\t";
+    //     if((i+1)%10 == 0)
+    //         outFile<<endl;
+    // }
+    // outFile<<endl;
+    // outFile<<endl;
+    // outFile<<endl;    
     
     cout << "train second stage" << endl;
     switch (kLeafNodeID)

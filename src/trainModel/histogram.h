@@ -22,7 +22,7 @@ public:
         int idx = float(key-minValue) / value;
         if(idx < 0)
             idx = 0;
-        if(idx > childNumber)
+        else if(idx > childNumber)
             idx = childNumber;
         return table[idx];
     }

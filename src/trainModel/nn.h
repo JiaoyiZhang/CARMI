@@ -94,12 +94,16 @@ public:
 		for (int i = 0; i < PositiveSegment.size(); i++)
 		{
 			if(key > PositiveSegment[i].point)
+			{
 				p += (key * PositiveSegment[i].W1 + PositiveSegment[i].b) * PositiveSegment[i].W2;
+			}
 		}
 		for (int i = 0; i < NegativeSegment.size(); i++)
 		{
 			if(key < NegativeSegment[i].point)
+			{
 				p += (key * NegativeSegment[i].W1 + NegativeSegment[i].b) * NegativeSegment[i].W2;
+			}
 		}
 		if (p < 0)
 			p = 0;
