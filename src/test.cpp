@@ -7,7 +7,8 @@
 #include "./dataset/longitudes.h"
 #include "./dataset/longlat.h"
 #include "reconstruction.h"
-#include "../cpp-btree/btree_map.h"
+// #include "../cpp-btree/btree_map.h"
+#include "../stx_btree/btree_map.h"
 #include <algorithm>
 #include <random>
 #include <time.h>
@@ -20,7 +21,7 @@ int datasetSize = 1000000;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
 
-btree::btree_map<double, double> btreemap;
+stx::btree_map<double, double> btreemap;
 
 extern vector<LRType> LRVector;
 extern vector<NNType> NNVector;
@@ -37,6 +38,8 @@ int childNum = 70125;
 int kThreshold = 256;
 int kMaxKeyNum = 256;
 double kRate = 0.4;
+
+ofstream outRes;
 
 void printResult(int r, double &time0, double &time1, double &time2, double &time3)
 {
@@ -59,6 +62,7 @@ void btree_test(double &time0, double &time1, double &time2, double &time3)
     e = clock();
     time0 += (double)(e - s) / CLOCKS_PER_SEC;
     cout<<"Find time:"<<(double)(e - s) / CLOCKS_PER_SEC / (float)dataset.size() <<endl;
+    outRes << "btree," << (double)(e - s) / CLOCKS_PER_SEC / (float)dataset.size() <<",";
   
     s = clock();
     for (int i = 0; i < insertDataset.size(); i++)
@@ -66,7 +70,7 @@ void btree_test(double &time0, double &time1, double &time2, double &time3)
     e = clock();
     time1 += (double)(e - s) / CLOCKS_PER_SEC;
     cout<<"Insert time:"<<(double)(e - s) / CLOCKS_PER_SEC / (float)insertDataset.size() <<endl;
-
+    outRes << (double)(e - s) / CLOCKS_PER_SEC / (float)insertDataset.size() << ",";
 
     // QueryPerformanceCounter(&s);
     // for (int i = 0; i < insertDataset.size(); i++)
@@ -90,11 +94,13 @@ void totalTest(int repetitions, bool mode)
     double time[4][4] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     for (int rep = 0; rep < repetitions; rep++)
     {
-        btree::btree_map<double, double> btree;
+        stx::btree_map<double, double> btree;
         for (int l = 0; l < dataset.size(); l++)
             btree.insert(dataset[l]);
         btreemap = btree;
+        outRes << "childNum is: "<<childNum<<endl;
         btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
+        cout << "-------------------------------" << endl;
 
         for(int j=0;j<4;j++)
         {
@@ -103,6 +109,21 @@ void totalTest(int repetitions, bool mode)
             cout << "repetition:" << rep << "\troot type:" << kInnerNodeID << endl;
             Initialize(dataset, childNum);
             cout << "index init over!" << endl;
+            switch (kInnerNodeID)
+            {
+                case 0:
+                outRes<<"lr,";
+                break;
+                case 1:
+                outRes<<"nn,";
+                break;
+                case 2:
+                outRes<<"his,";
+                break;
+                case 3:
+                outRes<<"bin,";
+                break;
+            }
 
             if(mode)
             {
@@ -114,6 +135,8 @@ void totalTest(int repetitions, bool mode)
                 double time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][0] += time0;
                 cout<<"Find time:"<<time0 / (float)dataset.size() <<endl;
+                outRes << time0 / (float)dataset.size() << ",";
+
 
                 s = clock();
                 for (int i = 0; i < insertDataset.size(); i++)
@@ -122,6 +145,7 @@ void totalTest(int repetitions, bool mode)
                 time0 = (double)(e - s) / CLOCKS_PER_SEC;
                 time[j][1] += time0;
                 cout<<"Insert time:"<<time0 / (float)insertDataset.size() <<endl;
+                outRes << time0 / (float)insertDataset.size() << ",";
 
                 // s = clock();
                 // for (int i = 0; i < insertDataset.size(); i++)
@@ -229,6 +253,7 @@ void totalTest(int repetitions, bool mode)
             vector<ArrayType>().swap(ArrayVector);
             vector<GappedArrayType>().swap(GAVector);
         }
+        outRes << endl;
     }
 
     cout << "btreemap:" << endl;
@@ -251,6 +276,7 @@ void experiment(int repetitions, double initRatio, bool calculateTime)
 {
     cout<<"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
     cout<<"initRatio is: "<<initRatio<<endl;
+    outRes<<"initRatio is: "<<initRatio<<endl;
     LongitudesDataset longData = LongitudesDataset(initRatio);
     LonglatDataset latData = LonglatDataset(initRatio);
     LognormalDataset logData = LognormalDataset(datasetSize, initRatio);
@@ -260,37 +286,57 @@ void experiment(int repetitions, double initRatio, bool calculateTime)
 
     childNum = 3907;
     cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+    outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
     uniData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
 
     cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+    outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
     expData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
 
     cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+    outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
     norData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
 
     cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+    outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
     logData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
     
     childNum = 70125;
     cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+    outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
     latData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
     
     cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+    outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
     longData.GenerateDataset(dataset, insertDataset);
     totalTest(repetitions, calculateTime);
 }
 
 int main()
 {
+    ofstream outFile;
+    outFile.open("nn.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("lr.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("his.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("bin.csv", ios::out);
+    outFile<<"\n";
+
+    outRes.open("res_1103csv", ios::app);
+    outRes<<"Test time: "<<__TIMESTAMP__<<endl;
     for(int l = 0; l < 2; l++)
     {
+
         kLeafNodeID = l;
-        cout<<"kLeafNodeID:"<<(kLeafNodeID ? "Gapped array leaf node\n" : "Array leaf node\n")<<endl;
+        cout<<"kLeafNodeID:"<<(kLeafNodeID ? "Gapped array leaf node" : "Array leaf node")<<endl;
+        outRes<<"kLeafNodeID:"<<(kLeafNodeID ? "Gapped array leaf node" : "Array leaf node")<<endl;
         if(kLeafNodeID == 1)
         {
             kThreshold = 256;  // ga
@@ -302,25 +348,17 @@ int main()
             // kMaxKeyNum = 6000;
         }
         cout<<"kThreshold is: "<<kThreshold<<endl;
+        outRes<<"kThreshold is: "<<kThreshold<<endl;
         int repetitions = 1;
         bool calculateTime = true;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
-        experiment(repetitions, 0.9, calculateTime);
+        outRes << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
+        // experiment(repetitions, 0.9, calculateTime);
         experiment(repetitions, 1, calculateTime);  // read-only
-        experiment(repetitions, 0.5, calculateTime);  // balance
-        experiment(repetitions, 0, calculateTime);  // partial
+        // experiment(repetitions, 0.5, calculateTime);  // balance
+        // experiment(repetitions, 0, calculateTime);  // partial
     }
 
-
-    ofstream outFile;
-    outFile.open("nn.csv", ios::out);
-    outFile<<"\n";
-    outFile.open("lr.csv", ios::out);
-    outFile<<"\n";
-    outFile.open("his.csv", ios::out);
-    outFile<<"\n";
-    outFile.open("bin.csv", ios::out);
-    outFile<<"\n";
 
     return 0;
 }
