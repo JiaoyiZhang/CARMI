@@ -55,6 +55,12 @@ void NormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset, v
         ds.push_back(distribution(generator));
     }
     std::sort(ds.begin(), ds.end());
+    if(ds[0]<0)
+    {
+        double diff = -ds[0];
+        for(int i=0;i<totalSize;i++)
+            ds[i]+=diff;
+    }
 
     double maxV = ds[ds.size() - 1];
     double factor = maxValue / maxV;

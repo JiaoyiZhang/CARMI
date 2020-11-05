@@ -4,10 +4,7 @@
 
 #include "../params.h"
 
-#include "../trainModel/binary_search_model.h"
-#include "../trainModel/histogram.h"
-#include "../trainModel/lr.h"
-#include "../trainModel/nn.h"
+#include "../trainModel/piecewiseLR.h"
 #include "../leafNodeType/array_type.h"
 #include "../leafNodeType/ga_type.h"
 #include <vector>
@@ -28,7 +25,7 @@ public:
     void Initialize(const vector<pair<double, double> > &dataset);
 
     vector<int> child;
-    Net model;
+    PiecewiseLR model;
     int childNumber;
 };
 

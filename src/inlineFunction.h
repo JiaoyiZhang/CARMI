@@ -11,13 +11,6 @@
 #include <vector>
 using namespace std;
 
-extern vector<LRType> LRVector;
-extern vector<NNType> NNVector;
-extern vector<HisType> HisVector;
-extern vector<BSType> BSVector;
-extern vector<ArrayType> ArrayVector;
-extern vector<GappedArrayType> GAVector;
-
 // search a key-value through binary search in 
 // the array leaf node
 inline int ArrayBinarySearch(vector<pair<double, double>> &m_dataset, double key, int start, int end)
