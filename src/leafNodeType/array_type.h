@@ -39,14 +39,14 @@ void ArrayType::SetDataset(const vector<pair<double, double>> &dataset)
         return;
 
     model.Train(m_dataset, m_datasetSize);
+    int sum = 0;
     for (int i = 0; i < m_datasetSize; i++)
     {
         int p = model.Predict(m_dataset[i].first);
         int e = abs(i - p);
-        if (e > error)
-            error = e;
+        sum += e;
     }
-    error++;
+    error = float(sum) / m_datasetSize + 1;
     writeTimes = 0;
 }
 #endif
