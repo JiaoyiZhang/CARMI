@@ -40,8 +40,8 @@ public:
     int GetChildNum() { return childNumber; }
 
 private:
-    vector<double> index;
-    int childNumber;
+    vector<double> index;  // 8c
+    int childNumber;  // 4
 };
 
 void BinarySearchModel::Train(const vector<pair<double, double>> &dataset, int len)

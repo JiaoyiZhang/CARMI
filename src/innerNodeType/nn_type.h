@@ -24,9 +24,9 @@ public:
     }
     void Initialize(const vector<pair<double, double> > &dataset);
 
-    vector<int> child;
-    PiecewiseLR model;
-    int childNumber;
+    vector<int> child;  // 4c
+    PiecewiseLR model;  // 24*8+4 Byte
+    int childNumber;  // 4
 };
 
 inline void NNType::Initialize(const vector<pair<double, double> > &dataset)

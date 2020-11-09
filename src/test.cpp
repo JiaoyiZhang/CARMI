@@ -31,6 +31,8 @@ extern vector<BSType> BSVector;
 extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
+
+int kMaxSpace = 1024 * 1024;  // Byte
 int kLeafNodeID = 0;
 int kInnerNodeID = 0;
 int kNeuronNumber = 8;
@@ -221,8 +223,8 @@ void totalTest(int repetitions, bool mode)
                 for (int i = 0; i < dataset.size(); i++)
                 {
                     auto res = Find(dataset[i].first);
-                    if(res.second != dataset[i].first * 10)
-                        cout<<"Find failed:\ti:"<<i<<"\t"<<dataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;   
+                    if(res.second != dataset[i].second)
+                        cout<<"Find failed:\ti:"<<i<<"\tdata:"<<dataset[i].first<<"\t"<<dataset[i].second<<"\tres: "<<res.first<<"\t"<<res.second<<endl;   
                 }
                 e = chrono::system_clock::now();
                 tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den;
@@ -236,7 +238,7 @@ void totalTest(int repetitions, bool mode)
                     if(!r)
                         cout<<"Insert failed:\ti:"<< i << "\t" <<insertDataset[i].first<<endl;
                     auto res = Find(insertDataset[i].first);
-                    if(res.second != insertDataset[i].first * 10)
+                    if(res.second != insertDataset[i].second)
                         cout<<"Find failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;   
                 }
                 e = chrono::system_clock::now();
@@ -244,7 +246,7 @@ void totalTest(int repetitions, bool mode)
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto res = Find(insertDataset[i].first);
-                    if(res.second != insertDataset[i].first * 10)
+                    if(res.second != insertDataset[i].second)
                         cout<<"Find Insert failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
                 }
                 time[j][1] += tmp;
@@ -280,7 +282,7 @@ void totalTest(int repetitions, bool mode)
                     if(!r)
                         cout<<"Delete failed:\ti:"<< i << "\t" <<insertDataset[i].first<<endl;
                     auto res = Find(insertDataset[i].first);
-                    if(res.second == insertDataset[i].first * 10)
+                    if(res.second == insertDataset[i].second || res.second == 1.11)
                         cout<<"After Delete failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
                 }
                 e = chrono::system_clock::now();
@@ -288,7 +290,7 @@ void totalTest(int repetitions, bool mode)
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto res = Find(insertDataset[i].first);
-                    if(res.second == insertDataset[i].first * 10)
+                    if(res.second == insertDataset[i].second || res.second == 1.11)
                         cout<<"Find Delete failed:\ti:"<<i<<"\t"<<insertDataset[i].first<<"\tres: "<<res.first<<"\t"<<res.second<<endl;    
                 }
                 tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den;
@@ -337,6 +339,7 @@ void experiment(int repetitions, double initRatio, bool calculateTime)
     vector<int> childNum_synthetic = {2000, 3000, 3907, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 50000, 100000};
     vector<int> childNum_map = {25000, 50000, 60000, 70125, 80000, 90000, 100000, 250000, 350000, 500000, 750000, 1000000};
     for(int i=0;i<childNum_synthetic.size();i++)
+    // for(int i=2;i<3;i++)
     {
         childNum = childNum_synthetic[i];
         cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
@@ -380,19 +383,19 @@ void experiment(int repetitions, double initRatio, bool calculateTime)
 
 int main()
 {
-    // ofstream outFile;
-    // outFile.open("nn.csv", ios::out);
-    // outFile<<"\n";
-    // outFile.open("lr.csv", ios::out);
-    // outFile<<"\n";
-    // outFile.open("his.csv", ios::out);
-    // outFile<<"\n";
-    // outFile.open("bin.csv", ios::out);
-    // outFile<<"\n";
+    ofstream outFile;
+    outFile.open("nn.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("lr.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("his.csv", ios::out);
+    outFile<<"\n";
+    outFile.open("bin.csv", ios::out);
+    outFile<<"\n";
 
-    outRes.open("res_1103_entropy.csv", ios::app);
+    outRes.open("res_1109_totalRes.csv", ios::app);
     outRes<<"Test time: "<<__TIMESTAMP__<<endl;
-    for(int l = 0; l < 1; l++)
+    for(int l = 0; l < 2; l++)
     {
 
         kLeafNodeID = l;

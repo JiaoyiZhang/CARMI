@@ -11,7 +11,7 @@
 #include <vector>
 using namespace std;
 
-// search a key-value through binary search in 
+// search a key-value through binary search in
 // the array leaf node
 inline int ArrayBinarySearch(vector<pair<double, double>> &m_dataset, double key, int start, int end)
 {
@@ -26,36 +26,46 @@ inline int ArrayBinarySearch(vector<pair<double, double>> &m_dataset, double key
     return start;
 }
 
-// search a key-value through binary search 
+// search a key-value through binary search
 // in the gapped array
+// return the idx of the first element >= key
 inline int GABinarySearch(vector<pair<double, double>> &m_dataset, double key, int start_idx, int end_idx)
 {
+    // for(int i=0;i<m_dataset.size();i++)
+    // {
+    //     cout<<i<<":"<<m_dataset[i].first<<"\t";
+    //     if((i+1)%100 == 0)
+    //         cout<<endl;
+    // }
+    // cout<<endl;
     // use binary search to find
-    while (start_idx < end_idx)
+    // cout<<"key:"<<key<<"\tstart:"<<start_idx<<"\tend:"<<end_idx<<endl;
+    while (end_idx - start_idx >= 2)
     {
-        if (m_dataset[start_idx].first == -1)
-            start_idx--;
-        if (m_dataset[end_idx].first == -1)
-            end_idx++;
         int mid = (start_idx + end_idx) >> 1;
+        // cout<<"In while: mid:"<<mid<<"\tstart:"<<start_idx<<"\tend:"<<end_idx<<endl;
         if (m_dataset[mid].first == -1)
         {
-            int left = max(start_idx, mid - 1);
-            int right = min(end_idx, mid + 1);
-            if (m_dataset[left].first >= key)
-                end_idx = left;
+            // cout<<"mid == -1!\tm_dataset[mid - 1].first:"<<m_dataset[mid - 1].first<<"\tkey:"<<key<<endl;
+            if (m_dataset[mid - 1].first >= key)
+                end_idx = mid - 1;
             else
-                start_idx = right;
+                start_idx = mid + 1;
         }
         else
         {
+            // cout<<"mid != -1!\tm_dataset[mid].first:"<<m_dataset[mid].first<<"\tkey:"<<key<<endl;
             if (m_dataset[mid].first >= key)
                 end_idx = mid;
             else
                 start_idx = mid + 1;
         }
     }
-    return start_idx;
+    // cout<<"Out of while! start:"<<start_idx<<"\tm_dataset[start_idx].first:"<<m_dataset[start_idx].first<<"\tm_dataset[end_idx].first:"<<m_dataset[end_idx].first<<endl;
+    if (m_dataset[start_idx].first >= key)
+        return start_idx;
+    else
+        return end_idx;
 }
 
 #endif

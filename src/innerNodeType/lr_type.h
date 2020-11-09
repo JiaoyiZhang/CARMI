@@ -24,9 +24,9 @@ public:
     }
     void Initialize(const vector<pair<double, double> > &dataset);
 
-    vector<int> child;
-    LinearRegression model;
-    int childNumber;
+    vector<int> child;  // 4c Byte
+    LinearRegression model;  // 20 Byte
+    int childNumber;  // 4
 };
 
 inline void LRType::Initialize(const vector<pair<double, double> > &dataset)

@@ -24,9 +24,9 @@ public:
     }
     void Initialize(const vector<pair<double, double> > &dataset);
 
-    vector<int> child;
-    HistogramModel model;
-    int childNumber;
+    vector<int> child;  // 4c
+    HistogramModel model;  // 16+16c
+    int childNumber;  // 4
 };
 
 

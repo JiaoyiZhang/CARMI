@@ -22,7 +22,7 @@ public:
     void SetDataset(const vector<pair<double, double>> &dataset);
 
     vector<pair<double, double>> m_dataset;
-    LinearRegression model;
+    LinearRegression model;  // 20 Byte
     int m_datasetSize;
     int error;
 

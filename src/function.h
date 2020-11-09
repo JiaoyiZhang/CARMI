@@ -28,10 +28,9 @@ extern int kThreshold;
 extern const double kDensity;
 extern const int kAdaptiveChildNum;
 extern double kRate;
-extern const double kReadWriteRate;
 extern int kMaxKeyNum;
 
-void Initialize(const vector<pair<double, double> > &dataset, int childNum)
+void Initialize(const vector<pair<double, double>> &dataset, int childNum)
 {
     // create the root node
     switch (kInnerNodeID)
@@ -57,10 +56,10 @@ void Initialize(const vector<pair<double, double> > &dataset, int childNum)
 
 pair<double, double> Find(double key)
 {
-    int idx = 0;  // idx in the INDEX
+    int idx = 0; // idx in the INDEX
     int content;
     int type = kInnerNodeID;
-    while(1)
+    while (1)
     {
         switch (type)
         {
@@ -107,9 +106,9 @@ pair<double, double> Find(double key)
                 int end = min(ArrayVector[idx].m_datasetSize - 1, preIdx + ArrayVector[idx].error);
                 start = min(start, end);
                 int res;
-                if(key <= ArrayVector[idx].m_dataset[start].first)
+                if (key <= ArrayVector[idx].m_dataset[start].first)
                     res = ArrayBinarySearch(ArrayVector[idx].m_dataset, key, 0, start);
-                else if(key <= ArrayVector[idx].m_dataset[end].first)
+                else if (key <= ArrayVector[idx].m_dataset[end].first)
                     res = ArrayBinarySearch(ArrayVector[idx].m_dataset, key, start, end);
                 else
                 {
@@ -117,12 +116,11 @@ pair<double, double> Find(double key)
                     if (res >= ArrayVector[idx].m_datasetSize)
                         return {};
                 }
-                    
+
                 if (ArrayVector[idx].m_dataset[res].first == key)
                     return ArrayVector[idx].m_dataset[res];
                 return {};
             }
-
         }
         break;
         case 5:
@@ -135,11 +133,15 @@ pair<double, double> Find(double key)
                 int start = max(0, preIdx - GAVector[idx].error);
                 int end = min(GAVector[idx].maxIndex, preIdx + GAVector[idx].error);
                 start = min(start, end);
-                
+
                 int res;
-                if(key <= GAVector[idx].m_dataset[start].first)
+                if (GAVector[idx].m_dataset[start].first == -1)
+                    start--;
+                if (GAVector[idx].m_dataset[end].first == -1)
+                    end--;
+                if (key <= GAVector[idx].m_dataset[start].first)
                     res = GABinarySearch(GAVector[idx].m_dataset, key, 0, start);
-                else if(key <= GAVector[idx].m_dataset[end].first)
+                else if (key <= GAVector[idx].m_dataset[end].first)
                     res = GABinarySearch(GAVector[idx].m_dataset, key, start, end);
                 else
                 {
@@ -160,10 +162,10 @@ pair<double, double> Find(double key)
 
 bool Insert(pair<double, double> data)
 {
-    int idx = 0;  // idx in the INDEX
+    int idx = 0; // idx in the INDEX
     int content;
     int type = kInnerNodeID;
-    while(1)
+    while (1)
     {
         switch (type)
         {
@@ -209,14 +211,13 @@ bool Insert(pair<double, double> data)
             int start = max(0, preIdx - ArrayVector[idx].error);
             int end = min(ArrayVector[idx].m_datasetSize - 1, preIdx + ArrayVector[idx].error);
             start = min(start, end);
-            
-            if(data.first <= ArrayVector[idx].m_dataset[start].first)
+
+            if (data.first <= ArrayVector[idx].m_dataset[start].first)
                 preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, 0, start);
-            else if(data.first <= ArrayVector[idx].m_dataset[end].first)
+            else if (data.first <= ArrayVector[idx].m_dataset[end].first)
                 preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, start, end);
             else
                 preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, end, ArrayVector[idx].m_datasetSize - 1);
-
 
             // Insert data
             if (preIdx == ArrayVector[idx].m_datasetSize - 1 && ArrayVector[idx].m_dataset[preIdx].first < data.first)
@@ -244,87 +245,92 @@ bool Insert(pair<double, double> data)
         case 5:
         {
             if ((float(GAVector[idx].m_datasetSize) / GAVector[idx].capacity > GAVector[idx].density))
-                {
-                    // If an additional Insertion results in crossing the density
-                    // then we expand the gapped array
-                    GAVector[idx].SetDataset(GAVector[idx].m_dataset);
-                }
+            {
+                // If an additional Insertion results in crossing the density
+                // then we expand the gapped array
+                GAVector[idx].SetDataset(GAVector[idx].m_dataset);
+            }
 
-                if (GAVector[idx].m_datasetSize == 0)
-                {
-                    GAVector[idx].m_dataset = vector<pair<double, double>>(GAVector[idx].capacity, pair<double, double>{-1, -1});
-                    GAVector[idx].m_dataset[0] = data;
-                    GAVector[idx].m_datasetSize++;
-                    GAVector[idx].maxIndex = 0;
-                    GAVector[idx].SetDataset(GAVector[idx].m_dataset);
-                    return true;
-                }
-                int preIdx = GAVector[idx].model.Predict(data.first);
+            if (GAVector[idx].m_datasetSize == 0)
+            {
+                GAVector[idx].m_dataset = vector<pair<double, double>>(GAVector[idx].capacity, pair<double, double>{-1, -1});
+                GAVector[idx].m_dataset[0] = data;
+                GAVector[idx].m_datasetSize++;
+                GAVector[idx].maxIndex = 0;
+                GAVector[idx].SetDataset(GAVector[idx].m_dataset);
+                return true;
+            }
+            int preIdx = GAVector[idx].model.Predict(data.first);
 
-                int start = max(0, preIdx - GAVector[idx].error);
-                int end = min(GAVector[idx].maxIndex, preIdx + GAVector[idx].error);
-                start = min(start, end);
-                
-                if(data.first <= GAVector[idx].m_dataset[start].first)
-                    preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, 0, start);
-                else if(data.first <= GAVector[idx].m_dataset[end].first)
-                    preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, start, end);
-                else
-                    preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, end, GAVector[idx].maxIndex);
+            int start = max(0, preIdx - GAVector[idx].error);
+            int end = min(GAVector[idx].maxIndex, preIdx + GAVector[idx].error);
+            start = min(start, end);
 
-                // if the Insertion position is a gap,
-                //  then we Insert the element into the gap and are done
-                if (GAVector[idx].m_dataset[preIdx].first == -1)
+            if (GAVector[idx].m_dataset[start].first == -1)
+                start--;
+            if (GAVector[idx].m_dataset[end].first == -1)
+                end--;
+
+            if (data.first <= GAVector[idx].m_dataset[start].first)
+                preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, 0, start);
+            else if (data.first <= GAVector[idx].m_dataset[end].first)
+                preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, start, end);
+            else
+                preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, end, GAVector[idx].maxIndex);
+
+            // if the Insertion position is a gap,
+            //  then we Insert the element into the gap and are done
+            if (GAVector[idx].m_dataset[preIdx].first == -1)
+            {
+                GAVector[idx].m_dataset[preIdx] = data;
+                GAVector[idx].m_datasetSize++;
+                GAVector[idx].maxIndex = max(GAVector[idx].maxIndex, preIdx);
+                return true;
+            }
+            else
+            {
+                if (GAVector[idx].m_dataset[preIdx].second == DBL_MIN)
                 {
                     GAVector[idx].m_dataset[preIdx] = data;
                     GAVector[idx].m_datasetSize++;
                     GAVector[idx].maxIndex = max(GAVector[idx].maxIndex, preIdx);
                     return true;
                 }
-                else
+                if (preIdx == GAVector[idx].maxIndex && GAVector[idx].m_dataset[GAVector[idx].maxIndex].first < data.first)
                 {
-                    if (GAVector[idx].m_dataset[preIdx].second == DBL_MIN)
-                    {
-                        GAVector[idx].m_dataset[preIdx] = data;
-                        GAVector[idx].m_datasetSize++;
-                        GAVector[idx].maxIndex = max(GAVector[idx].maxIndex, preIdx);
-                        return true;
-                    }
-                    if (preIdx == GAVector[idx].maxIndex && GAVector[idx].m_dataset[GAVector[idx].maxIndex].first < data.first)
-                    {
-                        GAVector[idx].m_dataset[++GAVector[idx].maxIndex] = data;
-                        GAVector[idx].m_datasetSize++;
-                        return true;
-                    }
-                    // If the Insertion position is not a gap, we make
-                    // a gap at the Insertion position by shifting the elements
-                    // by one position in the direction of the closest gap
-
-                    int i = preIdx + 1;
-                    while (GAVector[idx].m_dataset[i].first != -1)
-                        i++;
-                    if (i >= GAVector[idx].capacity)
-                    {
-                        i = preIdx - 1;
-                        while (i >= 0 && GAVector[idx].m_dataset[i].first != -1)
-                            i--;
-                        for (int j = i; j < preIdx - 1; j++)
-                            GAVector[idx].m_dataset[j] = GAVector[idx].m_dataset[j + 1];
-                        preIdx--;
-                    }
-                    else
-                    {
-                        if (i > GAVector[idx].maxIndex)
-                            GAVector[idx].maxIndex++;
-                        for (; i > preIdx; i--)
-                            GAVector[idx].m_dataset[i] = GAVector[idx].m_dataset[i - 1];
-                    }
-                    GAVector[idx].m_dataset[preIdx] = data;
+                    GAVector[idx].m_dataset[++GAVector[idx].maxIndex] = data;
                     GAVector[idx].m_datasetSize++;
-                    GAVector[idx].maxIndex = max(GAVector[idx].maxIndex, preIdx);
                     return true;
                 }
-                return false;
+                // If the Insertion position is not a gap, we make
+                // a gap at the Insertion position by shifting the elements
+                // by one position in the direction of the closest gap
+
+                int i = preIdx + 1;
+                while (GAVector[idx].m_dataset[i].first != -1)
+                    i++;
+                if (i >= GAVector[idx].capacity)
+                {
+                    i = preIdx - 1;
+                    while (i >= 0 && GAVector[idx].m_dataset[i].first != -1)
+                        i--;
+                    for (int j = i; j < preIdx - 1; j++)
+                        GAVector[idx].m_dataset[j] = GAVector[idx].m_dataset[j + 1];
+                    preIdx--;
+                }
+                else
+                {
+                    if (i > GAVector[idx].maxIndex)
+                        GAVector[idx].maxIndex++;
+                    for (; i > preIdx; i--)
+                        GAVector[idx].m_dataset[i] = GAVector[idx].m_dataset[i - 1];
+                }
+                GAVector[idx].m_dataset[preIdx] = data;
+                GAVector[idx].m_datasetSize++;
+                GAVector[idx].maxIndex = max(GAVector[idx].maxIndex, preIdx);
+                return true;
+            }
+            return false;
         }
         break;
         }
@@ -333,10 +339,10 @@ bool Insert(pair<double, double> data)
 
 bool Delete(double key)
 {
-    int idx = 0;  // idx in the INDEX
+    int idx = 0; // idx in the INDEX
     int content;
     int type = kInnerNodeID;
-    while(1)
+    while (1)
     {
         switch (type)
         {
@@ -377,9 +383,9 @@ bool Delete(double key)
                 int end = min(ArrayVector[idx].m_datasetSize - 1, preIdx + ArrayVector[idx].error);
                 start = min(start, end);
                 int res;
-                if(key <= ArrayVector[idx].m_dataset[start].first)
+                if (key <= ArrayVector[idx].m_dataset[start].first)
                     res = ArrayBinarySearch(ArrayVector[idx].m_dataset, key, 0, start);
-                else if(key <= ArrayVector[idx].m_dataset[end].first)
+                else if (key <= ArrayVector[idx].m_dataset[end].first)
                     res = ArrayBinarySearch(ArrayVector[idx].m_dataset, key, start, end);
                 else
                 {
@@ -420,9 +426,13 @@ bool Delete(double key)
                 start = min(start, end);
 
                 int res;
-                if(key <= GAVector[idx].m_dataset[start].first)
+                if (GAVector[idx].m_dataset[start].first == -1)
+                    start--;
+                if (GAVector[idx].m_dataset[end].first == -1)
+                    end--;
+                if (key <= GAVector[idx].m_dataset[start].first)
                     res = GABinarySearch(GAVector[idx].m_dataset, key, 0, start);
-                else if(key <= GAVector[idx].m_dataset[end].first)
+                else if (key <= GAVector[idx].m_dataset[end].first)
                     res = GABinarySearch(GAVector[idx].m_dataset, key, start, end);
                 else
                 {
@@ -447,10 +457,10 @@ bool Delete(double key)
 
 bool Update(pair<double, double> data)
 {
-    int idx = 0;  // idx in the INDEX
+    int idx = 0; // idx in the INDEX
     int content;
     int type = kInnerNodeID;
-    while(1)
+    while (1)
     {
         switch (type)
         {
@@ -490,16 +500,15 @@ bool Update(pair<double, double> data)
                 int start = max(0, preIdx - ArrayVector[idx].error);
                 int end = min(ArrayVector[idx].m_datasetSize - 1, preIdx + ArrayVector[idx].error);
                 start = min(start, end);
-                if(data.first <= ArrayVector[idx].m_dataset[start].first)
+                if (data.first <= ArrayVector[idx].m_dataset[start].first)
                     preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, 0, start);
-                else if(data.first <= ArrayVector[idx].m_dataset[end].first)
+                else if (data.first <= ArrayVector[idx].m_dataset[end].first)
                     preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, start, end);
                 else
                 {
                     preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, end, ArrayVector[idx].m_datasetSize - 1);
                     if (preIdx >= ArrayVector[idx].m_datasetSize)
                         return false;
-
                 }
                 if (ArrayVector[idx].m_dataset[preIdx].first != data.first)
                     return false;
@@ -521,11 +530,14 @@ bool Update(pair<double, double> data)
                 int start = max(0, preIdx - GAVector[idx].error);
                 int end = min(GAVector[idx].maxIndex, preIdx + GAVector[idx].error);
                 start = min(start, end);
+                if (GAVector[idx].m_dataset[start].first == -1)
+                    start--;
+                if (GAVector[idx].m_dataset[end].first == -1)
+                    end--;
 
-                
-                if(data.first <= GAVector[idx].m_dataset[start].first)
+                if (data.first <= GAVector[idx].m_dataset[start].first)
                     preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, 0, start);
-                else if(data.first <= GAVector[idx].m_dataset[end].first)
+                else if (data.first <= GAVector[idx].m_dataset[end].first)
                     preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, start, end);
                 else
                 {
@@ -549,9 +561,9 @@ long double GetEntropy(int size)
 {
     // the entropy of each type of leaf node is the same
     long double entropy = 0.0;
-    for(int i=0;i<ArrayVector.size();i++)
+    for (int i = 0; i < ArrayVector.size(); i++)
     {
-        if(ArrayVector[i].m_datasetSize != 0)
+        if (ArrayVector[i].m_datasetSize != 0)
         {
             auto p = double(ArrayVector[i].m_datasetSize) / size;
             entropy += p * (-log(p) / log(2));
@@ -560,7 +572,261 @@ long double GetEntropy(int size)
     return entropy;
 }
 
+// designed for construction
+void InnerNodeTime(int type, double key)
+{
+    int idx = 0; // idx in the INDEX
+    int content;
+    switch (type)
+    {
+    case 0:
+    {
+        content = LRVector[idx].child[LRVector[idx].model.Predict(key)];
+        type = content >> 28;
+        idx = content & 0x0FFFFFFF;
+        return;
+    }
+    break;
+    case 1:
+    {
+        content = NNVector[idx].child[NNVector[idx].model.Predict(key)];
+        type = content >> 28;
+        idx = content & 0x0FFFFFFF;
+        return;
+    }
+    break;
+    case 2:
+    {
+        content = HisVector[idx].child[HisVector[idx].model.Predict(key)];
+        type = content >> 28;
+        idx = content & 0x0FFFFFFF;
+        return;
+    }
+    break;
+    case 3:
+    {
+        content = BSVector[idx].child[BSVector[idx].model.Predict(key)];
+        type = content >> 28;
+        idx = content & 0x0FFFFFFF;
+        return;
+    }
+    break;
+    }
+}
+
+pair<double, double> LeafNodeFind(int type, int idx, double key)
+{
+    switch (type)
+    {
+    case 4:
+    {
+        if (ArrayVector[idx].m_datasetSize == 0)
+            return {};
+        int preIdx = ArrayVector[idx].model.Predict(key);
+        if (ArrayVector[idx].m_dataset[preIdx].first == key)
+        {
+            return ArrayVector[idx].m_dataset[preIdx];
+        }
+        else
+        {
+            int start = max(0, preIdx - ArrayVector[idx].error);
+            int end = min(ArrayVector[idx].m_datasetSize - 1, preIdx + ArrayVector[idx].error);
+            start = min(start, end);
+            int res;
+            if (key <= ArrayVector[idx].m_dataset[start].first)
+                res = ArrayBinarySearch(ArrayVector[idx].m_dataset, key, 0, start);
+            else if (key <= ArrayVector[idx].m_dataset[end].first)
+                res = ArrayBinarySearch(ArrayVector[idx].m_dataset, key, start, end);
+            else
+            {
+                res = ArrayBinarySearch(ArrayVector[idx].m_dataset, key, end, ArrayVector[idx].m_datasetSize - 1);
+                if (res >= ArrayVector[idx].m_datasetSize)
+                    return {};
+            }
+
+            if (ArrayVector[idx].m_dataset[res].first == key)
+                return ArrayVector[idx].m_dataset[res];
+            return {};
+        }
+    }
+    break;
+    case 5:
+    {
+        int preIdx = GAVector[idx].model.Predict(key);
+        if (GAVector[idx].m_dataset[preIdx].first == key)
+            return GAVector[idx].m_dataset[preIdx];
+        else
+        {
+            int start = max(0, preIdx - GAVector[idx].error);
+            int end = min(GAVector[idx].maxIndex, preIdx + GAVector[idx].error);
+            start = min(start, end);
+
+            int res;
+            if (GAVector[idx].m_dataset[start].first == -1)
+                start--;
+            if (GAVector[idx].m_dataset[end].first == -1)
+                end--;
+            if (key <= GAVector[idx].m_dataset[start].first)
+                res = GABinarySearch(GAVector[idx].m_dataset, key, 0, start);
+            else if (key <= GAVector[idx].m_dataset[end].first)
+                res = GABinarySearch(GAVector[idx].m_dataset, key, start, end);
+            else
+            {
+                res = GABinarySearch(GAVector[idx].m_dataset, key, end, GAVector[idx].maxIndex - 1);
+                if (res >= GAVector[idx].maxIndex)
+                    return {DBL_MIN, DBL_MIN};
+            }
+
+            if (GAVector[idx].m_dataset[res].first == key)
+                return GAVector[idx].m_dataset[res];
+            return {DBL_MIN, DBL_MIN};
+        }
+    }
+    break;
+    }
+}
+
+bool LeafNodeInsert(int type, int idx, pair<double, double> data)
+{
+    switch (type)
+    {
+    case 4:
+    {
+        if (ArrayVector[idx].m_datasetSize == 0)
+        {
+            ArrayVector[idx].m_dataset.push_back(data);
+            ArrayVector[idx].m_datasetSize++;
+            ArrayVector[idx].writeTimes++;
+            ArrayVector[idx].SetDataset(ArrayVector[idx].m_dataset);
+            return true;
+        }
+        int preIdx = ArrayVector[idx].model.Predict(data.first);
+        int start = max(0, preIdx - ArrayVector[idx].error);
+        int end = min(ArrayVector[idx].m_datasetSize - 1, preIdx + ArrayVector[idx].error);
+        start = min(start, end);
+
+        if (data.first <= ArrayVector[idx].m_dataset[start].first)
+            preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, 0, start);
+        else if (data.first <= ArrayVector[idx].m_dataset[end].first)
+            preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, start, end);
+        else
+            preIdx = ArrayBinarySearch(ArrayVector[idx].m_dataset, data.first, end, ArrayVector[idx].m_datasetSize - 1);
+
+        // Insert data
+        if (preIdx == ArrayVector[idx].m_datasetSize - 1 && ArrayVector[idx].m_dataset[preIdx].first < data.first)
+        {
+            ArrayVector[idx].m_dataset.push_back(data);
+            ArrayVector[idx].m_datasetSize++;
+            ArrayVector[idx].writeTimes++;
+            return true;
+        }
+        ArrayVector[idx].m_dataset.push_back(ArrayVector[idx].m_dataset[ArrayVector[idx].m_datasetSize - 1]);
+        ArrayVector[idx].m_datasetSize++;
+        for (int i = ArrayVector[idx].m_datasetSize - 2; i > preIdx; i--)
+            ArrayVector[idx].m_dataset[i] = ArrayVector[idx].m_dataset[i - 1];
+        ArrayVector[idx].m_dataset[preIdx] = data;
+
+        ArrayVector[idx].writeTimes++;
+
+        // If the current number is greater than the maximum,
+        // the child node needs to be retrained
+        if (ArrayVector[idx].writeTimes >= ArrayVector[idx].m_datasetSize || ArrayVector[idx].writeTimes > ArrayVector[idx].m_maxNumber)
+            ArrayVector[idx].SetDataset(ArrayVector[idx].m_dataset);
+        return true;
+    }
+    break;
+    case 5:
+    {
+        if ((float(GAVector[idx].m_datasetSize) / GAVector[idx].capacity > GAVector[idx].density))
+        {
+            // If an additional Insertion results in crossing the density
+            // then we expand the gapped array
+            GAVector[idx].SetDataset(GAVector[idx].m_dataset);
+        }
+
+        if (GAVector[idx].m_datasetSize == 0)
+        {
+            GAVector[idx].m_dataset = vector<pair<double, double>>(GAVector[idx].capacity, pair<double, double>{-1, -1});
+            GAVector[idx].m_dataset[0] = data;
+            GAVector[idx].m_datasetSize++;
+            GAVector[idx].maxIndex = 0;
+            GAVector[idx].SetDataset(GAVector[idx].m_dataset);
+            return true;
+        }
+        int preIdx = GAVector[idx].model.Predict(data.first);
+
+        int start = max(0, preIdx - GAVector[idx].error);
+        int end = min(GAVector[idx].maxIndex, preIdx + GAVector[idx].error);
+        start = min(start, end);
+
+        if (GAVector[idx].m_dataset[start].first == -1)
+            start--;
+        if (GAVector[idx].m_dataset[end].first == -1)
+            end--;
+
+        if (data.first <= GAVector[idx].m_dataset[start].first)
+            preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, 0, start);
+        else if (data.first <= GAVector[idx].m_dataset[end].first)
+            preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, start, end);
+        else
+            preIdx = GABinarySearch(GAVector[idx].m_dataset, data.first, end, GAVector[idx].maxIndex);
+
+        // if the Insertion position is a gap,
+        //  then we Insert the element into the gap and are done
+        if (GAVector[idx].m_dataset[preIdx].first == -1)
+        {
+            GAVector[idx].m_dataset[preIdx] = data;
+            GAVector[idx].m_datasetSize++;
+            GAVector[idx].maxIndex = max(GAVector[idx].maxIndex, preIdx);
+            return true;
+        }
+        else
+        {
+            if (GAVector[idx].m_dataset[preIdx].second == DBL_MIN)
+            {
+                GAVector[idx].m_dataset[preIdx] = data;
+                GAVector[idx].m_datasetSize++;
+                GAVector[idx].maxIndex = max(GAVector[idx].maxIndex, preIdx);
+                return true;
+            }
+            if (preIdx == GAVector[idx].maxIndex && GAVector[idx].m_dataset[GAVector[idx].maxIndex].first < data.first)
+            {
+                GAVector[idx].m_dataset[++GAVector[idx].maxIndex] = data;
+                GAVector[idx].m_datasetSize++;
+                return true;
+            }
+            // If the Insertion position is not a gap, we make
+            // a gap at the Insertion position by shifting the elements
+            // by one position in the direction of the closest gap
+
+            int i = preIdx + 1;
+            while (GAVector[idx].m_dataset[i].first != -1)
+                i++;
+            if (i >= GAVector[idx].capacity)
+            {
+                i = preIdx - 1;
+                while (i >= 0 && GAVector[idx].m_dataset[i].first != -1)
+                    i--;
+                for (int j = i; j < preIdx - 1; j++)
+                    GAVector[idx].m_dataset[j] = GAVector[idx].m_dataset[j + 1];
+                preIdx--;
+            }
+            else
+            {
+                if (i > GAVector[idx].maxIndex)
+                    GAVector[idx].maxIndex++;
+                for (; i > preIdx; i--)
+                    GAVector[idx].m_dataset[i] = GAVector[idx].m_dataset[i - 1];
+            }
+            GAVector[idx].m_dataset[preIdx] = data;
+            GAVector[idx].m_datasetSize++;
+            GAVector[idx].maxIndex = max(GAVector[idx].maxIndex, preIdx);
+            return true;
+        }
+        return false;
+    }
+    break;
+    }
+}
+
 #endif
-
-
-

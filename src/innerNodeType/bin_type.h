@@ -24,9 +24,9 @@ public:
     }
     void Initialize(const vector<pair<double, double> > &dataset);
 
-    vector<int> child;
-    BinarySearchModel model;
-    int childNumber;
+    vector<int> child;  // 4c
+    BinarySearchModel model;  // 8c + 4
+    int childNumber;  // 4
 };
 
 
