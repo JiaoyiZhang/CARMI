@@ -81,6 +81,7 @@ inline void BSType::Initialize(const vector<pair<double, double> > &dataset)
             }
             break;
     }
+    vector<vector<pair<double, double>>>().swap(perSubDataset);
     
     cout << "End train" << endl;
 }

@@ -79,7 +79,8 @@
         "fstream": "cpp",
         "numeric": "cpp",
         "bit": "cpp",
-        "memory_resource": "cpp"
+        "memory_resource": "cpp",
+        "variant": "cpp"
     },
     "C_Cpp.default.configurationProvider": "go2sh.cmake-integration"
 }

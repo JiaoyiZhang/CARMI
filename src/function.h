@@ -54,11 +54,11 @@ void Initialize(const vector<pair<double, double>> &dataset, int childNum)
     }
 }
 
-pair<double, double> Find(double key)
+pair<double, double> Find(int rootType, double key)
 {
     int idx = 0; // idx in the INDEX
     int content;
-    int type = kInnerNodeID;
+    int type = rootType;
     while (1)
     {
         switch (type)
@@ -160,11 +160,11 @@ pair<double, double> Find(double key)
     }
 }
 
-bool Insert(pair<double, double> data)
+bool Insert(int rootType, pair<double, double> data)
 {
     int idx = 0; // idx in the INDEX
     int content;
-    int type = kInnerNodeID;
+    int type = rootType;
     while (1)
     {
         switch (type)
@@ -337,11 +337,11 @@ bool Insert(pair<double, double> data)
     }
 }
 
-bool Delete(double key)
+bool Delete(int rootType, double key)
 {
     int idx = 0; // idx in the INDEX
     int content;
-    int type = kInnerNodeID;
+    int type = rootType;
     while (1)
     {
         switch (type)
@@ -455,11 +455,11 @@ bool Delete(double key)
     }
 }
 
-bool Update(pair<double, double> data)
+bool Update(int rootType, pair<double, double> data)
 {
     int idx = 0; // idx in the INDEX
     int content;
-    int type = kInnerNodeID;
+    int type = rootType;
     while (1)
     {
         switch (type)
@@ -573,9 +573,8 @@ long double GetEntropy(int size)
 }
 
 // designed for construction
-void InnerNodeTime(int type, double key)
+void InnerNodeTime(int idx, int type, double key)
 {
-    int idx = 0; // idx in the INDEX
     int content;
     switch (type)
     {

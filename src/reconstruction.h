@@ -29,14 +29,19 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const int
 {
     double OptimalValue = DBL_MAX;
 
-    vector<int> candidateChildNum = {2000, 3000, 3907, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 25000, 50000, 60000, 70125, 80000, 90000, 100000, 250000, 350000, 500000, 750000, 1000000};
+    // vector<int> candidateChildNum = {2000, 3000, 3907, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 25000, 50000, 60000, 70125, 80000, 90000, 100000, 200000, 350000};
+    vector<int> candidateChildNum = {200000};
 
     int space;
     int c;
     int optimalChildNumber, optimalType;
+    cout << "Choose root!" << endl;
     for (int i = 0; i < candidateChildNum.size(); i++)
     {
         c = candidateChildNum[i];
+        if (c * 512 < dataset.size())
+            continue;
+        // cout << "Now child number: " << c << endl;
         for (int type = 0; type < 4; type++)
         {
             switch (type)
@@ -82,20 +87,26 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const int
             chrono::_V2::system_clock::time_point s, e;
             s = chrono::system_clock::now();
             for (int i = 0; i < dataset.size(); i++)
-                InnerNodeTime(type, dataset[i].first);
+                InnerNodeTime(0, type, dataset[i].first);
             e = chrono::system_clock::now();
             double time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-            cout << "Average time:" << time / (float)dataset.size() << endl;
 
             auto entropy = GetEntropy(dataset.size());
-            cout << "Entropy:" << entropy << endl;
+            entropy /= (log(c) / log(2));
             double ratio = time / entropy;
+            // cout << "tmp root type:" << type << "\troot time:" << time << "\tEntropy:" << entropy << "\tratio: " << ratio << endl;
             if (ratio < OptimalValue)
             {
                 optimalChildNumber = c;
                 optimalType = type;
                 OptimalValue = ratio;
             }
+            vector<LRType>().swap(LRVector);
+            vector<NNType>().swap(NNVector);
+            vector<HisType>().swap(HisVector);
+            vector<BSType>().swap(BSVector);
+            vector<ArrayType>().swap(ArrayVector);
+            vector<GappedArrayType>().swap(GAVector);
         }
     }
     cout << "Best type is: " << optimalType << "\tbest childNumber: " << optimalChildNumber << "\tOptimal Value: " << OptimalValue << endl;
@@ -198,6 +209,7 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
     // construct a leaf node
     if (findData.size() + insertData.size() < kMaxKeyNum)
     {
+        // cout << "In construct leaf node: findData.size():" << findData.size() << "\tinsertData.size():" << insertData.size() << "\tkMaxKeyNum:" << kMaxKeyNum << endl;
         int L; // stored in the child vector of the upper node
         double space;
         int idx, type;
@@ -206,10 +218,11 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
             read += readCnt[i];
         for (int i = 0; i < writeCnt.size(); i++)
             write += writeCnt[i];
-        if (float(read) / (float(read + write)) >= kReadWriteRate)
+        cout << "In leaf: readTime:" << read << "\twriteTime:" << write << endl;
+        if ((read == 0 && write == 0) || float(read) / (float(read + write)) >= kReadWriteRate)
         {
             // choose an array node as the leaf node
-            ArrayVector.push_back(ArrayType(kThreshold));
+            ArrayVector.push_back(ArrayType(kMaxKeyNum));
             idx = ArrayVector.size() - 1;
             ArrayVector[idx].SetDataset(findData);
             L = 0x40000000 + idx;
@@ -219,13 +232,17 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
         else
         {
             // choose a gapped array node as the leaf node
-            GAVector.push_back(GappedArrayType(kThreshold));
+            GAVector.push_back(GappedArrayType(kMaxKeyNum));
             idx = GAVector.size() - 1;
             GAVector[idx].SetDataset(findData);
             L = 0x50000000 + idx;
             space = 44 + findData.size() * 4 / kDensity;
             type = 5;
         }
+        cout << "Now size:" << endl;
+        cout << "ArrayVector: " << ArrayVector.size() << endl;
+        cout << "GAVector: " << GAVector.size() << endl;
+        cout << "***************************************************" << endl;
         chrono::_V2::system_clock::time_point s, e;
         double time;
         s = chrono::system_clock::now();
@@ -235,25 +252,30 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
             LeafNodeInsert(type, idx, insertData[i]);
         e = chrono::system_clock::now();
         time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-        cout << "leaf node time:" << time << endl;
+        // cout << "leaf node time:" << time << endl;
         double cost = time + space * kRate;
         return {cost, L};
     }
     else
     {
+        cout << "In construct inner node: findData.size():" << findData.size() << "\tinsertData.size():" << insertData.size() << "\tkMaxKeyNum:" << kMaxKeyNum << endl;
         double OptimalValue = DBL_MAX;
 
-        vector<int> candidateChildNum = {2000, 3000, 3907, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 25000, 50000, 60000, 70125, 80000, 90000, 100000, 250000, 350000, 500000, 750000, 1000000};
+        // vector<int> candidateChildNum = {32, 64, 128, 256, 512, 2000, 3000, 3907, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 25000, 50000, 60000, 70125, 80000, 90000, 100000, 250000, 350000, 500000, 750000, 1000000};
+        vector<int> candidateChildNum = {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 8192 * 2, 8192 * 4, 8192 * 8, 8192 * 16, 8192 * 32, 8192 * 64, 8192 * 128};
 
         int space;
         int c;
-        int optimalChildNumber, optimalType;
+        int optimalChildNumber = 32, optimalType = 0;
         int tmpIdx;
         for (int k = 0; k < candidateChildNum.size(); k++)
         {
             c = candidateChildNum[k];
-            for (int type = 0; type < 4; type++)
+            if (4 * c > findData.size() || 10 * c < findData.size())
+                break;
+            for (int type = 0; type < 1; type++)
             {
+                // cout << "now type:" << type << "\tnow childNum:" << c << endl;
                 switch (type)
                 {
                 case 0:
@@ -264,6 +286,10 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     LRVector.push_back(LRType(c));
                     int idx = LRVector.size() - 1;
                     LRVector[idx].model.Train(findData, c);
+                    for (int i = 0; i < c; i++)
+                    {
+                        LRVector[idx].child.push_back(0x40000000 + i);
+                    }
 
                     // divide the key and query
                     vector<vector<pair<double, double>>> subFindData;
@@ -291,28 +317,41 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                         subInsertData[p].push_back(insertData[i]);
                         subWriteCnt[p].push_back(writeCnt[i]);
                     }
+                    // cout << "now test inner node time, childNum:" << LRVector[idx].child.size() << "\tidx:" << idx << endl;
 
                     // only record the time of inner node
                     chrono::_V2::system_clock::time_point s, e;
                     s = chrono::system_clock::now();
                     for (int i = 0; i < findData.size(); i++)
-                        InnerNodeTime(type, findData[i].first);
+                        InnerNodeTime(idx, type, findData[i].first);
                     for (int i = 0; i < insertData.size(); i++)
-                        InnerNodeTime(type, insertData[i].first);
+                        InnerNodeTime(idx, type, insertData[i].first);
                     e = chrono::system_clock::now();
                     double time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
-                    double RootCost = time + kRate * space;
+                    // double RootCost = time + kRate * space;
+                    double RootCost = time;
                     for (int i = 0; i < c; i++)
                     {
                         auto res = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
                         LRVector[idx].child.push_back(res.second);
                         RootCost += res.first;
                     }
+                    cout << "Now size:" << endl;
+                    cout << "LRVector: " << LRVector.size() << endl;
+                    cout << "NNVector: " << NNVector.size() << endl;
+                    cout << "HisVector: " << HisVector.size() << endl;
+                    cout << "BinVector: " << BSVector.size() << endl;
+                    cout << "ArrayVector: " << ArrayVector.size() << endl;
+                    cout << "GAVector: " << GAVector.size() << endl;
                     if (RootCost < OptimalValue)
                     {
+                        cout << "find better!" << endl;
                         if (OptimalValue != DBL_MAX)
+                        {
+                            cout << "not dblmax" << endl;
                             deleteNode(optimalType, optimalChildNumber, tmpIdx);
+                        }
                         tmpIdx = idx;
                         optimalChildNumber = c;
                         optimalType = type;
@@ -320,6 +359,18 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     }
                     else
                         deleteNode(type, c, idx);
+                    cout << "Now size:" << endl;
+                    cout << "LRVector: " << LRVector.size() << endl;
+                    cout << "NNVector: " << NNVector.size() << endl;
+                    cout << "HisVector: " << HisVector.size() << endl;
+                    cout << "BinVector: " << BSVector.size() << endl;
+                    cout << "ArrayVector: " << ArrayVector.size() << endl;
+                    cout << "GAVector: " << GAVector.size() << endl;
+
+                    vector<vector<pair<double, double>>>().swap(subFindData);
+                    vector<vector<pair<double, double>>>().swap(subInsertData);
+                    vector<vector<int>>().swap(subReadCnt);
+                    vector<vector<int>>().swap(subWriteCnt);
                     break;
                 }
                 case 1:
@@ -330,6 +381,10 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     NNVector.push_back(NNType(c));
                     int idx = NNVector.size() - 1;
                     NNVector[idx].model.Train(findData, c);
+                    for (int i = 0; i < c; i++)
+                    {
+                        NNVector[idx].child.push_back(0x40000000 + i);
+                    }
 
                     // divide the key and query
                     vector<vector<pair<double, double>>> subFindData;
@@ -362,9 +417,9 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     chrono::_V2::system_clock::time_point s, e;
                     s = chrono::system_clock::now();
                     for (int i = 0; i < findData.size(); i++)
-                        InnerNodeTime(type, findData[i].first);
+                        InnerNodeTime(idx, type, findData[i].first);
                     for (int i = 0; i < insertData.size(); i++)
-                        InnerNodeTime(type, insertData[i].first);
+                        InnerNodeTime(idx, type, insertData[i].first);
                     e = chrono::system_clock::now();
                     double time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
@@ -386,6 +441,11 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     }
                     else
                         deleteNode(type, c, idx);
+
+                    vector<vector<pair<double, double>>>().swap(subFindData);
+                    vector<vector<pair<double, double>>>().swap(subInsertData);
+                    vector<vector<int>>().swap(subReadCnt);
+                    vector<vector<int>>().swap(subWriteCnt);
                     break;
                 }
                 case 2:
@@ -396,6 +456,10 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     HisVector.push_back(HisType(c));
                     int idx = HisVector.size() - 1;
                     HisVector[idx].model.Train(findData, c);
+                    for (int i = 0; i < c; i++)
+                    {
+                        HisVector[idx].child.push_back(0x40000000 + i);
+                    }
 
                     // divide the key and query
                     vector<vector<pair<double, double>>> subFindData;
@@ -428,9 +492,9 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     chrono::_V2::system_clock::time_point s, e;
                     s = chrono::system_clock::now();
                     for (int i = 0; i < findData.size(); i++)
-                        InnerNodeTime(type, findData[i].first);
+                        InnerNodeTime(idx, type, findData[i].first);
                     for (int i = 0; i < insertData.size(); i++)
-                        InnerNodeTime(type, insertData[i].first);
+                        InnerNodeTime(idx, type, insertData[i].first);
                     e = chrono::system_clock::now();
                     double time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
@@ -452,6 +516,11 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     }
                     else
                         deleteNode(type, c, idx);
+
+                    vector<vector<pair<double, double>>>().swap(subFindData);
+                    vector<vector<pair<double, double>>>().swap(subInsertData);
+                    vector<vector<int>>().swap(subReadCnt);
+                    vector<vector<int>>().swap(subWriteCnt);
                     break;
                 }
                 case 3:
@@ -462,6 +531,10 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     BSVector.push_back(BSType(c));
                     int idx = BSVector.size() - 1;
                     BSVector[idx].model.Train(findData, c);
+                    for (int i = 0; i < c; i++)
+                    {
+                        BSVector[idx].child.push_back(0x40000000 + i);
+                    }
 
                     // divide the key and query
                     vector<vector<pair<double, double>>> subFindData;
@@ -494,9 +567,9 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     chrono::_V2::system_clock::time_point s, e;
                     s = chrono::system_clock::now();
                     for (int i = 0; i < findData.size(); i++)
-                        InnerNodeTime(type, findData[i].first);
+                        InnerNodeTime(idx, type, findData[i].first);
                     for (int i = 0; i < insertData.size(); i++)
-                        InnerNodeTime(type, insertData[i].first);
+                        InnerNodeTime(idx, type, insertData[i].first);
                     e = chrono::system_clock::now();
                     double time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
@@ -518,20 +591,35 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     }
                     else
                         deleteNode(type, c, idx);
+
+                    vector<vector<pair<double, double>>>().swap(subFindData);
+                    vector<vector<pair<double, double>>>().swap(subInsertData);
+                    vector<vector<int>>().swap(subReadCnt);
+                    vector<vector<int>>().swap(subWriteCnt);
                     break;
                 }
                 }
             }
         }
+        cout << "A new inner node is constructed! type:" << optimalType << "\tchildNum:" << optimalChildNumber << "\toptimal value:" << OptimalValue << "\ttmpIdx:" << tmpIdx << endl;
+        cout << "Now size:" << endl;
+        cout << "LRVector: " << LRVector.size() << endl;
+        cout << "NNVector: " << NNVector.size() << endl;
+        cout << "HisVector: " << HisVector.size() << endl;
+        cout << "BinVector: " << BSVector.size() << endl;
+        cout << "ArrayVector: " << ArrayVector.size() << endl;
+        cout << "GAVector: " << GAVector.size() << endl;
+        return {OptimalValue, (optimalType << 28) + tmpIdx};
     }
 }
 
 // main function of construction
+// return the type of root
 // findDataset: the dataset used to initialize the index
 // insertDataset: the dataset to be inserted into the index
 // readCnt: the number of READ corresponding to each key
 // writeCnt: the number of WRITE corresponding to each key
-void Construction(const vector<pair<double, double>> &findDataset, const vector<int> &readCnt, const vector<pair<double, double>> &insertDataset, const vector<int> &writeCnt)
+int Construction(const vector<pair<double, double>> &findDataset, const vector<int> &readCnt, const vector<pair<double, double>> &insertDataset, const vector<int> &writeCnt)
 {
     cout << endl;
     cout << "-------------------------------" << endl;
@@ -545,8 +633,165 @@ void Construction(const vector<pair<double, double>> &findDataset, const vector<
     vector<GappedArrayType>().swap(GAVector);
 
     auto res = ChooseRoot(findDataset, kMaxSpace);
+    int childNum = res.second;
+    int rootType = res.first;
     cout << "Construction of the root node has been completed!" << endl;
-    cout << "The optimal value is: " << res.first << ",\tthe optimal child number is: " << res.second << endl;
+    cout << "The optimal value is: " << res.first << "\tthe optimal child number is: " << res.second << endl;
+    switch (rootType)
+    {
+    case 0:
+    {
+        LRVector.push_back(LRType(childNum));
+        LRVector[0].model.Train(findDataset, childNum);
+        break;
+    }
+    case 1:
+    {
+        NNVector.push_back(NNType(childNum));
+        NNVector[0].model.Train(findDataset, childNum);
+        break;
+    }
+    case 2:
+    {
+        HisVector.push_back(HisType(childNum));
+        HisVector[0].model.Train(findDataset, childNum);
+        break;
+    }
+    case 3:
+    {
+        BSVector.push_back(BSType(childNum));
+        BSVector[0].model.Train(findDataset, childNum);
+        break;
+    }
+    }
+    cout << "Now size:" << endl;
+    cout << "LRVector: " << LRVector.size() << endl;
+    cout << "NNVector: " << NNVector.size() << endl;
+    cout << "HisVector: " << HisVector.size() << endl;
+    cout << "BinVector: " << BSVector.size() << endl;
+    cout << "ArrayVector: " << ArrayVector.size() << endl;
+    cout << "GAVector: " << GAVector.size() << endl;
+
+    double totalCost = 0.0;
+
+    vector<vector<pair<double, double>>> subFindData;
+    vector<vector<pair<double, double>>> subInsertData;
+    vector<vector<int>> subReadCnt;
+    vector<vector<int>> subWriteCnt;
+    vector<pair<double, double>> tmp;
+    vector<int> tmp1;
+    for (int i = 0; i < childNum; i++)
+    {
+        subFindData.push_back(tmp);
+        subInsertData.push_back(tmp);
+        subReadCnt.push_back(tmp1);
+        subWriteCnt.push_back(tmp1);
+    }
+    switch (rootType)
+    {
+    case 0:
+    {
+        for (int i = 0; i < findDataset.size(); i++)
+        {
+            int p = LRVector[0].model.Predict(findDataset[i].first);
+            subFindData[p].push_back(findDataset[i]);
+            subReadCnt[p].push_back(readCnt[i]);
+        }
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            int p = LRVector[0].model.Predict(insertDataset[i].first);
+            subInsertData[p].push_back(insertDataset[i]);
+            subWriteCnt[p].push_back(writeCnt[i]);
+        }
+
+        for (int i = 0; i < childNum; i++)
+        {
+            // if (subFindData[i].size() + subInsertData[i].size() >= kMaxKeyNum)
+            cout << "construct child " << i << ":" << endl;
+            auto resChild = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
+            LRVector[0].child.push_back(resChild.second);
+            totalCost += resChild.first;
+        }
+    }
+    break;
+    case 1:
+    {
+        for (int i = 0; i < findDataset.size(); i++)
+        {
+            int p = NNVector[0].model.Predict(findDataset[i].first);
+            subFindData[p].push_back(findDataset[i]);
+            subReadCnt[p].push_back(readCnt[i]);
+        }
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            int p = NNVector[0].model.Predict(insertDataset[i].first);
+            subInsertData[p].push_back(insertDataset[i]);
+            subWriteCnt[p].push_back(writeCnt[i]);
+        }
+
+        for (int i = 0; i < childNum; i++)
+        {
+            if (subFindData[i].size() + subInsertData[i].size() >= kMaxKeyNum)
+                cout << "construct child " << i << ":" << endl;
+            auto resChild = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
+            NNVector[0].child.push_back(resChild.second);
+            totalCost += resChild.first;
+        }
+    }
+    break;
+    case 2:
+    {
+        for (int i = 0; i < findDataset.size(); i++)
+        {
+            int p = HisVector[0].model.Predict(findDataset[i].first);
+            subFindData[p].push_back(findDataset[i]);
+            subReadCnt[p].push_back(readCnt[i]);
+        }
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            int p = HisVector[0].model.Predict(insertDataset[i].first);
+            subInsertData[p].push_back(insertDataset[i]);
+            subWriteCnt[p].push_back(writeCnt[i]);
+        }
+
+        for (int i = 0; i < childNum; i++)
+        {
+            if (subFindData[i].size() + subInsertData[i].size() >= kMaxKeyNum)
+                cout << "construct child " << i << ":" << endl;
+            auto resChild = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
+            HisVector[0].child.push_back(resChild.second);
+            totalCost += resChild.first;
+        }
+    }
+    break;
+    case 3:
+    {
+        for (int i = 0; i < findDataset.size(); i++)
+        {
+            int p = BSVector[0].model.Predict(findDataset[i].first);
+            subFindData[p].push_back(findDataset[i]);
+            subReadCnt[p].push_back(readCnt[i]);
+        }
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            int p = BSVector[0].model.Predict(insertDataset[i].first);
+            subInsertData[p].push_back(insertDataset[i]);
+            subWriteCnt[p].push_back(writeCnt[i]);
+        }
+
+        for (int i = 0; i < childNum; i++)
+        {
+            if (subFindData[i].size() + subInsertData[i].size() >= kMaxKeyNum)
+                cout << "construct child " << i << ":" << endl;
+            auto resChild = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
+            BSVector[0].child.push_back(resChild.second);
+            totalCost += resChild.first;
+        }
+    }
+    break;
+    }
+    cout << "total cost: " << totalCost << endl;
+    return rootType;
 }
 
 #endif
