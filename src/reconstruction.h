@@ -71,7 +71,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const int
             }
             case 2:
             {
-                space = 20 * c + 20;
+                space = c + 16;
                 if (space > maxSpace)
                     continue;
                 HisVector.push_back(HisType(c));

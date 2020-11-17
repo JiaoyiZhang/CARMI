@@ -564,7 +564,7 @@ int main()
     outFile.open("bin.csv", ios::out);
     outFile << "\n";
 
-    outRes.open("res_1114_construction_91.csv", ios::app);
+    outRes.open("res_1117_2.csv", ios::app);
     outRes << "Test time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
@@ -580,12 +580,12 @@ int main()
         outRes << "kThreshold is: " << kThreshold << endl;
         int repetitions = 1;
         bool calculateTime = true;
-        bool isConstruction = true;
+        bool isConstruction = false;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
-        // experiment(isConstruction, repetitions, 1, calculateTime); // read-only
+        experiment(isConstruction, repetitions, 1, calculateTime); // read-only
         // experiment(isConstruction, repetitions, 0.5, calculateTime); // balance
-        experiment(isConstruction, repetitions, 0.9, calculateTime);
+        // experiment(isConstruction, repetitions, 0.9, calculateTime);
         // experiment(repetitions, 0, calculateTime);  // partial
     }
     outRes << "----------------------------------------------" << endl;
