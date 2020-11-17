@@ -59,7 +59,7 @@ inline void HisType::Initialize(const vector<pair<double, double> > &dataset)
     // outFile<<endl;
     // outFile<<endl;    
 
-    cout << "train second stage" << endl;
+    // cout << "train second stage" << endl;
     switch (kLeafNodeID)
     {
         case 0:
@@ -83,7 +83,7 @@ inline void HisType::Initialize(const vector<pair<double, double> > &dataset)
     }
     vector<vector<pair<double, double>>>().swap(perSubDataset);
     
-    cout << "End train" << endl;
+    // cout << "End train" << endl;
 }
 
 #endif
