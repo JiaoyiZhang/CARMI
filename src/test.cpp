@@ -508,7 +508,8 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     {
         vector<int> childNum_synthetic = {2000, 3000, 3907, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 50000, 100000};
         vector<int> childNum_map = {25000, 50000, 60000, 70125, 80000, 90000, 100000, 250000, 350000, 500000, 750000, 1000000};
-        for (int i = 0; i < childNum_synthetic.size(); i++)
+        // for (int i = 0; i < childNum_synthetic.size(); i++)
+        for (int i = 2; i < 3; i++)
         {
             childNum = childNum_synthetic[i];
             kMaxKeyNum = 1024;
@@ -536,18 +537,18 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
             outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             totalTest(repetitions, calculateTime);
 
-            childNum = childNum_map[i];
-            cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            outRes << "+++++++++++ childNum: " << childNum << endl;
-            latData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            totalTest(repetitions, calculateTime);
+            // childNum = childNum_map[i];
+            // cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            // outRes << "+++++++++++ childNum: " << childNum << endl;
+            // latData.GenerateDataset(dataset, insertDataset);
+            // outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            // totalTest(repetitions, calculateTime);
 
-            cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            outRes << "+++++++++++ childNum: " << childNum << endl;
-            longData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            totalTest(repetitions, calculateTime);
+            // cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            // outRes << "+++++++++++ childNum: " << childNum << endl;
+            // longData.GenerateDataset(dataset, insertDataset);
+            // outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            // totalTest(repetitions, calculateTime);
         }
     }
 }
@@ -564,7 +565,7 @@ int main()
     outFile.open("bin.csv", ios::out);
     outFile << "\n";
 
-    outRes.open("res_1117_2.csv", ios::app);
+    outRes.open("res_1119.csv", ios::app);
     outRes << "Test time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
@@ -580,7 +581,7 @@ int main()
         outRes << "kThreshold is: " << kThreshold << endl;
         int repetitions = 1;
         bool calculateTime = true;
-        bool isConstruction = false;
+        bool isConstruction = true;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         experiment(isConstruction, repetitions, 1, calculateTime); // read-only

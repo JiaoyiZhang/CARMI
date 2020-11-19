@@ -66,6 +66,7 @@ pair<double, double> Find(int rootType, double key)
         case 0:
         {
             content = LRVector[idx].child[LRVector[idx].model.Predict(key)];
+            return {};
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -73,6 +74,7 @@ pair<double, double> Find(int rootType, double key)
         case 1:
         {
             content = NNVector[idx].child[NNVector[idx].model.Predict(key)];
+            return {};
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -80,6 +82,7 @@ pair<double, double> Find(int rootType, double key)
         case 2:
         {
             content = HisVector[idx].child[HisVector[idx].model.Predict(key)];
+            return {};
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -87,6 +90,7 @@ pair<double, double> Find(int rootType, double key)
         case 3:
         {
             content = BSVector[idx].child[BSVector[idx].model.Predict(key)];
+            return {};
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }

@@ -295,10 +295,11 @@ int storeOptimalNode(int optimalType, int tmpIdx, const vector<pair<double, doub
     return idx;
 }
 
-pair<double, int> Construct(const vector<pair<double, double>> &findData, const vector<int> &readCnt, const vector<pair<double, double>> &insertData, const vector<int> &writeCnt, int maxSpace)
+pair<double, int> Construct(bool isLeaf, const vector<pair<double, double>> &findData, const vector<int> &readCnt, const vector<pair<double, double>> &insertData, const vector<int> &writeCnt, int maxSpace)
 {
     // construct a leaf node
-    if (findData.size() + insertData.size() < kMaxKeyNum)
+    if (isLeaf)
+    // if (findData.size() + insertData.size() < kMaxKeyNum)
     {
         int L; // stored in the child vector of the upper node
         double space;
@@ -353,7 +354,7 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
         int c;
         int optimalChildNumber = 32, optimalType = 0;
         int tmpIdx;
-        for (int k = 16; k < findData.size() / 4;)
+        for (int k = 16; k < findData.size();)
         {
             c = k;
             if (k < 4096)
@@ -362,11 +363,12 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                 k += 8192;
             else
                 k += 65536;
-            // cout<<"c:"<<c<<"\tk:"<<k<<"\tsize:"<<findData.size()<<endl;
+            // cout << "c:" << c << "\tk:" << k << "\tsize:" << findData.size() << endl;
             if (512 * c < findData.size())
                 continue;
             for (int type = 0; type < 4; type++)
             {
+                // cout << "type:" << type << endl;
                 switch (type)
                 {
                 case 0:
@@ -406,12 +408,24 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     }
 
                     // only record the time of inner node using cost model
-                    double time = 8.1624 * (findData.size() + insertData.size());
+                    double time = 8.1624 * 1e-9 * (findData.size() + insertData.size());
 
                     double RootCost = time + kRate * space;
+                    // cout << "now max child:" << c << endl;
                     for (int i = 0; i < c; i++)
                     {
-                        auto res = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
+                        pair<double, int> res;
+                        if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+                        {
+                            auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);  // construct a leaf node
+                            auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace); // construct an inner node
+                            if (res0.first > res1.first)
+                                res = res1;
+                            else
+                                res = res0;
+                        }
+                        else
+                            res = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
                         tmpLRVec[idx].child.push_back(res.second);
                         RootCost += res.first;
                     }
@@ -422,6 +436,7 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                         optimalType = type;
                         OptimalValue = RootCost;
                     }
+                    // cout << "Rootcost:" << RootCost << endl;
 
                     vector<vector<pair<double, double>>>().swap(subFindData);
                     vector<vector<pair<double, double>>>().swap(subInsertData);
@@ -466,12 +481,24 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     }
 
                     // only record the time of inner node using cost model
-                    double time = 20.2689 * (findData.size() + insertData.size());
+                    double time = 20.2689 * 1e-9 * (findData.size() + insertData.size());
 
                     double RootCost = time + kRate * space;
+                    // cout << "now max child:" << c << endl;
                     for (int i = 0; i < c; i++)
                     {
-                        auto res = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
+                        pair<double, int> res;
+                        if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+                        {
+                            auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace); // construct an inner node
+                            auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);  // construct a leaf node
+                            if (res0.first > res1.first)
+                                res = res1;
+                            else
+                                res = res0;
+                        }
+                        else
+                            res = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
                         tmpNNVec[idx].child.push_back(res.second);
                         RootCost += res.first;
                     }
@@ -482,6 +509,7 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                         optimalType = type;
                         OptimalValue = RootCost;
                     }
+                    // cout << "Rootcost:" << RootCost << endl;
 
                     vector<vector<pair<double, double>>>().swap(subFindData);
                     vector<vector<pair<double, double>>>().swap(subInsertData);
@@ -497,6 +525,7 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     tmpHisVec.push_back(HisType(c));
                     int idx = tmpHisVec.size() - 1;
                     tmpHisVec[idx].model.Train(findData, c);
+                    // cout<<"train over"<<endl;
 
                     // divide the key and query
                     vector<vector<pair<double, double>>> subFindData;
@@ -524,14 +553,27 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                         subInsertData[p].push_back(insertData[i]);
                         subWriteCnt[p].push_back(writeCnt[i]);
                     }
+                    // cout<<"insert over"<<endl;
 
                     // only record the time of inner node using cost model
-                    double time = 12.4141 * (findData.size() + insertData.size());
+                    double time = 12.4141 * 1e-9 * (findData.size() + insertData.size());
 
                     double RootCost = time + kRate * space;
+                    // cout << "now max child:" << c << endl;
                     for (int i = 0; i < c; i++)
                     {
-                        auto res = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
+                        pair<double, int> res;
+                        if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+                        {
+                            auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace); // construct an inner node
+                            auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);  // construct a leaf node
+                            if (res0.first > res1.first)
+                                res = res1;
+                            else
+                                res = res0;
+                        }
+                        else
+                            res = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
                         tmpHisVec[idx].child.push_back(res.second);
                         RootCost += res.first;
                     }
@@ -543,6 +585,7 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                         OptimalValue = RootCost;
                     }
 
+                    // cout << "Rootcost:" << RootCost << endl;
                     vector<vector<pair<double, double>>>().swap(subFindData);
                     vector<vector<pair<double, double>>>().swap(subInsertData);
                     vector<vector<int>>().swap(subReadCnt);
@@ -586,12 +629,24 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                     }
 
                     // only record the time of inner node using cost model
-                    double time = log(c) / log(2) * (findData.size() + insertData.size());
+                    double time = log(c) / log(2) * 1e-9 * (findData.size() + insertData.size());
 
                     double RootCost = time + kRate * space;
+                    // cout << "now max child:" << c << endl;
                     for (int i = 0; i < c; i++)
                     {
-                        auto res = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
+                        pair<double, int> res;
+                        if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+                        {
+                            auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace); // construct an inner node
+                            auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);  // construct a leaf node
+                            if (res0.first > res1.first)
+                                res = res1;
+                            else
+                                res = res0;
+                        }
+                        else
+                            res = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
                         tmpBSVec[idx].child.push_back(res.second);
                         RootCost += res.first;
                     }
@@ -602,6 +657,7 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                         optimalType = type;
                         OptimalValue = RootCost;
                     }
+                    // cout << "Rootcost:" << RootCost << endl;
 
                     vector<vector<pair<double, double>>>().swap(subFindData);
                     vector<vector<pair<double, double>>>().swap(subInsertData);
@@ -612,9 +668,9 @@ pair<double, int> Construct(const vector<pair<double, double>> &findData, const 
                 }
             }
         }
-        // cout<<"start store"<<endl;
+        // cout << "start store" << endl;
         int actualIdx = storeOptimalNode(optimalType, tmpIdx, findData, insertData);
-        // cout<<"optimalType:"<<optimalType<<"\tOptimalValue:"<<OptimalValue<<"\ttmpIdx:"<<tmpIdx<<"\tactualIdx:"<<actualIdx<<"\toptimalChildNumber:"<<optimalChildNumber<<endl;
+        // cout << "optimalType:" << optimalType << "\tOptimalValue:" << OptimalValue << "\ttmpIdx:" << tmpIdx << "\tactualIdx:" << actualIdx << "\toptimalChildNumber:" << optimalChildNumber << endl;
         // cout << "LRVec size:" << LRVector.size() << endl;
         // cout << "NNVec size:" << NNVector.size() << endl;
         // cout << "HisVec size:" << HisVector.size() << endl;
@@ -715,7 +771,22 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
 
         for (int i = 0; i < childNum; i++)
         {
-            auto resChild = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
+            if (subFindData[i].size() + subInsertData[i].size() >= kMaxKeyNum)
+                cout << "construct child " << i << ":" << endl;
+            pair<double, int> resChild;
+            if ((subFindData[i].size() + subInsertData[i].size()) >= kMaxKeyNum)
+            {
+                auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace); // construct an inner node
+                // cout << "inner node over! res:" << res0.first << "\t" << res.second << endl;
+                auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace); // construct a leaf node
+                // cout << "leaf node over! res:" << res0.first << "\t" << res.second << endl;
+                if (res0.first > res1.first)
+                    resChild = res1;
+                else
+                    resChild = res0;
+            }
+            else
+                resChild = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
             int idx = resChild.second;
             if (subFindData[i].size() + subInsertData[i].size() < kMaxKeyNum)
             {
@@ -743,7 +814,18 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
 
         for (int i = 0; i < childNum; i++)
         {
-            auto resChild = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
+            pair<double, int> resChild;
+            if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+            {
+                auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace); // construct an inner node
+                auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);  // construct a leaf node
+                if (res0.first > res1.first)
+                    resChild = res1;
+                else
+                    resChild = res0;
+            }
+            else
+                resChild = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
             int idx = resChild.second;
             if (subFindData[i].size() + subInsertData[i].size() < kMaxKeyNum)
             {
@@ -773,7 +855,19 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
         {
             if (subFindData[i].size() + subInsertData[i].size() >= kMaxKeyNum)
                 cout << "construct child " << i << ":" << endl;
-            auto resChild = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
+
+            pair<double, int> resChild;
+            if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+            {
+                auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace); // construct an inner node
+                auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);  // construct a leaf node
+                if (res0.first > res1.first)
+                    resChild = res1;
+                else
+                    resChild = res0;
+            }
+            else
+                resChild = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
             int idx = resChild.second;
             if (subFindData[i].size() + subInsertData[i].size() < kMaxKeyNum)
             {
@@ -803,7 +897,19 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
         {
             if (subFindData[i].size() + subInsertData[i].size() >= kMaxKeyNum)
                 cout << "construct child " << i << ":" << endl;
-            auto resChild = Construct(subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
+
+            pair<double, int> resChild;
+            if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+            {
+                auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace); // construct an inner node
+                auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);  // construct a leaf node
+                if (res0.first > res1.first)
+                    resChild = res1;
+                else
+                    resChild = res0;
+            }
+            else
+                resChild = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], kMaxSpace);
             int idx = resChild.second;
             if (subFindData[i].size() + subInsertData[i].size() < kMaxKeyNum)
             {

@@ -26,11 +26,12 @@ public:
             idx = childNumber - 1;
 
         int base;
+        int tmpIdx = idx / 32;
         if ((idx / 16) % 2 == 0)
         {
-            base = table1[idx / 32] >> 16;
+            base = table1[tmpIdx] >> 16;
             int j = idx % 16;
-            int tmp = table0[idx / 32] >> (31 - j);
+            int tmp = table0[tmpIdx] >> (31 - j);
             for (; j >= 0; j--)
             {
                 base += tmp & 1;
@@ -39,9 +40,9 @@ public:
         }
         else
         {
-            base = table1[idx / 32] & 0x0000FFFF;
+            base = table1[tmpIdx] & 0x0000FFFF;
             int j = idx % 16;
-            int tmp = table0[idx / 32] >> (15 - j);
+            int tmp = table0[tmpIdx] >> (15 - j);
             for (; j >= 0; j--)
             {
                 base += tmp & 1;
@@ -56,8 +57,8 @@ private:
     // vector<double> table; //2c*8 Byte
     vector<unsigned int> table0; // 2c/32*8 = c/2 Byte
     vector<unsigned int> table1; // c/2 Byte
-    int childNumber;    // 4B
-    double minValue;    // 8B
+    int childNumber;             // 4B
+    double minValue;             // 8B
 };
 
 void HistogramModel::Train(const vector<pair<double, double>> &dataset, int len)
@@ -105,6 +106,8 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset, int len)
             cnt++;
             nowSize = 0;
         }
+        if (cnt >= childNumber / 2)
+            cnt = childNumber / 2 - 1;
         table[i] = cnt;
     }
 
@@ -136,8 +139,8 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset, int len)
             int diff = int(table[j]) - start_idx;
             // cout << "j:" << j << "\ttable[j]:" << table[j] << "\tstart:" << start_idx << "\tdiff:" << diff << endl;
             // if (diff >= 2)
-                // cout << "wrong!\t"
-                    //  << "table[j]:" << table[j] << "\tidx:" << start_idx << "\tdiff:" << diff << endl;
+            // cout << "wrong!\t"
+            //  << "table[j]:" << table[j] << "\tidx:" << start_idx << "\tdiff:" << diff << endl;
             tmp = (tmp << 1) + diff;
             if (diff > 0)
                 start_idx += diff;
@@ -145,7 +148,6 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset, int len)
         start_idx = (int(table[i]) << 16) + int(table[i + 16]);
         table1.push_back(start_idx);
         table0.push_back(tmp);
-        // cout<<"i:"<<i << "\ttable[i]:" << table[i] << "\tstartidx:" << start_idx << "\ttmp:" << tmp << endl;
     }
 }
 
