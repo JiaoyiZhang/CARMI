@@ -20,10 +20,12 @@ public:
         density = kDensity;
         capacity = cap;
         maxIndex = -2;
+        datasetIndex = -1;
     }
     void SetDataset(const vector<pair<double, double> > &dataset);
 
-    vector<pair<double, double> > m_dataset;
+    int datasetIndex; // index in the dataset (vector<vector<>>)
+    // vector<pair<double, double> > m_dataset;
     LinearRegression model;
     int m_datasetSize;
     int error;
@@ -53,13 +55,14 @@ void GappedArrayType::SetDataset(const vector<pair<double, double> > &subDataset
             m_datasetSize++;
         }
     }
-    m_dataset = newDataset;
-    model.Train(m_dataset, capacity);
-    for (int i = 0; i < m_dataset.size(); i++)
+    entireDataset.push_back(newDataset);
+    datasetIndex = entireDataset.size() - 1;
+    model.Train(newDataset, capacity);
+    for (int i = 0; i < newDataset.size(); i++)
     {
-        if (m_dataset[i].first != -1)
+        if (newDataset[i].first != -1)
         {
-            int p = model.Predict(m_dataset[i].first);
+            int p = model.Predict(newDataset[i].first);
             int e = abs(i - p);
             if (e > error)
                 error = e;
