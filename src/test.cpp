@@ -317,6 +317,25 @@ void totalTest(int repetitions, bool mode)
     // printResult(repetitions, time[3][0], time[3][1], time[3][2], time[3][3]);
 }
 
+long double calculateSpace()
+{
+    long double space = 0;
+    space += sizeof(LRType) * LRVector.size();
+    cout << "LR space:" << space << endl;
+    space += sizeof(NNType) * NNVector.size();
+    cout << "NN space:" << sizeof(NNType) * NNVector.size() << endl;
+    space += sizeof(HisType) * HisVector.size();
+    cout << "His space:" << sizeof(HisType) * HisVector.size() << endl;
+    space += sizeof(BSType) * BSVector.size();
+    cout << "BS space:" << sizeof(BSType) * BSVector.size() << endl;
+    space += sizeof(ArrayType) * ArrayVector.size();
+    cout << "Array space:" << sizeof(ArrayType) * ArrayVector.size() << endl;
+    space += sizeof(GappedArrayType) * GAVector.size();
+    cout << "GA space:" << sizeof(GappedArrayType) * GAVector.size() << endl;
+    cout << "TOTAL SPACE: " << space << endl;
+    return space;
+}
+
 void constructionTest()
 {
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkMaxSpace:" << kMaxSpace << "\tkRate:" << kRate << "\tkReadWriteRate:" << kReadWriteRate << endl;
@@ -393,6 +412,8 @@ void constructionTest()
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
     outRes << "Insert," << tmp / (float)insertDataset.size() << "\n";
+
+    calculateSpace();
 }
 
 void experiment(double isConstruction, int repetitions, double initRatio, bool calculateTime)
@@ -412,96 +433,96 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
         for (int r = 0; r < rate.size(); r++)
         {
             kRate = rate[r];
-            vector<int> max_synthetic = {256, 512, 1024, 2048, 4096, 8192, 10240, 8192 * 2};
-            vector<int> max_map = {512, 1024, 2048, 4096, 8192, 8192 * 2, 8192 * 4, 102400};
-            for (int i = 0; i < max_synthetic.size(); i++)
+            // vector<int> max_synthetic = {256, 512, 1024, 2048, 4096, 8192, 10240, 8192 * 2};
+            // vector<int> max_map = {512, 1024, 2048, 4096, 8192, 8192 * 2, 8192 * 4, 102400};
+            // for (int i = 0; i < max_synthetic.size(); i++)
+            // {
+            kMaxKeyNum = 256;
+            cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+            uniData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+            if (r == 0)
             {
-                kMaxKeyNum = max_synthetic[i];
-                cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-                uniData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0 && i == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
-                constructionTest();
-
-                cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-                expData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0 && i == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
-                constructionTest();
-
-                cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-                norData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0 && i == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
-                constructionTest();
-
-                cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-                logData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0 && i == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
-                constructionTest();
-
-                kMaxKeyNum = max_map[i];
-                cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-                latData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0 && i == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
-                constructionTest();
-
-                cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-                longData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0 && i == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
-                constructionTest();
+                stx::btree_map<double, double> btree;
+                for (int l = 0; l < dataset.size(); l++)
+                    btree.insert(dataset[l]);
+                btreemap = btree;
+                btree_test();
+                cout << "-------------------------------" << endl;
             }
+            constructionTest();
+
+            cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+            expData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+            if (r == 0)
+            {
+                stx::btree_map<double, double> btree;
+                for (int l = 0; l < dataset.size(); l++)
+                    btree.insert(dataset[l]);
+                btreemap = btree;
+                btree_test();
+                cout << "-------------------------------" << endl;
+            }
+            constructionTest();
+
+            cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+            norData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+            if (r == 0)
+            {
+                stx::btree_map<double, double> btree;
+                for (int l = 0; l < dataset.size(); l++)
+                    btree.insert(dataset[l]);
+                btreemap = btree;
+                btree_test();
+                cout << "-------------------------------" << endl;
+            }
+            constructionTest();
+
+            cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+            logData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+            if (r == 0)
+            {
+                stx::btree_map<double, double> btree;
+                for (int l = 0; l < dataset.size(); l++)
+                    btree.insert(dataset[l]);
+                btreemap = btree;
+                btree_test();
+                cout << "-------------------------------" << endl;
+            }
+            constructionTest();
+
+            kMaxKeyNum = 512;
+            cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            latData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            if (r == 0)
+            {
+                stx::btree_map<double, double> btree;
+                for (int l = 0; l < dataset.size(); l++)
+                    btree.insert(dataset[l]);
+                btreemap = btree;
+                btree_test();
+                cout << "-------------------------------" << endl;
+            }
+            constructionTest();
+
+            cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            longData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            if (r == 0)
+            {
+                stx::btree_map<double, double> btree;
+                for (int l = 0; l < dataset.size(); l++)
+                    btree.insert(dataset[l]);
+                btreemap = btree;
+                btree_test();
+                cout << "-------------------------------" << endl;
+            }
+            constructionTest();
+            // }
         }
     }
     else
