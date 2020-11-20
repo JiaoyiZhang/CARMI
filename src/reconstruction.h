@@ -703,6 +703,7 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
     vector<NNType>().swap(tmpNNVec);
     vector<HisType>().swap(tmpHisVec);
     vector<BSType>().swap(tmpBSVec);
+    vector<vector<pair<double, double>>>().swap(entireDataset);
 
     auto res = ChooseRoot(findDataset, kMaxSpace);
     int childNum = res.second;

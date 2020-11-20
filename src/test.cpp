@@ -20,7 +20,7 @@ using namespace std;
 int datasetSize = 1000000;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
-
+vector<vector<pair<double, double>>> entireDataset;
 stx::btree_map<double, double> btreemap;
 
 extern vector<LRType> LRVector;
@@ -296,6 +296,7 @@ void totalTest(int repetitions, bool mode)
             vector<BSType>().swap(BSVector);
             vector<ArrayType>().swap(ArrayVector);
             vector<GappedArrayType>().swap(GAVector);
+            vector<vector<pair<double, double>>>().swap(entireDataset);
         }
         outRes << endl
                << endl;
