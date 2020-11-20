@@ -15,12 +15,12 @@ class LonglatDataset
 public:
 	LonglatDataset(double initRatio)
 	{
-        if(initRatio == 0) 
-            num = 0;
-        else if(initRatio == 1)
-            num = -1;
-        else
-            num = initRatio / (1 - initRatio);
+		if (initRatio == 0)
+			num = 0;
+		else if (initRatio == 1)
+			num = -1;
+		else
+			num = initRatio / (1 - initRatio);
 	}
 
 	void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
@@ -31,8 +31,9 @@ private:
 
 void LonglatDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
-	initDataset.clear();
-	insertDataset.clear();
+	vector<pair<double, double>>().swap(initDataset);
+	vector<pair<double, double>>().swap(insertDataset);
+
 	vector<pair<double, double>> ds;
 	ifstream inFile("../src/dataset/iranLat.csv", ios::in);
 	if (!inFile)
@@ -54,30 +55,30 @@ void LonglatDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
 		string value = fields[1];
 		double k = stod(key);
 		double v = stod(value);
-		ds.push_back({ k, v });
+		ds.push_back({k, v});
 	}
 
 	std::sort(ds.begin(), ds.end());
-    if(num == 0)
-    {
-        int i = 0;
-        for(; i < 0.6 * ds.size(); i++)
+	if (num == 0)
+	{
+		int i = 0;
+		for (; i < 0.6 * ds.size(); i++)
 			initDataset.push_back(ds[i]);
-        for(; i < 0.9 * ds.size(); i+=2)
-        {
+		for (; i < 0.9 * ds.size(); i += 2)
+		{
 			initDataset.push_back(ds[i]);
 			insertDataset.push_back(ds[i]);
-        }
-        for(; i < ds.size(); i++)
+		}
+		for (; i < ds.size(); i++)
 			initDataset.push_back(ds[i]);
-    }
-	else if(num == -1)
+	}
+	else if (num == -1)
 	{
 		for (int i = 0; i < ds.size(); i++)
 			initDataset.push_back(ds[i]);
 	}
-    else
-    {
+	else
+	{
 		int cnt = 0;
 		for (int i = 0; i < ds.size(); i++)
 		{

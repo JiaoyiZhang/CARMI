@@ -13,13 +13,17 @@ public:
     UniformDataset(int total, double initRatio)
     {
         totalSize = total;
-        if(initRatio == 0)
-        {// several leaf nodes are inserted
+        if (initRatio == 0)
+        { // several leaf nodes are inserted
             insertSize = 0;
             initSize = 0;
         }
-        else if(initRatio == 1)
+        else if (initRatio == 1)
+        {
             num = -1;
+            initSize = total;
+            insertSize = 0;
+        }
         else
         {
             initSize = total * initRatio;
@@ -40,27 +44,27 @@ private:
 
 void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
-    initDataset.clear();
-    insertDataset.clear();
+    vector<pair<double, double>>().swap(initDataset);
+    vector<pair<double, double>>().swap(insertDataset);
     int cnt = 0;
-    if(initSize == 0)
+    if (initSize == 0)
     {
         int i = 0;
-        for(; i < 0.6 * totalSize; i++)
+        for (; i < 0.6 * totalSize; i++)
             initDataset.push_back({double(i), double(i) * 10});
-        for(; i < 0.9 * totalSize; i+=2)
+        for (; i < 0.9 * totalSize; i += 2)
         {
             initDataset.push_back({double(i), double(i) * 10});
-            insertDataset.push_back({double(i+1), double(i+1) * 10});
+            insertDataset.push_back({double(i + 1), double(i + 1) * 10});
         }
-        for(; i < totalSize; i++)
-            initDataset.push_back({double(i), double(i) * 10});        
+        for (; i < totalSize; i++)
+            initDataset.push_back({double(i), double(i) * 10});
     }
-	else if(num == -1)
-	{
+    else if (num == -1)
+    {
         for (int i = 0; i < totalSize; i++)
             initDataset.push_back({double(i), double(i) * 10});
-	}
+    }
     else
     {
         for (int i = 0; i < totalSize; i++)
@@ -77,7 +81,7 @@ void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
             }
         }
     }
-    cout<<"uniform: Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
+    cout << "uniform: Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
 }
 
 #endif

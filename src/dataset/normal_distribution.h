@@ -13,13 +13,17 @@ public:
     NormalDataset(int total, double initRatio)
     {
         totalSize = total;
-        if(initRatio == 0)
-        {// several leaf nodes are inserted
+        if (initRatio == 0)
+        { // several leaf nodes are inserted
             insertSize = 0;
             initSize = 0;
         }
-        else if(initRatio == 1)
+        else if (initRatio == 1)
+        {
             num = -1;
+            initSize = total;
+            insertSize = 0;
+        }
         else
         {
             initSize = total * initRatio;
@@ -47,41 +51,43 @@ void NormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset, v
     std::normal_distribution<double> distribution(0.0, 2.0);
     vector<double> ds;
 
-    initDataset.clear();
-    insertDataset.clear();
+    vector<pair<double, double>>().swap(initDataset);
+    vector<pair<double, double>>().swap(insertDataset);
 
     for (int i = 0; i < totalSize; i++)
     {
         ds.push_back(distribution(generator));
     }
     std::sort(ds.begin(), ds.end());
-    if(ds[0]<0)
+    if (ds[0] < 0)
     {
         double diff = -ds[0];
-        for(int i=0;i<totalSize;i++)
-            ds[i]+=diff;
+        for (int i = 0; i < totalSize; i++)
+            ds[i] += diff;
     }
 
     double maxV = ds[ds.size() - 1];
     double factor = maxValue / maxV;
-    if(initSize == 0)
+    if (initSize == 0)
     {
         int i = 0;
-        for(; i < 0.6 * totalSize; i++)
+        for (; i < 0.6 * totalSize; i++)
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-        for(; i < 0.9 * totalSize; i+=2)
+        for (; i < 0.9 * totalSize; i += 2)
         {
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
             insertDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
         }
-        for(; i < totalSize; i++)
+        for (; i < totalSize; i++)
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
     }
-	else if(num == -1)
-	{
-		for (int i = 0; i < ds.size(); i++)
+    else if (num == -1)
+    {
+        for (int i = 0; i < ds.size(); i++)
+        {
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-	}
+        }
+    }
     else
     {
         int cnt = 0;
@@ -99,7 +105,7 @@ void NormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset, v
             }
         }
     }
-    cout<<"normal: Read size:"<<initDataset.size()<<"\tWrite size:"<<insertDataset.size()<<endl;
+    cout << "normal: Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
 }
 
 #endif
