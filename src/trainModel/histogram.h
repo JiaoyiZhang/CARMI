@@ -1,9 +1,14 @@
 #ifndef HistogramModel_H
 #define HistogramModel_H
 
-#include "model.h"
 #include <iostream>
-class HistogramModel : public BasicModel
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <random>
+#include "../params.h"
+using namespace std;
+class HistogramModel
 {
 public:
     HistogramModel(){};

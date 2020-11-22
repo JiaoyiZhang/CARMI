@@ -1,9 +1,14 @@
 #ifndef BINARY_SEARCH_MODEL_H
 #define BINARY_SEARCH_MODEL_H
 
-#include "model.h"
-
-class BinarySearchModel : public BasicModel
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <random>
+#include "../params.h"
+using namespace std;
+class BinarySearchModel
 {
 public:
     BinarySearchModel(){};

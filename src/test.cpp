@@ -15,7 +15,7 @@
 #include <chrono>
 #include "../art_tree/art.h"
 #include "../art_tree/art.cpp"
-using namespace std;
+// using namespace std;
 
 int datasetSize = 1000000;
 vector<pair<double, double>> dataset;
@@ -30,7 +30,7 @@ extern vector<BSType> BSVector;
 extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
-int kMaxSpace = 1024 * 1024; // Byte
+double kMaxSpace = 10 * 1024 * 1024; // MB
 int kLeafNodeID = 0;
 int kInnerNodeID = 0;
 int kNeuronNumber = 8;
@@ -51,6 +51,173 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
     cout << "Delete time:" << time3 / (float)insertDataset.size() / float(r) << endl;
     cout << "Total time(find and insert):" << (time0 + time1) / (float)(dataset.size() + insertDataset.size()) / float(r) << endl;
     cout << "***********************" << endl;
+}
+
+void printSingleNode(int type, int idx)
+{
+    switch (type)
+    {
+    case 0:
+        cout << "LR: idx:" << idx << ",child:" << LRVector[idx].childNumber << "\t";
+        break;
+    case 1:
+        cout << "NN: idx:" << idx << ",child:" << NNVector[idx].childNumber << "\t";
+        break;
+        break;
+    case 2:
+        cout << "His: idx:" << idx << ",child:" << HisVector[idx].childNumber << "\t";
+        break;
+    case 3:
+        cout << "BS: idx:" << idx << ",child:" << BSVector[idx].childNumber << "\t";
+        break;
+    }
+}
+
+void printStructure(int level, int type, int idx)
+{
+    switch (type)
+    {
+    case 0:
+    {
+        cout << "level " << level << ": now root is lr, idx:" << idx << ", childNumber:" << LRVector[idx].childNumber;
+        vector<int> tree = {0, 0, 0, 0, 0, 0};
+        for (int i = 0; i < LRVector[idx].childNumber; i++)
+        {
+            auto content = LRVector[idx].child[i];
+            auto t = content >> 28;
+            auto childIdx = content & 0x0FFFFFFF;
+            tree[t]++;
+        }
+        cout << "\tchild:";
+        if (tree[0])
+            cout << "\tlr:" << tree[0];
+        if (tree[1])
+            cout << "\tnn:" << tree[1];
+        if (tree[2])
+            cout << "\this:" << tree[2];
+        if (tree[3])
+            cout << "\tbin:" << tree[3];
+        if (tree[4])
+            cout << "\tarray:" << tree[4];
+        if (tree[5])
+            cout << "\tga:" << tree[5];
+        cout << endl;
+        for (int i = 0; i < LRVector[idx].childNumber; i++)
+        {
+            auto content = LRVector[idx].child[i];
+            auto t = content >> 28;
+            auto childIdx = content & 0x0FFFFFFF;
+            if (t < 4)
+                printStructure(level + 1, t, childIdx);
+        }
+        break;
+    }
+    case 1:
+    {
+        cout << "level " << level << ": now root is nn, idx:" << idx << ", childNumber:" << NNVector[idx].childNumber;
+        vector<int> tree = {0, 0, 0, 0, 0, 0};
+        for (int i = 0; i < NNVector[idx].childNumber; i++)
+        {
+            auto content = NNVector[idx].child[i];
+            auto t = content >> 28;
+            auto childIdx = content & 0x0FFFFFFF;
+            tree[t]++;
+        }
+        cout << "\tchild:";
+        if (tree[0])
+            cout << "\tlr:" << tree[0];
+        if (tree[1])
+            cout << "\tnn:" << tree[1];
+        if (tree[2])
+            cout << "\this:" << tree[2];
+        if (tree[3])
+            cout << "\tbin:" << tree[3];
+        if (tree[4])
+            cout << "\tarray:" << tree[4];
+        if (tree[5])
+            cout << "\tga:" << tree[5];
+        cout << endl;
+        for (int i = 0; i < NNVector[idx].childNumber; i++)
+        {
+            auto content = NNVector[idx].child[i];
+            auto t = content >> 28;
+            auto childIdx = content & 0x0FFFFFFF;
+            if (t < 4)
+                printStructure(level + 1, t, childIdx);
+        }
+        break;
+    }
+    case 2:
+    {
+        cout << "level " << level << ": now root is his, idx:" << idx << ", childNumber:" << HisVector[idx].childNumber;
+        vector<int> tree = {0, 0, 0, 0, 0, 0};
+        for (int i = 0; i < HisVector[idx].childNumber; i++)
+        {
+            auto content = HisVector[idx].child[i];
+            auto t = content >> 28;
+            auto childIdx = content & 0x0FFFFFFF;
+            tree[t]++;
+        }
+        cout << "\tchild:";
+        if (tree[0])
+            cout << "\tlr:" << tree[0];
+        if (tree[1])
+            cout << "\tnn:" << tree[1];
+        if (tree[2])
+            cout << "\this:" << tree[2];
+        if (tree[3])
+            cout << "\tbin:" << tree[3];
+        if (tree[4])
+            cout << "\tarray:" << tree[4];
+        if (tree[5])
+            cout << "\tga:" << tree[5];
+        cout << endl;
+        for (int i = 0; i < HisVector[idx].childNumber; i++)
+        {
+            auto content = HisVector[idx].child[i];
+            auto t = content >> 28;
+            auto childIdx = content & 0x0FFFFFFF;
+            if (t < 4)
+                printStructure(level + 1, t, childIdx);
+        }
+        break;
+    }
+    case 3:
+    {
+        cout << "level " << level << ": now root is bin, idx:" << idx << ", childNumber:" << BSVector[idx].childNumber;
+        vector<int> tree = {0, 0, 0, 0, 0, 0};
+        for (int i = 0; i < BSVector[idx].childNumber; i++)
+        {
+            auto content = BSVector[idx].child[i];
+            auto t = content >> 28;
+            auto childIdx = content & 0x0FFFFFFF;
+            tree[t]++;
+        }
+        cout << "\tchild:";
+        if (tree[0])
+            cout << "\tlr:" << tree[0];
+        if (tree[1])
+            cout << "\tnn:" << tree[1];
+        if (tree[2])
+            cout << "\this:" << tree[2];
+        if (tree[3])
+            cout << "\tbin:" << tree[3];
+        if (tree[4])
+            cout << "\tarray:" << tree[4];
+        if (tree[5])
+            cout << "\tga:" << tree[5];
+        cout << endl;
+        for (int i = 0; i < BSVector[idx].childNumber; i++)
+        {
+            auto content = BSVector[idx].child[i];
+            auto t = content >> 28;
+            auto childIdx = content & 0x0FFFFFFF;
+            if (t < 4)
+                printStructure(level + 1, t, childIdx);
+        }
+        break;
+    }
+    }
 }
 
 void artTree_test()
@@ -85,9 +252,9 @@ void artTree_test()
     }
     e = chrono::system_clock::now();
     tmp1 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "art time: " << tmp1 / (float)dataset.size() << endl;
-    cout << "other time:" << tmp / (float)dataset.size() << endl;
-    cout << "final time:" << (tmp1 - tmp) / (float)dataset.size() << endl;
+    cout << "art time: " << tmp1 / (float)dataset.size() * 1000000000 << endl;
+    cout << "other time:" << tmp / (float)dataset.size() * 1000000000 << endl;
+    cout << "final time:" << (tmp1 - tmp) / (float)dataset.size() * 1000000000 << endl;
 }
 
 void btree_test()
@@ -100,16 +267,16 @@ void btree_test()
         btreemap.find(dataset[i].first);
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "Find time:" << tmp / (float)dataset.size() << endl;
-    outRes << "btree," << tmp / (float)dataset.size() << ",";
+    cout << "Find time:" << tmp / (float)dataset.size() * 1000000000 << "ns" << endl;
+    outRes << "btree," << tmp / (float)dataset.size() * 1000000000 << ",";
 
     s = chrono::system_clock::now();
     for (int i = 0; i < insertDataset.size(); i++)
         btreemap.insert(insertDataset[i]);
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
-    outRes << tmp / (float)insertDataset.size() << "\n";
+    cout << "Insert time:" << tmp / (float)insertDataset.size() * 1000000000 << endl;
+    outRes << tmp / (float)insertDataset.size() * 1000000000 << "\n";
 
     // QueryPerformanceCounter(&s);
     // for (int i = 0; i < insertDataset.size(); i++)
@@ -173,7 +340,7 @@ void totalTest(int repetitions, bool mode)
                 for (int i = 0; i < dataset.size(); i++)
                     Find(kInnerNodeID, dataset[i].first);
                 e = chrono::system_clock::now();
-                tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+                tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
                 time[j][0] += tmp;
                 cout << "Find time:" << tmp / (float)dataset.size() << endl;
                 outRes << tmp / (float)dataset.size() << ",";
@@ -188,7 +355,7 @@ void totalTest(int repetitions, bool mode)
                 // for (int i = 0; i < insertDataset.size(); i++)
                 //     Insert(kInnerNodeID, insertDataset[i]);
                 // e = chrono::system_clock::now();
-                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den;
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
                 // time[j][1] += tmp;
                 // cout<<"Insert time:"<<tmp / (float)insertDataset.size() <<endl;
                 // outRes << tmp / (float)insertDataset.size() << ",";
@@ -197,14 +364,14 @@ void totalTest(int repetitions, bool mode)
                 // for (int i = 0; i < insertDataset.size(); i++)
                 //     Update(kInnerNodeID, {insertDataset[i].first, 1.11});
                 // e = chrono::system_clock::now();
-                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den;
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
                 // time[j][2] += tmp;
 
                 // s = chrono::system_clock::now();
                 // for (int i = 0; i < insertDataset.size(); i++)
                 //     Delete(kInnerNodeID, insertDataset[i].first);
                 // e = chrono::system_clock::now();
-                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den;
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
                 // time[j][3] += tmp;
                 cout << "-------------------------------" << endl;
             }
@@ -274,7 +441,7 @@ void totalTest(int repetitions, bool mode)
                     if (!r)
                         cout << "Delete failed:\ti:" << i << "\t" << insertDataset[i].first << endl;
                     auto res = Find(kInnerNodeID, insertDataset[i].first);
-                    if (res.second == insertDataset[i].second || res.second == 1.11)
+                    if ((res.second == insertDataset[i].second) || (res.second == 1.11))
                         cout << "After Delete failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
                 }
                 e = chrono::system_clock::now();
@@ -282,7 +449,7 @@ void totalTest(int repetitions, bool mode)
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto res = Find(kInnerNodeID, insertDataset[i].first);
-                    if (res.second == insertDataset[i].second || res.second == 1.11)
+                    if ((res.second == insertDataset[i].second) || (res.second == 1.11))
                         cout << "Find Delete failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
                 }
                 tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
@@ -321,26 +488,34 @@ void totalTest(int repetitions, bool mode)
 long double calculateSpace()
 {
     long double space = 0;
-    space += sizeof(LRType) * LRVector.size();
-    cout << "LR space:" << space << endl;
-    space += sizeof(NNType) * NNVector.size();
-    cout << "NN space:" << sizeof(NNType) * NNVector.size() << endl;
-    space += sizeof(HisType) * HisVector.size();
-    cout << "His space:" << sizeof(HisType) * HisVector.size() << endl;
-    space += sizeof(BSType) * BSVector.size();
-    cout << "BS space:" << sizeof(BSType) * BSVector.size() << endl;
+
+    for (int i = 0; i < LRVector.size(); i++)
+        space += sizeof(LRType) + LRVector[i].childNumber * 4;
+    for (int i = 0; i < NNVector.size(); i++)
+        space += sizeof(NNType) + NNVector[i].childNumber * 4 + 192;
+    for (int i = 0; i < HisVector.size(); i++)
+        space += sizeof(HisType) + HisVector[i].childNumber * 5;
+    for (int i = 0; i < BSVector.size(); i++)
+        space += sizeof(BSType) + BSVector[i].childNumber * 12;
     space += sizeof(ArrayType) * ArrayVector.size();
-    cout << "Array space:" << sizeof(ArrayType) * ArrayVector.size() << endl;
     space += sizeof(GappedArrayType) * GAVector.size();
-    cout << "GA space:" << sizeof(GappedArrayType) * GAVector.size() << endl;
-    cout << "TOTAL SPACE: " << space << endl;
+    space = space / 1024 / 1024;
+    cout << "\nTOTAL SPACE: " << space << "MB" << endl;
     return space;
 }
 
 void constructionTest()
 {
-    cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkMaxSpace:" << kMaxSpace << "\tkRate:" << kRate << "\tkReadWriteRate:" << kReadWriteRate << endl;
-    outRes << "kMaxKeyNum," << kMaxKeyNum << ",kMaxSpace," << kMaxSpace << ",kRate," << kRate << ",kReadWriteRate," << kReadWriteRate << endl;
+    cout << "Space of different classes (sizeof):" << endl;
+    cout << "LRType:" << sizeof(LRType) << "\tlr model:" << sizeof(LinearRegression) << endl;
+    cout << "NNType:" << sizeof(NNType) << "\tnn model:" << sizeof(PiecewiseLR) << endl;
+    cout << "HisType:" << sizeof(HisType) << "\this model:" << sizeof(HistogramModel) << endl;
+    cout << "BSType:" << sizeof(BSType) << "\tbs model:" << sizeof(BinarySearchModel) << endl;
+    cout << "ArrayType:" << sizeof(ArrayType) << endl;
+    cout << "GappedArrayType:" << sizeof(GappedArrayType) << endl;
+
+    cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkMaxSpace:" << (kMaxSpace / 1024 / 1024) << "MB\tkRate:" << kRate << "\tkReadWriteRate:" << kReadWriteRate << endl;
+    outRes << "kMaxKeyNum," << kMaxKeyNum << ",kMaxSpace," << (kMaxSpace / 1024 / 1024) << "MB,kRate," << kRate << ",kReadWriteRate," << kReadWriteRate << endl;
     vector<int> readCnt;
     vector<int> writeCnt;
     for (int i = 0; i < dataset.size(); i++)
@@ -352,49 +527,42 @@ void constructionTest()
         writeCnt.push_back(10);
     }
     cout << "readCnt.size():" << readCnt.size() << "\twriteCnt.size():" << writeCnt.size() << endl;
-    auto rootType = Construction(dataset, readCnt, insertDataset, writeCnt);
+    auto rootType = Construction(kMaxSpace, dataset, readCnt, insertDataset, writeCnt);
     cout << "Construction over!" << endl;
     cout << endl;
 
     int size = 0;
     int cnt = 0;
     cout << "The index is:" << endl;
-    for (int i = 0; i < LRVector.size(); i++)
-    {
-        cout << "LRVector " << i << ": ChildNumber:" << LRVector[i].childNumber << endl;
-        size += LRVector[i].childNumber;
-        cnt++;
-    }
-    for (int i = 0; i < NNVector.size(); i++)
-    {
-        cout << "NNVector " << i << ": ChildNumber:" << NNVector[i].childNumber << endl;
-        size += NNVector[i].childNumber;
-        cnt++;
-    }
-    for (int i = 0; i < HisVector.size(); i++)
-    {
-        cout << "HisVector " << i << ": ChildNumber:" << HisVector[i].childNumber << endl;
-        size += HisVector[i].childNumber;
-        cnt++;
-    }
-    for (int i = 0; i < BSVector.size(); i++)
-    {
-        cout << "BSVector " << i << ": ChildNumber:" << BSVector[i].childNumber << endl;
-        size += BSVector[i].childNumber;
-        cnt++;
-    }
+    cout << "LRVector: size: " << LRVector.size() << endl;
+    cout << "NNVector: size: " << NNVector.size() << endl;
+    cout << "HisVector: size: " << HisVector.size() << endl;
+    cout << "BSVector: size: " << BSVector.size() << endl;
     cout << "ArrayVector size:" << ArrayVector.size() << endl;
     cout << "GAVector size:" << GAVector.size() << endl;
-    cout << "size: " << size << "\tcnt:" << cnt << endl;
+    cout << "the number of nodes: " << size << "\tcnt:" << cnt << endl;
+    cout << "\nprint the space:" << endl;
+    auto space = calculateSpace();
+    outRes << "Space," << space << ",";
+
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+    cout << "print structure:" << endl;
+    printStructure(1, rootType, 0);
+    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        auto res = Find(rootType, dataset[i].first);
+        if ((res.second != dataset[i].second) && res.first != dataset[i].first)
+            cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
+    }
+    cout << "check FIND over!" << endl;
 
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
     s = chrono::system_clock::now();
     for (int i = 0; i < dataset.size(); i++)
-    {
-        // cout<<"test find "<<i<<":"<<dataset[i].first<<endl;
         Find(rootType, dataset[i].first);
-    }
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Find time:" << tmp / (float)dataset.size() * 1000000000 << endl;
@@ -413,8 +581,6 @@ void constructionTest()
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
     outRes << "Insert," << tmp / (float)insertDataset.size() << "\n";
-
-    calculateSpace();
 }
 
 void experiment(double isConstruction, int repetitions, double initRatio, bool calculateTime)
@@ -430,100 +596,102 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
     if (isConstruction)
     {
-        vector<double> rate = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.05, 0.005, 0.0005, 5};
-        for (int r = 0; r < rate.size(); r++)
+        vector<double> rate = {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.05, 0.005, 0.0005, 5};
+        double base = 1024 * 1024; // 5MB
+        vector<double> space = {base, 2 * base, 5 * base, 10 * base, 15 * base, 20 * base, 30 * base};
+        for (int m = 0; m < space.size(); m++)
         {
-            kRate = rate[r];
-            // vector<int> max_synthetic = {256, 512, 1024, 2048, 4096, 8192, 10240, 8192 * 2};
-            // vector<int> max_map = {512, 1024, 2048, 4096, 8192, 8192 * 2, 8192 * 4, 102400};
-            // for (int i = 0; i < max_synthetic.size(); i++)
-            // {
-            kMaxKeyNum = 256;
-            cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-            uniData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-            if (r == 0)
+            kMaxSpace = space[m];
+            cout << "now kMaxSpace:" << kMaxSpace << endl;
+            for (int r = 0; r < rate.size(); r++)
             {
-                stx::btree_map<double, double> btree;
-                for (int l = 0; l < dataset.size(); l++)
-                    btree.insert(dataset[l]);
-                btreemap = btree;
-                btree_test();
-                cout << "-------------------------------" << endl;
-            }
-            constructionTest();
+                kRate = rate[r];
+                kMaxKeyNum = 256;
+                cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+                uniData.GenerateDataset(dataset, insertDataset);
+                outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+                if (r == 0)
+                {
+                    stx::btree_map<double, double> btree;
+                    for (int l = 0; l < dataset.size(); l++)
+                        btree.insert(dataset[l]);
+                    btreemap = btree;
+                    btree_test();
+                    cout << "-------------------------------" << endl;
+                }
+                constructionTest();
 
-            cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-            expData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-            if (r == 0)
-            {
-                stx::btree_map<double, double> btree;
-                for (int l = 0; l < dataset.size(); l++)
-                    btree.insert(dataset[l]);
-                btreemap = btree;
-                btree_test();
-                cout << "-------------------------------" << endl;
-            }
-            constructionTest();
+                cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+                expData.GenerateDataset(dataset, insertDataset);
+                outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+                if (r == 0)
+                {
+                    stx::btree_map<double, double> btree;
+                    for (int l = 0; l < dataset.size(); l++)
+                        btree.insert(dataset[l]);
+                    btreemap = btree;
+                    btree_test();
+                    cout << "-------------------------------" << endl;
+                }
+                constructionTest();
 
-            cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-            norData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-            if (r == 0)
-            {
-                stx::btree_map<double, double> btree;
-                for (int l = 0; l < dataset.size(); l++)
-                    btree.insert(dataset[l]);
-                btreemap = btree;
-                btree_test();
-                cout << "-------------------------------" << endl;
-            }
-            constructionTest();
+                cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+                norData.GenerateDataset(dataset, insertDataset);
+                outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+                if (r == 0)
+                {
+                    stx::btree_map<double, double> btree;
+                    for (int l = 0; l < dataset.size(); l++)
+                        btree.insert(dataset[l]);
+                    btreemap = btree;
+                    btree_test();
+                    cout << "-------------------------------" << endl;
+                }
+                constructionTest();
 
-            cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-            logData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-            if (r == 0)
-            {
-                stx::btree_map<double, double> btree;
-                for (int l = 0; l < dataset.size(); l++)
-                    btree.insert(dataset[l]);
-                btreemap = btree;
-                btree_test();
-                cout << "-------------------------------" << endl;
-            }
-            constructionTest();
+                cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+                logData.GenerateDataset(dataset, insertDataset);
+                outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+                if (r == 0)
+                {
+                    stx::btree_map<double, double> btree;
+                    for (int l = 0; l < dataset.size(); l++)
+                        btree.insert(dataset[l]);
+                    btreemap = btree;
+                    btree_test();
+                    cout << "-------------------------------" << endl;
+                }
+                constructionTest();
 
-            kMaxKeyNum = 512;
-            cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            latData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            if (r == 0)
-            {
-                stx::btree_map<double, double> btree;
-                for (int l = 0; l < dataset.size(); l++)
-                    btree.insert(dataset[l]);
-                btreemap = btree;
-                btree_test();
-                cout << "-------------------------------" << endl;
-            }
-            constructionTest();
+                kMaxKeyNum = 512;
+                cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+                latData.GenerateDataset(dataset, insertDataset);
+                outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+                if (r == 0)
+                {
+                    stx::btree_map<double, double> btree;
+                    for (int l = 0; l < dataset.size(); l++)
+                        btree.insert(dataset[l]);
+                    btreemap = btree;
+                    btree_test();
+                    cout << "-------------------------------" << endl;
+                }
+                constructionTest();
 
-            cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            longData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            if (r == 0)
-            {
-                stx::btree_map<double, double> btree;
-                for (int l = 0; l < dataset.size(); l++)
-                    btree.insert(dataset[l]);
-                btreemap = btree;
-                btree_test();
-                cout << "-------------------------------" << endl;
+                cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+                longData.GenerateDataset(dataset, insertDataset);
+                outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+                if (r == 0)
+                {
+                    stx::btree_map<double, double> btree;
+                    for (int l = 0; l < dataset.size(); l++)
+                        btree.insert(dataset[l]);
+                    btreemap = btree;
+                    btree_test();
+                    cout << "-------------------------------" << endl;
+                }
+                constructionTest();
             }
-            constructionTest();
-            // }
         }
     }
     else
@@ -587,8 +755,8 @@ int main()
     outFile.open("bin.csv", ios::out);
     outFile << "\n";
 
-    outRes.open("res_1119.csv", ios::app);
-    outRes << "Test time: " << __TIMESTAMP__ << endl;
+    outRes.open("res_1121.csv", ios::app);
+    outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
 
@@ -606,10 +774,10 @@ int main()
         bool isConstruction = true;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
-        experiment(isConstruction, repetitions, 1, calculateTime); // read-only
-        // experiment(isConstruction, repetitions, 0.5, calculateTime); // balance
+        experiment(isConstruction, repetitions, 1, calculateTime);   // read-only
+        experiment(isConstruction, repetitions, 0.5, calculateTime); // balance
         // experiment(isConstruction, repetitions, 0.9, calculateTime);
-        // experiment(repetitions, 0, calculateTime);  // partial
+        experiment(isConstruction, repetitions, 0, calculateTime); // partial
     }
     outRes << "----------------------------------------------" << endl;
 

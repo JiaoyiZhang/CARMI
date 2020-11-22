@@ -15,6 +15,8 @@ extern vector<NNType> NNVector;
 extern vector<HisType> HisVector;
 extern vector<BSType> BSVector;
 
+extern vector<vector<pair<double, double>>> tmpEntireDataset;
+
 // search a key-value through binary search in
 // the array leaf node
 inline int ArrayBinarySearch(vector<pair<double, double>> &m_dataset, double key, int start, int end)
@@ -35,22 +37,11 @@ inline int ArrayBinarySearch(vector<pair<double, double>> &m_dataset, double key
 // return the idx of the first element >= key
 inline int GABinarySearch(vector<pair<double, double>> &m_dataset, double key, int start_idx, int end_idx)
 {
-    // for(int i=0;i<m_dataset.size();i++)
-    // {
-    //     cout<<i<<":"<<m_dataset[i].first<<"\t";
-    //     if((i+1)%100 == 0)
-    //         cout<<endl;
-    // }
-    // cout<<endl;
-    // use binary search to find
-    // cout<<"key:"<<key<<"\tstart:"<<start_idx<<"\tend:"<<end_idx<<endl;
     while (end_idx - start_idx >= 2)
     {
         int mid = (start_idx + end_idx) >> 1;
-        // cout<<"In while: mid:"<<mid<<"\tstart:"<<start_idx<<"\tend:"<<end_idx<<endl;
         if (m_dataset[mid].first == -1)
         {
-            // cout<<"mid == -1!\tm_dataset[mid - 1].first:"<<m_dataset[mid - 1].first<<"\tkey:"<<key<<endl;
             if (m_dataset[mid - 1].first >= key)
                 end_idx = mid - 1;
             else
@@ -58,14 +49,12 @@ inline int GABinarySearch(vector<pair<double, double>> &m_dataset, double key, i
         }
         else
         {
-            // cout<<"mid != -1!\tm_dataset[mid].first:"<<m_dataset[mid].first<<"\tkey:"<<key<<endl;
             if (m_dataset[mid].first >= key)
                 end_idx = mid;
             else
                 start_idx = mid + 1;
         }
     }
-    // cout<<"Out of while! start:"<<start_idx<<"\tm_dataset[start_idx].first:"<<m_dataset[start_idx].first<<"\tm_dataset[end_idx].first:"<<m_dataset[end_idx].first<<endl;
     if (m_dataset[start_idx].first >= key)
         return start_idx;
     else
@@ -73,6 +62,7 @@ inline int GABinarySearch(vector<pair<double, double>> &m_dataset, double key, i
 }
 
 // designed for construction
+
 inline void InnerNodeTime(int idx, int type, double key)
 {
     int content;
@@ -113,15 +103,71 @@ inline void InnerNodeTime(int idx, int type, double key)
     }
 }
 
+inline void TestArraySetDataset(ArrayType &node, const vector<pair<double, double> > &subDataset)
+{
+    tmpEntireDataset.push_back(subDataset);
+    node.datasetIndex = tmpEntireDataset.size() - 1;
+    node.m_datasetSize = subDataset.size();
+    if (node.m_datasetSize == 0)
+        return;
+
+    node.model.Train(subDataset, node.m_datasetSize);
+    int sum = 0;
+    for (int i = 0; i < node.m_datasetSize; i++)
+    {
+        int p = node.model.Predict(subDataset[i].first);
+        int e = abs(i - p);
+        sum += e;
+    }
+    node.error = float(sum) / node.m_datasetSize + 1;
+    node.writeTimes = 0;
+}
+
+inline void TestGappedArraySetDataset(GappedArrayType &node, const vector<pair<double, double> > &subDataset)
+{
+    while ((float(subDataset.size()) / float(node.capacity) > node.density))
+    {
+        int newSize = node.capacity / node.density;
+        node.capacity = newSize;
+    }
+    node.m_datasetSize = 0;
+
+    vector<pair<double, double> > newDataset(node.capacity, pair<double, double>{-1, -1});
+    node.maxIndex = -2;
+    for (int i = 0; i < subDataset.size(); i++)
+    {
+        if ((subDataset[i].first != -1) && (subDataset[i].second != DBL_MIN))
+        {
+            node.maxIndex += 2;
+            newDataset[node.maxIndex] = subDataset[i];
+            node.m_datasetSize++;
+        }
+    }
+    tmpEntireDataset.push_back(newDataset);
+    node.datasetIndex = tmpEntireDataset.size() - 1;
+    node.model.Train(newDataset, node.capacity);
+    for (int i = 0; i < newDataset.size(); i++)
+    {
+        if (newDataset[i].first != -1)
+        {
+            int p = node.model.Predict(newDataset[i].first);
+            int e = abs(i - p);
+            if (e > node.error)
+                node.error = e;
+        }
+    }
+    node.error++;
+}
+
 inline pair<double, double> TestArrayFind(ArrayType &node, double key)
 {
     if (node.m_datasetSize == 0)
         return {};
     auto entireIdx = node.datasetIndex;
-    int preIdx = node.model.Predict(key);
-    if (entireDataset[entireIdx][preIdx].first == key)
+    int preIdx = node.model.PredictPrecision(key, node.m_datasetSize);
+    if (tmpEntireDataset[entireIdx][preIdx].first == key)
     {
-        return entireDataset[entireIdx][preIdx];
+        return tmpEntireDataset[entireIdx][preIdx];
     }
     else
     {
@@ -129,19 +175,19 @@ inline pair<double, double> TestArrayFind(ArrayType &node, double key)
         int end = min(node.m_datasetSize - 1, preIdx + node.error);
         start = min(start, end);
         int res;
-        if (key <= entireDataset[entireIdx][start].first)
-            res = ArrayBinarySearch(entireDataset[entireIdx], key, 0, start);
-        else if (key <= entireDataset[entireIdx][end].first)
-            res = ArrayBinarySearch(entireDataset[entireIdx], key, start, end);
+        if (key <= tmpEntireDataset[entireIdx][start].first)
+            res = ArrayBinarySearch(tmpEntireDataset[entireIdx], key, 0, start);
+        else if (key <= tmpEntireDataset[entireIdx][end].first)
+            res = ArrayBinarySearch(tmpEntireDataset[entireIdx], key, start, end);
         else
         {
-            res = ArrayBinarySearch(entireDataset[entireIdx], key, end, node.m_datasetSize - 1);
+            res = ArrayBinarySearch(tmpEntireDataset[entireIdx], key, end, node.m_datasetSize - 1);
             if (res >= node.m_datasetSize)
                 return {};
         }
 
-        if (entireDataset[entireIdx][res].first == key)
-            return entireDataset[entireIdx][res];
+        if (tmpEntireDataset[entireIdx][res].first == key)
+            return tmpEntireDataset[entireIdx][res];
         return {};
     }
 }
@@ -149,9 +195,9 @@ inline pair<double, double> TestArrayFind(ArrayType &node, double key)
 inline pair<double, double> TestGappedArrayFind(GappedArrayType &node, double key)
 {
     auto entireIdx = node.datasetIndex;
-    int preIdx = node.model.Predict(key);
-    if (entireDataset[entireIdx][preIdx].first == key)
-        return entireDataset[entireIdx][preIdx];
+    int preIdx = node.model.PredictPrecision(key, node.m_datasetSize);
+    if (tmpEntireDataset[entireIdx][preIdx].first == key)
+        return tmpEntireDataset[entireIdx][preIdx];
     else
     {
         int start = max(0, preIdx - node.error);
@@ -159,23 +205,23 @@ inline pair<double, double> TestGappedArrayFind(GappedArrayType &node, double ke
         start = min(start, end);
 
         int res;
-        if (entireDataset[entireIdx][start].first == -1)
+        if (tmpEntireDataset[entireIdx][start].first == -1)
             start--;
-        if (entireDataset[entireIdx][end].first == -1)
+        if (tmpEntireDataset[entireIdx][end].first == -1)
             end--;
-        if (key <= entireDataset[entireIdx][start].first)
-            res = GABinarySearch(entireDataset[entireIdx], key, 0, start);
-        else if (key <= entireDataset[entireIdx][end].first)
-            res = GABinarySearch(entireDataset[entireIdx], key, start, end);
+        if (key <= tmpEntireDataset[entireIdx][start].first)
+            res = GABinarySearch(tmpEntireDataset[entireIdx], key, 0, start);
+        else if (key <= tmpEntireDataset[entireIdx][end].first)
+            res = GABinarySearch(tmpEntireDataset[entireIdx], key, start, end);
         else
         {
-            res = GABinarySearch(entireDataset[entireIdx], key, end, node.maxIndex - 1);
+            res = GABinarySearch(tmpEntireDataset[entireIdx], key, end, node.maxIndex - 1);
             if (res >= node.maxIndex)
                 return {DBL_MIN, DBL_MIN};
         }
 
-        if (entireDataset[entireIdx][res].first == key)
-            return entireDataset[entireIdx][res];
+        if (tmpEntireDataset[entireIdx][res].first == key)
+            return tmpEntireDataset[entireIdx][res];
         return {DBL_MIN, DBL_MIN};
     }
 }
@@ -185,44 +231,44 @@ inline bool TestArrayInsert(ArrayType &node, pair<double, double> data)
     auto entireIdx = node.datasetIndex;
     if (node.m_datasetSize == 0)
     {
-        entireDataset[entireIdx].push_back(data);
+        tmpEntireDataset[entireIdx].push_back(data);
         node.m_datasetSize++;
         node.writeTimes++;
-        node.SetDataset(entireDataset[entireIdx]);
+        node.SetDataset(tmpEntireDataset[entireIdx]);
         return true;
     }
-    int preIdx = node.model.Predict(data.first);
+    int preIdx = node.model.PredictPrecision(data.first, node.m_datasetSize);
     int start = max(0, preIdx - node.error);
     int end = min(node.m_datasetSize - 1, preIdx + node.error);
     start = min(start, end);
 
-    if (data.first <= entireDataset[entireIdx][start].first)
-        preIdx = ArrayBinarySearch(entireDataset[entireIdx], data.first, 0, start);
-    else if (data.first <= entireDataset[entireIdx][end].first)
-        preIdx = ArrayBinarySearch(entireDataset[entireIdx], data.first, start, end);
+    if (data.first <= tmpEntireDataset[entireIdx][start].first)
+        preIdx = ArrayBinarySearch(tmpEntireDataset[entireIdx], data.first, 0, start);
+    else if (data.first <= tmpEntireDataset[entireIdx][end].first)
+        preIdx = ArrayBinarySearch(tmpEntireDataset[entireIdx], data.first, start, end);
     else
-        preIdx = ArrayBinarySearch(entireDataset[entireIdx], data.first, end, node.m_datasetSize - 1);
+        preIdx = ArrayBinarySearch(tmpEntireDataset[entireIdx], data.first, end, node.m_datasetSize - 1);
 
     // Insert data
-    if (preIdx == node.m_datasetSize - 1 && entireDataset[entireIdx][preIdx].first < data.first)
+    if (preIdx == node.m_datasetSize - 1 && tmpEntireDataset[entireIdx][preIdx].first < data.first)
     {
-        entireDataset[entireIdx].push_back(data);
+        tmpEntireDataset[entireIdx].push_back(data);
         node.m_datasetSize++;
         node.writeTimes++;
         return true;
     }
-    entireDataset[entireIdx].push_back(entireDataset[entireIdx][node.m_datasetSize - 1]);
+    tmpEntireDataset[entireIdx].push_back(tmpEntireDataset[entireIdx][node.m_datasetSize - 1]);
     node.m_datasetSize++;
     for (int i = node.m_datasetSize - 2; i > preIdx; i--)
-        entireDataset[entireIdx][i] = entireDataset[entireIdx][i - 1];
-    entireDataset[entireIdx][preIdx] = data;
+        tmpEntireDataset[entireIdx][i] = tmpEntireDataset[entireIdx][i - 1];
+    tmpEntireDataset[entireIdx][preIdx] = data;
 
     node.writeTimes++;
 
     // If the current number is greater than the maximum,
     // the child node needs to be retrained
     if (node.writeTimes >= node.m_datasetSize || node.writeTimes > node.m_maxNumber)
-        node.SetDataset(entireDataset[entireIdx]);
+        node.SetDataset(tmpEntireDataset[entireIdx]);
     return true;
 }
 
@@ -233,57 +279,57 @@ inline bool TestGappedArrayInsert(GappedArrayType &node, pair<double, double> da
     {
         // If an additional Insertion results in crossing the density
         // then we expand the gapped array
-        node.SetDataset(entireDataset[entireIdx]);
+        node.SetDataset(tmpEntireDataset[entireIdx]);
     }
 
     if (node.m_datasetSize == 0)
     {
-        entireDataset[entireIdx] = vector<pair<double, double>>(node.capacity, pair<double, double>{-1, -1});
-        entireDataset[entireIdx][0] = data;
+        tmpEntireDataset[entireIdx] = vector<pair<double, double>>(node.capacity, pair<double, double>{-1, -1});
+        tmpEntireDataset[entireIdx][0] = data;
         node.m_datasetSize++;
         node.maxIndex = 0;
-        node.SetDataset(entireDataset[entireIdx]);
+        node.SetDataset(tmpEntireDataset[entireIdx]);
         return true;
     }
-    int preIdx = node.model.Predict(data.first);
+    int preIdx = node.model.PredictPrecision(data.first, node.m_datasetSize);
 
     int start = max(0, preIdx - node.error);
     int end = min(node.maxIndex, preIdx + node.error);
     start = min(start, end);
 
-    if (entireDataset[entireIdx][start].first == -1)
+    if (tmpEntireDataset[entireIdx][start].first == -1)
         start--;
-    if (entireDataset[entireIdx][end].first == -1)
+    if (tmpEntireDataset[entireIdx][end].first == -1)
         end--;
 
-    if (data.first <= entireDataset[entireIdx][start].first)
-        preIdx = GABinarySearch(entireDataset[entireIdx], data.first, 0, start);
-    else if (data.first <= entireDataset[entireIdx][end].first)
-        preIdx = GABinarySearch(entireDataset[entireIdx], data.first, start, end);
+    if (data.first <= tmpEntireDataset[entireIdx][start].first)
+        preIdx = GABinarySearch(tmpEntireDataset[entireIdx], data.first, 0, start);
+    else if (data.first <= tmpEntireDataset[entireIdx][end].first)
+        preIdx = GABinarySearch(tmpEntireDataset[entireIdx], data.first, start, end);
     else
-        preIdx = GABinarySearch(entireDataset[entireIdx], data.first, end, node.maxIndex);
+        preIdx = GABinarySearch(tmpEntireDataset[entireIdx], data.first, end, node.maxIndex);
 
     // if the Insertion position is a gap,
     //  then we Insert the element into the gap and are done
-    if (entireDataset[entireIdx][preIdx].first == -1)
+    if (tmpEntireDataset[entireIdx][preIdx].first == -1)
     {
-        entireDataset[entireIdx][preIdx] = data;
+        tmpEntireDataset[entireIdx][preIdx] = data;
         node.m_datasetSize++;
         node.maxIndex = max(node.maxIndex, preIdx);
         return true;
     }
     else
     {
-        if (entireDataset[entireIdx][preIdx].second == DBL_MIN)
+        if (tmpEntireDataset[entireIdx][preIdx].second == DBL_MIN)
         {
-            entireDataset[entireIdx][preIdx] = data;
+            tmpEntireDataset[entireIdx][preIdx] = data;
             node.m_datasetSize++;
             node.maxIndex = max(node.maxIndex, preIdx);
             return true;
         }
-        if (preIdx == node.maxIndex && entireDataset[entireIdx][node.maxIndex].first < data.first)
+        if (preIdx == node.maxIndex && tmpEntireDataset[entireIdx][node.maxIndex].first < data.first)
         {
-            entireDataset[entireIdx][++node.maxIndex] = data;
+            tmpEntireDataset[entireIdx][++node.maxIndex] = data;
             node.m_datasetSize++;
             return true;
         }
@@ -292,15 +338,15 @@ inline bool TestGappedArrayInsert(GappedArrayType &node, pair<double, double> da
         // by one position in the direction of the closest gap
 
         int i = preIdx + 1;
-        while (entireDataset[entireIdx][i].first != -1)
+        while (tmpEntireDataset[entireIdx][i].first != -1)
             i++;
         if (i >= node.capacity)
         {
             i = preIdx - 1;
-            while (i >= 0 && entireDataset[entireIdx][i].first != -1)
+            while (i >= 0 && tmpEntireDataset[entireIdx][i].first != -1)
                 i--;
             for (int j = i; j < preIdx - 1; j++)
-                entireDataset[entireIdx][j] = entireDataset[entireIdx][j + 1];
+                tmpEntireDataset[entireIdx][j] = tmpEntireDataset[entireIdx][j + 1];
             preIdx--;
         }
         else
@@ -308,9 +354,9 @@ inline bool TestGappedArrayInsert(GappedArrayType &node, pair<double, double> da
             if (i > node.maxIndex)
                 node.maxIndex++;
             for (; i > preIdx; i--)
-                entireDataset[entireIdx][i] = entireDataset[entireIdx][i - 1];
+                tmpEntireDataset[entireIdx][i] = tmpEntireDataset[entireIdx][i - 1];
         }
-        entireDataset[entireIdx][preIdx] = data;
+        tmpEntireDataset[entireIdx][preIdx] = data;
         node.m_datasetSize++;
         node.maxIndex = max(node.maxIndex, preIdx);
         return true;

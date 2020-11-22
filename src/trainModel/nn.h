@@ -1,7 +1,6 @@
 #ifndef NN_H
 #define NN_H
 
-#include "model.h"
 #include "../params.h"
 #include <iostream>
 #include <vector>
@@ -81,7 +80,7 @@ public:
 	double b;
 	double W2;
 };
-class Net : public BasicModel
+class Net
 {
 public:
 	Net(){};

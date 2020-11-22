@@ -7,7 +7,6 @@
 #include <chrono>
 #include <random>
 #include "../params.h"
-#include "model.h"
 #include <math.h>
 using namespace std;
 
@@ -15,7 +14,7 @@ extern const int kMaxEpoch;
 extern const double kLearningRate;
 extern int kNeuronNumber;
 
-class PiecewiseLR : public BasicModel
+class PiecewiseLR
 {
 public:
     PiecewiseLR()

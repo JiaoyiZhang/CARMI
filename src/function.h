@@ -21,6 +21,8 @@ vector<BSType> BSVector;
 vector<ArrayType> ArrayVector;
 vector<GappedArrayType> GAVector;
 
+extern vector<vector<pair<double, double>>> entireDataset;
+
 extern int kLeafNodeID;
 extern int kInnerNodeID;
 
@@ -66,7 +68,6 @@ pair<double, double> Find(int rootType, double key)
         case 0:
         {
             content = LRVector[idx].child[LRVector[idx].model.Predict(key)];
-            return {};
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -74,7 +75,6 @@ pair<double, double> Find(int rootType, double key)
         case 1:
         {
             content = NNVector[idx].child[NNVector[idx].model.Predict(key)];
-            return {};
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -82,7 +82,6 @@ pair<double, double> Find(int rootType, double key)
         case 2:
         {
             content = HisVector[idx].child[HisVector[idx].model.Predict(key)];
-            return {};
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -90,7 +89,6 @@ pair<double, double> Find(int rootType, double key)
         case 3:
         {
             content = BSVector[idx].child[BSVector[idx].model.Predict(key)];
-            return {};
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -99,7 +97,7 @@ pair<double, double> Find(int rootType, double key)
         {
             if (ArrayVector[idx].m_datasetSize == 0)
                 return {};
-            int preIdx = ArrayVector[idx].model.Predict(key);
+            int preIdx = ArrayVector[idx].model.PredictPrecision(key, ArrayVector[idx].m_datasetSize);
             auto entireIdx = ArrayVector[idx].datasetIndex;
             if (entireDataset[entireIdx][preIdx].first == key)
             {
@@ -121,7 +119,6 @@ pair<double, double> Find(int rootType, double key)
                     if (res >= ArrayVector[idx].m_datasetSize)
                         return {};
                 }
-
                 if (entireDataset[entireIdx][res].first == key)
                     return entireDataset[entireIdx][res];
                 return {};
@@ -130,7 +127,7 @@ pair<double, double> Find(int rootType, double key)
         break;
         case 5:
         {
-            int preIdx = GAVector[idx].model.Predict(key);
+            int preIdx = GAVector[idx].model.PredictPrecision(key, GAVector[idx].maxIndex + 1);
             auto entireIdx = GAVector[idx].datasetIndex;
             if (entireDataset[entireIdx][preIdx].first == key)
                 return entireDataset[entireIdx][preIdx];
@@ -214,7 +211,7 @@ bool Insert(int rootType, pair<double, double> data)
                 ArrayVector[idx].SetDataset(entireDataset[entireIdx]);
                 return true;
             }
-            int preIdx = ArrayVector[idx].model.Predict(data.first);
+            int preIdx = ArrayVector[idx].model.PredictPrecision(data.first, ArrayVector[idx].m_datasetSize);
             int start = max(0, preIdx - ArrayVector[idx].error);
             int end = min(ArrayVector[idx].m_datasetSize - 1, preIdx + ArrayVector[idx].error);
             start = min(start, end);
@@ -268,7 +265,7 @@ bool Insert(int rootType, pair<double, double> data)
                 GAVector[idx].SetDataset(entireDataset[entireIdx]);
                 return true;
             }
-            int preIdx = GAVector[idx].model.Predict(data.first);
+            int preIdx = GAVector[idx].model.PredictPrecision(data.first, GAVector[idx].maxIndex + 1);
 
             int start = max(0, preIdx - GAVector[idx].error);
             int end = min(GAVector[idx].maxIndex, preIdx + GAVector[idx].error);
@@ -385,7 +382,7 @@ bool Delete(int rootType, double key)
         case 4:
         {
             auto entireIdx = ArrayVector[idx].datasetIndex;
-            int preIdx = ArrayVector[idx].model.Predict(key);
+            int preIdx = ArrayVector[idx].model.PredictPrecision(key, ArrayVector[idx].m_datasetSize);
             if (entireDataset[entireIdx][preIdx].first != key)
             {
                 int start = max(0, preIdx - ArrayVector[idx].error);
@@ -420,7 +417,7 @@ bool Delete(int rootType, double key)
             // DBL_MIN means the data has been deleted
             // when a data has been deleted, data.second == DBL_MIN
             auto entireIdx = GAVector[idx].datasetIndex;
-            int preIdx = GAVector[idx].model.Predict(key);
+            int preIdx = GAVector[idx].model.PredictPrecision(key, GAVector[idx].maxIndex + 1);
             if (entireDataset[entireIdx][preIdx].first == key)
             {
                 entireDataset[entireIdx][preIdx].second = DBL_MIN;
@@ -505,7 +502,7 @@ bool Update(int rootType, pair<double, double> data)
         case 4:
         {
             auto entireIdx = ArrayVector[idx].datasetIndex;
-            int preIdx = ArrayVector[idx].model.Predict(data.first);
+            int preIdx = ArrayVector[idx].model.PredictPrecision(data.first, ArrayVector[idx].m_datasetSize);
             if (entireDataset[entireIdx][preIdx].first != data.first)
             {
                 int start = max(0, preIdx - ArrayVector[idx].error);
@@ -531,7 +528,7 @@ bool Update(int rootType, pair<double, double> data)
         case 5:
         {
             auto entireIdx = GAVector[idx].datasetIndex;
-            int preIdx = GAVector[idx].model.Predict(data.first);
+            int preIdx = GAVector[idx].model.PredictPrecision(data.first, GAVector[idx].maxIndex + 1);
             if (entireDataset[entireIdx][preIdx].first == data.first)
             {
                 entireDataset[entireIdx][preIdx].second = data.second;

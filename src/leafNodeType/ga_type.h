@@ -8,6 +8,7 @@
 #include <vector>
 using namespace std;
 
+extern vector<vector<pair<double, double>>> entireDataset;
 
 class GappedArrayType
 {
@@ -25,7 +26,6 @@ public:
     void SetDataset(const vector<pair<double, double> > &dataset);
 
     int datasetIndex; // index in the dataset (vector<vector<>>)
-    // vector<pair<double, double> > m_dataset;
     LinearRegression model;
     int m_datasetSize;
     int error;
