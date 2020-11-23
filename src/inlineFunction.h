@@ -63,46 +63,6 @@ inline int GABinarySearch(vector<pair<double, double>> &m_dataset, double key, i
 
 // designed for construction
 
-inline void InnerNodeTime(int idx, int type, double key)
-{
-    int content;
-    switch (type)
-    {
-    case 0:
-    {
-        content = LRVector[idx].child[LRVector[idx].model.Predict(key)];
-        type = content >> 28;
-        idx = content & 0x0FFFFFFF;
-        return;
-    }
-    break;
-    case 1:
-    {
-        content = NNVector[idx].child[NNVector[idx].model.Predict(key)];
-        type = content >> 28;
-        idx = content & 0x0FFFFFFF;
-        return;
-    }
-    break;
-    case 2:
-    {
-        content = HisVector[idx].child[HisVector[idx].model.Predict(key)];
-        type = content >> 28;
-        idx = content & 0x0FFFFFFF;
-        return;
-    }
-    break;
-    case 3:
-    {
-        content = BSVector[idx].child[BSVector[idx].model.Predict(key)];
-        type = content >> 28;
-        idx = content & 0x0FFFFFFF;
-        return;
-    }
-    break;
-    }
-}
-
 inline void TestArraySetDataset(ArrayType &node, const vector<pair<double, double> > &subDataset)
 {
     tmpEntireDataset.push_back(subDataset);

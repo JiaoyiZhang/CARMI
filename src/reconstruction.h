@@ -39,17 +39,19 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const dou
     int space;
     int c;
     int optimalChildNumber, optimalType;
-    cout << "Choose root!" << endl;
     for (int c = 1024; c <= dataset.size();)
     {
         if (c <= 4096)
             c *= 2;
         else if (c <= 40960)
             c += 8192;
-        else
+        else if (c <= 1000000)
             c += 65536;
+        else
+            c *= 2;
         for (int type = 0; type < 4; type++)
         {
+            double time;
             switch (type)
             {
             case 0:
@@ -59,6 +61,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const dou
                     continue;
                 LRVector.push_back(LRType(c));
                 LRVector[0].Initialize(dataset);
+                time = 8.1624 * 1e-9 * dataset.size();
                 break;
             }
             case 1:
@@ -68,6 +71,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const dou
                     continue;
                 NNVector.push_back(NNType(c));
                 NNVector[0].Initialize(dataset);
+                time = 20.26894 * 1e-9 * dataset.size();
                 break;
             }
             case 2:
@@ -77,6 +81,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const dou
                     continue;
                 HisVector.push_back(HisType(c));
                 HisVector[0].Initialize(dataset);
+                time = 19.6543 * 1e-9 * dataset.size();
                 break;
             }
             case 3:
@@ -86,21 +91,15 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const dou
                     continue;
                 BSVector.push_back(BSType(c));
                 BSVector[0].Initialize(dataset);
+                time = 4 * log(c) / log(2) * 1e-9 * dataset.size();
                 break;
             }
             }
-            // only record the time of inner node
-            chrono::_V2::system_clock::time_point s, e;
-            s = chrono::system_clock::now();
-            for (int i = 0; i < dataset.size(); i++)
-                InnerNodeTime(0, type, dataset[i].first);
-            e = chrono::system_clock::now();
-            double time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
             auto entropy = GetEntropy(dataset.size());
-            entropy /= (log(c) / log(2));
+            // entropy /= (log(c) / log(2));
             double ratio = time / entropy;
-            if (ratio < OptimalValue)
+            if (ratio <= OptimalValue)
             {
                 optimalChildNumber = c;
                 optimalType = type;
@@ -324,8 +323,10 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 k *= 2;
             else if (k < 40960)
                 k += 8192;
-            else
+            else if (k <= 1000000)
                 k += 65536;
+            else
+                k *= 2;
             if (512 * c < findData.size())
                 continue;
             for (int type = 0; type < 4; type++)
@@ -394,7 +395,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                             break;
                         }
                     }
-                    if (RootCost < OptimalValue)
+                    if (RootCost <= OptimalValue)
                     {
                         tmpIdx = idx;
                         optimalChildNumber = c;
@@ -472,7 +473,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                             break;
                         }
                     }
-                    if (RootCost < OptimalValue)
+                    if (RootCost <= OptimalValue)
                     {
                         tmpIdx = idx;
                         optimalChildNumber = c;
@@ -524,7 +525,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                     }
 
                     // only record the time of inner node using cost model
-                    double time = 12.4141 * 1e-9 * (findData.size() + insertData.size());
+                    double time = 19.6543 * 1e-9 * (findData.size() + insertData.size());
 
                     double RootCost = time + kRate * space / 1024 / 1024;
                     for (int i = 0; i < c; i++)
@@ -550,7 +551,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                             break;
                         }
                     }
-                    if (RootCost < OptimalValue)
+                    if (RootCost <= OptimalValue)
                     {
                         tmpIdx = idx;
                         optimalChildNumber = c;
@@ -602,7 +603,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                     }
 
                     // only record the time of inner node using cost model
-                    double time = log(c) / log(2) * 1e-9 * (findData.size() + insertData.size());
+                    double time = 4 * log(c) / log(2) * 1e-9 * (findData.size() + insertData.size());
 
                     double RootCost = time + kRate * space / 1024 / 1024;
                     for (int i = 0; i < c; i++)
@@ -628,7 +629,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                             break;
                         }
                     }
-                    if (RootCost < OptimalValue)
+                    if (RootCost <= OptimalValue)
                     {
                         tmpIdx = idx;
                         optimalChildNumber = c;

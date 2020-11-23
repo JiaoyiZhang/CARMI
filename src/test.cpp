@@ -15,7 +15,7 @@
 #include <chrono>
 #include "../art_tree/art.h"
 #include "../art_tree/art.cpp"
-// using namespace std;
+using namespace std;
 
 int datasetSize = 1000000;
 vector<pair<double, double>> dataset;
@@ -565,8 +565,8 @@ void constructionTest()
         Find(rootType, dataset[i].first);
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "Find time:" << tmp / (float)dataset.size() * 1000000000 << endl;
-    outRes << "Find," << tmp / (float)dataset.size() * 1000000000 << ",";
+    cout << "Find time:" << tmp / (float)dataset.size() * 1000000000 - 5 << endl;
+    outRes << "Find," << tmp / (float)dataset.size() * 1000000000 - 5 << ",";
 
     auto entropy = GetEntropy(dataset.size());
     cout << "Entropy:" << entropy << endl;
@@ -596,10 +596,10 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
     if (isConstruction)
     {
-        vector<double> rate = {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.05, 0.005, 0.0005, 5};
+        vector<double> rate = {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
         double base = 1024 * 1024; // 5MB
         vector<double> space = {base, 2 * base, 5 * base, 10 * base, 15 * base, 20 * base, 30 * base};
-        for (int m = 0; m < space.size(); m++)
+        for (int m = space.size() - 1; m >= 0; m--)
         {
             kMaxSpace = space[m];
             cout << "now kMaxSpace:" << kMaxSpace << endl;
@@ -755,7 +755,7 @@ int main()
     outFile.open("bin.csv", ios::out);
     outFile << "\n";
 
-    outRes.open("res_1121.csv", ios::app);
+    outRes.open("res_1123.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
