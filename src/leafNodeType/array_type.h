@@ -23,6 +23,7 @@ public:
         rate = 2;
     }
     void SetDataset(const vector<pair<double, double>> &dataset, int cap);
+    void SetDataset(const int left, const int size, int cap);
 
     LinearRegression model; // 20 Byte
     int m_left;             // the left boundary of the leaf node in the global array
@@ -40,7 +41,7 @@ void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, int cap)
     m_capacity = cap;
     m_datasetSize = dataset.size();
     while (m_datasetSize > m_capacity)
-        m_capacity *= (1 + rate);
+        m_capacity *= rate;
     while (m_capacity % 16 != 0)
         m_capacity++;
     m_left = allocateMemory(m_capacity);
@@ -56,6 +57,39 @@ void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, int cap)
     for (int i = 0; i < m_datasetSize; i++)
     {
         int p = model.Predict(dataset[i].first);
+        int e = abs(i - p);
+        sum += e;
+    }
+    error = float(sum) / m_datasetSize + 1;
+}
+
+void ArrayType::SetDataset(const int left, const int size, int cap)
+{
+    if (m_left != -1)
+        releaseMemory(m_left, m_capacity);
+    m_capacity = cap;
+    m_datasetSize = size;
+    while (m_datasetSize >= m_capacity)
+        m_capacity *= rate;
+    while (m_capacity % 16 != 0)
+        m_capacity++;
+    m_left = allocateMemory(m_capacity);
+
+    if (m_datasetSize == 0)
+        return;
+    int right = left + size;
+    vector<pair<double, double>> tmp;
+    for (int i = m_left, j = left; j < right; i++, j++)
+    {
+        entireData[i] = entireData[j];
+        tmp.push_back(entireData[j]);
+    }
+
+    model.Train(tmp, m_datasetSize);
+    int sum = 0;
+    for (int i = 0; i < m_datasetSize; i++)
+    {
+        int p = model.Predict(tmp[i].first);
         int e = abs(i - p);
         sum += e;
     }

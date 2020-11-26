@@ -21,12 +21,15 @@ extern vector<BSType> BSVector;
 extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
-vector<vector<pair<double, double>>> tmpEntireDataset;
+extern pair<double, double> *entireData;
+extern int *mark;
 
 vector<LRType> tmpLRVec;
 vector<NNType> tmpNNVec;
 vector<HisType> tmpHisVec;
 vector<BSType> tmpBSVec;
+vector<ArrayType> tmpArrayVec;
+vector<GappedArrayType> tmpGAVec;
 
 extern double maxSpace;
 extern int kMaxKeyNum;
@@ -111,12 +114,9 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset, const dou
             vector<BSType>().swap(BSVector);
             vector<ArrayType>().swap(ArrayVector);
             vector<GappedArrayType>().swap(GAVector);
+            initEntireData(entireDataSize);
         }
     }
-    vector<vector<pair<double, double>>>().swap(entireDataset);
-    vector<vector<pair<double, double>>>().swap(tmpEntireDataset);
-    entireDataset.clear();
-    tmpEntireDataset.clear();
     cout << "Best type is: " << optimalType << "\tbest childNumber: " << optimalChildNumber << "\tOptimal Value: " << OptimalValue << endl;
     return {optimalType, optimalChildNumber};
 }
@@ -242,16 +242,16 @@ int storeOptimalNode(int optimalType, int tmpIdx, const vector<pair<double, doub
     case 4:
     {
         // choose an array node as the leaf node
-        ArrayVector.push_back(ArrayType(kMaxKeyNum));
+        ArrayVector.push_back(tmpArrayVec[tmpIdx]);
         idx = ArrayVector.size() - 1;
-        ArrayVector[idx].SetDataset(findData);
+        ArrayVector[idx].SetDataset(findData, ArrayVector[idx].m_capacity);
         break;
     }
     case 5:
     {
-        GAVector.push_back(GappedArrayType(kMaxKeyNum));
+        GAVector.push_back(tmpGAVec[tmpIdx]);
         idx = GAVector.size() - 1;
-        GAVector[idx].SetDataset(findData);
+        GAVector[idx].SetDataset(findData, GAVector[idx].capacity);
         break;
     }
     }
@@ -264,50 +264,60 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
     if (isLeaf || maxSpace <= 0)
     {
         int L; // stored in the child vector of the upper node
-        double space;
-        int idx, type;
-        chrono::_V2::system_clock::time_point s, e;
-        double time;
+
+        double OptimalValue = DBL_MAX;
+        int optimalChildNumber = 32, optimalType = 0, optimalSpace = 0;
+        int tmpIdx;
+
+        int type;
+        double space, time, cost;
+
         int read = 0, write = 0;
         for (int i = 0; i < readCnt.size(); i++)
             read += readCnt[i];
         for (int i = 0; i < writeCnt.size(); i++)
             write += writeCnt[i];
-        if (write == 0 || float(read) / (float(read + write)) >= kReadWriteRate)
+        // choose an array node as the leaf node
+        tmpArrayVec.push_back(ArrayType(kMaxKeyNum));
+        int idx = tmpArrayVec.size() - 1;
+
+        type = 4;
+        space = sizeof(ArrayType) / findData.size() + 16;
+        time = (read * 55 + write * 100) / (findData.size() + insertData.size()); // TBD
+        cost = time + space * kRate;
+        if (cost <= OptimalValue)
         {
-            // choose an array node as the leaf node
-            auto tmp = ArrayType(kMaxKeyNum);
-            TestArraySetDataset(tmp, findData);
-            L = 0x40000000;
-            space = sizeof(ArrayType);
-            type = 4;
-            s = chrono::system_clock::now();
-            for (int i = 0; i < findData.size(); i++)
-                TestArrayFind(tmp, findData[i].first);
-            for (int i = 0; i < insertData.size(); i++)
-                TestArrayInsert(tmp, insertData[i]);
-            e = chrono::system_clock::now();
-            time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+            tmpIdx = idx;
+            optimalType = type;
+            OptimalValue = cost;
+            optimalSpace = space;
         }
         else
+            tmpArrayVec.pop_back();
+
+        // choose a gapped array node as the leaf node
+        float Density[4] = {0.5, 0.7, 0.8, 0.9}; // data/capacity
+        type = 5;
+        for (int i = 0; i < 4; i++)
         {
-            // choose a gapped array node as the leaf node
+            tmpGAVec.push_back(GappedArrayType(kMaxKeyNum));
+            idx = tmpGAVec.size() - 1;
+            tmpGAVec[idx].density = Density[i];
             auto tmp = GappedArrayType(kMaxKeyNum);
-            TestGappedArraySetDataset(tmp, findData);
-            L = 0x50000000;
-            space = sizeof(GappedArrayType);
-            type = 5;
-            s = chrono::system_clock::now();
-            for (int i = 0; i < findData.size(); i++)
-                TestGappedArrayFind(tmp, findData[i].first);
-            for (int i = 0; i < insertData.size(); i++)
-                TestGappedArrayInsert(tmp, insertData[i]);
-            e = chrono::system_clock::now();
-            time = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+            space = sizeof(GappedArrayType) / findData.size() + 16 / tmpGAVec[idx].density;
+            time = (read * 75 + write * 10) / (findData.size() + insertData.size()); // TBD
+            cost = time + space * kRate;
+            if (cost <= OptimalValue)
+            {
+                tmpIdx = idx;
+                optimalType = type;
+                OptimalValue = cost;
+                optimalSpace = space;
+            }
+            else
+                tmpGAVec.pop_back();
         }
-        tmpEntireDataset.pop_back();
-        double cost = time + space * kRate / 1024 / 1024;
-        return {{cost, space}, L};
+        return {{OptimalValue, optimalSpace}, (optimalType << 28) + tmpIdx};
     }
     else
     {
@@ -673,10 +683,7 @@ int Construction(double maxSpace, const vector<pair<double, double>> &findDatase
     vector<NNType>().swap(tmpNNVec);
     vector<HisType>().swap(tmpHisVec);
     vector<BSType>().swap(tmpBSVec);
-    vector<vector<pair<double, double>>>().swap(entireDataset);
-    vector<vector<pair<double, double>>>().swap(tmpEntireDataset);
-    entireDataset.clear();
-    tmpEntireDataset.clear();
+    initEntireData(findDataset.size() + insertDataset.size());
 
     auto res = ChooseRoot(findDataset, maxSpace);
     int childNum = res.second;
@@ -757,16 +764,14 @@ int Construction(double maxSpace, const vector<pair<double, double>> &findDatase
                     resChild = res1;
                 else
                     resChild = res0;
-                int childType = resChild.second >> 28;
-                idx = storeOptimalNode(resChild.second >> 28, (resChild.second & 0x0FFFFFFF), subFindData[i]);
-                idx += (childType << 28);
             }
             else
             {
                 resChild = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
-                idx = storeOptimalNode(resChild.second >> 28, 0, subFindData[i]);
-                idx += resChild.second;
             }
+            int childType = resChild.second >> 28;
+            idx = storeOptimalNode(resChild.second >> 28, (resChild.second & 0x0FFFFFFF), subFindData[i]);
+            idx += (childType << 28);
             LRVector[0].child.push_back(idx);
             if ((resChild.second >> 28) > 4)
                 maxSpace -= 8;
@@ -806,16 +811,15 @@ int Construction(double maxSpace, const vector<pair<double, double>> &findDatase
                     resChild = res1;
                 else
                     resChild = res0;
-                int childType = resChild.second >> 28;
-                idx = storeOptimalNode(resChild.second >> 28, (resChild.second & 0x0FFFFFFF), subFindData[i]);
-                idx += (childType << 28);
             }
             else
             {
                 resChild = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
-                idx = storeOptimalNode(resChild.second >> 28, 0, subFindData[i]);
-                idx += resChild.second;
             }
+            int childType = resChild.second >> 28;
+            idx = storeOptimalNode(resChild.second >> 28, (resChild.second & 0x0FFFFFFF), subFindData[i]);
+            idx += (childType << 28);
+
             if ((resChild.second >> 28) > 4)
                 maxSpace -= 8;
             else if ((resChild.second >> 28) < 4)
@@ -855,16 +859,14 @@ int Construction(double maxSpace, const vector<pair<double, double>> &findDatase
                     resChild = res1;
                 else
                     resChild = res0;
-                int childType = resChild.second >> 28;
-                idx = storeOptimalNode(resChild.second >> 28, (resChild.second & 0x0FFFFFFF), subFindData[i]);
-                idx += (childType << 28);
             }
             else
             {
                 resChild = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
-                idx = storeOptimalNode(resChild.second >> 28, 0, subFindData[i]);
-                idx += resChild.second;
             }
+            int childType = resChild.second >> 28;
+            idx = storeOptimalNode(resChild.second >> 28, (resChild.second & 0x0FFFFFFF), subFindData[i]);
+            idx += (childType << 28);
             if ((resChild.second >> 28) > 4)
                 maxSpace -= 8;
             else if ((resChild.second >> 28) < 4)
@@ -904,16 +906,14 @@ int Construction(double maxSpace, const vector<pair<double, double>> &findDatase
                     resChild = res1;
                 else
                     resChild = res0;
-                int childType = resChild.second >> 28;
-                idx = storeOptimalNode(resChild.second >> 28, (resChild.second & 0x0FFFFFFF), subFindData[i]);
-                idx += (childType << 28);
             }
             else
             {
                 resChild = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i], maxSpace);
-                idx = storeOptimalNode(resChild.second >> 28, 0, subFindData[i]);
-                idx += resChild.second;
             }
+            int childType = resChild.second >> 28;
+            idx = storeOptimalNode(resChild.second >> 28, (resChild.second & 0x0FFFFFFF), subFindData[i]);
+            idx += (childType << 28);
             if ((resChild.second >> 28) > 4)
                 maxSpace -= 8;
             else if ((resChild.second >> 28) < 4)

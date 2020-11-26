@@ -15,16 +15,16 @@ extern vector<NNType> NNVector;
 extern vector<HisType> HisVector;
 extern vector<BSType> BSVector;
 
-extern vector<vector<pair<double, double>>> tmpEntireDataset;
+extern pair<double, double> *entireData;
 
 // search a key-value through binary search in
 // the array leaf node
-inline int ArrayBinarySearch(vector<pair<double, double>> &m_dataset, double key, int start, int end)
+inline int ArrayBinarySearch(double key, int start, int end)
 {
     while (start < end)
     {
         int mid = (start + end) / 2;
-        if (m_dataset[mid].first < key)
+        if (entireData[mid].first < key)
             start = mid + 1;
         else
             end = mid;
@@ -35,41 +35,51 @@ inline int ArrayBinarySearch(vector<pair<double, double>> &m_dataset, double key
 // search a key-value through binary search
 // in the gapped array
 // return the idx of the first element >= key
-inline int GABinarySearch(vector<pair<double, double>> &m_dataset, double key, int start_idx, int end_idx)
+inline int GABinarySearch(double key, int start_idx, int end_idx)
 {
     while (end_idx - start_idx >= 2)
     {
         int mid = (start_idx + end_idx) >> 1;
-        if (m_dataset[mid].first == -1)
+        if (entireData[mid].first == -1)
         {
-            if (m_dataset[mid - 1].first >= key)
+            if (entireData[mid - 1].first >= key)
                 end_idx = mid - 1;
             else
                 start_idx = mid + 1;
         }
         else
         {
-            if (m_dataset[mid].first >= key)
+            if (entireData[mid].first >= key)
                 end_idx = mid;
             else
                 start_idx = mid + 1;
         }
     }
-    if (m_dataset[start_idx].first >= key)
+    if (entireData[start_idx].first >= key)
         return start_idx;
     else
         return end_idx;
 }
 
 // designed for construction
-
-inline void TestArraySetDataset(ArrayType &node, const vector<pair<double, double> > &subDataset)
+/*
+inline void TestArraySetDataset(ArrayType &node, const vector<pair<double, double> > &subDataset, int cap)
 {
-    tmpEntireDataset.push_back(subDataset);
-    node.datasetIndex = tmpEntireDataset.size() - 1;
+    if (node.m_left != -1)
+        releaseMemory(node.m_left, node.m_capacity);
+    node.m_capacity = cap;
     node.m_datasetSize = subDataset.size();
+    while (node.m_datasetSize > node.m_capacity)
+        node.m_capacity *= node.rate;
+    while (node.m_capacity % 16 != 0)
+        node.m_capacity++;
+    node.m_left = allocateMemory(node.m_capacity);
+
     if (node.m_datasetSize == 0)
         return;
+
+    for (int i = node.m_left, j = 0; j < node.m_datasetSize; i++, j++)
+        tmpEntireData[i] = subDataset[j];
 
     node.model.Train(subDataset, node.m_datasetSize);
     int sum = 0;
@@ -80,11 +90,56 @@ inline void TestArraySetDataset(ArrayType &node, const vector<pair<double, doubl
         sum += e;
     }
     node.error = float(sum) / node.m_datasetSize + 1;
-    node.writeTimes = 0;
 }
 
-inline void TestGappedArraySetDataset(GappedArrayType &node, const vector<pair<double, double> > &subDataset)
+inline void TestGappedArraySetDataset(GappedArrayType &node, const vector<pair<double, double> > &subDataset, int cap)
 {
+    if (node.m_left != -1)
+        releaseMemory(node.m_left, node.capacity);
+    node.capacity = cap;
+    while ((float(subDataset.size()) / float(capacity) > density))
+        capacity = capacity / density;
+    while (capacity % 16 != 0)
+        capacity++;
+    m_datasetSize = 0;
+    m_left = allocateMemory(capacity);
+
+    int k = density / (1 - density);
+    int cnt = 0;
+    vector<pair<double, double>> newDataset(capacity, pair<double, double>{-1, -1});
+    int j = 0;
+    for (int i = 0; i < subDataset.size(); i++)
+    {
+        if ((subDataset[i].first != -1) && (subDataset[i].second != DBL_MIN))
+        {
+            cnt++;
+            if (cnt > k)
+            {
+                j++;
+                cnt = 0;
+            }
+            newDataset[j++] = subDataset[i];
+            maxIndex = j - 1;
+            m_datasetSize++;
+        }
+    }
+
+    for (int i = m_left, j = 0; j < capacity; i++, j++)
+        entireData[i] = newDataset[j];
+
+    model.Train(newDataset, capacity);
+    for (int i = 0; i < newDataset.size(); i++)
+    {
+        if (newDataset[i].first != -1)
+        {
+            int p = model.Predict(newDataset[i].first);
+            int e = abs(i - p);
+            if (e > error)
+                error = e;
+        }
+    }
+    error++;
+    
     while ((float(subDataset.size()) / float(node.capacity) > node.density))
     {
         int newSize = node.capacity / node.density;
@@ -323,5 +378,5 @@ inline bool TestGappedArrayInsert(GappedArrayType &node, pair<double, double> da
     }
     return false;
 }
-
+*/
 #endif

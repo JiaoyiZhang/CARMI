@@ -9,7 +9,7 @@ extern int entireDataSize;
 // initialize entireData and mark
 void initEntireData(int size)
 {
-    int len = 16;
+    int len = 4096;
     while (len < size)
     {
         len *= 2;

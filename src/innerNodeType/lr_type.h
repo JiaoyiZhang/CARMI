@@ -44,18 +44,6 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
         int p = model.Predict(dataset[i].first);
         perSubDataset[p].push_back(dataset[i]);
     }
-    // ofstream outFile;
-    // outFile.open("lr.csv", ios::app);
-    // outFile<<"---------------------------------------------------"<<endl;
-    // for(int i=0;i<childNumber;i++)
-    // {
-    //     outFile<<i<<":"<<perSubDataset[i].size()<<"\t";
-    //     if((i+1)%10 == 0)
-    //         outFile<<endl;
-    // }
-    // outFile<<endl;
-    // outFile<<endl;
-    // outFile<<endl;
 
     // cout << "train second stage" << endl;
     switch (kLeafNodeID)
@@ -66,7 +54,7 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
             ArrayVector.push_back(ArrayType(kThreshold));
             int idx = ArrayVector.size() - 1;
             child.push_back(0x40000000 + idx);
-            ArrayVector[idx].SetDataset(perSubDataset[i]);
+            ArrayVector[idx].SetDataset(perSubDataset[i], kMaxKeyNum);
         }
         break;
     case 1:
@@ -75,7 +63,7 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
             GAVector.push_back(GappedArrayType(kThreshold));
             int idx = GAVector.size() - 1;
             child.push_back(0x50000000 + idx);
-            GAVector[idx].SetDataset(perSubDataset[i]);
+            GAVector[idx].SetDataset(perSubDataset[i], kMaxKeyNum);
         }
         break;
     }

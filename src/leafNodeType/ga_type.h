@@ -25,6 +25,7 @@ public:
         m_left = -1;
     }
     void SetDataset(const vector<pair<double, double>> &dataset, int cap);
+    void SetDataset(const int left, const int size, int cap);
 
     LinearRegression model;
     int m_left;        // the left boundary of the leaf node in the global array
@@ -63,6 +64,56 @@ void GappedArrayType::SetDataset(const vector<pair<double, double>> &subDataset,
                 cnt = 0;
             }
             newDataset[j++] = subDataset[i];
+            maxIndex = j - 1;
+            m_datasetSize++;
+        }
+    }
+
+    for (int i = m_left, j = 0; j < capacity; i++, j++)
+        entireData[i] = newDataset[j];
+
+    model.Train(newDataset, capacity);
+    for (int i = 0; i < newDataset.size(); i++)
+    {
+        if (newDataset[i].first != -1)
+        {
+            int p = model.Predict(newDataset[i].first);
+            int e = abs(i - p);
+            if (e > error)
+                error = e;
+        }
+    }
+    error++;
+}
+
+void GappedArrayType::SetDataset(const int left, const int size, int cap)
+{
+    if (m_left != -1)
+        releaseMemory(m_left, capacity);
+    capacity = cap;
+    while ((float(size) / float(capacity) > density))
+        capacity = capacity / density;
+    while (capacity % 16 != 0)
+        capacity++;
+    m_datasetSize = 0;
+    m_left = allocateMemory(capacity);
+
+    int k = density / (1 - density);
+    int cnt = 0;
+    vector<pair<double, double>> newDataset(capacity, pair<double, double>{-1, -1});
+    int j = 0;
+    int right = left + size;
+    for (int i = left; i < right; i++)
+    {
+        if ((entireData[i].first != -1) && (entireData[i].second != DBL_MIN))
+        {
+            cnt++;
+            if (cnt > k)
+            {
+                j++;
+                cnt = 0;
+            }
+            newDataset[j++] = entireData[i];
             maxIndex = j - 1;
             m_datasetSize++;
         }

@@ -312,7 +312,7 @@ void totalTest(int repetitions, bool mode)
         // btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
         // cout << "-------------------------------" << endl;
 
-        for (int j = 0; j < 4; j++)
+        for (int j = 2; j < 4; j++)
         {
             kInnerNodeID = j;
             cout << "childNum is: " << childNum << endl;
@@ -642,42 +642,49 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
         for (int i = 2; i < 3; i++)
         {
             childNum = childNum_synthetic[i];
-            kMaxKeyNum = 1024;
-            cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-            outRes << "+++++++++++ childNum: " << childNum << endl;
-            uniData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-            totalTest(repetitions, calculateTime);
+            kMaxKeyNum = 256;
+            // cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+            // outRes << "+++++++++++ childNum: " << childNum << endl;
+            // uniData.GenerateDataset(dataset, insertDataset);
+            // outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+            // initEntireData(dataset.size() + insertDataset.size());
+            // totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             expData.GenerateDataset(dataset, insertDataset);
             outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+            initEntireData(dataset.size() + insertDataset.size());
             totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             norData.GenerateDataset(dataset, insertDataset);
             outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+            initEntireData(dataset.size() + insertDataset.size());
             totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             logData.GenerateDataset(dataset, insertDataset);
             outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+            initEntireData(dataset.size() + insertDataset.size());
             totalTest(repetitions, calculateTime);
 
+            // kMaxKeyNum = 512;
             // childNum = childNum_map[i];
             // cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
             // outRes << "+++++++++++ childNum: " << childNum << endl;
             // latData.GenerateDataset(dataset, insertDataset);
             // outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            // initEntireData(dataset.size() + insertDataset.size());
             // totalTest(repetitions, calculateTime);
 
             // cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
             // outRes << "+++++++++++ childNum: " << childNum << endl;
             // longData.GenerateDataset(dataset, insertDataset);
             // outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            // initEntireData(dataset.size() + insertDataset.size());
             // totalTest(repetitions, calculateTime);
         }
     }
@@ -685,17 +692,8 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
 
 int main()
 {
-    ofstream outFile;
-    outFile.open("nn.csv", ios::out);
-    outFile << "\n";
-    outFile.open("lr.csv", ios::out);
-    outFile << "\n";
-    outFile.open("his.csv", ios::out);
-    outFile << "\n";
-    outFile.open("bin.csv", ios::out);
-    outFile << "\n";
 
-    outRes.open("res_1124.csv", ios::app);
+    outRes.open("res_1126.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
@@ -703,20 +701,17 @@ int main()
         kLeafNodeID = l;
         cout << "kLeafNodeID:" << (kLeafNodeID ? "Gapped array leaf node" : "Array leaf node") << endl;
         outRes << "kLeafNodeID:" << (kLeafNodeID ? "Gapped array leaf node" : "Array leaf node") << endl;
-        if (kLeafNodeID == 1)
-            kThreshold = 256;
-        else
-            kThreshold = 50000;
+        kThreshold = 256;
         cout << "kThreshold is: " << kThreshold << endl;
         outRes << "kThreshold is: " << kThreshold << endl;
         int repetitions = 1;
-        bool calculateTime = true;
-        bool isConstruction = true;
+        bool calculateTime = false;
+        bool isConstruction = false;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         experiment(isConstruction, repetitions, 1, calculateTime);   // read-only
         experiment(isConstruction, repetitions, 0.5, calculateTime); // balance
-        // experiment(isConstruction, repetitions, 0.9, calculateTime);
+        experiment(isConstruction, repetitions, 0.9, calculateTime);
         experiment(isConstruction, repetitions, 0, calculateTime); // partial
     }
     outRes << "----------------------------------------------" << endl;
