@@ -22,6 +22,9 @@ vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
 vector<vector<pair<double, double>>> entireDataset;
 stx::btree_map<double, double> btreemap;
+pair<double, double> *entireData; // global array, store all leaf nodes
+int *mark;                        // mark whether each bolck is used (0:unused, 1:used)
+int entireDataSize;               // the size of entireData
 
 extern vector<LRType> LRVector;
 extern vector<NNType> NNVector;
@@ -515,7 +518,6 @@ void constructionTest()
     cout << "GappedArrayType:" << sizeof(GappedArrayType) << endl;
 
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkMaxSpace:" << (kMaxSpace / 1024 / 1024) << "MB\tkRate:" << kRate << "\tkReadWriteRate:" << kReadWriteRate << endl;
-    outRes << "kMaxKeyNum," << kMaxKeyNum << ",kMaxSpace," << (kMaxSpace / 1024 / 1024) << "MB,kRate," << kRate << ",kReadWriteRate," << kReadWriteRate << endl;
     vector<int> readCnt;
     vector<int> writeCnt;
     for (int i = 0; i < dataset.size(); i++)
@@ -543,7 +545,7 @@ void constructionTest()
     cout << "the number of nodes: " << size << "\tcnt:" << cnt << endl;
     cout << "\nprint the space:" << endl;
     auto space = calculateSpace();
-    outRes << "Space," << space << ",";
+    outRes << space << ",";
 
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
     cout << "print structure:" << endl;
@@ -566,13 +568,7 @@ void constructionTest()
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Find time:" << tmp / (float)dataset.size() * 1000000000 - 5 << endl;
-    outRes << "Find," << tmp / (float)dataset.size() * 1000000000 - 5 << ",";
-
-    auto entropy = GetEntropy(dataset.size());
-    cout << "Entropy:" << entropy << endl;
-    outRes << "ENTROPY," << entropy << ",";
-    cout << "time / entropy: " << tmp / (float)dataset.size() / entropy * 1000000000 << endl;
-    outRes << "ratio," << tmp / (float)dataset.size() / entropy * 1000000000 << ",";
+    outRes << tmp / (float)dataset.size() * 1000000000 - 5 << ",";
 
     s = chrono::system_clock::now();
     for (int i = 0; i < insertDataset.size(); i++)
@@ -580,7 +576,7 @@ void constructionTest()
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
-    outRes << "Insert," << tmp / (float)insertDataset.size() << "\n";
+    outRes << tmp / (float)insertDataset.size() << "ns,";
 }
 
 void experiment(double isConstruction, int repetitions, double initRatio, bool calculateTime)
@@ -596,10 +592,11 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
     if (isConstruction)
     {
-        vector<double> rate = {0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
-        double base = 1024 * 1024; // 5MB
-        vector<double> space = {base, 2 * base, 5 * base, 10 * base, 15 * base, 20 * base, 30 * base};
-        for (int m = space.size() - 1; m >= 0; m--)
+        vector<double> rate = {0.001, 0.01, 0.1, 0.6, 1};
+        double base = 1024 * 1024; // MB
+        vector<double> space = {350 * base, base, 5 * base, 10 * base, 20 * base};
+        // for (int m = space.size() - 1; m >= 0; m--)
+        for (int m = 0; m < space.size(); m++)
         {
             kMaxSpace = space[m];
             cout << "now kMaxSpace:" << kMaxSpace << endl;
@@ -607,90 +604,33 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
             {
                 kRate = rate[r];
                 kMaxKeyNum = 256;
+                outRes << "kMaxSpace:" << (kMaxSpace / 1024 / 1024) << "MB,kRate:" << kRate << ",kReadWriteRate:" << kReadWriteRate << endl;
                 cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
                 uniData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
                 constructionTest();
 
                 cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
                 expData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
                 constructionTest();
 
                 cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
                 norData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
                 constructionTest();
 
                 cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
                 logData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
                 constructionTest();
 
                 kMaxKeyNum = 512;
                 cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
                 latData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
                 constructionTest();
 
                 cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
                 longData.GenerateDataset(dataset, insertDataset);
-                outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-                if (r == 0)
-                {
-                    stx::btree_map<double, double> btree;
-                    for (int l = 0; l < dataset.size(); l++)
-                        btree.insert(dataset[l]);
-                    btreemap = btree;
-                    btree_test();
-                    cout << "-------------------------------" << endl;
-                }
                 constructionTest();
+
+                outRes << endl;
             }
         }
     }
@@ -755,7 +695,7 @@ int main()
     outFile.open("bin.csv", ios::out);
     outFile << "\n";
 
-    outRes.open("res_1123.csv", ios::app);
+    outRes.open("res_1124.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {

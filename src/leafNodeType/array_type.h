@@ -4,39 +4,48 @@
 #include "../params.h"
 #include "../trainModel/lr.h"
 #include <vector>
+#include "../datapoint.h"
 using namespace std;
 
-extern vector<vector<pair<double, double>>> entireDataset;
+extern pair<double, double> *entireData;
+extern int *mark;
+extern int entireDataSize;
 class ArrayType
 {
 public:
     ArrayType(){};
-    ArrayType(int maxNumber)
+    ArrayType(int cap)
     {
         m_datasetSize = 0;
         error = 0;
-        m_maxNumber = maxNumber;
-        writeTimes = 0;
-        datasetIndex = -1;
+        m_left = -1;
+        m_capacity = cap; // 256 or 512
+        rate = 2;
     }
-    void SetDataset(const vector<pair<double, double>> &dataset);
+    void SetDataset(const vector<pair<double, double>> &dataset, int cap);
 
-    int datasetIndex; // index in the dataset (vector<vector<>>)
     LinearRegression model; // 20 Byte
-    int m_datasetSize;
-    int error;
+    int m_left;             // the left boundary of the leaf node in the global array
+    int m_datasetSize;      // the current amount of data
+    int m_capacity;         // the maximum capacity of this leaf node
+    double rate;            // the ratio of each expansion
 
-    int m_maxNumber;
-    int writeTimes;
+    int error; // the boundary of binary search
 };
 
-void ArrayType::SetDataset(const vector<pair<double, double>> &dataset)
+void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, int cap)
 {
-    entireDataset.push_back(dataset);
-    datasetIndex = entireDataset.size() - 1;
+    m_capacity = cap;
     m_datasetSize = dataset.size();
+    while (m_datasetSize > m_capacity)
+        m_capacity *= 2;
+    m_left = allocateMemory(m_capacity);
+
     if (m_datasetSize == 0)
         return;
+
+    for (int i = m_left, j = 0; j < m_datasetSize; i++, j++)
+        entireData[i] = dataset[j];
 
     model.Train(dataset, m_datasetSize);
     int sum = 0;
@@ -47,6 +56,5 @@ void ArrayType::SetDataset(const vector<pair<double, double>> &dataset)
         sum += e;
     }
     error = float(sum) / m_datasetSize + 1;
-    writeTimes = 0;
 }
 #endif

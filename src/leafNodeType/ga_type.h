@@ -1,15 +1,15 @@
 #ifndef GA_TYPE_H
 #define GA_TYPE_H
 
-
 #include "../params.h"
 #include "../trainModel/lr.h"
 #include <float.h>
 #include <vector>
 using namespace std;
 
-extern vector<vector<pair<double, double>>> entireDataset;
-
+extern pair<double, double> *entireData;
+extern int *mark;
+extern int entireDataSize;
 class GappedArrayType
 {
 public:
@@ -21,22 +21,23 @@ public:
         density = kDensity;
         capacity = cap;
         maxIndex = -2;
-        datasetIndex = -1;
+        m_left = -1;
     }
-    void SetDataset(const vector<pair<double, double> > &dataset);
+    void SetDataset(const vector<pair<double, double>> &dataset, int cap);
 
-    int datasetIndex; // index in the dataset (vector<vector<>>)
     LinearRegression model;
-    int m_datasetSize;
-    int error;
+    int m_left;        // the left boundary of the leaf node in the global array
+    int m_datasetSize; // the current amount of data
+    int capacity;      // the current maximum capacity of the leaf node
 
     int maxIndex;   // tht index of the last one
-    int capacity;   // the current maximum capacity of the leaf node data
+    int error;      // the boundary of binary search
     double density; // the maximum density of the leaf node data
 };
 
-void GappedArrayType::SetDataset(const vector<pair<double, double> > &subDataset)
+void GappedArrayType::SetDataset(const vector<pair<double, double>> &subDataset, int cap)
 {
+    capacity = cap;
     while ((float(subDataset.size()) / float(capacity) > density))
     {
         int newSize = capacity / density;
@@ -44,19 +45,29 @@ void GappedArrayType::SetDataset(const vector<pair<double, double> > &subDataset
     }
     m_datasetSize = 0;
 
-    vector<pair<double, double> > newDataset(capacity, pair<double, double>{-1, -1});
-    maxIndex = -2;
+    int k = density / (1 - density);
+    int cnt = 0;
+    vector<pair<double, double>> newDataset(capacity, pair<double, double>{-1, -1});
+    int j = 0;
     for (int i = 0; i < subDataset.size(); i++)
     {
         if ((subDataset[i].first != -1) && (subDataset[i].second != DBL_MIN))
         {
-            maxIndex += 2;
-            newDataset[maxIndex] = subDataset[i];
+            cnt++;
+            if (cnt > k)
+            {
+                j++;
+                cnt = 0;
+            }
+            newDataset[j++] = subDataset[i];
+            maxIndex = j - 1;
             m_datasetSize++;
         }
     }
-    entireDataset.push_back(newDataset);
-    datasetIndex = entireDataset.size() - 1;
+
+    for (int i = m_left, j = 0; j < capacity; i++, j++)
+        entireData[i] = newDataset[j];
+
     model.Train(newDataset, capacity);
     for (int i = 0; i < newDataset.size(); i++)
     {
