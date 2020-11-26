@@ -35,10 +35,14 @@ public:
 
 void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, int cap)
 {
+    if (m_left != -1)
+        releaseMemory(m_left, m_capacity);
     m_capacity = cap;
     m_datasetSize = dataset.size();
     while (m_datasetSize > m_capacity)
-        m_capacity *= 2;
+        m_capacity *= (1 + rate);
+    while (m_capacity % 16 != 0)
+        m_capacity++;
     m_left = allocateMemory(m_capacity);
 
     if (m_datasetSize == 0)

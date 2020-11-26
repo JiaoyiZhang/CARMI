@@ -5,6 +5,7 @@
 #include "../trainModel/lr.h"
 #include <float.h>
 #include <vector>
+#include "../datapoint.h"
 using namespace std;
 
 extern pair<double, double> *entireData;
@@ -37,13 +38,15 @@ public:
 
 void GappedArrayType::SetDataset(const vector<pair<double, double>> &subDataset, int cap)
 {
+    if (m_left != -1)
+        releaseMemory(m_left, capacity);
     capacity = cap;
     while ((float(subDataset.size()) / float(capacity) > density))
-    {
-        int newSize = capacity / density;
-        capacity = newSize;
-    }
+        capacity = capacity / density;
+    while (capacity % 16 != 0)
+        capacity++;
     m_datasetSize = 0;
+    m_left = allocateMemory(capacity);
 
     int k = density / (1 - density);
     int cnt = 0;
