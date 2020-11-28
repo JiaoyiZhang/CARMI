@@ -20,7 +20,6 @@ using namespace std;
 int datasetSize = 1000000;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
-vector<vector<pair<double, double>>> entireDataset;
 stx::btree_map<double, double> btreemap;
 pair<double, double> *entireData; // global array, store all leaf nodes
 int *mark;                        // mark whether each bolck is used (0:unused, 1:used)
@@ -312,11 +311,12 @@ void totalTest(int repetitions, bool mode)
         // btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
         // cout << "-------------------------------" << endl;
 
-        for (int j = 2; j < 4; j++)
+        for (int j = 0; j < 4; j++)
         {
             kInnerNodeID = j;
             cout << "childNum is: " << childNum << endl;
             cout << "repetition:" << rep << "\troot type:" << kInnerNodeID << endl;
+            initEntireData(dataset.size() + insertDataset.size());
             Initialize(dataset, childNum);
             cout << "index init over!" << endl;
             switch (kInnerNodeID)
@@ -403,7 +403,7 @@ void totalTest(int repetitions, bool mode)
                         cout << "Insert failed:\ti:" << i << "\t" << insertDataset[i].first << endl;
                     auto res = Find(kInnerNodeID, insertDataset[i].first);
                     if (res.second != insertDataset[i].second)
-                        cout << "Find failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
+                        cout << "after insert, Find failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
                 }
                 e = chrono::system_clock::now();
                 tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
@@ -466,26 +466,10 @@ void totalTest(int repetitions, bool mode)
             vector<BSType>().swap(BSVector);
             vector<ArrayType>().swap(ArrayVector);
             vector<GappedArrayType>().swap(GAVector);
-            vector<vector<pair<double, double>>>().swap(entireDataset);
         }
         outRes << endl
                << endl;
     }
-
-    // cout << "btreemap:" << endl;
-    // printResult(repetitions, btree_time0, btree_time1, btree_time2, btree_time3);
-
-    // cout << "lr:" << endl;
-    // printResult(repetitions, time[0][0], time[0][1], time[0][2], time[0][3]);
-
-    // cout << "nn:" << endl;
-    // printResult(repetitions, time[1][0], time[1][1], time[1][2], time[1][3]);
-
-    // cout << "his:" << endl;
-    // printResult(repetitions, time[2][0], time[2][1], time[2][2], time[2][3]);
-
-    // cout << "bin:" << endl;
-    // printResult(repetitions, time[3][0], time[3][1], time[3][2], time[3][3]);
 }
 
 long double calculateSpace()
@@ -529,6 +513,7 @@ void constructionTest()
         writeCnt.push_back(10);
     }
     cout << "readCnt.size():" << readCnt.size() << "\twriteCnt.size():" << writeCnt.size() << endl;
+    initEntireData(dataset.size() + insertDataset.size());
     auto rootType = Construction(kMaxSpace, dataset, readCnt, insertDataset, writeCnt);
     cout << "Construction over!" << endl;
     cout << endl;
@@ -643,49 +628,43 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
         {
             childNum = childNum_synthetic[i];
             kMaxKeyNum = 256;
-            // cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-            // outRes << "+++++++++++ childNum: " << childNum << endl;
-            // uniData.GenerateDataset(dataset, insertDataset);
-            // outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-            // initEntireData(dataset.size() + insertDataset.size());
-            // totalTest(repetitions, calculateTime);
+            cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+            outRes << "+++++++++++ childNum: " << childNum << endl;
+            uniData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+            totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             expData.GenerateDataset(dataset, insertDataset);
             outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-            initEntireData(dataset.size() + insertDataset.size());
             totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             norData.GenerateDataset(dataset, insertDataset);
             outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-            initEntireData(dataset.size() + insertDataset.size());
             totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             logData.GenerateDataset(dataset, insertDataset);
             outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-            initEntireData(dataset.size() + insertDataset.size());
             totalTest(repetitions, calculateTime);
 
-            // kMaxKeyNum = 512;
-            // childNum = childNum_map[i];
-            // cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            // outRes << "+++++++++++ childNum: " << childNum << endl;
-            // latData.GenerateDataset(dataset, insertDataset);
-            // outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            // initEntireData(dataset.size() + insertDataset.size());
-            // totalTest(repetitions, calculateTime);
+            kMaxKeyNum = 512;
+            childNum = childNum_map[i];
+            cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            outRes << "+++++++++++ childNum: " << childNum << endl;
+            latData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            totalTest(repetitions, calculateTime);
 
-            // cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            // outRes << "+++++++++++ childNum: " << childNum << endl;
-            // longData.GenerateDataset(dataset, insertDataset);
-            // outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            // initEntireData(dataset.size() + insertDataset.size());
-            // totalTest(repetitions, calculateTime);
+            cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            outRes << "+++++++++++ childNum: " << childNum << endl;
+            longData.GenerateDataset(dataset, insertDataset);
+            outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            totalTest(repetitions, calculateTime);
         }
     }
 }
@@ -693,7 +672,7 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
 int main()
 {
 
-    outRes.open("res_1126.csv", ios::app);
+    outRes.open("res_1128.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
@@ -706,7 +685,7 @@ int main()
         outRes << "kThreshold is: " << kThreshold << endl;
         int repetitions = 1;
         bool calculateTime = false;
-        bool isConstruction = false;
+        bool isConstruction = true;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         experiment(isConstruction, repetitions, 1, calculateTime);   // read-only

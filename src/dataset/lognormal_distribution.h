@@ -13,6 +13,7 @@ public:
     LognormalDataset(int total, double initRatio)
     {
         totalSize = total;
+        num = 2;
         if (initRatio == 0)
         { // several leaf nodes are inserted
             insertSize = 0;
@@ -70,7 +71,7 @@ void LognormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset
         for (; i < 0.9 * totalSize; i += 2)
         {
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-            insertDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+            insertDataset.push_back({double(ds[i + 1] * factor), double(ds[i + 1] * factor) * 10});
         }
         for (; i < totalSize; i++)
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});

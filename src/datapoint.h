@@ -1,6 +1,8 @@
 #ifndef DATA_POINT_H
 #define DATA_POINT_H
 #include <iostream>
+#include <float.h>
+#include <vector>
 using namespace std;
 extern pair<double, double> *entireData;
 extern int *mark;
@@ -17,7 +19,11 @@ void initEntireData(int size)
     len *= 2;
     entireDataSize = len;
     cout << "the size of entireData is:" << len << endl;
+    delete[] entireData;
+    delete[] mark;
     entireData = new pair<double, double>[len];
+    for (int i = 0; i < len; i++)
+        entireData[i] = {DBL_MIN, DBL_MIN};
     mark = new int[len / 16];
     cout << "the size of mark is:" << len / 16 << endl;
     for (int i = 0; i < len / 16; i++)
@@ -38,7 +44,7 @@ int allocateMemory(int size)
             bool check = true;
             for (int j = i + 1; j < i + m; j++)
             {
-                if (mark[j] == 1)
+                if ((j >= entireDataSize / 16) || (mark[j] == 1))
                 {
                     check = false;
                     i = j;
@@ -54,7 +60,24 @@ int allocateMemory(int size)
             }
         }
     }
-    return -1;
+    // space is not enough, array needs to be expanded
+    cout << "need expand the entire!" << endl;
+    auto tmpSize = entireDataSize;
+    vector<pair<double, double>> tmpData;
+    vector<int> tmpMark;
+    for (int i = 0; i < tmpSize; i++)
+        tmpData.push_back(entireData[i]);
+    for (int i = 0; i < tmpSize / 16; i++)
+        tmpMark.push_back(mark[i]);
+
+    initEntireData(tmpSize);
+    for (int i = 0; i < tmpSize; i++)
+        entireData[i] = tmpData[i];
+    for (int i = 0; i < tmpSize / 16; i++)
+        mark[i] = tmpMark[i];
+    for (int i = tmpSize / 16; i < tmpSize / 16 + m; i++)
+        mark[i] = 1;
+    return tmpSize;
 }
 
 // release the specified space

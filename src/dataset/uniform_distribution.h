@@ -13,6 +13,7 @@ public:
     UniformDataset(int total, double initRatio)
     {
         totalSize = total;
+        num = 2;
         if (initRatio == 0)
         { // several leaf nodes are inserted
             insertSize = 0;

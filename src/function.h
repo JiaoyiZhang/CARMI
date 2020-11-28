@@ -13,6 +13,7 @@
 #include <float.h>
 #include <vector>
 #include <math.h>
+#include <iomanip>
 using namespace std;
 
 vector<LRType> LRVector;
@@ -98,36 +99,16 @@ pair<double, double> Find(int rootType, double key)
         break;
         case 4:
         {
-            if (key > 100000000)
-                cout << "Find:" << key << endl;
-            if (ArrayVector[idx].m_datasetSize == 0)
-                return {};
             auto size = ArrayVector[idx].m_datasetSize;
             int preIdx = ArrayVector[idx].model.PredictPrecision(key, size);
             auto left = ArrayVector[idx].m_left;
-            if (key > 100000000)
-                cout << "this leaf: size:" << size << ",\tpreIdx:" << preIdx << ",\tleft:" << left << endl;
-            if (key > 100000000)
-            {
-                for (int i = left; i < left + size; i++)
-                {
-                    cout << i << ":" << entireData[i].first << "\t";
-                    if ((i + 1) % 100 == 0)
-                        cout << endl;
-                }
-                cout << endl;
-            }
             if (entireData[left + preIdx].first == key)
-            {
                 return entireData[left + preIdx];
-            }
             else
             {
                 int start = max(0, preIdx - ArrayVector[idx].error) + left;
                 int end = min(size - 1, preIdx + ArrayVector[idx].error) + left;
                 start = min(start, end);
-                if (key > 100000000)
-                    cout << "start:" << start << ",\tend:" << end << endl;
                 int res;
                 if (key <= entireData[start].first)
                     res = ArrayBinarySearch(key, left, start);
@@ -136,11 +117,9 @@ pair<double, double> Find(int rootType, double key)
                 else
                 {
                     res = ArrayBinarySearch(key, end, left + size - 1);
-                    if (res >= size)
+                    if (res >= left + size)
                         return {};
                 }
-                if (key > 100000000)
-                    cout << "res:" << res << endl;
                 if (entireData[res].first == key)
                     return entireData[res];
                 return {};
@@ -170,8 +149,8 @@ pair<double, double> Find(int rootType, double key)
                     res = GABinarySearch(key, start, end);
                 else
                 {
-                    res = GABinarySearch(key, end, left + GAVector[idx].maxIndex - 1);
-                    if (res >= left + GAVector[idx].maxIndex)
+                    res = GABinarySearch(key, end, left + GAVector[idx].maxIndex);
+                    if (res > left + GAVector[idx].maxIndex)
                         return {DBL_MIN, DBL_MIN};
                 }
 
@@ -243,22 +222,26 @@ bool Insert(int rootType, pair<double, double> data)
             else if (data.first <= entireData[end].first)
                 preIdx = ArrayBinarySearch(data.first, start, end);
             else
-                preIdx = ArrayBinarySearch(data.first, end, size - 1);
+                preIdx = ArrayBinarySearch(data.first, end, left + size - 1);
 
             // expand
             if (size >= ArrayVector[idx].m_capacity)
+            {
+                auto diff = preIdx - left;
                 ArrayVector[idx].SetDataset(left, size, ArrayVector[idx].m_capacity);
+                left = ArrayVector[idx].m_left;
+                preIdx = left + diff;
+            }
 
             // Insert data
-            if (preIdx == left + size - 1 && entireData[preIdx].first < data.first)
+            if ((preIdx == left + size - 1) && (entireData[preIdx].first < data.first))
             {
                 entireData[left + size] = data;
                 ArrayVector[idx].m_datasetSize++;
                 return true;
             }
-            entireData[left + size] = entireData[left + size - 1];
             ArrayVector[idx].m_datasetSize++;
-            for (int i = left + size - 2; i > preIdx; i--)
+            for (int i = left + size; i > preIdx; i--)
                 entireData[i] = entireData[i - 1];
             entireData[preIdx] = data;
             return true;
@@ -272,6 +255,7 @@ bool Insert(int rootType, pair<double, double> data)
                 // If an additional Insertion results in crossing the density
                 // then we expand the gapped array
                 GAVector[idx].SetDataset(left, GAVector[idx].m_datasetSize, GAVector[idx].capacity);
+                left = GAVector[idx].m_left;
             }
 
             if (GAVector[idx].m_datasetSize == 0)
@@ -320,14 +304,16 @@ bool Insert(int rootType, pair<double, double> data)
                 }
                 if (preIdx == left + GAVector[idx].maxIndex && entireData[left + GAVector[idx].maxIndex].first < data.first)
                 {
-                    entireData[(++GAVector[idx].maxIndex) + left] = data;
+                    GAVector[idx].maxIndex = GAVector[idx].maxIndex + 1;
+                    ;
+                    entireData[GAVector[idx].maxIndex + left] = data;
                     GAVector[idx].m_datasetSize++;
                     return true;
                 }
+
                 // If the Insertion position is not a gap, we make
                 // a gap at the Insertion position by shifting the elements
                 // by one position in the direction of the closest gap
-
                 int i = preIdx + 1;
                 while (entireData[i].first != -1)
                     i++;
@@ -401,7 +387,9 @@ bool Delete(int rootType, double key)
             auto left = ArrayVector[idx].m_left;
             auto size = ArrayVector[idx].m_datasetSize;
             int preIdx = ArrayVector[idx].model.PredictPrecision(key, size);
-            if (entireData[left + preIdx].first != key)
+            if (entireData[left + preIdx].first == key)
+                preIdx += left;
+            else
             {
                 int start = max(0, preIdx - ArrayVector[idx].error) + left;
                 int end = min(size - 1, preIdx + ArrayVector[idx].error) + left;
@@ -424,6 +412,7 @@ bool Delete(int rootType, double key)
             }
             for (int i = preIdx; i < left + size - 1; i++)
                 entireData[i] = entireData[i + 1];
+            entireData[left + size - 1] = {DBL_MIN, DBL_MIN};
             ArrayVector[idx].m_datasetSize--;
             return true;
         }
@@ -467,7 +456,7 @@ bool Delete(int rootType, double key)
                 if (entireData[res].first != key)
                     return false;
                 GAVector[idx].m_datasetSize--;
-                entireData[res].second = DBL_MIN;
+                entireData[res] = {DBL_MIN, DBL_MIN};
                 if (res == left + GAVector[idx].maxIndex)
                     GAVector[idx].maxIndex--;
                 return true;
@@ -520,7 +509,9 @@ bool Update(int rootType, pair<double, double> data)
             auto left = ArrayVector[idx].m_left;
             auto size = ArrayVector[idx].m_datasetSize;
             int preIdx = ArrayVector[idx].model.PredictPrecision(data.first, size);
-            if (entireData[left + preIdx].first != data.first)
+            if (entireData[left + preIdx].first == data.first)
+                entireData[left + preIdx].second = data.second;
+            else
             {
                 int start = max(0, preIdx - ArrayVector[idx].error) + left;
                 int end = min(size - 1, preIdx + ArrayVector[idx].error) + left;
@@ -537,8 +528,8 @@ bool Update(int rootType, pair<double, double> data)
                 }
                 if (entireData[preIdx].first != data.first)
                     return false;
+                entireData[preIdx].second = data.second;
             }
-            entireData[preIdx].second = data.second;
             return true;
         }
         break;

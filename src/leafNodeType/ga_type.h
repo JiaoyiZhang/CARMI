@@ -102,7 +102,7 @@ void GappedArrayType::SetDataset(const int left, const int size, int cap)
     int cnt = 0;
     vector<pair<double, double>> newDataset(capacity, pair<double, double>{-1, -1});
     int j = 0;
-    int right = left + size;
+    int right = left + maxIndex + 1;
     for (int i = left; i < right; i++)
     {
         if ((entireData[i].first != -1) && (entireData[i].second != DBL_MIN))

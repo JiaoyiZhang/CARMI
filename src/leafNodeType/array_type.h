@@ -20,7 +20,7 @@ public:
         error = 0;
         m_left = -1;
         m_capacity = cap; // 256 or 512
-        rate = 2;
+        rate = 1.5;
     }
     void SetDataset(const vector<pair<double, double>> &dataset, int cap);
     void SetDataset(const int left, const int size, int cap);
@@ -56,7 +56,7 @@ void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, int cap)
     int sum = 0;
     for (int i = 0; i < m_datasetSize; i++)
     {
-        int p = model.Predict(dataset[i].first);
+        int p = model.PredictPrecision(dataset[i].first, m_datasetSize);
         int e = abs(i - p);
         sum += e;
     }
@@ -84,15 +84,15 @@ void ArrayType::SetDataset(const int left, const int size, int cap)
         entireData[i] = entireData[j];
         tmp.push_back(entireData[j]);
     }
-
     model.Train(tmp, m_datasetSize);
     int sum = 0;
     for (int i = 0; i < m_datasetSize; i++)
     {
-        int p = model.Predict(tmp[i].first);
+        int p = model.PredictPrecision(tmp[i].first, m_datasetSize);
         int e = abs(i - p);
         sum += e;
     }
     error = float(sum) / m_datasetSize + 1;
+    vector<pair<double, double>>().swap(tmp);
 }
 #endif

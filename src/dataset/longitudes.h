@@ -67,7 +67,7 @@ void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDatase
 		for (; i < 0.9 * ds.size(); i += 2)
 		{
 			initDataset.push_back(ds[i]);
-			insertDataset.push_back(ds[i]);
+			insertDataset.push_back(ds[i + 1]);
 		}
 		for (; i < ds.size(); i++)
 			initDataset.push_back(ds[i]);
