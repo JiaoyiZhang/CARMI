@@ -6,7 +6,7 @@
 #include "./dataset/exponential_distribution.h"
 #include "./dataset/longitudes.h"
 #include "./dataset/longlat.h"
-#include "reconstruction.h"
+#include "./construct/construction.h"
 #include "../stx_btree/btree_map.h"
 #include <algorithm>
 #include <random>
@@ -32,7 +32,6 @@ extern vector<BSType> BSVector;
 extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
-double kMaxSpace = 10 * 1024 * 1024; // MB
 int kLeafNodeID = 0;
 int kInnerNodeID = 0;
 int kNeuronNumber = 8;
@@ -501,7 +500,7 @@ void constructionTest()
     cout << "ArrayType:" << sizeof(ArrayType) << endl;
     cout << "GappedArrayType:" << sizeof(GappedArrayType) << endl;
 
-    cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkMaxSpace:" << (kMaxSpace / 1024 / 1024) << "MB\tkRate:" << kRate << "\tkReadWriteRate:" << kReadWriteRate << endl;
+    cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
     vector<int> readCnt;
     vector<int> writeCnt;
     for (int i = 0; i < dataset.size(); i++)
@@ -514,7 +513,7 @@ void constructionTest()
     }
     cout << "readCnt.size():" << readCnt.size() << "\twriteCnt.size():" << writeCnt.size() << endl;
     initEntireData(dataset.size() + insertDataset.size());
-    auto rootType = Construction(kMaxSpace, dataset, readCnt, insertDataset, writeCnt);
+    auto rootType = Construction(dataset, readCnt, insertDataset, writeCnt);
     cout << "Construction over!" << endl;
     cout << endl;
 
@@ -578,45 +577,38 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     if (isConstruction)
     {
         vector<double> rate = {0.001, 0.01, 0.1, 0.6, 1};
-        double base = 1024 * 1024; // MB
-        vector<double> space = {350 * base, base, 5 * base, 10 * base, 20 * base};
         // for (int m = space.size() - 1; m >= 0; m--)
-        for (int m = 0; m < space.size(); m++)
+        for (int r = 0; r < rate.size(); r++)
         {
-            kMaxSpace = space[m];
-            cout << "now kMaxSpace:" << kMaxSpace << endl;
-            for (int r = 0; r < rate.size(); r++)
-            {
-                kRate = rate[r];
-                kMaxKeyNum = 256;
-                outRes << "kMaxSpace:" << (kMaxSpace / 1024 / 1024) << "MB,kRate:" << kRate << ",kReadWriteRate:" << kReadWriteRate << endl;
-                cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-                uniData.GenerateDataset(dataset, insertDataset);
-                constructionTest();
+            kRate = rate[r];
+            kMaxKeyNum = 256;
+            outRes << "kRate:" << kRate << endl;
+            cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+            uniData.GenerateDataset(dataset, insertDataset);
+            constructionTest();
 
-                cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-                expData.GenerateDataset(dataset, insertDataset);
-                constructionTest();
+            cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+            expData.GenerateDataset(dataset, insertDataset);
+            constructionTest();
 
-                cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-                norData.GenerateDataset(dataset, insertDataset);
-                constructionTest();
+            cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+            norData.GenerateDataset(dataset, insertDataset);
+            constructionTest();
 
-                cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-                logData.GenerateDataset(dataset, insertDataset);
-                constructionTest();
+            cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+            logData.GenerateDataset(dataset, insertDataset);
+            constructionTest();
 
-                kMaxKeyNum = 512;
-                cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-                latData.GenerateDataset(dataset, insertDataset);
-                constructionTest();
+            kMaxKeyNum = 512;
+            cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            latData.GenerateDataset(dataset, insertDataset);
+            constructionTest();
 
-                cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-                longData.GenerateDataset(dataset, insertDataset);
-                constructionTest();
+            cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            longData.GenerateDataset(dataset, insertDataset);
+            constructionTest();
 
-                outRes << endl;
-            }
+            outRes << endl;
         }
     }
     else
