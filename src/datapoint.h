@@ -6,26 +6,27 @@
 using namespace std;
 extern pair<double, double> *entireData;
 extern int *mark;
-extern int entireDataSize;
+extern unsigned int entireDataSize;
 
 // initialize entireData and mark
 void initEntireData(int size)
 {
-    int len = 4096;
+    unsigned int len = 4096;
     while (len < size)
     {
         len *= 2;
     }
     len *= 2;
     entireDataSize = len;
-    cout << "the size of entireData is:" << len << endl;
+    // cout << "dataset size:" << size << endl;
+    // cout << "the size of entireData is:" << len << endl;
     delete[] entireData;
     delete[] mark;
     entireData = new pair<double, double>[len];
     for (int i = 0; i < len; i++)
         entireData[i] = {DBL_MIN, DBL_MIN};
     mark = new int[len / 16];
-    cout << "the size of mark is:" << len / 16 << endl;
+    // cout << "the size of mark is:" << len / 16 << endl;
     for (int i = 0; i < len / 16; i++)
         mark[i] = 0; // each block is unused
 }

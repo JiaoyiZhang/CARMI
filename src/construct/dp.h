@@ -9,7 +9,9 @@
 #include "../leafNodeType/ga_type.h"
 #include "../leafNodeType/array_type.h"
 #include "../function.h"
+#include "../inlineFunction.h"
 #include <float.h>
+#include <algorithm>
 #include <vector>
 using namespace std;
 
@@ -29,6 +31,14 @@ extern vector<GappedArrayType> tmpGAVec;
 
 pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double, double>> &findData, const vector<int> &readCnt, const vector<pair<double, double>> &insertData, const vector<int> &writeCnt)
 {
+    if (findData.size() == 0)
+    {
+        tmpArrayVec.push_back(ArrayType(kMaxKeyNum));
+        int idx = tmpArrayVec.size() - 1;
+        double cost = kRate * sizeof(ArrayType);
+        return {{cost, cost}, (4 << 28) + idx};
+    }
+
     // construct a leaf node
     if (isLeaf)
     {
@@ -51,8 +61,28 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
         int idx = tmpArrayVec.size() - 1;
 
         type = 4;
-        space = sizeof(ArrayType) / findData.size() + 16;
-        time = read * 55 + write * 100; // TBD
+        space = float(sizeof(ArrayType) + 16 * findData.size()) / findData.size();
+
+        auto tmp = tmpArrayVec[idx];
+        tmp.model.Train(findData, findData.size());
+        time = 0.0;
+        for (int i = 0; i < findData.size(); i++)
+        {
+            auto predict = tmp.model.Predict(findData[i].first);
+            time += 16;
+            if (predict - i != 0)
+                time += log(abs(predict - i)) / log(2) * readCnt[i] * 4;
+        }
+        for (int i = 0; i < insertData.size(); i++)
+        {
+            auto predict = tmp.model.Predict(insertData[i].first);
+            auto actual = TestArrayBinarySearch(findData[i].first, findData);
+            time += 16 + 4 * (insertData.size() - actual);
+            if (predict - actual != 0)
+                time += log(abs(predict - actual)) / log(2) * writeCnt[i];
+        }
+        time = time / (findData.size() + insertData.size());
+
         cost = time + space * kRate;
         if (cost <= OptimalValue)
         {
@@ -72,9 +102,28 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
             tmpGAVec.push_back(GappedArrayType(kMaxKeyNum));
             idx = tmpGAVec.size() - 1;
             tmpGAVec[idx].density = Density[i];
-            auto tmp = GappedArrayType(kMaxKeyNum);
-            space = sizeof(GappedArrayType) / findData.size() + 16 / tmpGAVec[idx].density;
-            time = read * 75 + write * 10; // TBD
+            auto tmp = tmpGAVec[idx];
+            space = float(sizeof(GappedArrayType) + 16.0 / tmpGAVec[idx].density * findData.size()) / findData.size();
+
+            tmp.model.Train(findData, findData.size());
+            time = 0.0;
+            for (int t = 0; t < findData.size(); t++)
+            {
+                auto predict = tmp.model.Predict(findData[t].first);
+                time += 16;
+                if (predict - t != 0)
+                    time += log(abs(predict - t)) / log(2) * readCnt[t] * 4 / tmpGAVec[idx].density;
+            }
+            for (int t = 0; t < insertData.size(); t++)
+            {
+                auto predict = tmp.model.Predict(insertData[t].first);
+                auto actual = TestGABinarySearch(findData[t].first, findData);
+                time += 16;
+                if (predict - actual != 0)
+                    time += log(abs(predict - actual)) / log(2) * writeCnt[t];
+            }
+            time = time / (findData.size() + insertData.size());
+
             cost = time + space * kRate;
             if (cost <= OptimalValue)
             {
@@ -91,19 +140,19 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
     else
     {
         double OptimalValue = DBL_MAX;
-        int space;
+        double space;
         int c;
         int optimalChildNumber = 32, optimalType = 0, optimalSpace = 0;
         int tmpIdx;
         for (int c = 16; c < findData.size();)
         {
-            if (c < 4096)
-                c *= 2;
-            else if (c < 40960)
-                c += 8192;
-            else if (c <= 1000000)
-                c += 65536;
-            else
+            // if (c < 4096)
+            //     c *= 2;
+            // else if (c < 40960)
+            //     c += 8192;
+            // else if (c <= 1000000)
+            //     c += 65536;
+            // else
                 c *= 2;
             if (512 * c < findData.size())
                 continue;
@@ -113,7 +162,12 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 {
                 case 0:
                 {
-                    space = (4 * c + sizeof(LRType));
+                    space = (4 * c + sizeof(LRType)) / findData.size();
+                    double time = 8.1624; // ns
+                    double RootCost = time + kRate * space;
+                    if (RootCost > OptimalValue)
+                        break;
+
                     tmpLRVec.push_back(LRType(c));
                     int idx = tmpLRVec.size() - 1;
                     tmpLRVec[idx].model.Train(findData, c);
@@ -145,9 +199,6 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                         subWriteCnt[p].push_back(writeCnt[i]);
                     }
 
-                    // only record the time of inner node using cost model
-                    double time = 8.1624; // ns
-                    double RootCost = time + kRate * space / 1024 / 1024;
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, int> res;
@@ -183,7 +234,12 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 }
                 case 1:
                 {
-                    space = (4 * c + 192 + sizeof(NNType));
+                    space = (4 * c + 192 + sizeof(NNType)) / findData.size();
+                    double time = 20.2689; // ns
+                    double RootCost = time + kRate * space;
+                    if (RootCost > OptimalValue)
+                        break;
+
                     tmpNNVec.push_back(NNType(c));
                     int idx = tmpNNVec.size() - 1;
                     tmpNNVec[idx].model.Train(findData, c);
@@ -214,11 +270,6 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                         subInsertData[p].push_back(insertData[i]);
                         subWriteCnt[p].push_back(writeCnt[i]);
                     }
-
-                    // only record the time of inner node using cost model
-                    double time = 20.2689; // ns
-
-                    double RootCost = time + kRate * space / 1024 / 1024;
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, int> res;
@@ -254,7 +305,12 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 }
                 case 2:
                 {
-                    space = (5 * c + sizeof(HisType));
+                    space = (5 * c + sizeof(HisType)) / findData.size();
+                    double time = 19.6543;
+                    double RootCost = time + kRate * space;
+                    if (RootCost > OptimalValue)
+                        break;
+
                     tmpHisVec.push_back(HisType(c));
                     int idx = tmpHisVec.size() - 1;
                     tmpHisVec[idx].model.Train(findData, c);
@@ -286,10 +342,6 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                         subWriteCnt[p].push_back(writeCnt[i]);
                     }
 
-                    // only record the time of inner node using cost model
-                    double time = 19.6543;
-
-                    double RootCost = time + kRate * space / 1024 / 1024;
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, int> res;
@@ -325,7 +377,12 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 }
                 case 3:
                 {
-                    space = (12 * c + sizeof(BSType));
+                    space = (12 * c + sizeof(BSType)) / findData.size();
+                    double time = 4 * log(c) / log(2);
+                    double RootCost = time + kRate * space;
+                    if (RootCost > OptimalValue)
+                        break;
+
                     tmpBSVec.push_back(BSType(c));
                     int idx = tmpBSVec.size() - 1;
                     tmpBSVec[idx].model.Train(findData, c);
@@ -356,11 +413,6 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                         subInsertData[p].push_back(insertData[i]);
                         subWriteCnt[p].push_back(writeCnt[i]);
                     }
-
-                    // only record the time of inner node using cost model
-                    double time = 4 * log(c) / log(2);
-
-                    double RootCost = time + kRate * space / 1024 / 1024;
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, int> res;

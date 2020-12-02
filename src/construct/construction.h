@@ -37,6 +37,9 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
     cout << endl;
     cout << "-------------------------------" << endl;
     cout << "Start construction!" << endl;
+    initEntireData(findDataset.size() + insertDataset.size());
+
+    auto res = ChooseRoot(findDataset);
 
     vector<LRType>().swap(LRVector);
     vector<NNType>().swap(NNVector);
@@ -48,9 +51,6 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
     vector<NNType>().swap(tmpNNVec);
     vector<HisType>().swap(tmpHisVec);
     vector<BSType>().swap(tmpBSVec);
-    initEntireData(findDataset.size() + insertDataset.size());
-
-    auto res = ChooseRoot(findDataset);
     int childNum = res.second;
     int rootType = res.first;
     cout << "Construction of the root node has been completed!" << endl;
@@ -119,6 +119,7 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
             int idx;
             if ((subFindData[i].size() + subInsertData[i].size()) >= kMaxKeyNum)
             {
+                cout<<"construct child i:"<<i<<endl;
                 auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
                 auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]);  // construct a leaf node
                 if (res0.first.first > res1.first.first)
@@ -159,6 +160,7 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
             int idx;
             if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
             {
+                cout<<"construct child i:"<<i<<endl;
                 auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
                 auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]);  // construct a leaf node
                 if (res0.first.first > res1.first.first)
@@ -199,6 +201,7 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
             int idx;
             if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
             {
+                cout<<"construct child i:"<<i<<endl;
                 auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
                 auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]);  // construct a leaf node
                 if (res0.first.first > res1.first.first)
@@ -239,6 +242,7 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
             int idx;
             if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
             {
+                cout<<"construct child i:"<<i<<endl;
                 auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
                 auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]);  // construct a leaf node
                 if (res0.first.first > res1.first.first)

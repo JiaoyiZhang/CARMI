@@ -23,7 +23,7 @@ vector<pair<double, double>> insertDataset;
 stx::btree_map<double, double> btreemap;
 pair<double, double> *entireData; // global array, store all leaf nodes
 int *mark;                        // mark whether each bolck is used (0:unused, 1:used)
-int entireDataSize;               // the size of entireData
+unsigned int entireDataSize;      // the size of entireData
 
 extern vector<LRType> LRVector;
 extern vector<NNType> NNVector;
@@ -559,8 +559,8 @@ void constructionTest()
         Insert(rootType, insertDataset[i]);
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
-    outRes << tmp / (float)insertDataset.size() << "ns,";
+    cout << "Insert time:" << tmp / (float)insertDataset.size() - 5 << endl;
+    outRes << tmp / (float)insertDataset.size() - 5 << "ns,";
 }
 
 void experiment(double isConstruction, int repetitions, double initRatio, bool calculateTime)
@@ -576,8 +576,7 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
     if (isConstruction)
     {
-        vector<double> rate = {0.001, 0.01, 0.1, 0.6, 1};
-        // for (int m = space.size() - 1; m >= 0; m--)
+        vector<double> rate = {1, 0.6, 0.1, 0.01, 0.001};
         for (int r = 0; r < rate.size(); r++)
         {
             kRate = rate[r];
@@ -599,14 +598,14 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
             logData.GenerateDataset(dataset, insertDataset);
             constructionTest();
 
-            kMaxKeyNum = 512;
-            cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            latData.GenerateDataset(dataset, insertDataset);
-            constructionTest();
+            // kMaxKeyNum = 512;
+            // cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            // latData.GenerateDataset(dataset, insertDataset);
+            // constructionTest();
 
-            cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            longData.GenerateDataset(dataset, insertDataset);
-            constructionTest();
+            // cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            // longData.GenerateDataset(dataset, insertDataset);
+            // constructionTest();
 
             outRes << endl;
         }
@@ -664,7 +663,7 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
 int main()
 {
 
-    outRes.open("res_1128.csv", ios::app);
+    outRes.open("res_1201_cons.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
@@ -676,7 +675,7 @@ int main()
         cout << "kThreshold is: " << kThreshold << endl;
         outRes << "kThreshold is: " << kThreshold << endl;
         int repetitions = 1;
-        bool calculateTime = false;
+        bool calculateTime = true;
         bool isConstruction = true;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");

@@ -10,7 +10,6 @@ using namespace std;
 
 extern pair<double, double> *entireData;
 extern int *mark;
-extern int entireDataSize;
 class GappedArrayType
 {
 public:
