@@ -48,6 +48,14 @@ public:
         return true;
     }
 
+    bool find(int idx)
+    {
+        if (m_block.find(idx) == m_block.end())
+            return false;
+        else
+            return true;
+    }
+
     set<int> m_block;
     int m_width;
 };

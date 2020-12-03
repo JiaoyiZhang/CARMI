@@ -13,7 +13,7 @@ extern vector<EmptyBlock> emptyBlocks;
 // initialize entireData and mark
 void initEntireData(int size)
 {
-    unsigned int len = 4096;
+    unsigned int len = 5096;
     while (len < size)
         len *= 2;
     len *= 2;
@@ -25,7 +25,7 @@ void initEntireData(int size)
     entireData = new pair<double, double>[len];
     for (int i = 0; i < len; i++)
         entireData[i] = {DBL_MIN, DBL_MIN};
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
         emptyBlocks.push_back(EmptyBlock(256 * pow(2, i)));
 }
 
@@ -47,21 +47,24 @@ int allocateMemory(int size)
         vector<EmptyBlock> tmpBlocks;
         for (int i = 0; i < tmpSize; i++)
             tmpData.push_back(entireData[i]);
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 5; i++)
             tmpBlocks.push_back(emptyBlocks[i]);
 
         initEntireData(tmpSize);
         for (int i = 0; i < tmpSize; i++)
             entireData[i] = tmpData[i];
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 5; i++)
         {
             emptyBlocks[i] = tmpBlocks[i];
-            for (int j = tmpSize; j < tmpSize / 16 + m; j++)
-                mark[i] = 1;
+            int start = tmpSize;
+            while (start % emptyBlocks[i].m_width != 0)
+                start++;
+            for (int j = start; j < entireDataSize; j += emptyBlocks[i].m_width)
+                emptyBlocks[i].m_block.insert(j);
         }
     }
     // release the space in other emptyBlocks
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
     {
         if (i != idx)
             emptyBlocks[i].release(idx, size);
@@ -72,10 +75,32 @@ int allocateMemory(int size)
 // release the specified space
 void releaseMemory(int left, int size)
 {
-    left /= 16;
-    size /= 16;
-    for (int i = left; i < left + size; i++)
-        mark[i] = 0;
+    int type = log(size / 256) / log(2);
+    emptyBlocks[type].m_block.insert(left);
+    for (int i = 0; i < type; i++)
+    {
+        // insert the empty blocks
+        for (int j = left; j < size; j += emptyBlocks[i].m_width)
+            emptyBlocks[i].m_block.insert(j);
+    }
+    for (int i = type + 1; i < 5; i++)
+    {
+        // check if there is a need to merge
+        if (left % emptyBlocks[i].m_width != 0)
+        {
+            if (emptyBlocks[i - 1].find(left - emptyBlocks[i - 1].m_width))
+                emptyBlocks[i].m_block.insert(left - emptyBlocks[i - 1].m_width);
+            else
+                break;
+        }
+        else
+        {
+            if (emptyBlocks[i - 1].find(left + emptyBlocks[i - 1].m_width))
+                emptyBlocks[i].m_block.insert(left);
+            else
+                break;
+        }
+    }
 }
 
 #endif // !DATA_POINT_H
