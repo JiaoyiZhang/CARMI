@@ -18,7 +18,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
     int c;
     int optimalChildNumber, optimalType;
     vector<pair<double, double>> tmp;
-    for (int c = 1024; c <= dataset.size();)
+    for (int c = 1024; c <= dataset.size() * 10;)
     {
         // if (c <= 4096)
         //     c *= 2;
@@ -27,7 +27,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
         // else if (c <= 1000000)
         //     c += 65536;
         // else
-            c *= 2;
+        c *= 2;
         if (512 * c < dataset.size())
             continue;
         for (int type = 0; type < 4; type++)
@@ -103,7 +103,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             // entropy /= (log(c) / log(2));
             vector<vector<pair<double, double>>>().swap(perSubDataset);
 
-            double cost = (time + (float(kRate * space) / dataset.size())) / entropy;  // ns / data + ns/B * B / data
+            double cost = (time + (float(kRate * space) / dataset.size())) / entropy; // ns / data + ns/B * B / data
             // cout << "time:" << time << ",\tspace:" << space << ",\tavg space:" << float(space) / float(dataset.size()) << ",\tk space:" << float(kRate * space) / float(dataset.size()) << endl;
             // cout << "entropy:" << entropy << endl;
             // cout << "ratio:" << cost << endl;

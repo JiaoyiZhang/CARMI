@@ -3,32 +3,30 @@
 #include <iostream>
 #include <float.h>
 #include <vector>
+#include <math.h>
+#include "empty_block.h"
 using namespace std;
 extern pair<double, double> *entireData;
-extern int *mark;
 extern unsigned int entireDataSize;
+extern vector<EmptyBlock> emptyBlocks;
 
 // initialize entireData and mark
 void initEntireData(int size)
 {
     unsigned int len = 4096;
     while (len < size)
-    {
         len *= 2;
-    }
     len *= 2;
     entireDataSize = len;
     // cout << "dataset size:" << size << endl;
     // cout << "the size of entireData is:" << len << endl;
     delete[] entireData;
-    delete[] mark;
+    vector<EmptyBlock>().swap(emptyBlocks);
     entireData = new pair<double, double>[len];
     for (int i = 0; i < len; i++)
         entireData[i] = {DBL_MIN, DBL_MIN};
-    mark = new int[len / 16];
-    // cout << "the size of mark is:" << len / 16 << endl;
-    for (int i = 0; i < len / 16; i++)
-        mark[i] = 0; // each block is unused
+    for (int i = 0; i < 4; i++)
+        emptyBlocks.push_back(EmptyBlock(256 * pow(2, i)));
 }
 
 // allocate a block to the current leaf node
@@ -37,48 +35,38 @@ void initEntireData(int size)
 // return -1, if it fails
 int allocateMemory(int size)
 {
-    int m = size / 16; // need m blocks
-    for (int i = 0; i < entireDataSize / 16; i++)
+    int idx = log(size / 256) / log(2); // idx in emptyBlocks[]
+    auto newLeft = emptyBlocks[idx].allocate(size);
+    if (newLeft == -1)
     {
-        if (mark[i] == 0)
+        // allocation fails
+        // need to expand the reorganize entireData
+        cout << "need expand the entire!" << endl;
+        auto tmpSize = entireDataSize;
+        vector<pair<double, double>> tmpData;
+        vector<EmptyBlock> tmpBlocks;
+        for (int i = 0; i < tmpSize; i++)
+            tmpData.push_back(entireData[i]);
+        for (int i = 0; i < 4; i++)
+            tmpBlocks.push_back(emptyBlocks[i]);
+
+        initEntireData(tmpSize);
+        for (int i = 0; i < tmpSize; i++)
+            entireData[i] = tmpData[i];
+        for (int i = 0; i < 4; i++)
         {
-            bool check = true;
-            for (int j = i + 1; j < i + m; j++)
-            {
-                if ((j >= entireDataSize / 16) || (mark[j] == 1))
-                {
-                    check = false;
-                    i = j;
-                    break;
-                }
-            }
-            if (check == true)
-            {
-                // allocate blocks
-                for (int k = i; k < i + m; k++)
-                    mark[k] = 1;
-                return i * 16;
-            }
+            emptyBlocks[i] = tmpBlocks[i];
+            for (int j = tmpSize; j < tmpSize / 16 + m; j++)
+                mark[i] = 1;
         }
     }
-    // space is not enough, array needs to be expanded
-    cout << "need expand the entire!" << endl;
-    auto tmpSize = entireDataSize;
-    vector<pair<double, double>> tmpData;
-    vector<int> tmpMark;
-    for (int i = 0; i < tmpSize; i++)
-        tmpData.push_back(entireData[i]);
-    for (int i = 0; i < tmpSize / 16; i++)
-        tmpMark.push_back(mark[i]);
-
-    initEntireData(tmpSize);
-    for (int i = 0; i < tmpSize; i++)
-        entireData[i] = tmpData[i];
-    for (int i = 0; i < tmpSize / 16; i++)
-        mark[i] = tmpMark[i];
-    for (int i = tmpSize / 16; i < tmpSize / 16 + m; i++)
-        mark[i] = 1;
-    return tmpSize;
+    // release the space in other emptyBlocks
+    for (int i = 0; i < 4; i++)
+    {
+        if (i != idx)
+            emptyBlocks[i].release(idx, size);
+    }
+    return newLeft;
 }
 
 // release the specified space

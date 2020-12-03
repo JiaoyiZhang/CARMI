@@ -24,7 +24,6 @@ vector<ArrayType> ArrayVector;
 vector<GappedArrayType> GAVector;
 
 extern pair<double, double> *entireData;
-extern int *mark;
 extern unsigned int entireDataSize;
 
 extern int kLeafNodeID;

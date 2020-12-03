@@ -21,9 +21,9 @@ int datasetSize = 1000000;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
 stx::btree_map<double, double> btreemap;
-pair<double, double> *entireData; // global array, store all leaf nodes
-int *mark;                        // mark whether each bolck is used (0:unused, 1:used)
+pair<double, double> *entireData; // global array, store all leaf nodes(0:unused, 1:used)
 unsigned int entireDataSize;      // the size of entireData
+vector<EmptyBlock> emptyBlocks;
 
 extern vector<LRType> LRVector;
 extern vector<NNType> NNVector;
@@ -643,19 +643,22 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
             outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             totalTest(repetitions, calculateTime);
 
-            kMaxKeyNum = 512;
-            childNum = childNum_map[i];
-            cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            outRes << "+++++++++++ childNum: " << childNum << endl;
-            latData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            totalTest(repetitions, calculateTime);
+            if (calculateTime)
+            {
+                kMaxKeyNum = 512;
+                childNum = childNum_map[i];
+                cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+                outRes << "+++++++++++ childNum: " << childNum << endl;
+                latData.GenerateDataset(dataset, insertDataset);
+                outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+                totalTest(repetitions, calculateTime);
 
-            cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            outRes << "+++++++++++ childNum: " << childNum << endl;
-            longData.GenerateDataset(dataset, insertDataset);
-            outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            totalTest(repetitions, calculateTime);
+                cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+                outRes << "+++++++++++ childNum: " << childNum << endl;
+                longData.GenerateDataset(dataset, insertDataset);
+                outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+                totalTest(repetitions, calculateTime);
+            }
         }
     }
 }
