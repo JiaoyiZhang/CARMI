@@ -665,7 +665,7 @@ int main()
 
     outRes.open("res_1201_cons.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
-    for (int l = 0; l < 1; l++)
+    for (int l = 0; l < 2; l++)
     {
 
         kLeafNodeID = l;
@@ -675,8 +675,8 @@ int main()
         cout << "kThreshold is: " << kThreshold << endl;
         outRes << "kThreshold is: " << kThreshold << endl;
         int repetitions = 1;
-        bool calculateTime = true;
-        bool isConstruction = true;
+        bool calculateTime = false;
+        bool isConstruction = false;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         experiment(isConstruction, repetitions, 1, calculateTime);   // read-only
