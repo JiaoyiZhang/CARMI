@@ -18,76 +18,67 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
     int c;
     int optimalChildNumber, optimalType;
     vector<pair<double, double>> tmp;
-    for (int c = 1024; c <= dataset.size() * 10;)
+    for (int c = 1024; c <= dataset.size() * 10; c *= 2)
     {
-        // if (c <= 4096)
-        //     c *= 2;
-        // else if (c <= 40960)
-        //     c += 8192;
-        // else if (c <= 1000000)
-        //     c += 65536;
-        // else
-        c *= 2;
         if (512 * c < dataset.size())
             continue;
         for (int type = 0; type < 4; type++)
         {
-            // cout << "now childNumber:" << c << ",\ttype:" << type << endl;
-            vector<vector<pair<double, double>>> perSubDataset;
+            vector<int> perSize(c, 0);
             for (int i = 0; i < c; i++)
-                perSubDataset.push_back(tmp);
+                perSize.push_back(0);
 
             switch (type)
             {
             case 0:
             {
                 time = 8.1624;
-                space = 4 * c + sizeof(LRType);
+                space = float(4 * c + sizeof(LRType)) / 1024 / 1024;
                 auto root = LRType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)
                 {
                     int p = root.model.Predict(dataset[i].first);
-                    perSubDataset[p].push_back(dataset[i]);
+                    perSize[p]++;
                 }
                 break;
             }
             case 1:
             {
                 time = 20.26894;
-                space = 4 * c + 192 + sizeof(NNType);
+                space = float(4 * c + 192 + sizeof(NNType)) / 1024 / 1024;
                 auto root = NNType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)
                 {
                     int p = root.model.Predict(dataset[i].first);
-                    perSubDataset[p].push_back(dataset[i]);
+                    perSize[p]++;
                 }
                 break;
             }
             case 2:
             {
                 time = 19.6543;
-                space = 5 * c + sizeof(HisType);
+                space = float(5 * c + sizeof(HisType)) / 1024 / 1024;
                 auto root = HisType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)
                 {
                     int p = root.model.Predict(dataset[i].first);
-                    perSubDataset[p].push_back(dataset[i]);
+                    perSize[p]++;
                 }
                 break;
             }
             case 3:
             {
                 time = 4 * log(c) / log(2);
-                space = 12 * c + sizeof(BSType);
+                space = float(12 * c + sizeof(BSType)) / 1024 / 1024;
                 auto root = BSType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)
                 {
                     int p = root.model.Predict(dataset[i].first);
-                    perSubDataset[p].push_back(dataset[i]);
+                    perSize[p]++;
                 }
                 break;
             }
@@ -96,17 +87,13 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             long double entropy = 0.0;
             for (int i = 0; i < c; i++)
             {
-                auto p = float(perSubDataset[i].size()) / dataset.size();
+                auto p = float(perSize[i]) / dataset.size();
                 if (p != 0)
                     entropy += p * (-log(p) / log(2));
             }
             // entropy /= (log(c) / log(2));
-            vector<vector<pair<double, double>>>().swap(perSubDataset);
 
-            double cost = (time + (float(kRate * space) / dataset.size())) / entropy; // ns / data + ns/B * B / data
-            // cout << "time:" << time << ",\tspace:" << space << ",\tavg space:" << float(space) / float(dataset.size()) << ",\tk space:" << float(kRate * space) / float(dataset.size()) << endl;
-            // cout << "entropy:" << entropy << endl;
-            // cout << "ratio:" << cost << endl;
+            double cost = (time + float(kRate * space)) / entropy;
             if (cost <= OptimalValue)
             {
                 optimalChildNumber = c;

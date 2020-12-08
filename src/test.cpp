@@ -17,13 +17,17 @@
 #include "../art_tree/art.cpp"
 using namespace std;
 
-int datasetSize = 1000000;
+int datasetSize = 1000;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
 stx::btree_map<double, double> btreemap;
 pair<double, double> *entireData; // global array, store all leaf nodes(0:unused, 1:used)
 unsigned int entireDataSize;      // the size of entireData
 vector<EmptyBlock> emptyBlocks;
+
+int *entireChild;
+unsigned int entireChildNumber;
+unsigned int nowChildNumber;
 
 extern vector<LRType> LRVector;
 extern vector<NNType> NNVector;
@@ -665,7 +669,6 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
 
 int main()
 {
-
     outRes.open("res_1201_cons.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 2; l++)

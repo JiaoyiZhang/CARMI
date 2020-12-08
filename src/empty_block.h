@@ -1,6 +1,7 @@
 #ifndef EMPTY_BLOCK_H
 #define EMPTY_BLOCK_H
 #include <set>
+#include <iostream>
 using namespace std;
 
 extern unsigned int entireDataSize;
@@ -42,8 +43,8 @@ public:
         {
             auto start = m_block.find(idx);
             auto len = size / m_width;
-            for (int i = 0; i < len; i++, ++start)
-                m_block.erase(start);
+            for (int i = 0; i < len; i++)
+                m_block.erase(start++);
         }
         return true;
     }

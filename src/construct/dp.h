@@ -35,7 +35,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
     {
         tmpArrayVec.push_back(ArrayType(kMaxKeyNum));
         int idx = tmpArrayVec.size() - 1;
-        double cost = kRate * sizeof(ArrayType);
+        double cost = kRate * sizeof(ArrayType) / 1024 / 1024;
         return {{cost, cost}, (4 << 28) + idx};
     }
 
@@ -51,39 +51,42 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
         int type;
         double space, time, cost;
 
-        int read = 0, write = 0;
-        for (int i = 0; i < readCnt.size(); i++)
-            read += readCnt[i];
-        for (int i = 0; i < writeCnt.size(); i++)
-            write += writeCnt[i];
         // choose an array node as the leaf node
         tmpArrayVec.push_back(ArrayType(kMaxKeyNum));
         int idx = tmpArrayVec.size() - 1;
 
         type = 4;
-        space = float(sizeof(ArrayType) + 16 * findData.size()) / findData.size();
+        space = float(sizeof(ArrayType) + 16 * findData.size()) / 1024 / 1024;
 
         auto tmp = tmpArrayVec[idx];
         tmp.model.Train(findData, findData.size());
         time = 0.0;
+        auto error = tmp.UpdateError(findData);
         for (int i = 0; i < findData.size(); i++)
         {
             auto predict = tmp.model.Predict(findData[i].first);
-            time += 16;
-            if (predict - i != 0)
-                time += log(abs(predict - i)) / log(2) * readCnt[i] * 4;
+            auto d = abs(i - predict);
+            time += 16.36;
+            if (d <= error)
+                time += log(error) / log(2) * readCnt[i] * 4.11;
+            else
+                time += log(findData.size()) / log(2) * readCnt[i] * 4.11;
         }
+
         for (int i = 0; i < insertData.size(); i++)
         {
             auto predict = tmp.model.Predict(insertData[i].first);
             auto actual = TestArrayBinarySearch(findData[i].first, findData);
-            time += 16 + 4 * (insertData.size() - actual);
-            if (predict - actual != 0)
-                time += log(abs(predict - actual)) / log(2) * writeCnt[i];
+            auto d = abs(actual - predict);
+            time += 16.36 + 5.25 * (insertData.size() - actual) * writeCnt[i];
+            if (d <= error)
+                time += log(error) / log(2) * writeCnt[i] * 4.11;
+            else
+                time += log(findData.size()) / log(2) * writeCnt[i] * 4.11;
         }
         time = time / (findData.size() + insertData.size());
 
-        cost = time + space * kRate;
+        cost = time + space * kRate; // ns + MB * kRate
         if (cost <= OptimalValue)
         {
             tmpIdx = idx;
@@ -102,29 +105,36 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
             tmpGAVec.push_back(GappedArrayType(kMaxKeyNum));
             idx = tmpGAVec.size() - 1;
             tmpGAVec[idx].density = Density[i];
-            auto tmp = tmpGAVec[idx];
-            space = float(sizeof(GappedArrayType) + 16.0 / tmpGAVec[idx].density * findData.size()) / findData.size();
+            auto tmpNode = tmpGAVec[idx];
+            space = float(sizeof(GappedArrayType) + 16.0 / tmpGAVec[idx].density * findData.size()) / 1024 / 1024;
 
-            tmp.model.Train(findData, findData.size());
+            tmpNode.model.Train(findData, findData.size());
             time = 0.0;
+            auto errorGA = tmpNode.UpdateError(findData);
             for (int t = 0; t < findData.size(); t++)
             {
-                auto predict = tmp.model.Predict(findData[t].first);
-                time += 16;
-                if (predict - t != 0)
-                    time += log(abs(predict - t)) / log(2) * readCnt[t] * 4 / tmpGAVec[idx].density;
+                auto predict = tmpNode.model.Predict(findData[t].first);
+                auto d = abs(t - predict);
+                time += 16.36;
+                if (d <= errorGA)
+                    time += log(errorGA) / log(2) * readCnt[i] * 4.11 * (2 - Density[i]);
+                else
+                    time += log(findData.size()) / log(2) * readCnt[i] * 4.11 * (2 - Density[i]);
             }
             for (int t = 0; t < insertData.size(); t++)
             {
-                auto predict = tmp.model.Predict(insertData[t].first);
+                auto predict = tmpNode.model.Predict(insertData[t].first);
                 auto actual = TestGABinarySearch(findData[t].first, findData);
-                time += 16;
-                if (predict - actual != 0)
-                    time += log(abs(predict - actual)) / log(2) * writeCnt[t];
+                time += 16.36;
+                auto d = abs(actual - predict);
+                if (d <= errorGA)
+                    time += log(errorGA) / log(2) * writeCnt[i] * 4.11 * (2 - Density[i]);
+                else
+                    time += log(findData.size()) / log(2) * writeCnt[i] * 4.11 * (2 - Density[i]);
             }
             time = time / (findData.size() + insertData.size());
 
-            cost = time + space * kRate;
+            cost = time + space * kRate; // ns + MB * kRate
             if (cost <= OptimalValue)
             {
                 tmpIdx = idx;
@@ -144,16 +154,8 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
         int c;
         int optimalChildNumber = 32, optimalType = 0, optimalSpace = 0;
         int tmpIdx;
-        for (int c = 16; c < findData.size();)
+        for (int c = 16; c < findData.size(); c *= 2)
         {
-            // if (c < 4096)
-            //     c *= 2;
-            // else if (c < 40960)
-            //     c += 8192;
-            // else if (c <= 1000000)
-            //     c += 65536;
-            // else
-                c *= 2;
             if (512 * c < findData.size())
                 continue;
             for (int type = 0; type < 4; type++)
@@ -162,8 +164,8 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 {
                 case 0:
                 {
-                    space = (4 * c + sizeof(LRType)) / findData.size();
-                    double time = 8.1624; // ns
+                    space = float(4 * c + sizeof(LRType)) / 1024 / 1024; // MB
+                    double time = 8.1624;                                // ns
                     double RootCost = time + kRate * space;
                     if (RootCost > OptimalValue)
                         break;
@@ -202,7 +204,9 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, int> res;
-                        if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+                        if ((subFindData[i].size() + subInsertData[i].size()) > 4096)
+                            res = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
+                        else if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
                         {
                             auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]);  // construct a leaf node
                             auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
@@ -234,8 +238,8 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 }
                 case 1:
                 {
-                    space = (4 * c + 192 + sizeof(NNType)) / findData.size();
-                    double time = 20.2689; // ns
+                    space = float(4 * c + 192 + sizeof(NNType)) / 1024 / 1024; // MB
+                    double time = 20.2689;                                     // ns
                     double RootCost = time + kRate * space;
                     if (RootCost > OptimalValue)
                         break;
@@ -273,7 +277,9 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, int> res;
-                        if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+                        if ((subFindData[i].size() + subInsertData[i].size()) > 4096)
+                            res = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
+                        else if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
                         {
                             auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
                             auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]);  // construct a leaf node
@@ -305,7 +311,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 }
                 case 2:
                 {
-                    space = (5 * c + sizeof(HisType)) / findData.size();
+                    space = float(5 * c + sizeof(HisType)) / 1024 / 1024; // MB
                     double time = 19.6543;
                     double RootCost = time + kRate * space;
                     if (RootCost > OptimalValue)
@@ -345,7 +351,9 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, int> res;
-                        if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+                        if ((subFindData[i].size() + subInsertData[i].size()) > 4096)
+                            res = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
+                        else if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
                         {
                             auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
                             auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]);  // construct a leaf node
@@ -377,7 +385,7 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                 }
                 case 3:
                 {
-                    space = (12 * c + sizeof(BSType)) / findData.size();
+                    space = float(12 * c + sizeof(BSType)) / 1024 / 1024;
                     double time = 4 * log(c) / log(2);
                     double RootCost = time + kRate * space;
                     if (RootCost > OptimalValue)
@@ -416,7 +424,9 @@ pair<pair<double, double>, int> Construct(bool isLeaf, const vector<pair<double,
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, int> res;
-                        if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+                        if ((subFindData[i].size() + subInsertData[i].size()) > 4096)
+                            res = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
+                        else if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
                         {
                             auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
                             auto res1 = Construct(true, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]);  // construct a leaf node

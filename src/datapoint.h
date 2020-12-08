@@ -10,10 +10,10 @@ extern pair<double, double> *entireData;
 extern unsigned int entireDataSize;
 extern vector<EmptyBlock> emptyBlocks;
 
-// initialize entireData and mark
+// initialize entireData
 void initEntireData(int size)
 {
-    unsigned int len = 5096;
+    unsigned int len = 4096;
     while (len < size)
         len *= 2;
     len *= 2;
@@ -30,11 +30,25 @@ void initEntireData(int size)
 }
 
 // allocate a block to the current leaf node
-// size: the size of the leaf node needs to be allocated, must be a multiple of 16
+// size: the size of the leaf node needs to be allocated
 // return the starting position of the allocation
 // return -1, if it fails
 int allocateMemory(int size)
 {
+    // if (size >= 512)
+    // {
+    //     cout << "size:" << size << endl;
+    //     for (int i = 0; i < 5; i++)
+    //     {
+    //         cout << "emptyBlocks: " << i << endl;
+    //         for (auto it = emptyBlocks[i].m_block.begin(); it != emptyBlocks[i].m_block.end(); it++)
+    //         {
+    //             cout << *it << "\t";
+    //         }
+    //         cout << endl;
+    //     }
+    //     cout << "-----------------------------------------" << endl;
+    // }
     int idx = log(size / 256) / log(2); // idx in emptyBlocks[]
     auto newLeft = emptyBlocks[idx].allocate(size);
     if (newLeft == -1)
@@ -62,12 +76,13 @@ int allocateMemory(int size)
             for (int j = start; j < entireDataSize; j += emptyBlocks[i].m_width)
                 emptyBlocks[i].m_block.insert(j);
         }
+        newLeft = emptyBlocks[idx].allocate(size);
     }
     // release the space in other emptyBlocks
     for (int i = 0; i < 5; i++)
     {
         if (i != idx)
-            emptyBlocks[i].release(idx, size);
+            emptyBlocks[i].release(newLeft, size);
     }
     return newLeft;
 }

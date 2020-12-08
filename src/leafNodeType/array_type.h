@@ -19,6 +19,7 @@ public:
         m_left = -1;
         m_capacity = cap; // 256 or 512
     }
+    inline int UpdateError(const vector<pair<double, double>> &dataset);
     inline void SetDataset(const vector<pair<double, double>> &dataset, int cap);
     inline void SetDataset(const int left, const int size, int cap);
 
@@ -36,10 +37,9 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
         releaseMemory(m_left, m_capacity);
     m_capacity = cap;
     m_datasetSize = dataset.size();
-    while (m_datasetSize > m_capacity)
+    while (m_datasetSize >= m_capacity)
         m_capacity *= kExpansionScale;
-    while (m_capacity % 16 != 0)
-        m_capacity++;
+
     m_left = allocateMemory(m_capacity);
 
     if (m_datasetSize == 0)
@@ -49,7 +49,22 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
         entireData[i] = dataset[j];
 
     model.Train(dataset, m_datasetSize);
+    UpdateError(dataset);
+}
 
+inline void ArrayType::SetDataset(const int left, const int size, int cap)
+{
+    m_datasetSize = size;
+    int right = left + size;
+    vector<pair<double, double>> tmp;
+    for (int j = left; j < right; j++)
+        tmp.push_back(entireData[j]);
+
+    SetDataset(tmp, cap);
+}
+
+inline int ArrayType::UpdateError(const vector<pair<double, double>> &dataset)
+{
     // find: max|pi-yi|
     int maxError = 0, p, d;
     for (int i = 0; i < m_datasetSize; i++)
@@ -87,17 +102,7 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
             error = e;
         }
     }
-}
-
-inline void ArrayType::SetDataset(const int left, const int size, int cap)
-{
-    m_datasetSize = size;
-    int right = left + size;
-    vector<pair<double, double>> tmp;
-    for (int j = left; j < right; j++)
-        tmp.push_back(entireData[j]);
-
-    SetDataset(tmp, cap);
+    return error;
 }
 
 #endif

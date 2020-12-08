@@ -116,7 +116,9 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
         {
             pair<pair<double, double>, int> resChild;
             int idx;
-            if ((subFindData[i].size() + subInsertData[i].size()) >= kMaxKeyNum)
+            if ((subFindData[i].size() + subInsertData[i].size()) > 4096)
+                resChild = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
+            else if ((subFindData[i].size() + subInsertData[i].size()) >= kMaxKeyNum)
             {
                 cout << "construct child i:" << i << endl;
                 auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
@@ -157,7 +159,9 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
         {
             pair<pair<double, double>, int> resChild;
             int idx;
-            if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+            if ((subFindData[i].size() + subInsertData[i].size()) > 4096)
+                resChild = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
+            else if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
             {
                 cout << "construct child i:" << i << endl;
                 auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
@@ -198,7 +202,9 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
         {
             pair<pair<double, double>, int> resChild;
             int idx;
-            if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+            if ((subFindData[i].size() + subInsertData[i].size()) > 4096)
+                resChild = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
+            else if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
             {
                 cout << "construct child i:" << i << endl;
                 auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
@@ -239,7 +245,9 @@ int Construction(const vector<pair<double, double>> &findDataset, const vector<i
         {
             pair<pair<double, double>, int> resChild;
             int idx;
-            if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
+            if ((subFindData[i].size() + subInsertData[i].size()) > 4096)
+                resChild = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
+            else if ((subFindData[i].size() + subInsertData[i].size()) > kMaxKeyNum)
             {
                 cout << "construct child i:" << i << endl;
                 auto res0 = Construct(false, subFindData[i], subReadCnt[i], subInsertData[i], subWriteCnt[i]); // construct an inner node
