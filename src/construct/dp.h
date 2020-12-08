@@ -72,6 +72,8 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
         auto tmp = ArrayType(kMaxKeyNum);
         tmp.model.Train(findData, findData.size());
         auto error = tmp.UpdateError(findData);
+        if (error == 0)
+            error = 1;
         for (int i = 0; i < findData.size(); i++)
         {
             auto predict = tmp.model.Predict(findData[i].first);
@@ -115,6 +117,8 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
 
             tmpNode.model.Train(findData, findData.size());
             auto errorGA = tmpNode.UpdateError(findData);
+            if (errorGA == 0)
+                errorGA = 1;
             for (int t = 0; t < findData.size(); t++)
             {
                 auto predict = tmpNode.model.Predict(findData[t].first);

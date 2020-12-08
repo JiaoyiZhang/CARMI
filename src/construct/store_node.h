@@ -232,8 +232,8 @@ int storeOptimalNode(int optimalType, int mark, long int key, const int left, co
         if (it == leafMap.end())
             cout << "WRONG!" << endl;
         GAVector.push_back(GappedArrayType(kMaxKeyNum));
-        GAVector[idx].density = it->second.density;
         idx = GAVector.size() - 1;
+        GAVector[idx].density = it->second.density;
         GAVector[idx].SetDataset(datapoint, GAVector[idx].capacity);
         break;
     }
