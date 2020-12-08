@@ -16,6 +16,10 @@ extern int kMaxKeyNum;              // used in construction
 extern double kRate;                // totalCost = space * kRate + time
 extern const double kDensity = 0.5; // the density of gap in gapped array
 
-extern const double kExpansionScale = 1.5; // scale of array expansion
+extern const double kExpansionScale = 2; // scale of array expansion
+
+extern int *entireChild;
+extern unsigned int entireChildNumber;
+extern unsigned int nowChildNumber;
 
 #endif

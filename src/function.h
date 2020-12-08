@@ -70,28 +70,28 @@ pair<double, double> Find(int rootType, double key)
         {
         case 0:
         {
-            content = LRVector[idx].child[LRVector[idx].model.Predict(key)];
+            content = entireChild[LRVector[idx].childLeft + LRVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 1:
         {
-            content = NNVector[idx].child[NNVector[idx].model.Predict(key)];
+            content = entireChild[NNVector[idx].childLeft + NNVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 2:
         {
-            content = HisVector[idx].child[HisVector[idx].model.Predict(key)];
+            content = entireChild[HisVector[idx].childLeft + HisVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 3:
         {
-            content = BSVector[idx].child[BSVector[idx].model.Predict(key)];
+            content = entireChild[BSVector[idx].childLeft + BSVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -174,28 +174,28 @@ bool Insert(int rootType, pair<double, double> data)
         {
         case 0:
         {
-            content = LRVector[idx].child[LRVector[idx].model.Predict(data.first)];
+            content = entireChild[LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 1:
         {
-            content = NNVector[idx].child[NNVector[idx].model.Predict(data.first)];
+            content = entireChild[NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 2:
         {
-            content = HisVector[idx].child[HisVector[idx].model.Predict(data.first)];
+            content = entireChild[HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 3:
         {
-            content = BSVector[idx].child[BSVector[idx].model.Predict(data.first)];
+            content = entireChild[BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -355,28 +355,28 @@ bool Delete(int rootType, double key)
         {
         case 0:
         {
-            content = LRVector[idx].child[LRVector[idx].model.Predict(key)];
+            content = entireChild[LRVector[idx].childLeft + LRVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 1:
         {
-            content = NNVector[idx].child[NNVector[idx].model.Predict(key)];
+            content = entireChild[NNVector[idx].childLeft + NNVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 2:
         {
-            content = HisVector[idx].child[HisVector[idx].model.Predict(key)];
+            content = entireChild[HisVector[idx].childLeft + HisVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 3:
         {
-            content = BSVector[idx].child[BSVector[idx].model.Predict(key)];
+            content = entireChild[BSVector[idx].childLeft + BSVector[idx].model.Predict(key)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
@@ -477,28 +477,28 @@ bool Update(int rootType, pair<double, double> data)
         {
         case 0:
         {
-            content = LRVector[idx].child[LRVector[idx].model.Predict(data.first)];
+            content = entireChild[LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 1:
         {
-            content = NNVector[idx].child[NNVector[idx].model.Predict(data.first)];
+            content = entireChild[NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 2:
         {
-            content = HisVector[idx].child[HisVector[idx].model.Predict(data.first)];
+            content = entireChild[HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }
         break;
         case 3:
         {
-            content = BSVector[idx].child[BSVector[idx].model.Predict(data.first)];
+            content = entireChild[BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
         }

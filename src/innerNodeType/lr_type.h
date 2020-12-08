@@ -6,6 +6,7 @@
 #include "../trainModel/lr.h"
 #include "../leafNodeType/array_type.h"
 #include "../leafNodeType/ga_type.h"
+#include "../child_array.h"
 #include <vector>
 #include <fstream>
 using namespace std;
@@ -20,10 +21,11 @@ public:
     LRType(int c)
     {
         childNumber = c;
+        childLeft = allocateChildMemory(c);
     }
     void Initialize(const vector<pair<double, double>> &dataset);
 
-    vector<int> child;      // 4c Byte + 16(vector)
+    int childLeft;          // 4c Byte + 4
     LinearRegression model; // 20 Byte
     int childNumber;        // 4
 };
@@ -53,7 +55,7 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
         {
             ArrayVector.push_back(ArrayType(kThreshold));
             int idx = ArrayVector.size() - 1;
-            child.push_back(0x40000000 + idx);
+            entireChild[childLeft + i] = 0x40000000 + idx;
             ArrayVector[idx].SetDataset(perSubDataset[i], kMaxKeyNum);
         }
         break;
@@ -62,7 +64,7 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
         {
             GAVector.push_back(GappedArrayType(kThreshold));
             int idx = GAVector.size() - 1;
-            child.push_back(0x50000000 + idx);
+            entireChild[childLeft + i] = 0x50000000 + idx;
             GAVector[idx].SetDataset(perSubDataset[i], kMaxKeyNum);
         }
         break;
