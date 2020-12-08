@@ -36,6 +36,8 @@ extern vector<BSType> BSVector;
 extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
+vector<pair<double, double>> findActualDataset;
+
 int kLeafNodeID = 0;
 int kInnerNodeID = 0;
 int kNeuronNumber = 8;
@@ -78,152 +80,152 @@ void printSingleNode(int type, int idx)
     }
 }
 
-void printStructure(int level, int type, int idx)
-{
-    switch (type)
-    {
-    case 0:
-    {
-        cout << "level " << level << ": now root is lr, idx:" << idx << ", childNumber:" << LRVector[idx].childNumber;
-        vector<int> tree = {0, 0, 0, 0, 0, 0};
-        for (int i = 0; i < LRVector[idx].childNumber; i++)
-        {
-            auto content = LRVector[idx].child[i];
-            auto t = content >> 28;
-            auto childIdx = content & 0x0FFFFFFF;
-            tree[t]++;
-        }
-        cout << "\tchild:";
-        if (tree[0])
-            cout << "\tlr:" << tree[0];
-        if (tree[1])
-            cout << "\tnn:" << tree[1];
-        if (tree[2])
-            cout << "\this:" << tree[2];
-        if (tree[3])
-            cout << "\tbin:" << tree[3];
-        if (tree[4])
-            cout << "\tarray:" << tree[4];
-        if (tree[5])
-            cout << "\tga:" << tree[5];
-        cout << endl;
-        for (int i = 0; i < LRVector[idx].childNumber; i++)
-        {
-            auto content = LRVector[idx].child[i];
-            auto t = content >> 28;
-            auto childIdx = content & 0x0FFFFFFF;
-            if (t < 4)
-                printStructure(level + 1, t, childIdx);
-        }
-        break;
-    }
-    case 1:
-    {
-        cout << "level " << level << ": now root is nn, idx:" << idx << ", childNumber:" << NNVector[idx].childNumber;
-        vector<int> tree = {0, 0, 0, 0, 0, 0};
-        for (int i = 0; i < NNVector[idx].childNumber; i++)
-        {
-            auto content = NNVector[idx].child[i];
-            auto t = content >> 28;
-            auto childIdx = content & 0x0FFFFFFF;
-            tree[t]++;
-        }
-        cout << "\tchild:";
-        if (tree[0])
-            cout << "\tlr:" << tree[0];
-        if (tree[1])
-            cout << "\tnn:" << tree[1];
-        if (tree[2])
-            cout << "\this:" << tree[2];
-        if (tree[3])
-            cout << "\tbin:" << tree[3];
-        if (tree[4])
-            cout << "\tarray:" << tree[4];
-        if (tree[5])
-            cout << "\tga:" << tree[5];
-        cout << endl;
-        for (int i = 0; i < NNVector[idx].childNumber; i++)
-        {
-            auto content = NNVector[idx].child[i];
-            auto t = content >> 28;
-            auto childIdx = content & 0x0FFFFFFF;
-            if (t < 4)
-                printStructure(level + 1, t, childIdx);
-        }
-        break;
-    }
-    case 2:
-    {
-        cout << "level " << level << ": now root is his, idx:" << idx << ", childNumber:" << HisVector[idx].childNumber;
-        vector<int> tree = {0, 0, 0, 0, 0, 0};
-        for (int i = 0; i < HisVector[idx].childNumber; i++)
-        {
-            auto content = HisVector[idx].child[i];
-            auto t = content >> 28;
-            auto childIdx = content & 0x0FFFFFFF;
-            tree[t]++;
-        }
-        cout << "\tchild:";
-        if (tree[0])
-            cout << "\tlr:" << tree[0];
-        if (tree[1])
-            cout << "\tnn:" << tree[1];
-        if (tree[2])
-            cout << "\this:" << tree[2];
-        if (tree[3])
-            cout << "\tbin:" << tree[3];
-        if (tree[4])
-            cout << "\tarray:" << tree[4];
-        if (tree[5])
-            cout << "\tga:" << tree[5];
-        cout << endl;
-        for (int i = 0; i < HisVector[idx].childNumber; i++)
-        {
-            auto content = HisVector[idx].child[i];
-            auto t = content >> 28;
-            auto childIdx = content & 0x0FFFFFFF;
-            if (t < 4)
-                printStructure(level + 1, t, childIdx);
-        }
-        break;
-    }
-    case 3:
-    {
-        cout << "level " << level << ": now root is bin, idx:" << idx << ", childNumber:" << BSVector[idx].childNumber;
-        vector<int> tree = {0, 0, 0, 0, 0, 0};
-        for (int i = 0; i < BSVector[idx].childNumber; i++)
-        {
-            auto content = BSVector[idx].child[i];
-            auto t = content >> 28;
-            auto childIdx = content & 0x0FFFFFFF;
-            tree[t]++;
-        }
-        cout << "\tchild:";
-        if (tree[0])
-            cout << "\tlr:" << tree[0];
-        if (tree[1])
-            cout << "\tnn:" << tree[1];
-        if (tree[2])
-            cout << "\this:" << tree[2];
-        if (tree[3])
-            cout << "\tbin:" << tree[3];
-        if (tree[4])
-            cout << "\tarray:" << tree[4];
-        if (tree[5])
-            cout << "\tga:" << tree[5];
-        cout << endl;
-        for (int i = 0; i < BSVector[idx].childNumber; i++)
-        {
-            auto content = BSVector[idx].child[i];
-            auto t = content >> 28;
-            auto childIdx = content & 0x0FFFFFFF;
-            if (t < 4)
-                printStructure(level + 1, t, childIdx);
-        }
-        break;
-    }
-    }
-}
+// void printStructure(int level, int type, int idx)
+// {
+//     switch (type)
+//     {
+//     case 0:
+//     {
+//         cout << "level " << level << ": now root is lr, idx:" << idx << ", childNumber:" << LRVector[idx].childNumber;
+//         vector<int> tree = {0, 0, 0, 0, 0, 0};
+//         for (int i = 0; i < LRVector[idx].childNumber; i++)
+//         {
+//             auto content = LRVector[idx].child[i];
+//             auto t = content >> 28;
+//             auto childIdx = content & 0x0FFFFFFF;
+//             tree[t]++;
+//         }
+//         cout << "\tchild:";
+//         if (tree[0])
+//             cout << "\tlr:" << tree[0];
+//         if (tree[1])
+//             cout << "\tnn:" << tree[1];
+//         if (tree[2])
+//             cout << "\this:" << tree[2];
+//         if (tree[3])
+//             cout << "\tbin:" << tree[3];
+//         if (tree[4])
+//             cout << "\tarray:" << tree[4];
+//         if (tree[5])
+//             cout << "\tga:" << tree[5];
+//         cout << endl;
+//         for (int i = 0; i < LRVector[idx].childNumber; i++)
+//         {
+//             auto content = LRVector[idx].child[i];
+//             auto t = content >> 28;
+//             auto childIdx = content & 0x0FFFFFFF;
+//             if (t < 4)
+//                 printStructure(level + 1, t, childIdx);
+//         }
+//         break;
+//     }
+//     case 1:
+//     {
+//         cout << "level " << level << ": now root is nn, idx:" << idx << ", childNumber:" << NNVector[idx].childNumber;
+//         vector<int> tree = {0, 0, 0, 0, 0, 0};
+//         for (int i = 0; i < NNVector[idx].childNumber; i++)
+//         {
+//             auto content = NNVector[idx].child[i];
+//             auto t = content >> 28;
+//             auto childIdx = content & 0x0FFFFFFF;
+//             tree[t]++;
+//         }
+//         cout << "\tchild:";
+//         if (tree[0])
+//             cout << "\tlr:" << tree[0];
+//         if (tree[1])
+//             cout << "\tnn:" << tree[1];
+//         if (tree[2])
+//             cout << "\this:" << tree[2];
+//         if (tree[3])
+//             cout << "\tbin:" << tree[3];
+//         if (tree[4])
+//             cout << "\tarray:" << tree[4];
+//         if (tree[5])
+//             cout << "\tga:" << tree[5];
+//         cout << endl;
+//         for (int i = 0; i < NNVector[idx].childNumber; i++)
+//         {
+//             auto content = NNVector[idx].child[i];
+//             auto t = content >> 28;
+//             auto childIdx = content & 0x0FFFFFFF;
+//             if (t < 4)
+//                 printStructure(level + 1, t, childIdx);
+//         }
+//         break;
+//     }
+//     case 2:
+//     {
+//         cout << "level " << level << ": now root is his, idx:" << idx << ", childNumber:" << HisVector[idx].childNumber;
+//         vector<int> tree = {0, 0, 0, 0, 0, 0};
+//         for (int i = 0; i < HisVector[idx].childNumber; i++)
+//         {
+//             auto content = HisVector[idx].child[i];
+//             auto t = content >> 28;
+//             auto childIdx = content & 0x0FFFFFFF;
+//             tree[t]++;
+//         }
+//         cout << "\tchild:";
+//         if (tree[0])
+//             cout << "\tlr:" << tree[0];
+//         if (tree[1])
+//             cout << "\tnn:" << tree[1];
+//         if (tree[2])
+//             cout << "\this:" << tree[2];
+//         if (tree[3])
+//             cout << "\tbin:" << tree[3];
+//         if (tree[4])
+//             cout << "\tarray:" << tree[4];
+//         if (tree[5])
+//             cout << "\tga:" << tree[5];
+//         cout << endl;
+//         for (int i = 0; i < HisVector[idx].childNumber; i++)
+//         {
+//             auto content = HisVector[idx].child[i];
+//             auto t = content >> 28;
+//             auto childIdx = content & 0x0FFFFFFF;
+//             if (t < 4)
+//                 printStructure(level + 1, t, childIdx);
+//         }
+//         break;
+//     }
+//     case 3:
+//     {
+//         cout << "level " << level << ": now root is bin, idx:" << idx << ", childNumber:" << BSVector[idx].childNumber;
+//         vector<int> tree = {0, 0, 0, 0, 0, 0};
+//         for (int i = 0; i < BSVector[idx].childNumber; i++)
+//         {
+//             auto content = BSVector[idx].child[i];
+//             auto t = content >> 28;
+//             auto childIdx = content & 0x0FFFFFFF;
+//             tree[t]++;
+//         }
+//         cout << "\tchild:";
+//         if (tree[0])
+//             cout << "\tlr:" << tree[0];
+//         if (tree[1])
+//             cout << "\tnn:" << tree[1];
+//         if (tree[2])
+//             cout << "\this:" << tree[2];
+//         if (tree[3])
+//             cout << "\tbin:" << tree[3];
+//         if (tree[4])
+//             cout << "\tarray:" << tree[4];
+//         if (tree[5])
+//             cout << "\tga:" << tree[5];
+//         cout << endl;
+//         for (int i = 0; i < BSVector[idx].childNumber; i++)
+//         {
+//             auto content = BSVector[idx].child[i];
+//             auto t = content >> 28;
+//             auto childIdx = content & 0x0FFFFFFF;
+//             if (t < 4)
+//                 printStructure(level + 1, t, childIdx);
+//         }
+//         break;
+//     }
+//     }
+// }
 
 void artTree_test()
 {
@@ -505,19 +507,24 @@ void constructionTest()
     cout << "GappedArrayType:" << sizeof(GappedArrayType) << endl;
 
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
-    vector<int> readCnt;
-    vector<int> writeCnt;
+    findActualDataset = dataset;
+    
     for (int i = 0; i < dataset.size(); i++)
-    {
-        readCnt.push_back(2);
-    }
+        dataset[i].second = 2;
     for (int i = 0; i < insertDataset.size(); i++)
-    {
-        writeCnt.push_back(10);
-    }
-    cout << "readCnt.size():" << readCnt.size() << "\twriteCnt.size():" << writeCnt.size() << endl;
+        insertDataset[i].second = 10;
+    vector<pair<double, double>> totalData;
+    for (int i = 0; i < dataset.size(); i++)
+        totalData.push_back(dataset[i]);
+    for (int i = 0; i < insertDataset.size(); i++)
+        totalData.push_back(insertDataset[i]);
+
+    std::sort(totalData.begin(), totalData.end(), [](pair<double, double> p1, pair<double, double> p2) {
+        return p1.first < p2.first;
+    });
+
     initEntireData(dataset.size() + insertDataset.size());
-    auto rootType = Construction(dataset, readCnt, insertDataset, writeCnt);
+    auto rootType = Construction(dataset, insertDataset);
     cout << "Construction over!" << endl;
     cout << endl;
 
@@ -537,7 +544,7 @@ void constructionTest()
 
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
     cout << "print structure:" << endl;
-    printStructure(1, rootType, 0);
+    // printStructure(1, rootType, 0);
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
 
     for (int i = 0; i < dataset.size(); i++)

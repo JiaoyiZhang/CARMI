@@ -21,7 +21,6 @@ public:
     {
         childNumber = c;
         model = HistogramModel(c);
-        childLeft = allocateChildMemory(c);
     }
     void Initialize(const vector<pair<double, double>> &dataset);
 
@@ -32,6 +31,7 @@ public:
 
 inline void HisType::Initialize(const vector<pair<double, double>> &dataset)
 {
+    childLeft = allocateChildMemory(childNumber);
     if (dataset.size() == 0)
         return;
 
