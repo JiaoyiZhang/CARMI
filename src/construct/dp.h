@@ -14,14 +14,15 @@
 #include <float.h>
 #include <algorithm>
 #include <vector>
+#include <map>
 using namespace std;
 
 extern map<int, double> COST;
 extern map<int, LeafParams> leafMap;
 extern map<int, InnerParams> innerMap;
 
-extern vector<pair<double, double>> findDataset;
-extern vector<pair<double, double>> insertDataset;
+extern vector<pair<double, double>> findDatapoint;
+extern vector<pair<double, double>> insertDatapoint;
 
 // return {cost, type(0:inner, 1:leaf)}
 pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
@@ -56,9 +57,9 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
         vector<pair<double, double>> findData;
         vector<pair<double, double>> insertData;
         for (int l = findLeft; l < findLeft + findSize; l++)
-            findData.push_back(findDataset[l]);
+            findData.push_back(findDatapoint[l]);
         for (int l = insertLeft; l < insertLeft + insertSize; l++)
-            insertData.push_back(insertDataset[l]);
+            insertData.push_back(insertDatapoint[l]);
 
         double OptimalValue = DBL_MAX;
         LeafParams optimalStruct = {-1, -1};
@@ -157,9 +158,9 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
         vector<pair<double, double>> findData;
         vector<pair<double, double>> insertData;
         for (int l = findLeft; l < findLeft + findSize; l++)
-            findData.push_back(findDataset[l]);
+            findData.push_back(findDatapoint[l]);
         for (int l = insertLeft; l < insertLeft + insertSize; l++)
-            insertData.push_back(insertDataset[l]);
+            insertData.push_back(insertDatapoint[l]);
         for (int c = 16; c < findData.size(); c *= 2)
         {
             if (512 * c < findData.size())
@@ -180,8 +181,8 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                     node.model.Train(findData, c);
 
                     // divide the key and query
-                    vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
-                    vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
+                    vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
+                    vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
                     for (int i = 0; i < findData.size(); i++)
                     {
                         int p = node.model.Predict(findData[i].first);
@@ -238,8 +239,8 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                     node.model.Train(findData, c);
 
                     // divide the key and query
-                    vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
-                    vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
+                    vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
+                    vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
                     for (int i = 0; i < findData.size(); i++)
                     {
                         int p = node.model.Predict(findData[i].first);
@@ -296,8 +297,8 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                     node.model.Train(findData, c);
 
                     // divide the key and query
-                    vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
-                    vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
+                    vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
+                    vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
                     for (int i = 0; i < findData.size(); i++)
                     {
                         int p = node.model.Predict(findData[i].first);
@@ -354,8 +355,8 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                     node.model.Train(findData, c);
 
                     // divide the key and query
-                    vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
-                    vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
+                    vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
+                    vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
                     for (int i = 0; i < findData.size(); i++)
                     {
                         int p = node.model.Predict(findData[i].first);

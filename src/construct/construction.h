@@ -15,8 +15,8 @@ extern vector<BSType> BSVector;
 extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
-vector<pair<double, double>> findDataset;
-vector<pair<double, double>> insertDataset;
+vector<pair<double, double>> findDatapoint;
+vector<pair<double, double>> insertDatapoint;
 
 extern vector<pair<double, double>> findActualDataset;
 extern pair<double, double> *entireData;
@@ -30,8 +30,8 @@ extern double kRate;
 
 // main function of construction
 // return the type of root
-// findDataset: the dataset used to initialize the index
-// insertDataset: the dataset to be inserted into the index
+// findDatapoint: the dataset used to initialize the index
+// insertDatapoint: the dataset to be inserted into the index
 // readCnt: the number of READ corresponding to each key
 // writeCnt: the number of WRITE corresponding to each key
 int Construction(const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
@@ -40,8 +40,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     cout << "-------------------------------" << endl;
     cout << "Start construction!" << endl;
     initEntireData(findData.size() + insertData.size());
-    findDataset = findData;
-    insertDataset = insertData;
+    findDatapoint = findData;
+    insertDatapoint = insertData;
     auto res = ChooseRoot(findData);
 
     vector<LRType>().swap(LRVector);
@@ -93,16 +93,16 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     {
     case 0:
     {
-        for (int i = 0; i < findDataset.size(); i++)
+        for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = LRVector[0].model.Predict(findDataset[i].first);
+            int p = LRVector[0].model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
-        for (int i = 0; i < insertDataset.size(); i++)
+        for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = LRVector[0].model.Predict(insertDataset[i].first);
+            int p = LRVector[0].model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -155,16 +155,16 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     }
     case 1:
     {
-        for (int i = 0; i < findDataset.size(); i++)
+        for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = NNVector[0].model.Predict(findDataset[i].first);
+            int p = NNVector[0].model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
-        for (int i = 0; i < insertDataset.size(); i++)
+        for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = NNVector[0].model.Predict(insertDataset[i].first);
+            int p = NNVector[0].model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -215,16 +215,16 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     break;
     case 2:
     {
-        for (int i = 0; i < findDataset.size(); i++)
+        for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = HisVector[0].model.Predict(findDataset[i].first);
+            int p = HisVector[0].model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
-        for (int i = 0; i < insertDataset.size(); i++)
+        for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = HisVector[0].model.Predict(insertDataset[i].first);
+            int p = HisVector[0].model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -276,16 +276,16 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     break;
     case 3:
     {
-        for (int i = 0; i < findDataset.size(); i++)
+        for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = BSVector[0].model.Predict(findDataset[i].first);
+            int p = BSVector[0].model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
-        for (int i = 0; i < insertDataset.size(); i++)
+        for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = BSVector[0].model.Predict(insertDataset[i].first);
+            int p = BSVector[0].model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;

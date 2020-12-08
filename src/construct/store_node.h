@@ -12,6 +12,7 @@
 #include "params_struct.h"
 #include <float.h>
 #include <vector>
+#include <map>
 using namespace std;
 
 extern vector<LRType> LRVector;
