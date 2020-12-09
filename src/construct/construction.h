@@ -23,7 +23,7 @@ extern pair<double, double> *entireData;
 
 map<int, double> COST; // int:left; double:cost
 map<int, LeafParams> leafMap;
-map<int, InnerParams> innerMap;
+map<pair<int, int>, InnerParams> innerMap;
 
 extern int kMaxKeyNum;
 extern double kRate;
@@ -133,7 +133,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             if (childType == 0)
             {
-                long int key = subFindData[i].first;
+                cout << "store inner node: " << endl;
+                pair<int, int> key = {subFindData[i].first, subFindData[i].second};
                 type = (innerMap.find(key))->second.type;
                 idx = storeOptimalNode(type, childType, key, subFindData[i].first, subFindData[i].second);
             }
@@ -141,11 +142,16 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             {
                 long int key = subFindData[i].first;
                 type = (leafMap.find(key))->second.type;
-                idx = storeOptimalNode(type, childType, key, subFindData[i].first, subFindData[i].second);
+                idx = storeOptimalNode(type, childType, {subFindData[i].first, subFindData[i].second}, subFindData[i].first, subFindData[i].second);
             }
 
             idx += (type << 28);
             entireChild[LRVector[0].childLeft + i] = idx;
+            // if (HisVector.size() > 0)
+            // {
+            //     cout << i << "in construction, His:" << HisVector.size() << endl;
+            //     cout << "in construction, His[0].childNumber:" << HisVector[0].childNumber << endl;
+            // }
 
             totalCost += resChild.first;
 
@@ -196,7 +202,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             if (childType == 0)
             {
-                long int key = subFindData[i].first;
+                pair<int, int> key = {subFindData[i].first, subFindData[i].second};
                 type = (innerMap.find(key))->second.type;
                 idx = storeOptimalNode(type, childType, key, subFindData[i].first, subFindData[i].second);
             }
@@ -204,7 +210,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             {
                 long int key = subFindData[i].first;
                 type = (leafMap.find(key))->second.type;
-                idx = storeOptimalNode(type, childType, key, subFindData[i].first, subFindData[i].second);
+                idx = storeOptimalNode(type, childType, {subFindData[i].first, subFindData[i].second}, subFindData[i].first, subFindData[i].second);
             }
             idx += (type << 28);
             entireChild[NNVector[0].childLeft + i] = idx;
@@ -257,7 +263,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             if (childType == 0)
             {
-                long int key = subFindData[i].first;
+                pair<int, int> key = {subFindData[i].first, subFindData[i].second};
                 type = (innerMap.find(key))->second.type;
                 idx = storeOptimalNode(type, childType, key, subFindData[i].first, subFindData[i].second);
             }
@@ -265,7 +271,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             {
                 long int key = subFindData[i].first;
                 type = (leafMap.find(key))->second.type;
-                idx = storeOptimalNode(type, childType, key, subFindData[i].first, subFindData[i].second);
+                idx = storeOptimalNode(type, childType, {subFindData[i].first, subFindData[i].second}, subFindData[i].first, subFindData[i].second);
             }
 
             idx += (type << 28);
@@ -319,7 +325,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             if (childType == 0)
             {
-                long int key = subFindData[i].first;
+                pair<int, int> key = {subFindData[i].first, subFindData[i].second};
                 type = (innerMap.find(key))->second.type;
                 idx = storeOptimalNode(type, childType, key, subFindData[i].first, subFindData[i].second);
             }
@@ -327,7 +333,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             {
                 long int key = subFindData[i].first;
                 type = (leafMap.find(key))->second.type;
-                idx = storeOptimalNode(type, childType, key, subFindData[i].first, subFindData[i].second);
+                idx = storeOptimalNode(type, childType, {subFindData[i].first, subFindData[i].second}, subFindData[i].first, subFindData[i].second);
             }
 
             idx += (type << 28);

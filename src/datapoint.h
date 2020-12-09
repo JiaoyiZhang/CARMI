@@ -35,20 +35,6 @@ void initEntireData(int size)
 // return -1, if it fails
 int allocateMemory(int size)
 {
-    // if (size >= 512)
-    // {
-    //     cout << "size:" << size << endl;
-    //     for (int i = 0; i < 5; i++)
-    //     {
-    //         cout << "emptyBlocks: " << i << endl;
-    //         for (auto it = emptyBlocks[i].m_block.begin(); it != emptyBlocks[i].m_block.end(); it++)
-    //         {
-    //             cout << *it << "\t";
-    //         }
-    //         cout << endl;
-    //     }
-    //     cout << "-----------------------------------------" << endl;
-    // }
     int idx = log(size / 256) / log(2); // idx in emptyBlocks[]
     auto newLeft = emptyBlocks[idx].allocate(size);
     if (newLeft == -1)
@@ -63,8 +49,10 @@ int allocateMemory(int size)
             tmpData.push_back(entireData[i]);
         for (int i = 0; i < 5; i++)
             tmpBlocks.push_back(emptyBlocks[i]);
+        cout << "before init" << endl;
 
         initEntireData(tmpSize);
+        cout << "init over" << endl;
         for (int i = 0; i < tmpSize; i++)
             entireData[i] = tmpData[i];
         for (int i = 0; i < 5; i++)

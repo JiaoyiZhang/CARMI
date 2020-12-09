@@ -41,7 +41,6 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
         m_capacity *= kExpansionScale;
 
     m_left = allocateMemory(m_capacity);
-
     if (m_datasetSize == 0)
         return;
 

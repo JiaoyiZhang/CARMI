@@ -7,7 +7,7 @@ struct InnerParams
 {
     int type;
     int childNum;
-    vector<pair<int, int>> child; // 0/1:inner/leaf;    idx: the key in the corresponding map
+    vector<pair<int, pair<int, int>>> child; // 0/1:inner/leaf;    idx: the key in the corresponding map
 };
 
 struct LeafParams

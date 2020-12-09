@@ -19,7 +19,7 @@ using namespace std;
 
 extern map<int, double> COST;
 extern map<int, LeafParams> leafMap;
-extern map<int, InnerParams> innerMap;
+extern map<pair<int, int>, InnerParams> innerMap;
 
 extern vector<pair<double, double>> findDatapoint;
 extern vector<pair<double, double>> insertDatapoint;
@@ -158,7 +158,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
     {
         double OptimalValue = DBL_MAX;
         double space;
-        InnerParams optimalStruct = {0, 32, vector<pair<int, int>>()};
+        InnerParams optimalStruct = {0, 32, vector<pair<int, pair<int, int>>>()};
         vector<pair<double, double>> findData;
         vector<pair<double, double>> insertData;
         for (int l = findLeft; l < findLeft + findSize; l++)
@@ -202,7 +202,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         subInsertData[p].second++;
                     }
 
-                    vector<pair<int, int>> tmpChild;
+                    vector<pair<int, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
                         pair<double, int> res;
@@ -219,7 +219,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         }
                         else
                             res = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-                        tmpChild.push_back({res.second, subFindData[i].first});
+                        tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         RootCost += res.first;
                     }
                     if (RootCost <= OptimalValue)
@@ -260,7 +260,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         subInsertData[p].second++;
                     }
 
-                    vector<pair<int, int>> tmpChild;
+                    vector<pair<int, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
                         pair<double, int> res;
@@ -277,7 +277,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         }
                         else
                             res = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-                        tmpChild.push_back({res.second, subFindData[i].first});
+                        tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         RootCost += res.first;
                     }
                     if (RootCost <= OptimalValue)
@@ -308,17 +308,22 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         int p = node.model.Predict(findData[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
-                        subFindData[p].second++;
+                        subFindData[p].second = subFindData[p].second + 1;
                     }
                     for (int i = 0; i < insertData.size(); i++)
                     {
                         int p = node.model.Predict(insertData[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
-                        subInsertData[p].second++;
+                        subInsertData[p].second = subInsertData[p].second + 1;
+                    }
+                    for (int i = 0; i < c; i++)
+                    {
+                        if(subFindData[i].second>4096)
+                            cout<<i<<":"<<subFindData[i].second<<endl;
                     }
 
-                    vector<pair<int, int>> tmpChild;
+                    vector<pair<int, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
                         pair<double, int> res;
@@ -335,7 +340,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         }
                         else
                             res = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-                        tmpChild.push_back({res.second, subFindData[i].first});
+                        tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         RootCost += res.first;
                     }
                     if (RootCost <= OptimalValue)
@@ -376,7 +381,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         subInsertData[p].second++;
                     }
 
-                    vector<pair<int, int>> tmpChild;
+                    vector<pair<int, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
                         pair<double, int> res;
@@ -393,7 +398,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         }
                         else
                             res = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-                        tmpChild.push_back({res.second, subFindData[i].first});
+                        tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         RootCost += res.first;
                     }
                     if (RootCost <= OptimalValue)
@@ -409,7 +414,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
             }
         }
         COST.insert({findLeft, OptimalValue});
-        innerMap.insert({findLeft, optimalStruct});
+        innerMap.insert({{findLeft, findSize}, optimalStruct});
         return {OptimalValue, 0};
     }
 }
