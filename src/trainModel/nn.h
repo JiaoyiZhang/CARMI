@@ -189,7 +189,6 @@ void Net::Train(const vector<pair<double, double>> &dataset, int len)
 			}
 		}
 		f = clock();
-		// cout<<"epoch "<<epoch<<": time: "<<(float)(f-s) / CLOCKS_PER_SEC<<endl;
 	}
 	// record the split points
 	for(int i=0;i<W1.size();i++)

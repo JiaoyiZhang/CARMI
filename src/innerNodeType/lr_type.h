@@ -47,7 +47,6 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
         perSubDataset[p].push_back(dataset[i]);
     }
 
-    // cout << "train second stage" << endl;
     switch (kLeafNodeID)
     {
     case 0:
@@ -71,8 +70,6 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
     }
 
     vector<vector<pair<double, double>>>().swap(perSubDataset);
-
-    // cout << "End train" << endl;
 }
 
 #endif

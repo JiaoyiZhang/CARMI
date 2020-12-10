@@ -137,15 +137,9 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset, int len)
                 if (i + 16 < childNumber)
                     table1[table1.size() - 1] = (int(table[i]) << 16) + int(table[i + 16]);
                 table0.push_back(tmp);
-                // cout << "table[i]:" << table[i] << "\ttable1[table1.size()-1]:" << table1[table1.size() - 1] << "\ttmp:" << tmp << endl;
-                // cout << "TOTAL sSIZ:" << table1.size() << endl;
                 return;
             }
             int diff = int(table[j]) - start_idx;
-            // cout << "j:" << j << "\ttable[j]:" << table[j] << "\tstart:" << start_idx << "\tdiff:" << diff << endl;
-            // if (diff >= 2)
-            // cout << "wrong!\t"
-            //  << "table[j]:" << table[j] << "\tidx:" << start_idx << "\tdiff:" << diff << endl;
             tmp = (tmp << 1) + diff;
             if (diff > 0)
                 start_idx += diff;

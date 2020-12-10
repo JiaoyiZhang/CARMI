@@ -18,11 +18,6 @@ inline bool allocateEmptyBlock(int left, int len)
 {
     if (len == 0)
         return true;
-    // cout << "*****start allocateEmptyBlock, left:" << left << ",\tlen:" << len << endl;
-    // for (int i = 0; i < 13; i++)
-    // {
-    //     cout << "output block " << i << ",\twidth: " << emptyBlocks[i].m_width << ",\tsize:" << emptyBlocks[i].m_block.size() << endl;
-    // }
     int res = 0;
     for (int i = 12; i >= 0; i--)
     {
@@ -73,10 +68,6 @@ void initEntireData(int left, int size, bool reinit)
     auto res = allocateEmptyBlock(left, len);
     if (!res)
         cout << "init allocateEmptyBlock WRONG!" << endl;
-    // for (int i = 0; i < 13; i++)
-    // {
-    //     cout << "output block " << i << ",\twidth: " << emptyBlocks[i].m_width << ",\tsize:" << emptyBlocks[i].m_block.size() << endl;
-    // }
 }
 
 // allocate a block to the current leaf node
@@ -86,7 +77,6 @@ void initEntireData(int left, int size, bool reinit)
 int allocateMemory(int size)
 {
     int idx = getIndex(size); // idx in emptyBlocks[]
-    // cout << "size: " << size << ",\tidx:" << idx << ",\twidth:" << emptyBlocks[idx].m_width << endl;
     size = emptyBlocks[idx].m_width;
     if (idx == -1)
         cout << "getIndex in emptyBlocks WRONG!\tsize:" << size << endl;
@@ -100,7 +90,6 @@ int allocateMemory(int size)
             break;
         }
     }
-    // cout << "after allocate, newLeft is:" << newLeft << endl;
     if (newLeft == -1)
     {
         // allocation fails
@@ -131,13 +120,11 @@ int allocateMemory(int size)
             }
         }
     }
-    // cout << "after expand, newLeft is:" << newLeft << ",\twidth:" << emptyBlocks[idx].m_width << endl;
 
     // add the left blocks into the corresponding blocks
     auto res = allocateEmptyBlock(newLeft + size, emptyBlocks[idx].m_width - size);
     if (!res)
         cout << "after allocate, allocateEmptyBlock WRONG!" << endl;
-    // cout << "final newLeft is:" << newLeft << endl;
     return newLeft;
 }
 
