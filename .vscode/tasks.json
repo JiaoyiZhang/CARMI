@@ -3,16 +3,19 @@
         {
             "type": "shell",
             "label": "g++.exe build active file",
-            "command": "F:\\TDM-GCC-64\\bin\\g++.exe",
+            "command": "g++",
             "args": [
                 "-g",
                 "${file}",
+                "-std=c++11",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
-            ],
-            "options": {
-                "cwd": "F:\\TDM-GCC-64\\bin"
-            }
+                // "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileBasenameNoExtension}.out"
+            ]
+            // ,
+            // "options": {
+            //     "cwd": "F:\\TDM-GCC-64\\bin"
+            // }
         }
     ],
     "version": "2.0.0"
