@@ -4,17 +4,12 @@
 #include <iostream>
 using namespace std;
 
-extern unsigned int entireDataSize;
-
 class EmptyBlock
 {
 public:
     EmptyBlock(int w)
     {
         m_width = w;
-        int len = entireDataSize / m_width;
-        for (int i = 0; i < len; i++)
-            m_block.insert(i * w);
     }
 
     // allocate a block, return idx
@@ -29,24 +24,15 @@ public:
         return res;
     }
 
-    // delete the corresponding empty blocks
-    bool release(int idx, int size)
+    // add the corresponding empty blocks
+    // return the size of the empty block after this action
+    int addBlock(int idx, int size)
     {
         if (size < m_width)
-        {
-            auto res = m_block.find(idx);
-            if (res == m_block.end())
-                return true;
-            m_block.erase(res);
-        }
-        else
-        {
-            auto start = m_block.find(idx);
-            auto len = size / m_width;
-            for (int i = 0; i < len; i++)
-                m_block.erase(start++);
-        }
-        return true;
+            return -1;
+        int newIdx = idx + size - m_width;
+        m_block.insert(newIdx);
+        return size - m_width;
     }
 
     bool find(int idx)

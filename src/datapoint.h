@@ -9,24 +9,74 @@ using namespace std;
 extern pair<double, double> *entireData;
 extern unsigned int entireDataSize;
 extern vector<EmptyBlock> emptyBlocks;
+extern vector<pair<double, double>> testDataset;
+
+// allocate empty blocks into emptyBlocks[i]
+// left: the beginning idx of empty blocks
+// len: the length of the blocks
+inline bool allocateEmptyBlock(int left, int len)
+{
+    if (len == 0)
+        return true;
+    // cout << "*****start allocateEmptyBlock, left:" << left << ",\tlen:" << len << endl;
+    // for (int i = 0; i < 13; i++)
+    // {
+    //     cout << "output block " << i << ",\twidth: " << emptyBlocks[i].m_width << ",\tsize:" << emptyBlocks[i].m_block.size() << endl;
+    // }
+    int res = 0;
+    for (int i = 12; i >= 0; i--)
+    {
+        res = emptyBlocks[i].addBlock(left, len);
+        while (res > 0)
+        {
+            len = res;
+            res = emptyBlocks[i].addBlock(left, len);
+        }
+        if (res == 0)
+            return true;
+    }
+    return false;
+}
+
+// find the corresponding index in emptyBlocks
+// return idx
+inline int getIndex(int size)
+{
+    for (int i = 12, j = 4096; i >= 0; i--, j /= 2)
+    {
+        if (size <= j && size > j / 2)
+            return i;
+    }
+    return -1;
+}
 
 // initialize entireData
-void initEntireData(int size)
+void initEntireData(int left, int size, bool reinit)
 {
     unsigned int len = 4096;
     while (len < size)
         len *= 2;
     len *= 2;
     entireDataSize = len;
-    // cout << "dataset size:" << size << endl;
-    // cout << "the size of entireData is:" << len << endl;
+    cout << "dataset size:" << size << endl;
+    cout << "the size of entireData is:" << len << endl;
     delete[] entireData;
+    testDataset = vector<pair<double, double>>(entireDataSize, pair<double, double>{-1, -1});
     vector<EmptyBlock>().swap(emptyBlocks);
     entireData = new pair<double, double>[len];
     for (int i = 0; i < len; i++)
         entireData[i] = {DBL_MIN, DBL_MIN};
-    for (int i = 0; i < 5; i++)
-        emptyBlocks.push_back(EmptyBlock(256 * pow(2, i)));
+    for (int i = 0, j = 1; i < 13; i++, j *= 2)
+        emptyBlocks.push_back(EmptyBlock(j));
+    if (reinit)
+        len = size;
+    auto res = allocateEmptyBlock(left, len);
+    if (!res)
+        cout << "init allocateEmptyBlock WRONG!" << endl;
+    // for (int i = 0; i < 13; i++)
+    // {
+    //     cout << "output block " << i << ",\twidth: " << emptyBlocks[i].m_width << ",\tsize:" << emptyBlocks[i].m_block.size() << endl;
+    // }
 }
 
 // allocate a block to the current leaf node
@@ -35,8 +85,22 @@ void initEntireData(int size)
 // return -1, if it fails
 int allocateMemory(int size)
 {
-    int idx = log(size / 256) / log(2); // idx in emptyBlocks[]
-    auto newLeft = emptyBlocks[idx].allocate(size);
+    int idx = getIndex(size); // idx in emptyBlocks[]
+    // cout << "size: " << size << ",\tidx:" << idx << ",\twidth:" << emptyBlocks[idx].m_width << endl;
+    size = emptyBlocks[idx].m_width;
+    if (idx == -1)
+        cout << "getIndex in emptyBlocks WRONG!\tsize:" << size << endl;
+    auto newLeft = -1;
+    for (int i = idx; i < 13; i++)
+    {
+        newLeft = emptyBlocks[i].allocate(size);
+        if (newLeft != -1)
+        {
+            idx = i;
+            break;
+        }
+    }
+    // cout << "after allocate, newLeft is:" << newLeft << endl;
     if (newLeft == -1)
     {
         // allocation fails
@@ -47,61 +111,47 @@ int allocateMemory(int size)
         vector<EmptyBlock> tmpBlocks;
         for (int i = 0; i < tmpSize; i++)
             tmpData.push_back(entireData[i]);
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 13; i++)
             tmpBlocks.push_back(emptyBlocks[i]);
-        cout << "before init" << endl;
 
-        initEntireData(tmpSize);
-        cout << "init over" << endl;
+        initEntireData(tmpSize, tmpSize, true);
         for (int i = 0; i < tmpSize; i++)
             entireData[i] = tmpData[i];
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < tmpSize; i++)
+            testDataset[i] = tmpData[i];
+        for (int i = 0; i < 13; i++)
+            emptyBlocks[i].m_block.insert(tmpBlocks[i].m_block.begin(), tmpBlocks[i].m_block.end());
+        for (int i = idx; i < 13; i++)
         {
-            emptyBlocks[i] = tmpBlocks[i];
-            int start = tmpSize;
-            while (start % emptyBlocks[i].m_width != 0)
-                start++;
-            for (int j = start; j < entireDataSize; j += emptyBlocks[i].m_width)
-                emptyBlocks[i].m_block.insert(j);
+            newLeft = emptyBlocks[i].allocate(size);
+            if (newLeft != -1)
+            {
+                idx = i;
+                break;
+            }
         }
-        newLeft = emptyBlocks[idx].allocate(size);
     }
-    // release the space in other emptyBlocks
-    for (int i = 0; i < 5; i++)
-    {
-        if (i != idx)
-            emptyBlocks[i].release(newLeft, size);
-    }
+    // cout << "after expand, newLeft is:" << newLeft << ",\twidth:" << emptyBlocks[idx].m_width << endl;
+
+    // add the left blocks into the corresponding blocks
+    auto res = allocateEmptyBlock(newLeft + size, emptyBlocks[idx].m_width - size);
+    if (!res)
+        cout << "after allocate, allocateEmptyBlock WRONG!" << endl;
+    // cout << "final newLeft is:" << newLeft << endl;
     return newLeft;
 }
 
 // release the specified space
 void releaseMemory(int left, int size)
 {
-    int type = log(size / 256) / log(2);
-    emptyBlocks[type].m_block.insert(left);
-    for (int i = 0; i < type; i++)
+    int idx = getIndex(size);
+    for (int i = idx; i < 13; i++)
     {
-        // insert the empty blocks
-        for (int j = left; j < size; j += emptyBlocks[i].m_width)
-            emptyBlocks[i].m_block.insert(j);
-    }
-    for (int i = type + 1; i < 5; i++)
-    {
-        // check if there is a need to merge
-        if (left % emptyBlocks[i].m_width != 0)
+        if (!emptyBlocks[i].find(left + emptyBlocks[i].m_width))
         {
-            if (emptyBlocks[i - 1].find(left - emptyBlocks[i - 1].m_width))
-                emptyBlocks[i].m_block.insert(left - emptyBlocks[i - 1].m_width);
-            else
-                break;
-        }
-        else
-        {
-            if (emptyBlocks[i - 1].find(left + emptyBlocks[i - 1].m_width))
-                emptyBlocks[i].m_block.insert(left);
-            else
-                break;
+            emptyBlocks[i].m_block.insert(left);
+            cout << "release i:" << i << ",\tleft:" << left << ",\tsize:" << size << ",\twidth:" << emptyBlocks[i].m_width << endl;
+            break;
         }
     }
 }
