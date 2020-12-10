@@ -22,15 +22,13 @@ extern vector<BSType> BSVector;
 extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
-extern map<int, double> COST;
-extern map<int, LeafParams> leafMap;
-extern map<pair<int, int>, InnerParams> innerMap;
+extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 
 extern vector<pair<double, double>> findActualDataset;
 
 // store the optimal node into the index structure
 // tmpIdx: key in the corresponding struct
-int storeOptimalNode(int optimalType, int mark, pair<int, int> key, const int left, const int size)
+int storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size)
 {
     vector<pair<double, double>> datapoint;
     for (int i = left; i < left + size; i++)
@@ -40,8 +38,8 @@ int storeOptimalNode(int optimalType, int mark, pair<int, int> key, const int le
     {
     case 0:
     {
-        auto it = innerMap.find(key);
-        if (it == innerMap.end())
+        auto it = structMap.find(key);
+        if (it == structMap.end())
             cout << "WRONG!" << endl;
         auto node = LRType(it->second.childNum);
         LRVector.push_back(node);
@@ -67,26 +65,18 @@ int storeOptimalNode(int optimalType, int mark, pair<int, int> key, const int le
         for (int i = 0; i < optimalChildNumber; i++)
         {
             auto nowChild = it->second.child[i];
-            pair<int, int> nowKey = nowChild.second;
+            pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
-            if (nowChild.first == 0)
-            {
-                type = (innerMap.find(nowKey))->second.type;
-                actualIdx = storeOptimalNode(type, nowChild.first, nowKey, subLeft[i], subFindData[i].size());
-            }
-            else
-            {
-                type = (leafMap.find(nowKey.first))->second.type;
-                actualIdx = storeOptimalNode(type, nowChild.first, nowKey, subLeft[i], subFindData[i].size());
-            }
+            type = (structMap.find(nowKey))->second.type;
+            actualIdx = storeOptimalNode(type, nowKey, subLeft[i], subFindData[i].size());
             entireChild[LRVector[idx].childLeft + i] = (type << 28) + actualIdx;
         }
         break;
     }
     case 1:
     {
-        auto it = innerMap.find(key);
-        if (it == innerMap.end())
+        auto it = structMap.find(key);
+        if (it == structMap.end())
             cout << "WRONG!" << endl;
         auto node = NNType(it->second.childNum);
         NNVector.push_back(node);
@@ -112,26 +102,18 @@ int storeOptimalNode(int optimalType, int mark, pair<int, int> key, const int le
         for (int i = 0; i < optimalChildNumber; i++)
         {
             auto nowChild = it->second.child[i];
-            pair<int, int> nowKey = nowChild.second;
+            pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
-            if (nowChild.first == 0)
-            {
-                type = (innerMap.find(nowKey))->second.type;
-                actualIdx = storeOptimalNode(type, nowChild.first, nowKey, subLeft[i], subFindData[i].size());
-            }
-            else
-            {
-                type = (leafMap.find(nowKey.first))->second.type;
-                actualIdx = storeOptimalNode(type, nowChild.first, nowKey, subLeft[i], subFindData[i].size());
-            }
-            entireChild[NNVector[idx].childLeft + i] = (type << 28) + actualIdx;
+            type = (structMap.find(nowKey))->second.type;
+            actualIdx = storeOptimalNode(type, nowKey, subLeft[i], subFindData[i].size());
+            entireChild[LRVector[idx].childLeft + i] = (type << 28) + actualIdx;
         }
         break;
     }
     case 2:
     {
-        auto it = innerMap.find(key);
-        if (it == innerMap.end())
+        auto it = structMap.find(key);
+        if (it == structMap.end())
             cout << "WRONG!" << endl;
         auto node = HisType(it->second.childNum);
         HisVector.push_back(node);
@@ -157,28 +139,18 @@ int storeOptimalNode(int optimalType, int mark, pair<int, int> key, const int le
         for (int i = 0; i < optimalChildNumber; i++)
         {
             auto nowChild = it->second.child[i];
-            pair<int, int> nowKey = nowChild.second;
+            pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
-            if (nowChild.first == 0)
-            {
-                type = (innerMap.find(nowKey))->second.type;
-                // cout << "type:" << type << ",\tsize:" << subFindData[i].size() << ",\tleft:" << subLeft[i] << endl;
-                actualIdx = storeOptimalNode(type, nowChild.first, nowKey, subLeft[i], subFindData[i].size());
-            }
-            else
-            {
-                type = (leafMap.find(nowKey.first))->second.type;
-                // cout << "type:" << type << ",\tsize:" << subFindData[i].size() << ",\tleft:" << subLeft[i] << endl;
-                actualIdx = storeOptimalNode(type, nowChild.first, nowKey, subLeft[i], subFindData[i].size());
-            }
-            entireChild[HisVector[idx].childLeft + i] = (type << 28) + actualIdx;
+            type = (structMap.find(nowKey))->second.type;
+            actualIdx = storeOptimalNode(type, nowKey, subLeft[i], subFindData[i].size());
+            entireChild[LRVector[idx].childLeft + i] = (type << 28) + actualIdx;
         }
         break;
     }
     case 3:
     {
-        auto it = innerMap.find(key);
-        if (it == innerMap.end())
+        auto it = structMap.find(key);
+        if (it == structMap.end())
             cout << "WRONG!" << endl;
         auto node = BSType(it->second.childNum);
         BSVector.push_back(node);
@@ -204,19 +176,11 @@ int storeOptimalNode(int optimalType, int mark, pair<int, int> key, const int le
         for (int i = 0; i < optimalChildNumber; i++)
         {
             auto nowChild = it->second.child[i];
-            pair<int, int> nowKey = nowChild.second;
+            pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
-            if (nowChild.first == 0)
-            {
-                type = (innerMap.find(nowKey))->second.type;
-                actualIdx = storeOptimalNode(type, nowChild.first, nowKey, subLeft[i], subFindData[i].size());
-            }
-            else
-            {
-                type = (leafMap.find(nowKey.first))->second.type;
-                actualIdx = storeOptimalNode(type, nowChild.first, nowKey, subLeft[i], subFindData[i].size());
-            }
-            entireChild[BSVector[idx].childLeft + i] = (type << 28) + actualIdx;
+            type = (structMap.find(nowKey))->second.type;
+            actualIdx = storeOptimalNode(type, nowKey, subLeft[i], subFindData[i].size());
+            entireChild[LRVector[idx].childLeft + i] = (type << 28) + actualIdx;
         }
         break;
     }
@@ -230,8 +194,8 @@ int storeOptimalNode(int optimalType, int mark, pair<int, int> key, const int le
     }
     case 5:
     {
-        auto it = leafMap.find(key.first);
-        if (it == leafMap.end())
+        auto it = structMap.find(key);
+        if (it == structMap.end())
             cout << "WRONG!" << endl;
         GAVector.push_back(GappedArrayType(kMaxKeyNum));
         idx = GAVector.size() - 1;

@@ -3,17 +3,13 @@
 #include <vector>
 using namespace std;
 
-struct InnerParams
+struct ParamStruct
 {
-    int type;
-    int childNum;
-    vector<pair<int, pair<int, int>>> child; // 0/1:inner/leaf;    idx: the key in the corresponding map
-};
-
-struct LeafParams
-{
-    int type;
-    double density;
+    int type;       // 0-4
+    int childNum;   // for inner nodes
+    double density; // for leaf nodes
+    // true: inner, false: leaf
+    vector<pair<bool, pair<int, int>>> child; // the key in the corresponding map
 };
 
 #endif

@@ -17,42 +17,46 @@
 #include <map>
 using namespace std;
 
-extern map<int, double> COST;
-extern map<int, LeafParams> leafMap;
-extern map<pair<int, int>, InnerParams> innerMap;
+extern map<pair<int, int>, double> COST;
+extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 
 extern vector<pair<double, double>> findDatapoint;
 extern vector<pair<double, double>> insertDatapoint;
 
-// return {cost, type(0:inner, 1:leaf)}
-pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
+// return {cost, true:inner, false:leaf}
+pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
 {
     if (findSize == 0)
     {
-        auto it = COST.find(findLeft);
+        auto it = COST.find({findLeft, findSize});
         if (it != COST.end())
         {
             double cost = it->second;
-            return {cost, 1};
+            auto itStruct = structMap.find({false, {findLeft, findSize}});
+            auto stru = itStruct->second;
+            return {cost, false};
         }
         else
         {
             double cost = kRate * sizeof(ArrayType) / 1024 / 1024;
-            COST.insert({findLeft, cost});
-            LeafParams leafP = {4, 2};
-            leafMap.insert({findLeft, leafP});
-            return {cost, 1};
+            COST.insert({{findLeft, findSize}, cost});
+            ParamStruct leafP;
+            leafP.type = 4;
+            structMap.insert({{false, {findLeft, findSize}}, leafP});
+            return {cost, false};
         }
     }
 
     // construct a leaf node
     if (isLeaf)
     {
-        auto it = COST.find(findLeft);
+        auto it = COST.find({findLeft, findSize});
         if (it != COST.end())
         {
             auto cost = it->second;
-            return {cost, 1};
+            auto itStruct = structMap.find({false, {findLeft, findSize}});
+            auto stru = itStruct->second;
+            return {cost, false};
         }
         vector<pair<double, double>> findData;
         vector<pair<double, double>> insertData;
@@ -62,7 +66,7 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
             insertData.push_back(insertDatapoint[l]);
 
         double OptimalValue = DBL_MAX;
-        LeafParams optimalStruct = {-1, -1};
+        ParamStruct optimalStruct;
         double space, time, cost;
 
         // choose an array node as the leaf node
@@ -150,15 +154,15 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                 optimalStruct.density = Density[i];
             }
         }
-        COST.insert({findLeft, cost});
-        leafMap.insert({findLeft, optimalStruct});
-        return {OptimalValue, 1};
+        COST.insert({{findLeft, findSize}, cost});
+        structMap.insert({{false, {findLeft, findSize}}, optimalStruct});
+        return {OptimalValue, false};
     }
     else
     {
         double OptimalValue = DBL_MAX;
         double space;
-        InnerParams optimalStruct = {0, 32, vector<pair<int, pair<int, int>>>()};
+        ParamStruct optimalStruct = {0, 32, 2, vector<pair<bool, pair<int, int>>>()};
         vector<pair<double, double>> findData;
         vector<pair<double, double>> insertData;
         for (int l = findLeft; l < findLeft + findSize; l++)
@@ -202,23 +206,23 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         subInsertData[p].second++;
                     }
 
-                    vector<pair<int, pair<int, int>>> tmpChild;
+                    vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
-                        pair<double, int> res;
+                        pair<double, bool> res;
                         if (subFindData[i].second + subInsertData[i].second > 4096)
-                            res = Construct(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                            res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
-                            auto res1 = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                            auto res0 = Construct(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                            auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                            auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                             if (res0.first > res1.first)
                                 res = res1;
                             else
                                 res = res0;
                         }
                         else
-                            res = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                            res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         RootCost += res.first;
                     }
@@ -260,23 +264,23 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         subInsertData[p].second++;
                     }
 
-                    vector<pair<int, pair<int, int>>> tmpChild;
+                    vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
-                        pair<double, int> res;
+                        pair<double, bool> res;
                         if (subFindData[i].second + subInsertData[i].second > 4096)
-                            res = Construct(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                            res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
-                            auto res1 = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                            auto res0 = Construct(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                            auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                            auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                             if (res0.first > res1.first)
                                 res = res1;
                             else
                                 res = res0;
                         }
                         else
-                            res = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                            res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         RootCost += res.first;
                     }
@@ -319,27 +323,27 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                     }
                     for (int i = 0; i < c; i++)
                     {
-                        if(subFindData[i].second>4096)
-                            cout<<i<<":"<<subFindData[i].second<<endl;
+                        if (subFindData[i].second > 4096)
+                            cout << i << ":" << subFindData[i].second << endl;
                     }
 
-                    vector<pair<int, pair<int, int>>> tmpChild;
+                    vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
-                        pair<double, int> res;
+                        pair<double, bool> res;
                         if (subFindData[i].second + subInsertData[i].second > 4096)
-                            res = Construct(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                            res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
-                            auto res1 = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                            auto res0 = Construct(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                            auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                            auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                             if (res0.first > res1.first)
                                 res = res1;
                             else
                                 res = res0;
                         }
                         else
-                            res = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                            res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         RootCost += res.first;
                     }
@@ -381,23 +385,23 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                         subInsertData[p].second++;
                     }
 
-                    vector<pair<int, pair<int, int>>> tmpChild;
+                    vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
-                        pair<double, int> res;
+                        pair<double, bool> res;
                         if (subFindData[i].second + subInsertData[i].second > 4096)
-                            res = Construct(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                            res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
-                            auto res1 = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                            auto res0 = Construct(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                            auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                            auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                             if (res0.first > res1.first)
                                 res = res1;
                             else
                                 res = res0;
                         }
                         else
-                            res = Construct(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                            res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         RootCost += res.first;
                     }
@@ -413,9 +417,9 @@ pair<double, int> Construct(bool isLeaf, const int findLeft, const int findSize,
                 }
             }
         }
-        COST.insert({findLeft, OptimalValue});
-        innerMap.insert({{findLeft, findSize}, optimalStruct});
-        return {OptimalValue, 0};
+        // COST.insert({{findLeft, findSize}, OptimalValue});
+        structMap.insert({{true, {findLeft, findSize}}, optimalStruct});
+        return {OptimalValue, true};
     }
 }
 
