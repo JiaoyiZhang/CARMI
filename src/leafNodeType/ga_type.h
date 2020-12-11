@@ -43,6 +43,8 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     capacity = cap;
     while ((float(subDataset.size()) / float(capacity) >= density))
         capacity = capacity / density;
+    if (capacity > 4096)
+        capacity = 4096;
     m_datasetSize = 0;
     m_left = allocateMemory(capacity);
 

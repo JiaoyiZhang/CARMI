@@ -321,11 +321,6 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                             subInsertData[p].first = i;
                         subInsertData[p].second = subInsertData[p].second + 1;
                     }
-                    for (int i = 0; i < c; i++)
-                    {
-                        if (subFindData[i].second > 4096)
-                            cout << i << ":" << subFindData[i].second << endl;
-                    }
 
                     vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)

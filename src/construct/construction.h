@@ -63,24 +63,28 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     case 0:
     {
         LRVector.push_back(LRType(childNum));
+        LRVector[0].childLeft = allocateChildMemory(childNum);
         LRVector[0].model.Train(findData, childNum);
         break;
     }
     case 1:
     {
         NNVector.push_back(NNType(childNum));
+        NNVector[0].childLeft = allocateChildMemory(childNum);
         NNVector[0].model.Train(findData, childNum);
         break;
     }
     case 2:
     {
         HisVector.push_back(HisType(childNum));
+        HisVector[0].childLeft = allocateChildMemory(childNum);
         HisVector[0].model.Train(findData, childNum);
         break;
     }
     case 3:
     {
         BSVector.push_back(BSType(childNum));
+        BSVector[0].childLeft = allocateChildMemory(childNum);
         BSVector[0].model.Train(findData, childNum);
         break;
     }

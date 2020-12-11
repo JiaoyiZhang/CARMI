@@ -106,7 +106,7 @@ int storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int 
             int actualIdx, type;
             type = (structMap.find(nowKey))->second.type;
             actualIdx = storeOptimalNode(type, nowKey, subLeft[i], subFindData[i].size());
-            entireChild[LRVector[idx].childLeft + i] = (type << 28) + actualIdx;
+            entireChild[NNVector[idx].childLeft + i] = (type << 28) + actualIdx;
         }
         break;
     }
@@ -143,7 +143,7 @@ int storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int 
             int actualIdx, type;
             type = (structMap.find(nowKey))->second.type;
             actualIdx = storeOptimalNode(type, nowKey, subLeft[i], subFindData[i].size());
-            entireChild[LRVector[idx].childLeft + i] = (type << 28) + actualIdx;
+            entireChild[HisVector[idx].childLeft + i] = (type << 28) + actualIdx;
         }
         break;
     }
@@ -180,7 +180,7 @@ int storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int 
             int actualIdx, type;
             type = (structMap.find(nowKey))->second.type;
             actualIdx = storeOptimalNode(type, nowKey, subLeft[i], subFindData[i].size());
-            entireChild[LRVector[idx].childLeft + i] = (type << 28) + actualIdx;
+            entireChild[BSVector[idx].childLeft + i] = (type << 28) + actualIdx;
         }
         break;
     }
