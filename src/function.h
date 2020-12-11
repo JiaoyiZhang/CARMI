@@ -101,17 +101,6 @@ pair<double, double> Find(int rootType, double key)
             auto size = ArrayVector[idx].m_datasetSize;
             int preIdx = ArrayVector[idx].model.PredictPrecision(key, size);
             auto left = ArrayVector[idx].m_left;
-            // if (key >= 230137)
-            // {
-            //     cout << "in array, find " << key << ",\tsize:" << size << ",\tpreIdx:" << preIdx << ",\tleft:" << left << endl;
-            //     for (int i = 0; i < size; i++)
-            //     {
-            //         cout << i + left << ":" << entireData[i + left].first << "\t";
-            //         if ((i + 1) % 10 == 0)
-            //             cout << endl;
-            //     }
-            //     cout << endl;
-            // }
             if (entireData[left + preIdx].first == key)
                 return entireData[left + preIdx];
             else
