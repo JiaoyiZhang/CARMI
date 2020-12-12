@@ -19,6 +19,7 @@
 using namespace std;
 
 int datasetSize = 1000000;
+int initDatasetSize;
 vector<pair<double, double>> dataset;
 vector<pair<double, double>> insertDataset;
 stx::btree_map<double, double> btreemap;
@@ -550,7 +551,8 @@ void constructionTest()
         for (int i = 0; i < dataset.size(); i++)
         {
             auto res = Find(rootType, dataset[i].first);
-            if ((res.second != dataset[i].second) || (res.first != dataset[i].first))
+            // if ((res.second != dataset[i].second) || (res.first != dataset[i].first))
+            if (res.first != dataset[i].first)
                 cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
         }
         cout << "check FIND over!" << endl;
@@ -596,27 +598,33 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
             outRes << "kRate:" << kRate << endl;
             cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
             uniData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             constructionTest();
 
             cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
             expData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             constructionTest();
 
             cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
             norData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             constructionTest();
 
             cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             logData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             constructionTest();
 
             kMaxKeyNum = 16;
             cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
             latData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             constructionTest();
 
             cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
             longData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             constructionTest();
 
             outRes << endl;
@@ -634,24 +642,28 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
             cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             uniData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
             totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             expData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
             totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             norData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
             totalTest(repetitions, calculateTime);
 
             cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             outRes << "+++++++++++ childNum: " << childNum << endl;
             logData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
             outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             totalTest(repetitions, calculateTime);
 
@@ -662,12 +674,14 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
                 cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
                 outRes << "+++++++++++ childNum: " << childNum << endl;
                 latData.GenerateDataset(dataset, insertDataset);
+                initDatasetSize = dataset.size();
                 outRes << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
                 totalTest(repetitions, calculateTime);
 
                 cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
                 outRes << "+++++++++++ childNum: " << childNum << endl;
                 longData.GenerateDataset(dataset, insertDataset);
+                initDatasetSize = dataset.size();
                 outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
                 totalTest(repetitions, calculateTime);
             }
