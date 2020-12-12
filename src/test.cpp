@@ -550,7 +550,8 @@ void constructionTest()
         for (int i = 0; i < dataset.size(); i++)
         {
             auto res = Find(rootType, dataset[i].first);
-            if ((res.second != dataset[i].second) || (res.first != dataset[i].first))
+            // if ((res.second != dataset[i].second) || (res.first != dataset[i].first))
+            if (res.first != dataset[i].first)
                 cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
         }
         cout << "check FIND over!" << endl;
@@ -610,14 +611,14 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
             logData.GenerateDataset(dataset, insertDataset);
             constructionTest();
 
-            kMaxKeyNum = 16;
-            cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            latData.GenerateDataset(dataset, insertDataset);
-            constructionTest();
+            // kMaxKeyNum = 16;
+            // cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+            // latData.GenerateDataset(dataset, insertDataset);
+            // constructionTest();
 
-            cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            longData.GenerateDataset(dataset, insertDataset);
-            constructionTest();
+            // cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+            // longData.GenerateDataset(dataset, insertDataset);
+            // constructionTest();
 
             outRes << endl;
         }
@@ -677,7 +678,7 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
 
 int main()
 {
-    outRes.open("res_1211.csv", ios::app);
+    outRes.open("res_1212.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
