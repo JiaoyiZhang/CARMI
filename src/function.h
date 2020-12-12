@@ -177,6 +177,82 @@ bool Insert(int rootType, pair<double, double> data)
             content = entireChild[LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
+
+            // check split
+            if (type == 4 && ArrayVector[idx].m_datasetSize >= 4096)
+            {
+                int oldChildIdx = LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first); // idx in entireChild
+                vector<pair<double, double>> tmpDataset;
+                auto left = ArrayVector[idx].m_left;
+                auto size = ArrayVector[idx].m_datasetSize;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+                ArrayVector.erase(ArrayVector.begin() + idx); // delete the old leaf node
+                auto node = LRType(128);                      // create a new inner node
+                LRVector.push_back(node);
+                idx = LRVector.size() - 1;
+                entireChild[oldChildIdx] = 0x00000000 + idx;
+                int childNum = LRVector[idx].childNumber;
+                LRVector[idx].childLeft = allocateChildMemory(childNum);
+                LRVector[idx].model.Train(tmpDataset, childNum);
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = LRVector[idx].model.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    ArrayVector.push_back(ArrayType(kThreshold));
+                    int leafIdx = ArrayVector.size() - 1;
+                    ArrayVector[leafIdx].SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[LRVector[idx].childLeft + i] = 0x40000000 + leafIdx;
+                }
+                type = 0;
+            }
+            else if (type == 5 && GAVector[idx].m_datasetSize >= 4096)
+            {
+                int oldChildIdx = LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first); // idx in entireChild
+                vector<pair<double, double>> tmpDataset;
+                auto left = GAVector[idx].m_left;
+                auto size = GAVector[idx].m_datasetSize;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+                GAVector.erase(GAVector.begin() + idx); // delete the old leaf node
+                auto node = LRType(128);                      // create a new inner node
+                LRVector.push_back(node);
+                idx = LRVector.size() - 1;
+                entireChild[oldChildIdx] = 0x00000000 + idx;
+                int childNum = LRVector[idx].childNumber;
+                LRVector[idx].childLeft = allocateChildMemory(childNum);
+                LRVector[idx].model.Train(tmpDataset, childNum);
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = LRVector[idx].model.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    GAVector.push_back(GappedArrayType(kThreshold));
+                    int leafIdx = GAVector.size() - 1;
+                    GAVector[leafIdx].SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[LRVector[idx].childLeft + i] = 0x50000000 + leafIdx;
+                }
+                type = 0;
+            }
         }
         break;
         case 1:
@@ -184,6 +260,82 @@ bool Insert(int rootType, pair<double, double> data)
             content = entireChild[NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
+
+            // check split
+            if (type == 4 && ArrayVector[idx].m_datasetSize >= 4096)
+            {
+                int oldChildIdx = NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first); // idx in entireChild
+                vector<pair<double, double>> tmpDataset;
+                auto left = ArrayVector[idx].m_left;
+                auto size = ArrayVector[idx].m_datasetSize;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+                ArrayVector.erase(ArrayVector.begin() + idx); // delete the old leaf node
+                auto node = NNType(128);                      // create a new inner node
+                NNVector.push_back(node);
+                idx = NNVector.size() - 1;
+                entireChild[oldChildIdx] = 0x10000000 + idx;
+                int childNum = NNVector[idx].childNumber;
+                NNVector[idx].childLeft = allocateChildMemory(childNum);
+                NNVector[idx].model.Train(tmpDataset, childNum);
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = NNVector[idx].model.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    ArrayVector.push_back(ArrayType(kThreshold));
+                    int leafIdx = ArrayVector.size() - 1;
+                    ArrayVector[leafIdx].SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[NNVector[idx].childLeft + i] = 0x40000000 + leafIdx;
+                }
+                type = 1;
+            }
+            else if (type == 5 && GAVector[idx].m_datasetSize >= 4096)
+            {
+                int oldChildIdx = NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first); // idx in entireChild
+                vector<pair<double, double>> tmpDataset;
+                auto left = GAVector[idx].m_left;
+                auto size = GAVector[idx].m_datasetSize;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+                GAVector.erase(GAVector.begin() + idx); // delete the old leaf node
+                auto node = NNType(128);                      // create a new inner node
+                NNVector.push_back(node);
+                idx = NNVector.size() - 1;
+                entireChild[oldChildIdx] = 0x10000000 + idx;
+                int childNum = NNVector[idx].childNumber;
+                NNVector[idx].childLeft = allocateChildMemory(childNum);
+                NNVector[idx].model.Train(tmpDataset, childNum);
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = NNVector[idx].model.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    GAVector.push_back(GappedArrayType(kThreshold));
+                    int leafIdx = GAVector.size() - 1;
+                    GAVector[leafIdx].SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[NNVector[idx].childLeft + i] = 0x50000000 + leafIdx;
+                }
+                type = 1;
+            }
         }
         break;
         case 2:
@@ -191,6 +343,81 @@ bool Insert(int rootType, pair<double, double> data)
             content = entireChild[HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
+            // check split
+            if (type == 4 && ArrayVector[idx].m_datasetSize >= 4096)
+            {
+                int oldChildIdx = HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first); // idx in entireChild
+                vector<pair<double, double>> tmpDataset;
+                auto left = ArrayVector[idx].m_left;
+                auto size = ArrayVector[idx].m_datasetSize;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+                ArrayVector.erase(ArrayVector.begin() + idx); // delete the old leaf node
+                auto node = HisType(128);                      // create a new inner node
+                HisVector.push_back(node);
+                idx = HisVector.size() - 1;
+                entireChild[oldChildIdx] = 0x20000000 + idx;
+                int childNum = HisVector[idx].childNumber;
+                HisVector[idx].childLeft = allocateChildMemory(childNum);
+                HisVector[idx].model.Train(tmpDataset, childNum);
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = HisVector[idx].model.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    ArrayVector.push_back(ArrayType(kThreshold));
+                    int leafIdx = ArrayVector.size() - 1;
+                    ArrayVector[leafIdx].SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[HisVector[idx].childLeft + i] = 0x40000000 + leafIdx;
+                }
+                type = 2;
+            }
+            else if (type == 5 && GAVector[idx].m_datasetSize >= 4096)
+            {
+                int oldChildIdx = HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first); // idx in entireChild
+                vector<pair<double, double>> tmpDataset;
+                auto left = GAVector[idx].m_left;
+                auto size = GAVector[idx].m_datasetSize;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+                GAVector.erase(GAVector.begin() + idx); // delete the old leaf node
+                auto node = HisType(128);                      // create a new inner node
+                HisVector.push_back(node);
+                idx = HisVector.size() - 1;
+                entireChild[oldChildIdx] = 0x20000000 + idx;
+                int childNum = HisVector[idx].childNumber;
+                HisVector[idx].childLeft = allocateChildMemory(childNum);
+                HisVector[idx].model.Train(tmpDataset, childNum);
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = HisVector[idx].model.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    GAVector.push_back(GappedArrayType(kThreshold));
+                    int leafIdx = GAVector.size() - 1;
+                    GAVector[leafIdx].SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[HisVector[idx].childLeft + i] = 0x50000000 + leafIdx;
+                }
+                type = 2;
+            }
         }
         break;
         case 3:
@@ -198,6 +425,81 @@ bool Insert(int rootType, pair<double, double> data)
             content = entireChild[BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first)];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
+            // check split
+            if (type == 4 && ArrayVector[idx].m_datasetSize >= 4096)
+            {
+                int oldChildIdx = BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first); // idx in entireChild
+                vector<pair<double, double>> tmpDataset;
+                auto left = ArrayVector[idx].m_left;
+                auto size = ArrayVector[idx].m_datasetSize;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+                ArrayVector.erase(ArrayVector.begin() + idx); // delete the old leaf node
+                auto node = BSType(128);                      // create a new inner node
+                BSVector.push_back(node);
+                idx = BSVector.size() - 1;
+                entireChild[oldChildIdx] = 0x30000000 + idx;
+                int childNum = BSVector[idx].childNumber;
+                BSVector[idx].childLeft = allocateChildMemory(childNum);
+                BSVector[idx].model.Train(tmpDataset, childNum);
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = BSVector[idx].model.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    ArrayVector.push_back(ArrayType(kThreshold));
+                    int leafIdx = ArrayVector.size() - 1;
+                    ArrayVector[leafIdx].SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[BSVector[idx].childLeft + i] = 0x40000000 + leafIdx;
+                }
+                type = 3;
+            }
+            else if (type == 5 && GAVector[idx].m_datasetSize >= 4096)
+            {
+                int oldChildIdx = BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first); // idx in entireChild
+                vector<pair<double, double>> tmpDataset;
+                auto left = GAVector[idx].m_left;
+                auto size = GAVector[idx].m_datasetSize;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+                GAVector.erase(GAVector.begin() + idx); // delete the old leaf node
+                auto node = BSType(128);                      // create a new inner node
+                BSVector.push_back(node);
+                idx = BSVector.size() - 1;
+                entireChild[oldChildIdx] = 0x30000000 + idx;
+                int childNum = BSVector[idx].childNumber;
+                BSVector[idx].childLeft = allocateChildMemory(childNum);
+                BSVector[idx].model.Train(tmpDataset, childNum);
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = BSVector[idx].model.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    GAVector.push_back(GappedArrayType(kThreshold));
+                    int leafIdx = GAVector.size() - 1;
+                    GAVector[leafIdx].SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[BSVector[idx].childLeft + i] = 0x50000000 + leafIdx;
+                }
+                type = 3;
+            }
         }
         break;
         case 4:
