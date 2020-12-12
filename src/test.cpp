@@ -64,26 +64,6 @@ void printResult(int r, double &time0, double &time1, double &time2, double &tim
     cout << "***********************" << endl;
 }
 
-void printSingleNode(int type, int idx)
-{
-    switch (type)
-    {
-    case 0:
-        cout << "LR: idx:" << idx << ",child:" << LRVector[idx].childNumber << "\t";
-        break;
-    case 1:
-        cout << "NN: idx:" << idx << ",child:" << NNVector[idx].childNumber << "\t";
-        break;
-        break;
-    case 2:
-        cout << "His: idx:" << idx << ",child:" << HisVector[idx].childNumber << "\t";
-        break;
-    case 3:
-        cout << "BS: idx:" << idx << ",child:" << BSVector[idx].childNumber << "\t";
-        break;
-    }
-}
-
 void printStructure(int level, int type, int idx)
 {
     switch (type)
@@ -498,6 +478,8 @@ long double calculateSpace()
     space += sizeof(GappedArrayType) * GAVector.size();
     space = space / 1024 / 1024;
     cout << "\nTOTAL SPACE: " << space << "MB" << endl;
+    space += float(dataset.size()) * 16 / 1024 / 1024;
+    cout << "\nTOTAL SPACE (include data): " << space << "MB" << endl;
     return space;
 }
 

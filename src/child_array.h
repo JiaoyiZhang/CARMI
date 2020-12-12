@@ -48,6 +48,7 @@ int allocateChildMemory(int size)
             entireChild[i] = tmpChild[i];
         nowChildNumber = tmpEnd;
         newLeft = nowChildNumber;
+        nowChildNumber += size;
     }
     return newLeft;
 }
