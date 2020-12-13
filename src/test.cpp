@@ -41,6 +41,7 @@ extern vector<ArrayType> ArrayVector;
 extern vector<GappedArrayType> GAVector;
 
 vector<pair<double, double>> findActualDataset;
+vector<pair<double, double>> insertActualDataset;
 
 int kLeafNodeID = 0;
 int kInnerNodeID = 0;
@@ -215,7 +216,7 @@ void artTree_test()
 {
     art_tree t;
     art_tree_init(&t);
-    vector<char *> artKey, artValue;
+    vector<char *> artKey, artValue, artInsertKey, artInsertValue;
     for (int i = 0; i < dataset.size(); i++)
     {
         auto key = (const unsigned char *)to_string(dataset[i].first).data();
@@ -223,6 +224,14 @@ void artTree_test()
         artKey.push_back((char *)key);
         artValue.push_back((char *)value);
         art_insert(&t, key, strlen((const char *)key), (uint64_t)dataset[i].second);
+    }
+    for (int i = 0; i < insertDataset.size(); i++)
+    {
+        auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
+        auto value = (const unsigned char *)to_string(insertDataset[i].second).data();
+        artInsertKey.push_back((char *)key);
+        artInsertValue.push_back((char *)value);
+        art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
     }
     vector<uint64_t> rets;
     chrono::_V2::system_clock::time_point s, e;
@@ -242,14 +251,38 @@ void artTree_test()
         art_search(&t, key, strlen((const char *)key), rets);
     }
     e = chrono::system_clock::now();
-    // tmp1 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "art time: " << tmp1 / (float)dataset.size() * 1000000000 << endl;
+    tmp1 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    cout << "art find time: " << tmp1 / (float)dataset.size() * 1000000000 << endl;
     cout << "other time:" << tmp / (float)dataset.size() * 1000000000 << endl;
     cout << "final time:" << (tmp1 - tmp) / (float)dataset.size() * 1000000000 << endl;
+
+    s = chrono::system_clock::now();
+    for (int i = 0; i < artInsertKey.size(); i++)
+    {
+        auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
+    }
+    e = chrono::system_clock::now();
+    tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+
+    s = chrono::system_clock::now();
+    for (int i = 0; i < artInsertKey.size(); i++)
+    {
+        auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
+        art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
+    }
+    e = chrono::system_clock::now();
+    tmp1 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    cout << "art insert time: " << tmp1 / (float)insertDataset.size() * 1000000000 << endl;
+    cout << "other time:" << tmp / (float)insertDataset.size() * 1000000000 << endl;
+    cout << "final insert time:" << (tmp1 - tmp) / (float)insertDataset.size() * 1000000000 << endl;
 }
 
 void btree_test()
 {
+    stx::btree_map<double, double> btree;
+    for (int l = 0; l < dataset.size(); l++)
+        btree.insert(dataset[l]);
+    btreemap = btree;
     cout << "btree:" << endl;
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
@@ -292,12 +325,8 @@ void totalTest(int repetitions, bool mode)
     for (int rep = 0; rep < repetitions; rep++)
     {
         // artTree_test();
-        // stx::btree_map<double, double> btree;
-        // for (int l = 0; l < dataset.size(); l++)
-        //     btree.insert(dataset[l]);
-        // btreemap = btree;
         // outRes << "childNum is: "<<childNum<<endl;
-        // btree_test(btree_time0, btree_time1, btree_time2, btree_time3);
+        // btree_test();
         // cout << "-------------------------------" << endl;
 
         for (int j = 0; j < 4; j++)
@@ -495,6 +524,7 @@ void constructionTest()
 
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
     findActualDataset = dataset;
+    insertActualDataset = insertDataset;
     auto data1 = dataset;
     auto data2 = insertDataset;
 
@@ -555,8 +585,8 @@ void constructionTest()
         Insert(rootType, insertDataset[i]);
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "Insert time:" << tmp / (float)insertDataset.size() - 5 << endl;
-    outRes << tmp / (float)insertDataset.size() - 5 << "ns,";
+    cout << "Insert time:" << tmp / (float)insertDataset.size() * 1000000000 - 5 << endl;
+    outRes << tmp / (float)insertDataset.size() * 1000000000 - 5 << "ns,";
 }
 
 void experiment(double isConstruction, int repetitions, double initRatio, bool calculateTime)
@@ -572,7 +602,7 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
     if (isConstruction)
     {
-        vector<double> rate = {1, 0.6, 0.1, 0.01, 0.001, 10, 50, 100, 1000};
+        vector<double> rate = {1000, 100, 50, 10, 1, 0.6, 0.1, 0.01, 0.001};
         for (int r = 0; r < rate.size(); r++)
         {
             kRate = rate[r];
@@ -581,31 +611,42 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
             cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
             uniData.GenerateDataset(dataset, insertDataset);
             initDatasetSize = dataset.size();
+            if (r == 0)
+            {
+                btree_test();
+                artTree_test();
+            }
             constructionTest();
 
             cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
             expData.GenerateDataset(dataset, insertDataset);
             initDatasetSize = dataset.size();
+            if (r == 0)
+            {
+                btree_test();
+                artTree_test();
+            }
             constructionTest();
 
             cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
             norData.GenerateDataset(dataset, insertDataset);
             initDatasetSize = dataset.size();
+            if (r == 0)
+            {
+                btree_test();
+                artTree_test();
+            }
             constructionTest();
 
             cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             logData.GenerateDataset(dataset, insertDataset);
             initDatasetSize = dataset.size();
+            if (r == 0)
+            {
+                btree_test();
+                artTree_test();
+            }
             constructionTest();
-
-            // kMaxKeyNum = 16;
-            // cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
-            // latData.GenerateDataset(dataset, insertDataset);
-            // constructionTest();
-
-            // cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
-            // longData.GenerateDataset(dataset, insertDataset);
-            // constructionTest();
 
             outRes << endl;
         }
@@ -669,9 +710,47 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     }
 }
 
+void constructMap(double initRatio)
+{
+    cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+    cout << "initRatio is: " << initRatio << endl;
+    cout << "construct map" << endl;
+    outRes << "construct map" << endl;
+    outRes << "initRatio," << initRatio << endl;
+    LongitudesDataset longData = LongitudesDataset(initRatio);
+    LonglatDataset latData = LonglatDataset(initRatio);
+    vector<double> rate = {1000, 100, 50, 10, 1, 0.6, 0.1, 0.01, 0.001};
+    for (int r = 0; r < rate.size(); r++)
+    {
+        kRate = rate[r];
+        outRes << "kRate:" << kRate << endl;
+
+        kMaxKeyNum = 16;
+        cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+        latData.GenerateDataset(dataset, insertDataset);
+        if (r == 0)
+        {
+            btree_test();
+            artTree_test();
+        }
+        constructionTest();
+
+        cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+        longData.GenerateDataset(dataset, insertDataset);
+        if (r == 0)
+        {
+            btree_test();
+            artTree_test();
+        }
+        constructionTest();
+
+        outRes << endl;
+    }
+}
+
 int main()
 {
-    outRes.open("res_1212.csv", ios::app);
+    outRes.open("res_1213.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
@@ -691,6 +770,11 @@ int main()
         experiment(isConstruction, repetitions, 0.5, calculateTime); // balance
         experiment(isConstruction, repetitions, 0.9, calculateTime);
         experiment(isConstruction, repetitions, 0, calculateTime); // partial
+
+        constructMap(1);   // read-only
+        constructMap(0.5); // balance
+        constructMap(0.9);
+        constructMap(0); // partial
     }
     outRes << "----------------------------------------------" << endl;
 

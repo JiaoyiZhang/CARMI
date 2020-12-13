@@ -18,10 +18,9 @@ extern vector<GappedArrayType> GAVector;
 vector<pair<double, double>> findDatapoint;
 vector<pair<double, double>> insertDatapoint;
 
-extern vector<pair<double, double>> findActualDataset;
 extern pair<double, double> *entireData;
 
-map<pair<int, int>, double> COST; // int:left; double:cost
+map<pair<int, int>, pair<double, double>> COST; // int:left; double:time, space
 map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 
 extern int kMaxKeyNum;
@@ -113,7 +112,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
 
         for (int i = 0; i < childNum; i++)
         {
-            pair<double, bool> resChild;
+            pair<pair<double, double>, bool> resChild;
             int idx;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -121,7 +120,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             {
                 auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                 auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                if (res0.first > res1.first)
+                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     resChild = res1;
                 else
                     resChild = res0;
@@ -133,12 +132,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             type = (structMap.find(key))->second.type;
-            idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second);
+            idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
 
             idx += (type << 28);
             entireChild[LRVector[0].childLeft + i] = idx;
 
-            totalCost += resChild.first;
+            totalCost += resChild.first.first + resChild.first.second;
 
             COST.clear();
             structMap.clear();
@@ -164,7 +163,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
 
         for (int i = 0; i < childNum; i++)
         {
-            pair<double, bool> resChild;
+            pair<pair<double, double>, bool> resChild;
             int idx;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -172,7 +171,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             {
                 auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                 auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                if (res0.first > res1.first)
+                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     resChild = res1;
                 else
                     resChild = res0;
@@ -184,12 +183,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             type = (structMap.find(key))->second.type;
-            idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second);
+            idx = idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
 
             idx += (type << 28);
             entireChild[NNVector[0].childLeft + i] = idx;
 
-            totalCost += resChild.first;
+            totalCost += resChild.first.first + resChild.first.second;
 
             COST.clear();
             structMap.clear();
@@ -215,7 +214,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
 
         for (int i = 0; i < childNum; i++)
         {
-            pair<double, bool> resChild;
+            pair<pair<double, double>, bool> resChild;
             int idx;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -223,7 +222,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             {
                 auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                 auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                if (res0.first > res1.first)
+                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     resChild = res1;
                 else
                     resChild = res0;
@@ -235,12 +234,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             type = (structMap.find(key))->second.type;
-            idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second);
+            idx = idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
 
             idx += (type << 28);
             entireChild[HisVector[0].childLeft + i] = idx;
 
-            totalCost += resChild.first;
+            totalCost += resChild.first.first + resChild.first.second;
 
             COST.clear();
             structMap.clear();
@@ -266,7 +265,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
 
         for (int i = 0; i < childNum; i++)
         {
-            pair<double, bool> resChild;
+            pair<pair<double, double>, bool> resChild;
             int idx;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -274,7 +273,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             {
                 auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                 auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                if (res0.first > res1.first)
+                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     resChild = res1;
                 else
                     resChild = res0;
@@ -286,12 +285,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             type = (structMap.find(key))->second.type;
-            idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second);
+            idx = idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
 
             idx += (type << 28);
             entireChild[BSVector[0].childLeft + i] = idx;
 
-            totalCost += resChild.first;
+            totalCost += resChild.first.first + resChild.first.second;
 
             COST.clear();
             structMap.clear();

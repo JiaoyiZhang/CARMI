@@ -225,7 +225,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = left; i < left + size; i++)
                     tmpDataset.push_back(entireData[i]);
                 GAVector.erase(GAVector.begin() + idx); // delete the old leaf node
-                auto node = LRType(128);                      // create a new inner node
+                auto node = LRType(128);                // create a new inner node
                 LRVector.push_back(node);
                 idx = LRVector.size() - 1;
                 entireChild[oldChildIdx] = 0x00000000 + idx;
@@ -308,7 +308,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = left; i < left + size; i++)
                     tmpDataset.push_back(entireData[i]);
                 GAVector.erase(GAVector.begin() + idx); // delete the old leaf node
-                auto node = NNType(128);                      // create a new inner node
+                auto node = NNType(128);                // create a new inner node
                 NNVector.push_back(node);
                 idx = NNVector.size() - 1;
                 entireChild[oldChildIdx] = 0x10000000 + idx;
@@ -353,7 +353,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = left; i < left + size; i++)
                     tmpDataset.push_back(entireData[i]);
                 ArrayVector.erase(ArrayVector.begin() + idx); // delete the old leaf node
-                auto node = HisType(128);                      // create a new inner node
+                auto node = HisType(128);                     // create a new inner node
                 HisVector.push_back(node);
                 idx = HisVector.size() - 1;
                 entireChild[oldChildIdx] = 0x20000000 + idx;
@@ -390,7 +390,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = left; i < left + size; i++)
                     tmpDataset.push_back(entireData[i]);
                 GAVector.erase(GAVector.begin() + idx); // delete the old leaf node
-                auto node = HisType(128);                      // create a new inner node
+                auto node = HisType(128);               // create a new inner node
                 HisVector.push_back(node);
                 idx = HisVector.size() - 1;
                 entireChild[oldChildIdx] = 0x20000000 + idx;
@@ -472,7 +472,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = left; i < left + size; i++)
                     tmpDataset.push_back(entireData[i]);
                 GAVector.erase(GAVector.begin() + idx); // delete the old leaf node
-                auto node = BSType(128);                      // create a new inner node
+                auto node = BSType(128);                // create a new inner node
                 BSVector.push_back(node);
                 idx = BSVector.size() - 1;
                 entireChild[oldChildIdx] = 0x30000000 + idx;
@@ -550,6 +550,8 @@ bool Insert(int rootType, pair<double, double> data)
         break;
         case 5:
         {
+            if (idx >= GAVector.size())
+                cout << "idx exceed the size of GAVector!" << endl;
             auto left = GAVector[idx].m_left;
             if ((float(GAVector[idx].m_datasetSize) / GAVector[idx].capacity > GAVector[idx].density))
             {

@@ -17,21 +17,22 @@
 #include <map>
 using namespace std;
 
-extern map<pair<int, int>, double> COST;
+extern map<pair<int, int>, pair<double, double>> COST;
+;
 extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 
 extern vector<pair<double, double>> findDatapoint;
 extern vector<pair<double, double>> insertDatapoint;
 
 // return {cost, true:inner, false:leaf}
-pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
+pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
 {
     if (findSize == 0)
     {
         auto it = COST.find({findLeft, findSize});
         if (it != COST.end())
         {
-            double cost = it->second;
+            auto cost = it->second;
             auto itStruct = structMap.find({false, {findLeft, findSize}});
             auto stru = itStruct->second;
             return {cost, false};
@@ -39,11 +40,11 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
         else
         {
             double cost = kRate * sizeof(ArrayType) / 1024 / 1024;
-            COST.insert({{findLeft, findSize}, cost});
+            COST.insert({{findLeft, findSize}, {0, cost}});
             ParamStruct leafP;
             leafP.type = 4;
             structMap.insert({{false, {findLeft, findSize}}, leafP});
-            return {cost, false};
+            return {{0, cost}, false};
         }
     }
 
@@ -66,6 +67,8 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
             insertData.push_back(insertDatapoint[l]);
 
         double OptimalValue = DBL_MAX;
+        double OptimalTime = DBL_MAX;
+        double OptimalSpace = DBL_MAX;
         ParamStruct optimalStruct;
         double space, time, cost;
 
@@ -108,6 +111,8 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
             OptimalValue = cost;
             optimalStruct.type = 4;
             optimalStruct.density = 2;
+            OptimalSpace = space * kRate;
+            OptimalTime = time;
         }
 
         // choose a gapped array node as the leaf node
@@ -152,15 +157,19 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                 OptimalValue = cost;
                 optimalStruct.type = 5;
                 optimalStruct.density = Density[i];
+                OptimalSpace = space * kRate;
+                OptimalTime = time;
             }
         }
-        COST.insert({{findLeft, findSize}, cost});
+        COST.insert({{findLeft, findSize}, {OptimalTime, OptimalSpace}});
         structMap.insert({{false, {findLeft, findSize}}, optimalStruct});
-        return {OptimalValue, false};
+        return {{OptimalTime, OptimalSpace}, false};
     }
     else
     {
         double OptimalValue = DBL_MAX;
+        double OptimalTime = DBL_MAX;
+        double OptimalSpace = DBL_MAX;
         double space;
         ParamStruct optimalStruct = {0, 32, 2, vector<pair<bool, pair<int, int>>>()};
         vector<pair<double, double>> findData;
@@ -182,6 +191,7 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                     space = float(4 * c + sizeof(LRType)) / 1024 / 1024; // MB
                     double time = 8.1624;                                // ns
                     double RootCost = time + kRate * space;
+                    space *= kRate;
                     if (RootCost > OptimalValue)
                         break;
 
@@ -209,14 +219,14 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                     vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
-                        pair<double, bool> res;
+                        pair<pair<double, double>, bool> res;
                         if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
                             auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                             auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                            if (res0.first > res1.first)
+                            if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                                 res = res1;
                             else
                                 res = res0;
@@ -224,7 +234,10 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                         else
                             res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
-                        RootCost += res.first;
+                        space += res.first.second;
+                        time += (res.first.first / c);
+                        RootCost += res.first.second;      // space*kRate
+                        RootCost += (res.first.first / c); // time
                     }
                     if (RootCost <= OptimalValue)
                     {
@@ -232,6 +245,8 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                         optimalStruct.type = 0;
                         optimalStruct.childNum = c;
                         optimalStruct.child = tmpChild;
+                        OptimalTime = time;
+                        OptimalSpace = space;
                     }
                     break;
                 }
@@ -240,6 +255,7 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                     space = float(4 * c + 192 + sizeof(NNType)) / 1024 / 1024; // MB
                     double time = 20.2689;                                     // ns
                     double RootCost = time + kRate * space;
+                    space *= kRate;
                     if (RootCost > OptimalValue)
                         break;
 
@@ -267,14 +283,14 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                     vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
-                        pair<double, bool> res;
+                        pair<pair<double, double>, bool> res;
                         if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
                             auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                             auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                            if (res0.first > res1.first)
+                            if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                                 res = res1;
                             else
                                 res = res0;
@@ -282,7 +298,10 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                         else
                             res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
-                        RootCost += res.first;
+                        space += res.first.second;
+                        time += (res.first.first / c);
+                        RootCost += res.first.second;      // space*kRate
+                        RootCost += (res.first.first / c); // time
                     }
                     if (RootCost <= OptimalValue)
                     {
@@ -290,6 +309,8 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                         optimalStruct.type = 1;
                         optimalStruct.childNum = c;
                         optimalStruct.child = tmpChild;
+                        OptimalTime = time;
+                        OptimalSpace = space;
                     }
                     break;
                 }
@@ -298,6 +319,7 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                     space = float(5 * c + sizeof(HisType)) / 1024 / 1024; // MB
                     double time = 19.6543;
                     double RootCost = time + kRate * space;
+                    space *= kRate;
                     if (RootCost > OptimalValue)
                         break;
 
@@ -325,14 +347,14 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                     vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
-                        pair<double, bool> res;
+                        pair<pair<double, double>, bool> res;
                         if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
                             auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                             auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                            if (res0.first > res1.first)
+                            if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                                 res = res1;
                             else
                                 res = res0;
@@ -340,7 +362,10 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                         else
                             res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
-                        RootCost += res.first;
+                        space += res.first.second;
+                        time += (res.first.first / c);
+                        RootCost += res.first.second;      // space*kRate
+                        RootCost += (res.first.first / c); // time
                     }
                     if (RootCost <= OptimalValue)
                     {
@@ -348,6 +373,8 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                         optimalStruct.type = 2;
                         optimalStruct.childNum = c;
                         optimalStruct.child = tmpChild;
+                        OptimalTime = time;
+                        OptimalSpace = space;
                     }
                     break;
                 }
@@ -356,6 +383,7 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                     space = float(12 * c + sizeof(BSType)) / 1024 / 1024;
                     double time = 4 * log(c) / log(2);
                     double RootCost = time + kRate * space;
+                    space *= kRate;
                     if (RootCost > OptimalValue)
                         break;
 
@@ -383,14 +411,14 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                     vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
-                        pair<double, bool> res;
+                        pair<pair<double, double>, bool> res;
                         if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
                             auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                             auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                            if (res0.first > res1.first)
+                            if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                                 res = res1;
                             else
                                 res = res0;
@@ -398,7 +426,10 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                         else
                             res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
-                        RootCost += res.first;
+                        space += res.first.second;
+                        time += (res.first.first / c);
+                        RootCost += res.first.second;      // space*kRate
+                        RootCost += (res.first.first / c); // time
                     }
                     if (RootCost <= OptimalValue)
                     {
@@ -406,6 +437,8 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
                         optimalStruct.type = 3;
                         optimalStruct.childNum = c;
                         optimalStruct.child = tmpChild;
+                        OptimalTime = time;
+                        OptimalSpace = space;
                     }
                     break;
                 }
@@ -414,7 +447,7 @@ pair<double, bool> dp(bool isLeaf, const int findLeft, const int findSize, const
         }
         // COST.insert({{findLeft, findSize}, OptimalValue});
         structMap.insert({{true, {findLeft, findSize}}, optimalStruct});
-        return {OptimalValue, true};
+        return {{OptimalTime, OptimalSpace}, true};
     }
 }
 

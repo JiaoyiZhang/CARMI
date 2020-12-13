@@ -140,7 +140,7 @@ void releaseMemory(int left, int size)
         if (!emptyBlocks[i].find(left + emptyBlocks[i].m_width))
         {
             emptyBlocks[i].m_block.insert(left);
-            cout << "release i:" << i << ",\tleft:" << left << ",\tsize:" << size << ",\twidth:" << emptyBlocks[i].m_width << endl;
+            // cout << "release i:" << i << ",\tleft:" << left << ",\tsize:" << size << ",\twidth:" << emptyBlocks[i].m_width << endl;
             break;
         }
     }

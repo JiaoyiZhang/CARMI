@@ -17,7 +17,8 @@
 #include <map>
 using namespace std;
 
-extern map<pair<int, int>, double> COST;
+extern map<pair<int, int>, pair<double, double>> COST;
+;
 extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 
 extern vector<pair<double, double>> findDatapoint;
@@ -26,14 +27,14 @@ extern vector<pair<double, double>> insertDatapoint;
 extern int initDatasetSize;
 
 // return {cost, true:inner, false:leaf}
-pair<double, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
+pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
 {
     if (findSize == 0)
     {
         auto it = COST.find({findLeft, findSize});
         if (it != COST.end())
         {
-            double cost = it->second;
+            auto cost = it->second;
             auto itStruct = structMap.find({false, {findLeft, findSize}});
             auto stru = itStruct->second;
             return {cost, false};
@@ -41,11 +42,11 @@ pair<double, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int fi
         else
         {
             double cost = kRate * sizeof(ArrayType) / 1024 / 1024;
-            COST.insert({{findLeft, findSize}, cost});
+            COST.insert({{findLeft, findSize}, {0, cost}});
             ParamStruct leafP;
             leafP.type = 4;
             structMap.insert({{false, {findLeft, findSize}}, leafP});
-            return {cost, false};
+            return {{0, cost}, false};
         }
     }
 
@@ -68,6 +69,8 @@ pair<double, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int fi
             insertData.push_back(insertDatapoint[l]);
 
         double OptimalValue = DBL_MAX;
+        double OptimalTime = DBL_MAX;
+        double OptimalSpace = DBL_MAX;
         ParamStruct optimalStruct;
         double space, time, cost;
 
@@ -110,6 +113,8 @@ pair<double, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int fi
             OptimalValue = cost;
             optimalStruct.type = 4;
             optimalStruct.density = 2;
+            OptimalSpace = space * kRate;
+            OptimalTime = time;
         }
 
         // choose a gapped array node as the leaf node
@@ -154,15 +159,19 @@ pair<double, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int fi
                 OptimalValue = cost;
                 optimalStruct.type = 5;
                 optimalStruct.density = Density[i];
+                OptimalSpace = space * kRate;
+                OptimalTime = time;
             }
         }
-        COST.insert({{findLeft, findSize}, cost});
+        COST.insert({{findLeft, findSize}, {OptimalTime, OptimalSpace}});
         structMap.insert({{false, {findLeft, findSize}}, optimalStruct});
-        return {OptimalValue, false};
+        return {{OptimalTime, OptimalSpace}, false};
     }
     else
     {
         double OptimalValue = DBL_MAX;
+        double OptimalTime = DBL_MAX;
+        double OptimalSpace = DBL_MAX;
         double time, space;
         double pi = float(findSize) / initDatasetSize;
         ParamStruct optimalStruct = {0, 32, 2, vector<pair<bool, pair<int, int>>>()};
@@ -251,7 +260,8 @@ pair<double, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int fi
                 if (cost <= OptimalValue)
                 {
                     OptimalValue = cost;
-                    OptimalValue = cost;
+                    OptimalSpace = float(kRate * space) / pi / entropy;
+                    OptimalTime = time / entropy;
                     optimalStruct.type = type;
                     optimalStruct.childNum = c;
                 }
@@ -357,14 +367,14 @@ pair<double, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int fi
 
         for (int i = 0; i < childNum; i++)
         {
-            pair<double, bool> res;
+            pair<pair<double, double>, bool> res;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
                 auto res1 = GreedyAlgorithm(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                 auto res0 = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                if (res0.first > res1.first)
+                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     res = res1;
                 else
                     res = res0;
@@ -372,11 +382,14 @@ pair<double, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int fi
             else
                 res = GreedyAlgorithm(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
+            OptimalValue += res.first.first + res.first.second;
+            OptimalSpace += res.first.second;
+            OptimalTime += res.first.first / childNum;
         }
 
         optimalStruct.child = tmpChild;
         structMap.insert({{true, {findLeft, findSize}}, optimalStruct});
-        return {OptimalValue, true};
+        return {{OptimalTime, OptimalSpace}, true};
     }
 }
 #endif // !GREEDY_H
