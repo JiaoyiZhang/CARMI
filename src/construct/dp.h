@@ -39,10 +39,11 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         }
         else
         {
-            double cost = kRate * sizeof(ArrayType) / 1024 / 1024;
+            double cost = kRate * sizeof(GappedArrayType(kMaxKeyNum)) / 1024 / 1024;
             COST.insert({{findLeft, findSize}, {0, cost}});
             ParamStruct leafP;
-            leafP.type = 4;
+            leafP.type = 5;
+            leafP.density = 0.5;
             structMap.insert({{false, {findLeft, findSize}}, leafP});
             return {{0, cost}, false};
         }
@@ -95,13 +96,13 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         for (int i = 0; i < insertData.size(); i++)
         {
             auto predict = tmp.model.Predict(insertData[i].first);
-            auto actual = TestArrayBinarySearch(findData[i].first, findData);
+            auto actual = TestArrayBinarySearch(insertData[i].first, findData);
             auto d = abs(actual - predict);
-            time += 16.36 + 5.25 * (insertData.size() - actual) * insertData[i].second;
+            time += 16.36 + 28.25 * (insertData.size() - actual) * (insertData[i].second + i);
             if (d <= error)
                 time += log(error) / log(2) * insertData[i].second * 4.11;
             else
-                time += log(findData.size()) / log(2) * insertData[i].second * 4.11;
+                time += log(insertData.size()) / log(2) * insertData[i].second * 4.11;
         }
         time = time / (findData.size() + insertData.size());
 
@@ -141,13 +142,13 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             for (int t = 0; t < insertData.size(); t++)
             {
                 auto predict = tmpNode.model.Predict(insertData[t].first);
-                auto actual = TestGABinarySearch(findData[t].first, findData);
+                auto actual = TestGABinarySearch(insertData[t].first, findData);
                 time += 16.36;
                 auto d = abs(actual - predict);
                 if (d <= errorGA)
                     time += log(errorGA) / log(2) * insertData[t].second * 4.11 * (2 - Density[i]);
                 else
-                    time += log(findData.size()) / log(2) * insertData[t].second * 4.11 * (2 - Density[i]);
+                    time += log(insertData.size()) / log(2) * insertData[t].second * 4.11 * (2 - Density[i]);
             }
             time = time / (findData.size() + insertData.size());
 

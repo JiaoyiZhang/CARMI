@@ -26,7 +26,8 @@ public:
     void Train(const vector<pair<double, double>> &dataset, int len);
     int Predict(double key)
     {
-        int s = 0, e = kNeuronNumber - 1;
+        int s = 0;
+        int e = kNeuronNumber - 1;
         int mid;
         while (s < e)
         {
@@ -72,10 +73,9 @@ void PiecewiseLR::Train(const vector<pair<double, double>> &dataset, int len)
             actualSize++;
         index.push_back(double(i) / double(dataset.size()));
     }
-    if (actualSize == 0 || actualSize < 10)
-    {
+    if (actualSize == 0)
         return;
-    }
+        
     int seg = dataset.size() / kNeuronNumber;
     int i = 0;
     for (int k = 1; k <= kNeuronNumber; k++)

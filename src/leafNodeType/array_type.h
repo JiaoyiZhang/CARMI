@@ -40,6 +40,8 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
     m_datasetSize = dataset.size();
     while (m_datasetSize >= m_capacity)
         m_capacity *= kExpansionScale;
+    
+    m_capacity *= 2;  // test
     if (m_capacity > 4096)
         m_capacity = 4096;
 

@@ -37,8 +37,8 @@ inline bool allocateEmptyBlock(int left, int len)
 // return idx
 inline int getIndex(int size)
 {
-    if (size > 4096)
-        cout << "size: " << size << ",\tsize > 4096, getIndex WRONG!" << endl;
+    if (size > 4096 || size < 1)
+        cout << "size: " << size << ",\tsize > 4096 || size < 1, getIndex WRONG!" << endl;
     int j = 4096;
     for (int i = 12; i >= 0; i--, j /= 2)
     {

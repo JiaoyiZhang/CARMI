@@ -214,6 +214,8 @@ void printStructure(int level, int type, int idx)
 
 void artTree_test()
 {
+    outRes << "artTree:"
+           << ",";
     art_tree t;
     art_tree_init(&t);
     vector<char *> artKey, artValue, artInsertKey, artInsertValue;
@@ -255,6 +257,7 @@ void artTree_test()
     cout << "art find time: " << tmp1 / (float)dataset.size() * 1000000000 << endl;
     cout << "other time:" << tmp / (float)dataset.size() * 1000000000 << endl;
     cout << "final time:" << (tmp1 - tmp) / (float)dataset.size() * 1000000000 << endl;
+    outRes << (tmp1 - tmp) / (float)dataset.size() * 1000000000 << ",";
 
     s = chrono::system_clock::now();
     for (int i = 0; i < artInsertKey.size(); i++)
@@ -275,6 +278,7 @@ void artTree_test()
     cout << "art insert time: " << tmp1 / (float)insertDataset.size() * 1000000000 << endl;
     cout << "other time:" << tmp / (float)insertDataset.size() * 1000000000 << endl;
     cout << "final insert time:" << (tmp1 - tmp) / (float)insertDataset.size() * 1000000000 << endl;
+    outRes << (tmp1 - tmp) / (float)insertDataset.size() * 1000000000 << "\n";
 }
 
 void btree_test()
@@ -525,17 +529,15 @@ void constructionTest()
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
     findActualDataset = dataset;
     insertActualDataset = insertDataset;
-    auto data1 = dataset;
-    auto data2 = insertDataset;
 
     for (int i = 0; i < dataset.size(); i++)
-        data1[i].second = 2;
+        dataset[i].second = 2;
     for (int i = 0; i < insertDataset.size(); i++)
-        data2[i].second = 10;
+        insertDataset[i].second = 20;
 
     initEntireData(0, dataset.size() + insertDataset.size(), false);
     initEntireChild(dataset.size() + insertDataset.size());
-    auto rootType = Construction(data1, data2);
+    auto rootType = Construction(dataset, insertDataset);
     cout << "Construction over!" << endl;
     cout << endl;
 
@@ -557,6 +559,9 @@ void constructionTest()
     cout << "print structure:" << endl;
     printStructure(1, rootType, 0);
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+
+    dataset = findActualDataset;
+    insertDataset = insertActualDataset;
 
     if (kRate == 1)
     {
@@ -750,7 +755,7 @@ void constructMap(double initRatio)
 
 int main()
 {
-    outRes.open("res_1213.csv", ios::app);
+    outRes.open("res_1215_final.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     for (int l = 0; l < 1; l++)
     {
@@ -766,10 +771,10 @@ int main()
         bool isConstruction = true;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
+        experiment(isConstruction, repetitions, 0.9, calculateTime);
+        experiment(isConstruction, repetitions, 0, calculateTime);   // partial
         experiment(isConstruction, repetitions, 1, calculateTime);   // read-only
         experiment(isConstruction, repetitions, 0.5, calculateTime); // balance
-        experiment(isConstruction, repetitions, 0.9, calculateTime);
-        experiment(isConstruction, repetitions, 0, calculateTime); // partial
 
         constructMap(1);   // read-only
         constructMap(0.5); // balance

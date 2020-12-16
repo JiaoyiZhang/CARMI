@@ -215,7 +215,7 @@ int storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int 
     case 4:
     {
         // choose an array node as the leaf node
-        ArrayVector.push_back(ArrayType(size + insertSize));
+        ArrayVector.push_back(ArrayType(max(size + insertSize, kMaxKeyNum)));
         idx = ArrayVector.size() - 1;
         ArrayVector[idx].SetDataset(datapoint, ArrayVector[idx].m_capacity);
         break;
@@ -225,7 +225,7 @@ int storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int 
         auto it = structMap.find(key);
         if (it == structMap.end())
             cout << "WRONG!" << endl;
-        GAVector.push_back(GappedArrayType(size + insertSize));
+        GAVector.push_back(GappedArrayType(max(size + insertSize, kMaxKeyNum)));
         idx = GAVector.size() - 1;
         GAVector[idx].density = it->second.density;
         GAVector[idx].SetDataset(datapoint, GAVector[idx].capacity);

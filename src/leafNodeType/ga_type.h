@@ -43,6 +43,7 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     capacity = cap;
     while ((float(subDataset.size()) / float(capacity) >= density))
         capacity = float(capacity) / density + 1;
+    capacity *= 2;  // test
     if (capacity > 4096)
         capacity = 4096;
     m_datasetSize = 0;
