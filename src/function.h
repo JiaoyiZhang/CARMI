@@ -15,7 +15,7 @@
 #include <math.h>
 #include <iomanip>
 using namespace std;
-
+ 
 vector<LRType> LRVector;
 vector<NNType> NNVector;
 vector<HisType> HisVector;
