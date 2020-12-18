@@ -6,6 +6,7 @@
 #include "./dataset/exponential_distribution.h"
 #include "./dataset/longitudes.h"
 #include "./dataset/longlat.h"
+#include "./dataset/ycsb.h"
 #include "./construct/construction.h"
 #include "../stx_btree/btree_map.h"
 #include <algorithm>
@@ -236,45 +237,45 @@ void artTree_test()
         art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
     }
     vector<uint64_t> rets;
-    chrono::_V2::system_clock::time_point s, e;
+    // chrono::_V2::system_clock::time_point s, e;
     double tmp, tmp1;
-    s = chrono::system_clock::now();
+    // s = chrono::system_clock::now();
     for (int i = 0; i < artKey.size(); i++)
     {
         auto key = (const unsigned char *)to_string(dataset[i].first).data();
     }
-    e = chrono::system_clock::now();
-    tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    // e = chrono::system_clock::now();
+    // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
-    s = chrono::system_clock::now();
+    // s = chrono::system_clock::now();
     for (int i = 0; i < artKey.size(); i++)
     {
         auto key = (const unsigned char *)to_string(dataset[i].first).data();
         art_search(&t, key, strlen((const char *)key), rets);
     }
-    e = chrono::system_clock::now();
-    tmp1 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    // e = chrono::system_clock::now();
+    // tmp1 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "art find time: " << tmp1 / (float)dataset.size() * 1000000000 << endl;
     cout << "other time:" << tmp / (float)dataset.size() * 1000000000 << endl;
     cout << "final time:" << (tmp1 - tmp) / (float)dataset.size() * 1000000000 << endl;
     outRes << (tmp1 - tmp) / (float)dataset.size() * 1000000000 << ",";
 
-    s = chrono::system_clock::now();
+    // s = chrono::system_clock::now();
     for (int i = 0; i < artInsertKey.size(); i++)
     {
         auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
     }
-    e = chrono::system_clock::now();
-    tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    // e = chrono::system_clock::now();
+    // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
-    s = chrono::system_clock::now();
+    // s = chrono::system_clock::now();
     for (int i = 0; i < artInsertKey.size(); i++)
     {
         auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
         art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
     }
-    e = chrono::system_clock::now();
-    tmp1 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    // e = chrono::system_clock::now();
+    // tmp1 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "art insert time: " << tmp1 / (float)insertDataset.size() * 1000000000 << endl;
     cout << "other time:" << tmp / (float)insertDataset.size() * 1000000000 << endl;
     cout << "final insert time:" << (tmp1 - tmp) / (float)insertDataset.size() * 1000000000 << endl;
@@ -288,21 +289,21 @@ void btree_test()
         btree.insert(dataset[l]);
     btreemap = btree;
     cout << "btree:" << endl;
-    chrono::_V2::system_clock::time_point s, e;
+    // chrono::_V2::system_clock::time_point s, e;
     double tmp;
-    s = chrono::system_clock::now();
+    // s = chrono::system_clock::now();
     for (int i = 0; i < dataset.size(); i++)
         btreemap.find(dataset[i].first);
-    e = chrono::system_clock::now();
-    tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    // e = chrono::system_clock::now();
+    // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Find time:" << tmp / (float)dataset.size() * 1000000000 << "ns" << endl;
     outRes << "btree," << tmp / (float)dataset.size() * 1000000000 << ",";
 
-    s = chrono::system_clock::now();
+    // s = chrono::system_clock::now();
     for (int i = 0; i < insertDataset.size(); i++)
         btreemap.insert(insertDataset[i]);
-    e = chrono::system_clock::now();
-    tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    // e = chrono::system_clock::now();
+    // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Insert time:" << tmp / (float)insertDataset.size() * 1000000000 << endl;
     outRes << tmp / (float)insertDataset.size() * 1000000000 << "\n";
 
@@ -360,13 +361,13 @@ void totalTest(int repetitions, bool mode)
 
             if (mode)
             {
-                chrono::_V2::system_clock::time_point s, e;
+                // chrono::_V2::system_clock::time_point s, e;
                 double tmp;
-                s = chrono::system_clock::now();
+                // s = chrono::system_clock::now();
                 for (int i = 0; i < dataset.size(); i++)
                     Find(kInnerNodeID, dataset[i].first);
-                e = chrono::system_clock::now();
-                tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
+                // e = chrono::system_clock::now();
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
                 time[j][0] += tmp;
                 cout << "Find time:" << tmp / (float)dataset.size() << endl;
                 outRes << tmp / (float)dataset.size() << ",";
@@ -377,48 +378,48 @@ void totalTest(int repetitions, bool mode)
                 cout << "time / entropy: " << tmp / (float)dataset.size() / entropy << endl;
                 outRes << "ratio," << tmp / (float)dataset.size() / entropy << ",";
 
-                // s = chrono::system_clock::now();
+                // // s = chrono::system_clock::now();
                 // for (int i = 0; i < insertDataset.size(); i++)
                 //     Insert(kInnerNodeID, insertDataset[i]);
-                // e = chrono::system_clock::now();
-                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
+                // // e = chrono::system_clock::now();
+                // // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
                 // time[j][1] += tmp;
                 // cout<<"Insert time:"<<tmp / (float)insertDataset.size() <<endl;
                 // outRes << tmp / (float)insertDataset.size() << ",";
 
-                // s = chrono::system_clock::now();
+                // // s = chrono::system_clock::now();
                 // for (int i = 0; i < insertDataset.size(); i++)
                 //     Update(kInnerNodeID, {insertDataset[i].first, 1.11});
-                // e = chrono::system_clock::now();
-                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
+                // // e = chrono::system_clock::now();
+                // // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
                 // time[j][2] += tmp;
 
-                // s = chrono::system_clock::now();
+                // // s = chrono::system_clock::now();
                 // for (int i = 0; i < insertDataset.size(); i++)
                 //     Delete(kInnerNodeID, insertDataset[i].first);
-                // e = chrono::system_clock::now();
-                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
+                // // e = chrono::system_clock::now();
+                // // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
                 // time[j][3] += tmp;
                 cout << "-------------------------------" << endl;
             }
             else
             {
                 // check WRONG
-                chrono::_V2::system_clock::time_point s, e;
+                // chrono::_V2::system_clock::time_point s, e;
                 double tmp;
-                s = chrono::system_clock::now();
+                // s = chrono::system_clock::now();
                 for (int i = 0; i < dataset.size(); i++)
                 {
                     auto res = Find(kInnerNodeID, dataset[i].first);
                     if (res.second != dataset[i].second)
                         cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
                 }
-                e = chrono::system_clock::now();
-                tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+                // e = chrono::system_clock::now();
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
                 time[j][0] += tmp;
                 cout << "check FIND over!" << endl;
 
-                s = chrono::system_clock::now();
+                // s = chrono::system_clock::now();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto r = Insert(kInnerNodeID, insertDataset[i]);
@@ -428,8 +429,8 @@ void totalTest(int repetitions, bool mode)
                     if (res.second != insertDataset[i].second)
                         cout << "after insert, Find failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
                 }
-                e = chrono::system_clock::now();
-                tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+                // e = chrono::system_clock::now();
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto res = Find(kInnerNodeID, insertDataset[i].first);
@@ -439,7 +440,7 @@ void totalTest(int repetitions, bool mode)
                 time[j][1] += tmp;
                 cout << "check INSERT over!" << endl;
 
-                s = chrono::system_clock::now();
+                // s = chrono::system_clock::now();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto r = Update(kInnerNodeID, {insertDataset[i].first, 1.11});
@@ -449,8 +450,8 @@ void totalTest(int repetitions, bool mode)
                     if (res.second != 1.11)
                         cout << "After Update failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
                 }
-                e = chrono::system_clock::now();
-                tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+                // e = chrono::system_clock::now();
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto res = Find(kInnerNodeID, insertDataset[i].first);
@@ -460,7 +461,7 @@ void totalTest(int repetitions, bool mode)
                 time[j][2] += tmp;
                 cout << "check UPDATE over!" << endl;
 
-                s = chrono::system_clock::now();
+                // s = chrono::system_clock::now();
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto r = Delete(kInnerNodeID, insertDataset[i].first);
@@ -470,15 +471,15 @@ void totalTest(int repetitions, bool mode)
                     if ((res.second == insertDataset[i].second) || (res.second == 1.11))
                         cout << "After Delete failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
                 }
-                e = chrono::system_clock::now();
-                tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+                // e = chrono::system_clock::now();
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
                 for (int i = 0; i < insertDataset.size(); i++)
                 {
                     auto res = Find(kInnerNodeID, insertDataset[i].first);
                     if ((res.second == insertDataset[i].second) || (res.second == 1.11))
                         cout << "Find Delete failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
                 }
-                tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+                // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
                 time[j][3] += tmp;
                 cout << "check DELETE over!" << endl;
                 cout << "-------------------------------" << endl;
@@ -575,21 +576,21 @@ void constructionTest()
         cout << "check FIND over!" << endl;
     }
 
-    chrono::_V2::system_clock::time_point s, e;
+    // chrono::_V2::system_clock::time_point s, e;
     double tmp;
-    s = chrono::system_clock::now();
+    // s = chrono::system_clock::now();
     for (int i = 0; i < dataset.size(); i++)
         Find(rootType, dataset[i].first);
-    e = chrono::system_clock::now();
-    tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    // e = chrono::system_clock::now();
+    // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Find time:" << tmp / (float)dataset.size() * 1000000000 - 5 << endl;
     outRes << tmp / (float)dataset.size() * 1000000000 - 5 << ",";
 
-    s = chrono::system_clock::now();
+    // s = chrono::system_clock::now();
     for (int i = 0; i < insertDataset.size(); i++)
         Insert(rootType, insertDataset[i]);
-    e = chrono::system_clock::now();
-    tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    // e = chrono::system_clock::now();
+    // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     cout << "Insert time:" << tmp / (float)insertDataset.size() * 1000000000 - 5 << endl;
     outRes << tmp / (float)insertDataset.size() * 1000000000 - 5 << "ns,";
 }
@@ -605,6 +606,7 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
     UniformDataset uniData = UniformDataset(datasetSize, initRatio);
     NormalDataset norData = NormalDataset(datasetSize, initRatio);
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
+
     if (isConstruction)
     {
         vector<double> rate = {1000, 100, 50, 10, 1, 0.6, 0.1, 0.01, 0.001};
@@ -645,6 +647,16 @@ void experiment(double isConstruction, int repetitions, double initRatio, bool c
 
             cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
             logData.GenerateDataset(dataset, insertDataset);
+            initDatasetSize = dataset.size();
+            if (r == 0)
+            {
+                btree_test();
+                artTree_test();
+            }
+            constructionTest();
+
+            cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
+            ycsbData.GenerateDataset(dataset, insertDataset);
             initDatasetSize = dataset.size();
             if (r == 0)
             {
@@ -753,6 +765,34 @@ void constructMap(double initRatio)
     }
 }
 
+void constructYCSB(double initRatio)
+{
+    cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+    cout << "initRatio is: " << initRatio << endl;
+    cout << "construct ycsb" << endl;
+    outRes << "construct ycsb" << endl;
+    outRes << "initRatio," << initRatio << endl;
+    YCSBDataset ycsbData = YCSBDataset(initRatio);
+    vector<double> rate = {1000, 100, 50, 10, 1, 0.6, 0.1, 0.01, 0.001};
+    for (int r = 0; r < rate.size(); r++)
+    {
+        kRate = rate[r];
+        outRes << "kRate:" << kRate << endl;
+
+        kMaxKeyNum = 256;
+        cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
+        ycsbData.GenerateDataset(dataset, insertDataset);
+        if (r == 0)
+        {
+            btree_test();
+            artTree_test();
+        }
+        constructionTest();
+
+        outRes << endl;
+    }
+}
+
 int main()
 {
     outRes.open("res_1215_final.csv", ios::app);
@@ -771,6 +811,12 @@ int main()
         bool isConstruction = true;
         cout << "MODE: " << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
         outRes << "MODE," << (calculateTime ? "CALCULATE TIME\n" : "CHECK CORRECTNESS\n");
+
+        constructYCSB(1);   // read-only
+        constructYCSB(0.5); // balance
+        constructYCSB(0.95);
+        constructYCSB(0); // partial
+
         experiment(isConstruction, repetitions, 0.9, calculateTime);
         experiment(isConstruction, repetitions, 0, calculateTime);   // partial
         experiment(isConstruction, repetitions, 1, calculateTime);   // read-only

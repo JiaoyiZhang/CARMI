@@ -4,3 +4,4 @@ CMakeFiles/*
 .vscode/*
 src/dataset/iranLat.csv
 src/dataset/iranLon.csv
+src/dataset/ycsbdata.csv
