@@ -12,7 +12,6 @@
 #include "./core_construct.h"
 
 extern double kRate;
-extern int kMaxKeyNum;
 extern int datasetSize;
 extern int initDatasetSize;
 extern int childNum;
@@ -31,51 +30,50 @@ void constructSynthetic(double initRatio)
     NormalDataset norData = NormalDataset(datasetSize, initRatio);
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
 
-    vector<double> rate = {1000, 100, 50, 10, 1, 0.6, 0.1, 0.01, 0.001};
+    vector<double> rate = {1000, 100, 50, 10, 1, 0.6, 0.1};
     for (int r = 0; r < rate.size(); r++)
     {
         kRate = rate[r];
-        kMaxKeyNum = 2;
         outRes << "kRate:" << kRate << endl;
         cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
         uniData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test();
-            artTree_test();
+            btree_test(initRatio);
+            artTree_test(initRatio);
         }
-        CoreConstruct();
+        CoreConstruct(initRatio);
 
         cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
         expData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test();
-            artTree_test();
+            btree_test(initRatio);
+            artTree_test(initRatio);
         }
-        CoreConstruct();
+        CoreConstruct(initRatio);
 
         cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
         norData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test();
-            artTree_test();
+            btree_test(initRatio);
+            artTree_test(initRatio);
         }
-        CoreConstruct();
+        CoreConstruct(initRatio);
 
         cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
         logData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test();
-            artTree_test();
+            btree_test(initRatio);
+            artTree_test(initRatio);
         }
-        CoreConstruct();
+        CoreConstruct(initRatio);
 
         outRes << endl;
     }

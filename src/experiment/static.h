@@ -45,13 +45,13 @@ void RunStatic()
             break;
         }
 
-        // chrono::_V2::system_clock::time_point s, e;
+        chrono::_V2::system_clock::time_point s, e;
         double tmp;
-        // s = chrono::system_clock::now();
+        s = chrono::system_clock::now();
         for (int i = 0; i < dataset.size(); i++)
             Find(kInnerNodeID, dataset[i].first);
-        // e = chrono::system_clock::now();
-        // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
+        e = chrono::system_clock::now();
+        tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
         cout << "Find time:" << tmp / (float)dataset.size() << endl;
         outRes << tmp / (float)dataset.size() << ",";
 
@@ -61,11 +61,11 @@ void RunStatic()
         cout << "time / entropy: " << tmp / (float)dataset.size() / entropy << endl;
         outRes << "ratio," << tmp / (float)dataset.size() / entropy << ",";
 
-        // s = chrono::system_clock::now();
+        s = chrono::system_clock::now();
         for (int i = 0; i < insertDataset.size(); i++)
             Insert(kInnerNodeID, insertDataset[i]);
-        // e = chrono::system_clock::now();
-        // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
+        e = chrono::system_clock::now();
+        tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
         cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
         outRes << tmp / (float)insertDataset.size() << ",";
         cout << "-------------------------------" << endl;

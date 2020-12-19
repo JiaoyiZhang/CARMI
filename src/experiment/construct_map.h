@@ -10,7 +10,6 @@
 #include "./core_construct.h"
 
 extern double kRate;
-extern int kMaxKeyNum;
 
 extern vector<pair<double, double>> dataset;
 extern vector<pair<double, double>> insertDataset;
@@ -36,19 +35,19 @@ void constructMap(double initRatio)
         latData.GenerateDataset(dataset, insertDataset);
         if (r == 0)
         {
-            btree_test();
-            artTree_test();
+            btree_test(initRatio);
+            artTree_test(initRatio);
         }
-        CoreConstruct();
+        CoreConstruct(initRatio);
 
         cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
         longData.GenerateDataset(dataset, insertDataset);
         if (r == 0)
         {
-            btree_test();
-            artTree_test();
+            btree_test(initRatio);
+            artTree_test(initRatio);
         }
-        CoreConstruct();
+        CoreConstruct(initRatio);
 
         outRes << endl;
     }

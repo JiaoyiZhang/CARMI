@@ -6,6 +6,11 @@
 #include "../func/print_structure.h"
 #include "../func/function.h"
 #include "../func/calculate_space.h"
+
+#include "../workload/workloada.h"
+#include "../workload/workloadb.h"
+#include "../workload/workloadc.h"
+#include "../workload/workloadd.h"
 using namespace std;
 
 extern vector<pair<double, double>> findActualDataset;
@@ -16,7 +21,7 @@ extern vector<pair<double, double>> insertDataset;
 
 extern ofstream outRes;
 
-void CoreConstruct()
+void CoreConstruct(double initRatio)
 {
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
     findActualDataset = dataset;
@@ -52,42 +57,14 @@ void CoreConstruct()
     printStructure(1, rootType, 0);
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
 
-    dataset = findActualDataset;
-    insertDataset = insertActualDataset;
-
-    if (kRate == 1)
-    {
-        for (int i = 0; i < dataset.size(); i++)
-        {
-            auto res = Find(rootType, dataset[i].first);
-            // if ((res.second != dataset[i].second) || (res.first != dataset[i].first))
-            if (res.first != dataset[i].first)
-                cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
-        }
-        cout << "check FIND over!" << endl;
-    }
-
-    // chrono::_V2::system_clock::time_point s, e;
-    double tmp;
-    // s = chrono::system_clock::now();
-    for (int i = 0; i < dataset.size(); i++)
-        Find(rootType, dataset[i].first);
-    // e = chrono::system_clock::now();
-    // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "Find time:" << tmp / (float)dataset.size() * 1000000000 - 5 << endl;
-    outRes << tmp / (float)dataset.size() * 1000000000 - 5 << ",";
-
-    // s = chrono::system_clock::now();
-    for (int i = 0; i < insertDataset.size(); i++)
-        Insert(rootType, insertDataset[i]);
-    // e = chrono::system_clock::now();
-    // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    cout << "Insert time:" << tmp / (float)insertDataset.size() * 1000000000 - 5 << endl;
-    outRes << tmp / (float)insertDataset.size() * 1000000000 - 5 << "ns,";
+    if (initRatio == 0.5)
+        WorkloadA(rootType); // write-heavy
+    else if (initRatio == 0.95)
+        WorkloadB(rootType); // read-mostly
+    else if (initRatio == 1)
+        WorkloadC(rootType); // read-only
+    else if (initRatio == 0)
+        WorkloadD(rootType); // write-partially
 }
-
-
-
-
 
 #endif // !CORE_CONSTRUCT_H

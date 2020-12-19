@@ -11,8 +11,6 @@
 
 #include "./static.h"
 
-extern double kRate;
-extern int kMaxKeyNum;
 extern int datasetSize;
 extern int initDatasetSize;
 extern int childNum;
@@ -37,7 +35,6 @@ void testSynthetic(double initRatio)
     for (int i = 2; i < 3; i++)
     {
         childNum = childNum_synthetic[i];
-        kMaxKeyNum = 256;
         cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
         uniData.GenerateDataset(dataset, insertDataset);

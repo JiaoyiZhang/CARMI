@@ -7,7 +7,6 @@
 #include "./core_construct.h"
 
 extern double kRate;
-extern int kMaxKeyNum;
 
 extern vector<pair<double, double>> dataset;
 extern vector<pair<double, double>> insertDataset;
@@ -27,15 +26,14 @@ void constructYCSB(double initRatio)
         kRate = rate[r];
         outRes << "kRate:" << kRate << endl;
 
-        kMaxKeyNum = 256;
         cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
         ycsbData.GenerateDataset(dataset, insertDataset);
         if (r == 0)
         {
-            btree_test();
-            artTree_test();
+            btree_test(initRatio);
+            artTree_test(initRatio);
         }
-        CoreConstruct();
+        CoreConstruct(initRatio);
 
         outRes << endl;
     }
