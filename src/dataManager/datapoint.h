@@ -6,10 +6,9 @@
 #include <math.h>
 #include "empty_block.h"
 using namespace std;
-extern pair<double, double> *entireData;
-extern unsigned int entireDataSize;
-extern vector<EmptyBlock> emptyBlocks;
-extern vector<pair<double, double>> testDataset;
+pair<double, double> *entireData;
+unsigned int entireDataSize;
+vector<EmptyBlock> emptyBlocks;
 
 // allocate empty blocks into emptyBlocks[i]
 // left: the beginning idx of empty blocks
@@ -59,7 +58,6 @@ void initEntireData(int left, int size, bool reinit)
     cout << "dataset size:" << size << endl;
     cout << "the size of entireData is:" << len << endl;
     delete[] entireData;
-    testDataset = vector<pair<double, double>>(entireDataSize, pair<double, double>{-1, -1});
     vector<EmptyBlock>().swap(emptyBlocks);
     entireData = new pair<double, double>[len];
     for (int i = 0; i < len; i++)
@@ -109,8 +107,6 @@ int allocateMemory(int size)
         initEntireData(tmpSize, tmpSize, true);
         for (int i = 0; i < tmpSize; i++)
             entireData[i] = tmpData[i];
-        for (int i = 0; i < tmpSize; i++)
-            testDataset[i] = tmpData[i];
         for (int i = 0; i < 13; i++)
             emptyBlocks[i].m_block.insert(tmpBlocks[i].m_block.begin(), tmpBlocks[i].m_block.end());
         for (int i = idx; i < 13; i++)

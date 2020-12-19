@@ -4,11 +4,10 @@
 #include "../params.h"
 #include "../trainModel/lr.h"
 #include <vector>
-#include "../datapoint.h"
+#include "../dataManager/datapoint.h"
 using namespace std;
 
 extern pair<double, double> *entireData;
-extern vector<pair<double, double>> testDataset;
 class ArrayType
 {
 public:
@@ -51,8 +50,6 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
 
     for (int i = m_left, j = 0; j < m_datasetSize; i++, j++)
         entireData[i] = dataset[j];
-    for (int i = m_left, j = 0; j < m_datasetSize; i++, j++)
-        testDataset[i] = dataset[j];
 
     model.Train(dataset, m_datasetSize);
     UpdateError(dataset);

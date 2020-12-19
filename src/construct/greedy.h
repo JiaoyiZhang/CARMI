@@ -5,7 +5,7 @@
 #include "../innerNodeType/his_type.h"
 #include "../innerNodeType/lr_type.h"
 #include "../innerNodeType/nn_type.h"
-#include "../function.h"
+#include "../func/function.h"
 #include <vector>
 using namespace std;
 

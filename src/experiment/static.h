@@ -1,0 +1,180 @@
+#ifndef STATIC_H
+#define STATIC_H
+
+#include "../func/function.h"
+
+using namespace std;
+
+extern vector<LRType> LRVector;
+extern vector<NNType> NNVector;
+extern vector<HisType> HisVector;
+extern vector<BSType> BSVector;
+extern vector<ArrayType> ArrayVector;
+extern vector<GappedArrayType> GAVector;
+
+extern int childNum;
+extern ofstream outRes;
+
+extern vector<pair<double, double>> dataset;
+extern vector<pair<double, double>> insertDataset;
+
+void RunStatic()
+{
+    for (int j = 0; j < 4; j++)
+    {
+        kInnerNodeID = j;
+        cout << "childNum is: " << childNum << endl;
+        cout << "root type:" << kInnerNodeID << endl;
+        initEntireData(0, dataset.size() + insertDataset.size(), false);
+        initEntireChild(dataset.size() + insertDataset.size());
+        Initialize(dataset, childNum);
+        cout << "index init over!" << endl;
+        switch (kInnerNodeID)
+        {
+        case 0:
+            outRes << "lr,";
+            break;
+        case 1:
+            outRes << "nn,";
+            break;
+        case 2:
+            outRes << "his,";
+            break;
+        case 3:
+            outRes << "bin,";
+            break;
+        }
+
+        // chrono::_V2::system_clock::time_point s, e;
+        double tmp;
+        // s = chrono::system_clock::now();
+        for (int i = 0; i < dataset.size(); i++)
+            Find(kInnerNodeID, dataset[i].first);
+        // e = chrono::system_clock::now();
+        // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
+        cout << "Find time:" << tmp / (float)dataset.size() << endl;
+        outRes << tmp / (float)dataset.size() << ",";
+
+        auto entropy = GetEntropy(dataset.size());
+        cout << "Entropy:" << entropy << endl;
+        outRes << "ENTROPY," << entropy << ",";
+        cout << "time / entropy: " << tmp / (float)dataset.size() / entropy << endl;
+        outRes << "ratio," << tmp / (float)dataset.size() / entropy << ",";
+
+        // s = chrono::system_clock::now();
+        for (int i = 0; i < insertDataset.size(); i++)
+            Insert(kInnerNodeID, insertDataset[i]);
+        // e = chrono::system_clock::now();
+        // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count())/chrono::nanoseconds::period::den* 1000000000 ;
+        cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
+        outRes << tmp / (float)insertDataset.size() << ",";
+        cout << "-------------------------------" << endl;
+
+        vector<LRType>().swap(LRVector);
+        vector<NNType>().swap(NNVector);
+        vector<HisType>().swap(HisVector);
+        vector<BSType>().swap(BSVector);
+        vector<ArrayType>().swap(ArrayVector);
+        vector<GappedArrayType>().swap(GAVector);
+    }
+    outRes << endl;
+}
+
+void TestStatic(bool mode)
+{
+    for (int j = 0; j < 4; j++)
+    {
+        kInnerNodeID = j;
+        cout << "childNum is: " << childNum << endl;
+        cout << "root type:" << kInnerNodeID << endl;
+        initEntireData(0, dataset.size() + insertDataset.size(), false);
+        initEntireChild(dataset.size() + insertDataset.size());
+        Initialize(dataset, childNum);
+        cout << "index init over!" << endl;
+        switch (kInnerNodeID)
+        {
+        case 0:
+            outRes << "lr,";
+            break;
+        case 1:
+            outRes << "nn,";
+            break;
+        case 2:
+            outRes << "his,";
+            break;
+        case 3:
+            outRes << "bin,";
+            break;
+        }
+        double tmp;
+        for (int i = 0; i < dataset.size(); i++)
+        {
+            auto res = Find(kInnerNodeID, dataset[i].first);
+            if (res.second != dataset[i].second)
+                cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
+        }
+        cout << "check FIND over!" << endl;
+
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            auto r = Insert(kInnerNodeID, insertDataset[i]);
+            if (!r)
+                cout << "Insert failed:\ti:" << i << "\t" << insertDataset[i].first << endl;
+            auto res = Find(kInnerNodeID, insertDataset[i].first);
+            if (res.second != insertDataset[i].second)
+                cout << "after insert, Find failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
+        }
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            auto res = Find(kInnerNodeID, insertDataset[i].first);
+            if (res.second != insertDataset[i].second)
+                cout << "Find Insert failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
+        }
+        cout << "check INSERT over!" << endl;
+
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            auto r = Update(kInnerNodeID, {insertDataset[i].first, 1.11});
+            if (!r)
+                cout << "Update failed:\ti:" << i << "\t" << insertDataset[i].first << endl;
+            auto res = Find(kInnerNodeID, insertDataset[i].first);
+            if (res.second != 1.11)
+                cout << "After Update failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
+        }
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            auto res = Find(kInnerNodeID, insertDataset[i].first);
+            if (res.second != 1.11)
+                cout << "Find Update failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
+        }
+        cout << "check UPDATE over!" << endl;
+
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            auto r = Delete(kInnerNodeID, insertDataset[i].first);
+            if (!r)
+                cout << "Delete failed:\ti:" << i << "\t" << insertDataset[i].first << endl;
+            auto res = Find(kInnerNodeID, insertDataset[i].first);
+            if ((res.second == insertDataset[i].second) || (res.second == 1.11))
+                cout << "After Delete failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
+        }
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            auto res = Find(kInnerNodeID, insertDataset[i].first);
+            if ((res.second == insertDataset[i].second) || (res.second == 1.11))
+                cout << "Find Delete failed:\ti:" << i << "\t" << insertDataset[i].first << "\tres: " << res.first << "\t" << res.second << endl;
+        }
+        cout << "check DELETE over!" << endl;
+        cout << "-------------------------------" << endl;
+    }
+    vector<LRType>().swap(LRVector);
+    vector<NNType>().swap(NNVector);
+    vector<HisType>().swap(HisVector);
+    vector<BSType>().swap(BSVector);
+    vector<ArrayType>().swap(ArrayVector);
+    vector<GappedArrayType>().swap(GAVector);
+
+    outRes << endl;
+}
+
+#endif // !STATIC_H

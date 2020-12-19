@@ -5,7 +5,7 @@
 #include "../trainModel/lr.h"
 #include <float.h>
 #include <vector>
-#include "../datapoint.h"
+#include "../dataManager/datapoint.h"
 using namespace std;
 
 extern pair<double, double> *entireData;

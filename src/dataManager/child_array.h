@@ -3,9 +3,9 @@
 #include <iostream>
 #include <vector>
 using namespace std;
-extern int *entireChild;
-extern unsigned int entireChildNumber;
-extern unsigned int nowChildNumber;
+int *entireChild;
+unsigned int entireChildNumber;
+unsigned int nowChildNumber;
 
 // initialize entireChild
 void initEntireChild(int size)

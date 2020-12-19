@@ -1,13 +1,13 @@
 #ifndef INLINE_FUNCTION_H
 #define INLINE_FUNCTION_H
 
-#include "params.h"
-#include "innerNodeType/bin_type.h"
-#include "innerNodeType/his_type.h"
-#include "innerNodeType/lr_type.h"
-#include "innerNodeType/nn_type.h"
-#include "leafNodeType/ga_type.h"
-#include "leafNodeType/array_type.h"
+#include "../params.h"
+#include "../innerNodeType/bin_type.h"
+#include "../innerNodeType/his_type.h"
+#include "../innerNodeType/lr_type.h"
+#include "../innerNodeType/nn_type.h"
+#include "../leafNodeType/ga_type.h"
+#include "../leafNodeType/array_type.h"
 #include <vector>
 using namespace std;
 extern vector<LRType> LRVector;

@@ -8,8 +8,8 @@
 #include "../innerNodeType/nn_type.h"
 #include "../leafNodeType/ga_type.h"
 #include "../leafNodeType/array_type.h"
-#include "../function.h"
-#include "../inlineFunction.h"
+#include "../func/function.h"
+#include "../func/inlineFunction.h"
 #include "params_struct.h"
 #include <float.h>
 #include <algorithm>

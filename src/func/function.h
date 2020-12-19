@@ -1,15 +1,15 @@
 #ifndef FUNCTION_H
 #define FUNCTION_H
 
-#include "params.h"
-#include "innerNodeType/bin_type.h"
-#include "innerNodeType/his_type.h"
-#include "innerNodeType/lr_type.h"
-#include "innerNodeType/nn_type.h"
-#include "leafNodeType/ga_type.h"
-#include "leafNodeType/array_type.h"
+#include "../params.h"
+#include "../innerNodeType/bin_type.h"
+#include "../innerNodeType/his_type.h"
+#include "../innerNodeType/lr_type.h"
+#include "../innerNodeType/nn_type.h"
+#include "../leafNodeType/ga_type.h"
+#include "../leafNodeType/array_type.h"
 #include "inlineFunction.h"
-#include "datapoint.h"
+#include "../dataManager/datapoint.h"
 #include <float.h>
 #include <vector>
 #include <math.h>

@@ -6,7 +6,7 @@
 #include "../trainModel/lr.h"
 #include "../leafNodeType/array_type.h"
 #include "../leafNodeType/ga_type.h"
-#include "../child_array.h"
+#include "../dataManager/child_array.h"
 #include <vector>
 #include <fstream>
 using namespace std;
