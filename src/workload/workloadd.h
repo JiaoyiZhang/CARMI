@@ -63,10 +63,12 @@ void WorkloadD(int rootType)
     {
         for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
         {
+            TestFind(rootType, dataset[findCnt].first);
             findCnt++;
         }
         for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
         {
+            TestFind(rootType, insertDataset[insertCnt].first);
             insertCnt++;
         }
     }
@@ -76,7 +78,7 @@ void WorkloadD(int rootType)
 
     cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 - 5 << endl;
     outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 - 5 << ",";
-    
+
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
         return p1.first < p2.first;
     });

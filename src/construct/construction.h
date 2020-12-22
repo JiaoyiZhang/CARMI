@@ -1,7 +1,7 @@
 #ifndef CONSTRUCTION_H
 #define CONSTRUCTION_H
 
-#include "greedy.h"
+#include "choose_root.h"
 #include "store_node.h"
 #include "dp.h"
 #include "params_struct.h"
@@ -89,12 +89,16 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     }
     }
     double totalCost = 0.0;
+    double totalTime = 0.0;
+    double totalSpace = 0.0;
     vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
     vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
     switch (rootType)
     {
     case 0:
     {
+        totalTime = 12.2345;
+        totalSpace += sizeof(LRType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
             int p = LRVector[0].model.Predict(findDatapoint[i].first);
@@ -136,8 +140,13 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
 
             idx += (type << 28);
             entireChild[LRVector[0].childLeft + i] = idx;
+            // cout << "child " << i << ":\ttime is:" << resChild.first.first << ",\tnow time:" << totalTime + resChild.first.first << endl;
+            // cout << "find size: " << subFindData[i].second << ",\tinsertSize: " << subInsertData[i].second << endl;
+            // cout << "TIMESTAMP: " << __TIMESTAMP__ << endl;
 
             totalCost += resChild.first.first + resChild.first.second;
+            totalTime += resChild.first.first;
+            totalSpace += resChild.first.second;
 
             COST.clear();
             structMap.clear();
@@ -146,6 +155,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     }
     case 1:
     {
+        totalTime = 39.1523;
+        totalSpace += sizeof(NNType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
             int p = NNVector[0].model.Predict(findDatapoint[i].first);
@@ -189,6 +200,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             entireChild[NNVector[0].childLeft + i] = idx;
 
             totalCost += resChild.first.first + resChild.first.second;
+            totalTime += resChild.first.first;
+            totalSpace += resChild.first.second;
 
             COST.clear();
             structMap.clear();
@@ -197,6 +210,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     break;
     case 2:
     {
+        totalTime = 38.5235;
+        totalSpace += sizeof(HisType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
             int p = HisVector[0].model.Predict(findDatapoint[i].first);
@@ -240,6 +255,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             entireChild[HisVector[0].childLeft + i] = idx;
 
             totalCost += resChild.first.first + resChild.first.second;
+            totalTime += resChild.first.first;
+            totalSpace += resChild.first.second;
 
             COST.clear();
             structMap.clear();
@@ -248,6 +265,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     break;
     case 3:
     {
+        totalTime = 8.23 * log(childNum) / log(2);
+        totalSpace += sizeof(BSType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
             int p = BSVector[0].model.Predict(findDatapoint[i].first);
@@ -291,6 +310,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             entireChild[BSVector[0].childLeft + i] = idx;
 
             totalCost += resChild.first.first + resChild.first.second;
+            totalTime += resChild.first.first;
+            totalSpace += resChild.first.second;
 
             COST.clear();
             structMap.clear();
@@ -299,6 +320,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     break;
     }
     cout << "total cost: " << totalCost << endl;
+    cout << "total time: " << totalTime << endl;
+    cout << "total space: " << totalSpace << endl;
     return rootType;
 }
 

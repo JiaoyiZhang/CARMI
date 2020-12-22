@@ -20,7 +20,7 @@ void constructYCSB(double initRatio)
     outRes << "construct ycsb" << endl;
     outRes << "initRatio," << initRatio << endl;
     YCSBDataset ycsbData = YCSBDataset(initRatio);
-    vector<double> rate = {1000, 100, 50, 10, 1, 0.6, 0.1, 0.01, 0.001};
+    vector<double> rate = {50, 25, 10, 5, 1, 0.5, 0.1};
     for (int r = 0; r < rate.size(); r++)
     {
         kRate = rate[r];
@@ -28,11 +28,11 @@ void constructYCSB(double initRatio)
 
         cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
         ycsbData.GenerateDataset(dataset, insertDataset);
-        if (r == 0)
-        {
-            btree_test(initRatio);
-            artTree_test(initRatio);
-        }
+        // if (r == 0)
+        // {
+        //     btree_test(initRatio);
+        //     artTree_test(initRatio);
+        // }
         CoreConstruct(initRatio);
 
         outRes << endl;

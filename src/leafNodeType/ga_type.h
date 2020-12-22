@@ -43,7 +43,7 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     capacity = cap;
     while ((float(subDataset.size()) / float(capacity) >= density))
         capacity = float(capacity) / density + 1;
-    capacity *= 2;  // test
+    capacity *= 2; // test
     if (capacity > 4096)
         capacity = 4096;
     m_datasetSize = 0;
@@ -68,6 +68,9 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
             m_datasetSize++;
         }
     }
+
+    if (m_datasetSize > 4096)
+        cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:" << m_datasetSize << endl;
 
     for (int i = m_left, j = 0; j < capacity; i++, j++)
         entireData[i] = newDataset[j];

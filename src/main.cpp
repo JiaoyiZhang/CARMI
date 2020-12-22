@@ -27,21 +27,30 @@ ofstream outRes;
 
 int main()
 {
-    outRes.open("res_1215_final.csv", ios::app);
+    outRes.open("res_1222.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     kMaxKeyNum = 256;
-    // constructYCSB(1);   // read-only
-    // constructYCSB(0.5); // balance
-    // constructYCSB(0.95);
-    // constructYCSB(0); // partial
+    // kLeafNodeID = 1;
+    cout << "kLeafNodeID:" << kLeafNodeID << endl;
+    // static structure
+    // testSynthetic(1);
+    // testSynthetic(0.5);
+    // testSynthetic(0.95);
+    // testSynthetic(0);
 
     kMaxKeyNum = 2;
-    constructSynthetic(1);   // read-only
-    constructSynthetic(0.5); // balance
-    constructSynthetic(0.95);
-    constructSynthetic(0); // partial
+    // constructSynthetic(1);   // read-only
+    // constructSynthetic(0.5); // balance
 
-    kMaxKeyNum = 256;
+    // constructSynthetic(0.95);
+    // constructSynthetic(0); // partial
+
+    constructYCSB(1);   // read-only
+    constructYCSB(0.5); // balance
+    constructYCSB(0.95);
+    constructYCSB(0); // partial
+
+    // kMaxKeyNum = 256;
     constructMap(1);   // read-only
     constructMap(0.5); // balance
     constructMap(0.95);

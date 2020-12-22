@@ -39,14 +39,17 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
     m_datasetSize = dataset.size();
     while (m_datasetSize >= m_capacity)
         m_capacity *= kExpansionScale;
-    
-    m_capacity *= 2;  // test
+
+    m_capacity *= 2; // test
     if (m_capacity > 4096)
         m_capacity = 4096;
 
     m_left = allocateMemory(m_capacity);
     if (m_datasetSize == 0)
         return;
+
+    if (m_datasetSize > 4096)
+        cout << "Array setDataset WRONG! datasetSize > 4096, size is:" << m_datasetSize << endl;
 
     for (int i = m_left, j = 0; j < m_datasetSize; i++, j++)
         entireData[i] = dataset[j];

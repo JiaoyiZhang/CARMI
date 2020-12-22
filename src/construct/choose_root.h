@@ -1,5 +1,5 @@
-#ifndef GREEDY_H
-#define GREEDY_H
+#ifndef CHOOSE_ROOT_H
+#define CHOOSE_ROOT_H
 
 #include "../innerNodeType/bin_type.h"
 #include "../innerNodeType/his_type.h"
@@ -32,7 +32,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             {
             case 0:
             {
-                time = 8.1624;
+                time = 12.2345;
                 space = float(4 * c + sizeof(LRType)) / 1024 / 1024;
                 auto root = LRType(c);
                 root.model.Train(dataset, c);
@@ -45,7 +45,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             }
             case 1:
             {
-                time = 20.26894;
+                time = 39.1523;
                 space = float(4 * c + 192 + sizeof(NNType)) / 1024 / 1024;
                 auto root = NNType(c);
                 root.model.Train(dataset, c);
@@ -58,7 +58,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             }
             case 2:
             {
-                time = 19.6543;
+                time = 38.5235;
                 space = float(5 * c + sizeof(HisType)) / 1024 / 1024;
                 auto root = HisType(c);
                 root.model.Train(dataset, c);
@@ -71,7 +71,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             }
             case 3:
             {
-                time = 4 * log(c) / log(2);
+                time = 8.23 * log(c) / log(2);
                 space = float(12 * c + sizeof(BSType)) / 1024 / 1024;
                 auto root = BSType(c);
                 root.model.Train(dataset, c);

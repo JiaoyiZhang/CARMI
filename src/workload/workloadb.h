@@ -57,6 +57,7 @@ void WorkloadB(int rootType)
     {
         for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
         {
+            TestFind(rootType, dataset[findCnt].first);
             findCnt++;
         }
     }

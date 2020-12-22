@@ -24,7 +24,7 @@ void constructMap(double initRatio)
     outRes << "initRatio," << initRatio << endl;
     LongitudesDataset longData = LongitudesDataset(initRatio);
     LonglatDataset latData = LonglatDataset(initRatio);
-    vector<double> rate = {1000, 100, 50, 10, 1, 0.6, 0.1, 0.01, 0.001};
+    vector<double> rate = {50, 25, 10, 5, 1, 0.5, 0.1};
     for (int r = 0; r < rate.size(); r++)
     {
         kRate = rate[r];

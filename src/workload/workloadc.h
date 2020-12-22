@@ -46,6 +46,7 @@ void WorkloadC(int rootType)
     s = chrono::system_clock::now();
     for (int i = 0; i < end; i++)
     {
+        TestFind(rootType, dataset[i].first);
     }
     e = chrono::system_clock::now();
     double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;

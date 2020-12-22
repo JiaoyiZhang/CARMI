@@ -15,7 +15,7 @@
 #include <math.h>
 #include <iomanip>
 using namespace std;
- 
+
 vector<LRType> LRVector;
 vector<NNType> NNVector;
 vector<HisType> HisVector;
@@ -168,20 +168,21 @@ bool Insert(int rootType, pair<double, double> data)
     int idx = 0; // idx in the INDEX
     int content;
     int type = rootType;
+    int childIdx = 0;
     while (1)
     {
         switch (type)
         {
         case 0:
         {
-            content = entireChild[LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first)];
+            childIdx = LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first);
+            content = entireChild[childIdx];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
 
             // check split
             if (type == 4 && ArrayVector[idx].m_datasetSize >= 4096)
             {
-                int oldChildIdx = LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first); // idx in entireChild
                 vector<pair<double, double>> tmpDataset;
                 auto left = ArrayVector[idx].m_left;
                 auto size = ArrayVector[idx].m_datasetSize;
@@ -191,7 +192,7 @@ bool Insert(int rootType, pair<double, double> data)
                 auto node = LRType(128);                      // create a new inner node
                 LRVector.push_back(node);
                 idx = LRVector.size() - 1;
-                entireChild[oldChildIdx] = 0x00000000 + idx;
+                entireChild[childIdx] = 0x00000000 + idx;
                 int childNum = LRVector[idx].childNumber;
                 LRVector[idx].childLeft = allocateChildMemory(childNum);
                 LRVector[idx].model.Train(tmpDataset, childNum);
@@ -218,7 +219,6 @@ bool Insert(int rootType, pair<double, double> data)
             }
             else if (type == 5 && GAVector[idx].m_datasetSize >= 4096)
             {
-                int oldChildIdx = LRVector[idx].childLeft + LRVector[idx].model.Predict(data.first); // idx in entireChild
                 vector<pair<double, double>> tmpDataset;
                 auto left = GAVector[idx].m_left;
                 auto size = GAVector[idx].m_datasetSize;
@@ -228,7 +228,7 @@ bool Insert(int rootType, pair<double, double> data)
                 auto node = LRType(128);                // create a new inner node
                 LRVector.push_back(node);
                 idx = LRVector.size() - 1;
-                entireChild[oldChildIdx] = 0x00000000 + idx;
+                entireChild[childIdx] = 0x00000000 + idx;
                 int childNum = LRVector[idx].childNumber;
                 LRVector[idx].childLeft = allocateChildMemory(childNum);
                 LRVector[idx].model.Train(tmpDataset, childNum);
@@ -257,14 +257,14 @@ bool Insert(int rootType, pair<double, double> data)
         break;
         case 1:
         {
-            content = entireChild[NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first)];
+            childIdx = NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first);
+            content = entireChild[childIdx];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
 
             // check split
             if (type == 4 && ArrayVector[idx].m_datasetSize >= 4096)
             {
-                int oldChildIdx = NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first); // idx in entireChild
                 vector<pair<double, double>> tmpDataset;
                 auto left = ArrayVector[idx].m_left;
                 auto size = ArrayVector[idx].m_datasetSize;
@@ -274,7 +274,7 @@ bool Insert(int rootType, pair<double, double> data)
                 auto node = NNType(128);                      // create a new inner node
                 NNVector.push_back(node);
                 idx = NNVector.size() - 1;
-                entireChild[oldChildIdx] = 0x10000000 + idx;
+                entireChild[childIdx] = 0x10000000 + idx;
                 int childNum = NNVector[idx].childNumber;
                 NNVector[idx].childLeft = allocateChildMemory(childNum);
                 NNVector[idx].model.Train(tmpDataset, childNum);
@@ -301,7 +301,6 @@ bool Insert(int rootType, pair<double, double> data)
             }
             else if (type == 5 && GAVector[idx].m_datasetSize >= 4096)
             {
-                int oldChildIdx = NNVector[idx].childLeft + NNVector[idx].model.Predict(data.first); // idx in entireChild
                 vector<pair<double, double>> tmpDataset;
                 auto left = GAVector[idx].m_left;
                 auto size = GAVector[idx].m_datasetSize;
@@ -311,7 +310,7 @@ bool Insert(int rootType, pair<double, double> data)
                 auto node = NNType(128);                // create a new inner node
                 NNVector.push_back(node);
                 idx = NNVector.size() - 1;
-                entireChild[oldChildIdx] = 0x10000000 + idx;
+                entireChild[childIdx] = 0x10000000 + idx;
                 int childNum = NNVector[idx].childNumber;
                 NNVector[idx].childLeft = allocateChildMemory(childNum);
                 NNVector[idx].model.Train(tmpDataset, childNum);
@@ -340,13 +339,13 @@ bool Insert(int rootType, pair<double, double> data)
         break;
         case 2:
         {
-            content = entireChild[HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first)];
+            childIdx = HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first);
+            content = entireChild[childIdx];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
             // check split
             if (type == 4 && ArrayVector[idx].m_datasetSize >= 4096)
             {
-                int oldChildIdx = HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first); // idx in entireChild
                 vector<pair<double, double>> tmpDataset;
                 auto left = ArrayVector[idx].m_left;
                 auto size = ArrayVector[idx].m_datasetSize;
@@ -356,7 +355,7 @@ bool Insert(int rootType, pair<double, double> data)
                 auto node = HisType(128);                     // create a new inner node
                 HisVector.push_back(node);
                 idx = HisVector.size() - 1;
-                entireChild[oldChildIdx] = 0x20000000 + idx;
+                entireChild[childIdx] = 0x20000000 + idx;
                 int childNum = HisVector[idx].childNumber;
                 HisVector[idx].childLeft = allocateChildMemory(childNum);
                 HisVector[idx].model.Train(tmpDataset, childNum);
@@ -383,7 +382,7 @@ bool Insert(int rootType, pair<double, double> data)
             }
             else if (type == 5 && GAVector[idx].m_datasetSize >= 4096)
             {
-                int oldChildIdx = HisVector[idx].childLeft + HisVector[idx].model.Predict(data.first); // idx in entireChild
+
                 vector<pair<double, double>> tmpDataset;
                 auto left = GAVector[idx].m_left;
                 auto size = GAVector[idx].m_datasetSize;
@@ -393,7 +392,7 @@ bool Insert(int rootType, pair<double, double> data)
                 auto node = HisType(128);               // create a new inner node
                 HisVector.push_back(node);
                 idx = HisVector.size() - 1;
-                entireChild[oldChildIdx] = 0x20000000 + idx;
+                entireChild[childIdx] = 0x20000000 + idx;
                 int childNum = HisVector[idx].childNumber;
                 HisVector[idx].childLeft = allocateChildMemory(childNum);
                 HisVector[idx].model.Train(tmpDataset, childNum);
@@ -422,13 +421,13 @@ bool Insert(int rootType, pair<double, double> data)
         break;
         case 3:
         {
-            content = entireChild[BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first)];
+            childIdx = BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first);
+            content = entireChild[childIdx];
             type = content >> 28;
             idx = content & 0x0FFFFFFF;
             // check split
             if (type == 4 && ArrayVector[idx].m_datasetSize >= 4096)
             {
-                int oldChildIdx = BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first); // idx in entireChild
                 vector<pair<double, double>> tmpDataset;
                 auto left = ArrayVector[idx].m_left;
                 auto size = ArrayVector[idx].m_datasetSize;
@@ -438,7 +437,7 @@ bool Insert(int rootType, pair<double, double> data)
                 auto node = BSType(128);                      // create a new inner node
                 BSVector.push_back(node);
                 idx = BSVector.size() - 1;
-                entireChild[oldChildIdx] = 0x30000000 + idx;
+                entireChild[childIdx] = 0x30000000 + idx;
                 int childNum = BSVector[idx].childNumber;
                 BSVector[idx].childLeft = allocateChildMemory(childNum);
                 BSVector[idx].model.Train(tmpDataset, childNum);
@@ -465,7 +464,6 @@ bool Insert(int rootType, pair<double, double> data)
             }
             else if (type == 5 && GAVector[idx].m_datasetSize >= 4096)
             {
-                int oldChildIdx = BSVector[idx].childLeft + BSVector[idx].model.Predict(data.first); // idx in entireChild
                 vector<pair<double, double>> tmpDataset;
                 auto left = GAVector[idx].m_left;
                 auto size = GAVector[idx].m_datasetSize;
@@ -475,7 +473,7 @@ bool Insert(int rootType, pair<double, double> data)
                 auto node = BSType(128);                // create a new inner node
                 BSVector.push_back(node);
                 idx = BSVector.size() - 1;
-                entireChild[oldChildIdx] = 0x30000000 + idx;
+                entireChild[childIdx] = 0x30000000 + idx;
                 int childNum = BSVector[idx].childNumber;
                 BSVector[idx].childLeft = allocateChildMemory(childNum);
                 BSVector[idx].model.Train(tmpDataset, childNum);
@@ -891,5 +889,8 @@ long double GetEntropy(int size)
     }
     return entropy;
 }
-
+pair<double, double> TestFind(int rootType, double key)
+{
+    return {};
+}
 #endif

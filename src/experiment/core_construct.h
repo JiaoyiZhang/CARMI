@@ -21,6 +21,8 @@ extern vector<pair<double, double>> insertDataset;
 
 extern ofstream outRes;
 
+int totalFrequency = 0;
+
 void CoreConstruct(double initRatio)
 {
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
@@ -28,9 +30,15 @@ void CoreConstruct(double initRatio)
     insertActualDataset = insertDataset;
 
     for (int i = 0; i < dataset.size(); i++)
-        dataset[i].second = 2;
+    {
+        dataset[i].second = 5;
+        totalFrequency += 5;
+    }
     for (int i = 0; i < insertDataset.size(); i++)
-        insertDataset[i].second = 20;
+    {
+        insertDataset[i].second = 1;
+        totalFrequency += 1;
+    }
 
     initEntireData(0, dataset.size() + insertDataset.size(), false);
     initEntireChild(dataset.size() + insertDataset.size());

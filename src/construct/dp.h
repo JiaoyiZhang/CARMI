@@ -24,10 +24,12 @@ extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 extern vector<pair<double, double>> findDatapoint;
 extern vector<pair<double, double>> insertDatapoint;
 
+extern int totalFrequency;
+
 // return {cost, true:inner, false:leaf}
 pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
 {
-    if (findSize == 0)
+    if (findSize == 0 && insertSize == 0)
     {
         auto it = COST.find({findLeft, findSize});
         if (it != COST.end())
@@ -39,10 +41,10 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         }
         else
         {
-            double cost = kRate * sizeof(GappedArrayType(kMaxKeyNum)) / 1024 / 1024;
+            double cost = kRate * sizeof(ArrayType(kMaxKeyNum)) / 1024 / 1024;
             COST.insert({{findLeft, findSize}, {0, cost}});
             ParamStruct leafP;
-            leafP.type = 5;
+            leafP.type = 4;
             leafP.density = 0.5;
             structMap.insert({{false, {findLeft, findSize}}, leafP});
             return {{0, cost}, false};
@@ -86,11 +88,11 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         {
             auto predict = tmp.model.Predict(findData[i].first);
             auto d = abs(i - predict);
-            time += 16.36;
+            time += 74.6245 * findData[i].second; // due to shuffle
             if (d <= error)
-                time += log(error) / log(2) * findData[i].second * 4.11;
+                time += log(error) / log(2) * findData[i].second * 8.23;
             else
-                time += log(findData.size()) / log(2) * findData[i].second * 4.11;
+                time += log(findData.size()) / log(2) * findData[i].second * 8.23;
         }
 
         for (int i = 0; i < insertData.size(); i++)
@@ -98,13 +100,14 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             auto predict = tmp.model.Predict(insertData[i].first);
             auto actual = TestArrayBinarySearch(insertData[i].first, findData);
             auto d = abs(actual - predict);
-            time += 16.36 + 28.25 * (insertData.size() - actual) * (insertData[i].second + i);
+            time += (74.6245 + 28.25 * (insertData.size() - actual + 1)) * insertData[i].second;
             if (d <= error)
-                time += log(error) / log(2) * insertData[i].second * 4.11;
+                time += log(error) / log(2) * insertData[i].second * 8.23;
             else
-                time += log(insertData.size()) / log(2) * insertData[i].second * 4.11;
+                time += log(insertData.size()) / log(2) * insertData[i].second * 8.23;
         }
-        time = time / (findData.size() + insertData.size());
+        // time = time / (findData.size() + insertData.size());
+        time = time / totalFrequency;
 
         cost = time + space * kRate; // ns + MB * kRate
         if (cost <= OptimalValue)
@@ -133,24 +136,25 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             {
                 auto predict = tmpNode.model.Predict(findData[t].first);
                 auto d = abs(t - predict);
-                time += 16.36;
+                time += 74.6245 * findData[t].second; // due to shuffle
                 if (d <= errorGA)
-                    time += log(errorGA) / log(2) * findData[t].second * 4.11 * (2 - Density[i]);
+                    time += log(errorGA) / log(2) * findData[t].second * 8.23 * (2 - Density[i]);
                 else
-                    time += log(findData.size()) / log(2) * findData[t].second * 4.11 * (2 - Density[i]);
+                    time += log(findData.size()) / log(2) * findData[t].second * 8.23 * (2 - Density[i]);
             }
             for (int t = 0; t < insertData.size(); t++)
             {
                 auto predict = tmpNode.model.Predict(insertData[t].first);
                 auto actual = TestGABinarySearch(insertData[t].first, findData);
-                time += 16.36;
+                time += 74.6245 * insertData[t].second; // due to shuffle
                 auto d = abs(actual - predict);
                 if (d <= errorGA)
-                    time += log(errorGA) / log(2) * insertData[t].second * 4.11 * (2 - Density[i]);
+                    time += log(errorGA) / log(2) * insertData[t].second * 8.23 * (2 - Density[i]);
                 else
-                    time += log(insertData.size()) / log(2) * insertData[t].second * 4.11 * (2 - Density[i]);
+                    time += log(insertData.size()) / log(2) * insertData[t].second * 8.23 * (2 - Density[i]);
             }
-            time = time / (findData.size() + insertData.size());
+            // time = time / (findData.size() + insertData.size());
+            time = time / totalFrequency;
 
             cost = time + space * kRate; // ns + MB * kRate
             if (cost <= OptimalValue)
@@ -175,10 +179,17 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         ParamStruct optimalStruct = {0, 32, 2, vector<pair<bool, pair<int, int>>>()};
         vector<pair<double, double>> findData;
         vector<pair<double, double>> insertData;
+        int frequency = 0;
         for (int l = findLeft; l < findLeft + findSize; l++)
+        {
             findData.push_back(findDatapoint[l]);
+            frequency += findDatapoint[l].second;
+        }
         for (int l = insertLeft; l < insertLeft + insertSize; l++)
+        {
             insertData.push_back(insertDatapoint[l]);
+            frequency += insertDatapoint[l].second;
+        }
         for (int c = 16; c < findData.size(); c *= 2)
         {
             if (512 * c < findData.size())
@@ -190,7 +201,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 case 0:
                 {
                     space = float(4 * c + sizeof(LRType)) / 1024 / 1024; // MB
-                    double time = 8.1624;                                // ns
+                    double time = 12.2345;                               // ns
+                    time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
                     space *= kRate;
                     if (RootCost > OptimalValue)
@@ -236,9 +248,9 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                             res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         space += res.first.second;
-                        time += (res.first.first / c);
-                        RootCost += res.first.second;      // space*kRate
-                        RootCost += (res.first.first / c); // time
+                        time += res.first.first;
+                        RootCost += res.first.second; // space*kRate
+                        RootCost += res.first.first;  // time
                     }
                     if (RootCost <= OptimalValue)
                     {
@@ -254,7 +266,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 case 1:
                 {
                     space = float(4 * c + 192 + sizeof(NNType)) / 1024 / 1024; // MB
-                    double time = 20.2689;                                     // ns
+                    double time = 39.1523;                                     // ns
+                    time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
                     space *= kRate;
                     if (RootCost > OptimalValue)
@@ -300,9 +313,9 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                             res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         space += res.first.second;
-                        time += (res.first.first / c);
-                        RootCost += res.first.second;      // space*kRate
-                        RootCost += (res.first.first / c); // time
+                        time += res.first.first;
+                        RootCost += res.first.second; // space*kRate
+                        RootCost += res.first.first;  // time
                     }
                     if (RootCost <= OptimalValue)
                     {
@@ -318,7 +331,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 case 2:
                 {
                     space = float(5 * c + sizeof(HisType)) / 1024 / 1024; // MB
-                    double time = 19.6543;
+                    double time = 38.5235;
+                    time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
                     space *= kRate;
                     if (RootCost > OptimalValue)
@@ -364,9 +378,9 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                             res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         space += res.first.second;
-                        time += (res.first.first / c);
-                        RootCost += res.first.second;      // space*kRate
-                        RootCost += (res.first.first / c); // time
+                        time += res.first.first;
+                        RootCost += res.first.second; // space*kRate
+                        RootCost += res.first.first;  // time
                     }
                     if (RootCost <= OptimalValue)
                     {
@@ -382,7 +396,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 case 3:
                 {
                     space = float(12 * c + sizeof(BSType)) / 1024 / 1024;
-                    double time = 4 * log(c) / log(2);
+                    double time = 8.23 * log(c) / log(2);
+                    time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
                     space *= kRate;
                     if (RootCost > OptimalValue)
@@ -428,9 +443,9 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                             res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
                         tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
                         space += res.first.second;
-                        time += (res.first.first / c);
-                        RootCost += res.first.second;      // space*kRate
-                        RootCost += (res.first.first / c); // time
+                        time += res.first.first;
+                        RootCost += res.first.second; // space*kRate
+                        RootCost += res.first.first;  // time
                     }
                     if (RootCost <= OptimalValue)
                     {
