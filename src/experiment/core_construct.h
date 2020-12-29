@@ -46,16 +46,6 @@ void CoreConstruct(double initRatio)
     cout << "Construction over!" << endl;
     cout << endl;
 
-    int size = 0;
-    int cnt = 0;
-    cout << "The index is:" << endl;
-    cout << "LRVector: size: " << LRVector.size() << endl;
-    cout << "NNVector: size: " << NNVector.size() << endl;
-    cout << "HisVector: size: " << HisVector.size() << endl;
-    cout << "BSVector: size: " << BSVector.size() << endl;
-    cout << "ArrayVector size:" << ArrayVector.size() << endl;
-    cout << "GAVector size:" << GAVector.size() << endl;
-    cout << "the number of nodes: " << size << "\tcnt:" << cnt << endl;
     cout << "\nprint the space:" << endl;
     auto space = calculateSpace();
     outRes << space << ",";

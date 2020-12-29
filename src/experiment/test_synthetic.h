@@ -29,8 +29,7 @@ void testSynthetic(double initRatio)
     NormalDataset norData = NormalDataset(datasetSize, initRatio);
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
 
-    vector<int> childNum_synthetic = {2000, 3000, 3907, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 50000, 100000};
-    vector<int> childNum_map = {25000, 50000, 60000, 70125, 80000, 90000, 100000, 250000, 350000, 500000, 750000, 1000000};
+    vector<int> childNum_synthetic = {65536, 131072, 262144, 524288, 1048576};
     // for (int i = 0; i < childNum_synthetic.size(); i++)
     for (int i = 2; i < 3; i++)
     {

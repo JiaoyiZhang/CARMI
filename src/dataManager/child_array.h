@@ -2,7 +2,7 @@
 #define CHILD_ARRAY_H
 #include <iostream>
 #include <vector>
-#include "../innerNode/baseNode.h"
+#include "../baseNode.h"
 using namespace std;
 BaseNode **entireChild;
 unsigned int entireChildNumber;
@@ -19,6 +19,8 @@ void initEntireChild(int size)
     delete[] entireChild;
     nowChildNumber = 0;
     entireChild = new BaseNode *[len];
+    for (int i = 0; i < len; i++)
+        entireChild[i] = new BaseNode;
     for (int i = 0; i < len; i++)
         entireChild[i]->flag = '0';
 }

@@ -5,13 +5,7 @@
 
 using namespace std;
 
-extern vector<LRType> LRVector;
-extern vector<NNType> NNVector;
-extern vector<HisType> HisVector;
-extern vector<BSType> BSVector;
-extern vector<ArrayType> ArrayVector;
-extern vector<GappedArrayType> GAVector;
-
+extern BaseNode **entireChild;
 extern int childNum;
 extern ofstream outRes;
 
@@ -65,7 +59,8 @@ void RunStatic()
         double temp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
         cout << "Find time:" << temp / (float)dataset.size() << endl;
 
-        auto entropy = GetEntropy(dataset.size());
+        // auto entropy = GetEntropy(dataset.size());
+        auto entropy = 2;
         cout << "Entropy:" << entropy << endl;
         outRes << "ENTROPY," << entropy << ",";
         cout << "time / entropy: " << tmp / (float)dataset.size() / entropy << endl;
@@ -83,13 +78,6 @@ void RunStatic()
         std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
             return p1.first < p2.first;
         });
-
-        vector<LRType>().swap(LRVector);
-        vector<NNType>().swap(NNVector);
-        vector<HisType>().swap(HisVector);
-        vector<BSType>().swap(BSVector);
-        vector<ArrayType>().swap(ArrayVector);
-        vector<GappedArrayType>().swap(GAVector);
     }
     outRes << endl;
 }
@@ -181,12 +169,6 @@ void TestStatic(bool mode)
         cout << "check DELETE over!" << endl;
         cout << "-------------------------------" << endl;
     }
-    vector<LRType>().swap(LRVector);
-    vector<NNType>().swap(NNVector);
-    vector<HisType>().swap(HisVector);
-    vector<BSType>().swap(BSVector);
-    vector<ArrayType>().swap(ArrayVector);
-    vector<GappedArrayType>().swap(GAVector);
 
     outRes << endl;
 }
