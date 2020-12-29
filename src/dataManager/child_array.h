@@ -4,7 +4,7 @@
 #include <vector>
 #include "../innerNode/baseNode.h"
 using namespace std;
-BaseNode *entireChild;
+BaseNode **entireChild;
 unsigned int entireChildNumber;
 unsigned int nowChildNumber;
 
@@ -18,9 +18,9 @@ void initEntireChild(int size)
     entireChildNumber = len;
     delete[] entireChild;
     nowChildNumber = 0;
-    entireChild = new BaseNode[len];
+    entireChild = new BaseNode *[len];
     for (int i = 0; i < len; i++)
-        entireChild[i].flag = '0';
+        entireChild[i]->flag = '0';
 }
 
 // allocate a block to the current inner node
@@ -40,7 +40,7 @@ int allocateChildMemory(int size)
         cout << "need expand the entireChild!" << endl;
         auto tmpSize = entireChildNumber;
         auto tmpEnd = nowChildNumber;
-        vector<BaseNode> tmpChild;
+        vector<BaseNode *> tmpChild;
         for (int i = 0; i < tmpSize; i++)
             tmpChild.push_back(entireChild[i]);
 
