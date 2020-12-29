@@ -6,15 +6,17 @@
 #include <float.h>
 #include <vector>
 #include "../dataManager/datapoint.h"
+#include "../baseNode.h"
 using namespace std;
 
 extern pair<double, double> *entireData;
-class GappedArrayType
+class GappedArrayType : public BaseNode
 {
 public:
-    GappedArrayType(){};
+    GappedArrayType() { flag = 'F'; };
     GappedArrayType(int cap)
     {
+        flag = 'F';
         m_datasetSize = 0;
         error = 0;
         density = kDensity;

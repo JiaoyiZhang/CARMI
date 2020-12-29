@@ -5,15 +5,17 @@
 #include "../trainModel/lr.h"
 #include <vector>
 #include "../dataManager/datapoint.h"
+#include "../baseNode.h"
 using namespace std;
 
 extern pair<double, double> *entireData;
-class ArrayType
+class ArrayType : public BaseNode
 {
 public:
-    ArrayType(){};
+    ArrayType() { flag = 'E'; };
     ArrayType(int cap)
     {
+        flag = 'E';
         m_datasetSize = 0;
         error = 0;
         m_left = -1;
@@ -29,6 +31,7 @@ public:
     int m_capacity;         // the maximum capacity of this leaf node
 
     int error; // the boundary of binary search
+    double tmp[2];
 };
 
 inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, int cap)
