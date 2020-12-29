@@ -36,7 +36,7 @@ void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDatase
 	vector<pair<double, double>>().swap(insertDataset);
 
 	vector<pair<double, double>> ds;
-	ifstream inFile("../src/dataset/iranLon.csv", ios::in);
+	ifstream inFile("../src/dataset/longitude.csv", ios::in);
 	if (!inFile)
 	{
 		cout << "打开文件失败！" << endl;
@@ -57,6 +57,8 @@ void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDatase
 		double k = stod(key);
 		double v = stod(value);
 		ds.push_back({k, v});
+		if (ds.size() == 100000000)
+			break;
 	}
 
 	std::sort(ds.begin(), ds.end());

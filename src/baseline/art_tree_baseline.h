@@ -19,21 +19,16 @@ void artTree_test(double initRatio)
     cout << "artTree,";
     art_tree t;
     art_tree_init(&t);
-    vector<char *> artKey, artValue, artInsertKey, artInsertValue;
     for (int i = 0; i < dataset.size(); i++)
     {
         auto key = (const unsigned char *)to_string(dataset[i].first).data();
         auto value = (const unsigned char *)to_string(dataset[i].second).data();
-        artKey.push_back((char *)key);
-        artValue.push_back((char *)value);
         art_insert(&t, key, strlen((const char *)key), (uint64_t)dataset[i].second);
     }
     for (int i = 0; i < insertDataset.size(); i++)
     {
         auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
         auto value = (const unsigned char *)to_string(insertDataset[i].second).data();
-        artInsertKey.push_back((char *)key);
-        artInsertValue.push_back((char *)value);
         art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
     }
 

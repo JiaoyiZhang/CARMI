@@ -36,7 +36,7 @@ void YCSBDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vec
     vector<pair<double, double>>().swap(insertDataset);
 
     vector<pair<double, double>> ds;
-    ifstream inFile("../src/dataset/ycsbdata.csv", ios::in);
+    ifstream inFile("../src/dataset/newycsbdata.csv", ios::in);
     if (!inFile)
     {
         cout << "打开文件失败！" << endl;
