@@ -10,15 +10,15 @@
 #include <fstream>
 using namespace std;
 
-extern vector<ArrayType> ArrayVector;
-extern vector<GappedArrayType> GAVector;
+extern BaseNode **entireChild;
 
-class BSType
+class BSType : public BaseNode
 {
 public:
-    BSType(){};
+    BSType() { flag = 'D'; };
     BSType(int c)
     {
+        flag = 'D';
         childNumber = c;
         model = BinarySearchModel(c);
     }
@@ -52,19 +52,15 @@ inline void BSType::Initialize(const vector<pair<double, double>> &dataset)
     case 0:
         for (int i = 0; i < childNumber; i++)
         {
-            ArrayVector.push_back(ArrayType(kThreshold));
-            int idx = ArrayVector.size() - 1;
-            entireChild[childLeft + i] = 0x40000000 + idx;
-            ArrayVector[idx].SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i] = new ArrayType(kThreshold);
+            ((ArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
         }
         break;
     case 1:
         for (int i = 0; i < childNumber; i++)
         {
-            GAVector.push_back(GappedArrayType(kThreshold));
-            int idx = GAVector.size() - 1;
-            entireChild[childLeft + i] = 0x50000000 + idx;
-            GAVector[idx].SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i] = new GappedArrayType(kThreshold);
+            ((GappedArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
         }
         break;
     }
