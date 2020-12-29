@@ -12,10 +12,10 @@ extern BaseNode **entireChild;
 class BSModel : public BaseNode
 {
 public:
-    BSModel() { flag = 'D'; };
+    BSModel() { flag = 3; };
     BSModel(int c)
     {
-        flag = 'D';
+        flag = 3;
         childNumber = min(c, 12); // childNumber = 12
         for (int i = 0; i < 12; i++)
             index[i] = 0;

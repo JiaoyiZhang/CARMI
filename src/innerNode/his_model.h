@@ -12,10 +12,10 @@ extern BaseNode **entireChild;
 class HisModel : public BaseNode
 {
 public:
-    HisModel() { flag = 'C'; };
+    HisModel() { flag = 2; };
     HisModel(int c)
     {
-        flag = 'C';
+        flag = 2;
         childNumber = min(c, 160); // childNumber = 160
         minValue = 0;
         divisor = 1;

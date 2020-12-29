@@ -12,10 +12,10 @@ extern BaseNode **entireChild;
 class NNModel : public BaseNode
 {
 public:
-    NNModel() { flag = 'B'; };
+    NNModel() { flag = 1; };
     NNModel(int c)
     {
-        flag = 'B';
+        flag = 1;
         childNumber = c;
         for (int i = 0; i < 3; i++)
             theta[i] = {0.0001, 0.666};

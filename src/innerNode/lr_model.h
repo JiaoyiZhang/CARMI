@@ -12,10 +12,10 @@ extern BaseNode **entireChild;
 class LRModel : public BaseNode
 {
 public:
-    LRModel() { flag = 'A'; };
+    LRModel() { flag = 0; };
     LRModel(int c)
     {
-        flag = 'A';
+        flag = 0;
         childNumber = c;
         bound = childNumber / 5;
     }
