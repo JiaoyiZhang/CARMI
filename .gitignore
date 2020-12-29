@@ -5,3 +5,6 @@ CMakeFiles/*
 src/dataset/iranLat.csv
 src/dataset/iranLon.csv
 src/dataset/ycsbdata.csv
+src/dataset/newycsbdata.csv
+src/dataset/longitude.csv
+src/dataset/longlat.csv
