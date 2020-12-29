@@ -16,7 +16,6 @@ double kRate = 0.4;                 // totalCost = space * kRate + time
 extern const double kDensity = 0.5; // the density of gap in gapped array
 extern const double kExpansionScale = 1.5; // scale of array expansion
 
-extern int *entireChild;
 extern unsigned int entireChildNumber;
 extern unsigned int nowChildNumber;
 
