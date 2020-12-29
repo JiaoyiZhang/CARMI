@@ -10,10 +10,8 @@
 #include "../leafNodeType/array_type.h"
 #include <vector>
 using namespace std;
-extern vector<LRType> LRVector;
-extern vector<NNType> NNVector;
-extern vector<HisType> HisVector;
-extern vector<BSType> BSVector;
+
+extern BaseNode **entireChild;
 
 extern pair<double, double> *entireData;
 
