@@ -200,7 +200,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 {
                 case 0:
                 {
-                    space = float(4 * c + sizeof(LRType)) / 1024 / 1024; // MB
+                    space = float(4 * c + sizeof(LRModel)) / 1024 / 1024; // MB
                     double time = 12.2345;                               // ns
                     time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
@@ -208,22 +208,22 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = LRType(c);
-                    node.model.Train(findData, c);
+                    auto node = LRModel(c);
+                    node.Train(findData);
 
                     // divide the key and query
                     vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
                     vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
                     for (int i = 0; i < findData.size(); i++)
                     {
-                        int p = node.model.Predict(findData[i].first);
+                        int p = node.Predict(findData[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
                         subFindData[p].second++;
                     }
                     for (int i = 0; i < insertData.size(); i++)
                     {
-                        int p = node.model.Predict(insertData[i].first);
+                        int p = node.Predict(insertData[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
                         subInsertData[p].second++;
@@ -265,7 +265,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 }
                 case 1:
                 {
-                    space = float(4 * c + 192 + sizeof(NNType)) / 1024 / 1024; // MB
+                    space = float(4 * c + 192 + sizeof(NNModel)) / 1024 / 1024; // MB
                     double time = 39.1523;                                     // ns
                     time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
@@ -273,22 +273,22 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = NNType(c);
-                    node.model.Train(findData, c);
+                    auto node = NNModel(c);
+                    node.Train(findData);
 
                     // divide the key and query
                     vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
                     vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
                     for (int i = 0; i < findData.size(); i++)
                     {
-                        int p = node.model.Predict(findData[i].first);
+                        int p = node.Predict(findData[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
                         subFindData[p].second++;
                     }
                     for (int i = 0; i < insertData.size(); i++)
                     {
-                        int p = node.model.Predict(insertData[i].first);
+                        int p = node.Predict(insertData[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
                         subInsertData[p].second++;
@@ -330,7 +330,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 }
                 case 2:
                 {
-                    space = float(5 * c + sizeof(HisType)) / 1024 / 1024; // MB
+                    space = float(5 * c + sizeof(HisModel)) / 1024 / 1024; // MB
                     double time = 38.5235;
                     time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
@@ -338,22 +338,22 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = HisType(c);
-                    node.model.Train(findData, c);
+                    auto node = HisModel(c);
+                    node.Train(findData);
 
                     // divide the key and query
                     vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
                     vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
                     for (int i = 0; i < findData.size(); i++)
                     {
-                        int p = node.model.Predict(findData[i].first);
+                        int p = node.Predict(findData[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
                         subFindData[p].second = subFindData[p].second + 1;
                     }
                     for (int i = 0; i < insertData.size(); i++)
                     {
-                        int p = node.model.Predict(insertData[i].first);
+                        int p = node.Predict(insertData[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
                         subInsertData[p].second = subInsertData[p].second + 1;
@@ -395,7 +395,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 }
                 case 3:
                 {
-                    space = float(12 * c + sizeof(BSType)) / 1024 / 1024;
+                    space = float(12 * c + sizeof(BSModel)) / 1024 / 1024;
                     double time = 8.23 * log(c) / log(2);
                     time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
@@ -403,22 +403,22 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = BSType(c);
-                    node.model.Train(findData, c);
+                    auto node = BSModel(c);
+                    node.Train(findData);
 
                     // divide the key and query
                     vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
                     vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
                     for (int i = 0; i < findData.size(); i++)
                     {
-                        int p = node.model.Predict(findData[i].first);
+                        int p = node.Predict(findData[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
                         subFindData[p].second++;
                     }
                     for (int i = 0; i < insertData.size(); i++)
                     {
-                        int p = node.model.Predict(insertData[i].first);
+                        int p = node.Predict(insertData[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
                         subInsertData[p].second++;

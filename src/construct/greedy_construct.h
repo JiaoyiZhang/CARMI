@@ -205,12 +205,12 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 case 0:
                 {
                     time = 12.2345;
-                    space = float(4 * c + sizeof(LRType)) / 1024 / 1024;
-                    auto root = LRType(c);
-                    root.model.Train(findData, c);
+                    space = float(4 * c + sizeof(LRModel)) / 1024 / 1024;
+                    auto root = LRModel(c);
+                    root.Train(findData);
                     for (int i = 0; i < findData.size(); i++)
                     {
-                        int p = root.model.Predict(findData[i].first);
+                        int p = root.Predict(findData[i].first);
                         perSize[p]++;
                     }
                     break;
@@ -218,12 +218,12 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 case 1:
                 {
                     time = 39.1523;
-                    space = float(4 * c + 192 + sizeof(NNType)) / 1024 / 1024;
-                    auto root = NNType(c);
-                    root.model.Train(findData, c);
+                    space = float(4 * c + 192 + sizeof(NNModel)) / 1024 / 1024;
+                    auto root = NNModel(c);
+                    root.Train(findData);
                     for (int i = 0; i < findData.size(); i++)
                     {
-                        int p = root.model.Predict(findData[i].first);
+                        int p = root.Predict(findData[i].first);
                         perSize[p]++;
                     }
                     break;
@@ -231,12 +231,12 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 case 2:
                 {
                     time = 38.5235;
-                    space = float(5 * c + sizeof(HisType)) / 1024 / 1024;
-                    auto root = HisType(c);
-                    root.model.Train(findData, c);
+                    space = float(5 * c + sizeof(HisModel)) / 1024 / 1024;
+                    auto root = HisModel(c);
+                    root.Train(findData);
                     for (int i = 0; i < findData.size(); i++)
                     {
-                        int p = root.model.Predict(findData[i].first);
+                        int p = root.Predict(findData[i].first);
                         perSize[p]++;
                     }
                     break;
@@ -244,12 +244,12 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 case 3:
                 {
                     time = 8.23 * log(c) / log(2);
-                    space = float(12 * c + sizeof(BSType)) / 1024 / 1024;
-                    auto root = BSType(c);
-                    root.model.Train(findData, c);
+                    space = float(12 * c + sizeof(BSModel)) / 1024 / 1024;
+                    auto root = BSModel(c);
+                    root.Train(findData);
                     for (int i = 0; i < findData.size(); i++)
                     {
-                        int p = root.model.Predict(findData[i].first);
+                        int p = root.Predict(findData[i].first);
                         perSize[p]++;
                     }
                     break;
@@ -286,20 +286,20 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         {
         case 0:
         {
-            auto node = LRType(childNum);
-            node.model.Train(findData, childNum);
+            auto node = LRModel(childNum);
+            node.Train(findData);
 
             // divide the key and query
             for (int i = 0; i < findData.size(); i++)
             {
-                int p = node.model.Predict(findData[i].first);
+                int p = node.Predict(findData[i].first);
                 if (subFindData[p].first == -1)
                     subFindData[p].first = i;
                 subFindData[p].second++;
             }
             for (int i = 0; i < insertData.size(); i++)
             {
-                int p = node.model.Predict(insertData[i].first);
+                int p = node.Predict(insertData[i].first);
                 if (subInsertData[p].first == -1)
                     subInsertData[p].first = i;
                 subInsertData[p].second++;
@@ -308,20 +308,20 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         }
         case 1:
         {
-            auto node = NNType(childNum);
-            node.model.Train(findData, childNum);
+            auto node = NNModel(childNum);
+            node.Train(findData);
 
             // divide the key and query
             for (int i = 0; i < findData.size(); i++)
             {
-                int p = node.model.Predict(findData[i].first);
+                int p = node.Predict(findData[i].first);
                 if (subFindData[p].first == -1)
                     subFindData[p].first = i;
                 subFindData[p].second++;
             }
             for (int i = 0; i < insertData.size(); i++)
             {
-                int p = node.model.Predict(insertData[i].first);
+                int p = node.Predict(insertData[i].first);
                 if (subInsertData[p].first == -1)
                     subInsertData[p].first = i;
                 subInsertData[p].second++;
@@ -330,20 +330,20 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         }
         case 2:
         {
-            auto node = HisType(childNum);
-            node.model.Train(findData, childNum);
+            auto node = HisModel(childNum);
+            node.Train(findData);
 
             // divide the key and query
             for (int i = 0; i < findData.size(); i++)
             {
-                int p = node.model.Predict(findData[i].first);
+                int p = node.Predict(findData[i].first);
                 if (subFindData[p].first == -1)
                     subFindData[p].first = i;
                 subFindData[p].second++;
             }
             for (int i = 0; i < insertData.size(); i++)
             {
-                int p = node.model.Predict(insertData[i].first);
+                int p = node.Predict(insertData[i].first);
                 if (subInsertData[p].first == -1)
                     subInsertData[p].first = i;
                 subInsertData[p].second++;
@@ -352,20 +352,20 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         }
         case 3:
         {
-            auto node = BSType(childNum);
-            node.model.Train(findData, childNum);
+            auto node = BSModel(childNum);
+            node.Train(findData);
 
             // divide the key and query
             for (int i = 0; i < findData.size(); i++)
             {
-                int p = node.model.Predict(findData[i].first);
+                int p = node.Predict(findData[i].first);
                 if (subFindData[p].first == -1)
                     subFindData[p].first = i;
                 subFindData[p].second++;
             }
             for (int i = 0; i < insertData.size(); i++)
             {
-                int p = node.model.Predict(insertData[i].first);
+                int p = node.Predict(insertData[i].first);
                 if (subInsertData[p].first == -1)
                     subInsertData[p].first = i;
                 subInsertData[p].second++;

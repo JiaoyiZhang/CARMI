@@ -8,12 +8,7 @@
 #include <map>
 using namespace std;
 
-extern vector<LRType> LRVector;
-extern vector<NNType> NNVector;
-extern vector<HisType> HisVector;
-extern vector<BSType> BSVector;
-extern vector<ArrayType> ArrayVector;
-extern vector<GappedArrayType> GAVector;
+extern BaseNode **entireChild;
 
 vector<pair<double, double>> findDatapoint;
 vector<pair<double, double>> insertDatapoint;
@@ -43,13 +38,6 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     insertDatapoint = insertData;
     auto res = ChooseRoot(findData);
 
-    vector<LRType>().swap(LRVector);
-    vector<NNType>().swap(NNVector);
-    vector<HisType>().swap(HisVector);
-    vector<BSType>().swap(BSVector);
-    vector<ArrayType>().swap(ArrayVector);
-    vector<GappedArrayType>().swap(GAVector);
-
     COST.clear();
     structMap.clear();
 
@@ -61,30 +49,30 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     {
     case 0:
     {
-        LRVector.push_back(LRType(childNum));
-        LRVector[0].childLeft = allocateChildMemory(childNum);
-        LRVector[0].model.Train(findData, childNum);
+        entireChild[0] = new LRType(childNum);
+        ((LRType *)entireChild[0])->childLeft = allocateChildMemory(childNum);
+        ((LRType *)entireChild[0])->model.Train(findData, childNum);
         break;
     }
     case 1:
     {
-        NNVector.push_back(NNType(childNum));
-        NNVector[0].childLeft = allocateChildMemory(childNum);
-        NNVector[0].model.Train(findData, childNum);
+        entireChild[0] = new NNType(childNum);
+        ((NNType *)entireChild[0])->childLeft = allocateChildMemory(childNum);
+        ((NNType *)entireChild[0])->model.Train(findData, childNum);
         break;
     }
     case 2:
     {
-        HisVector.push_back(HisType(childNum));
-        HisVector[0].childLeft = allocateChildMemory(childNum);
-        HisVector[0].model.Train(findData, childNum);
+        entireChild[0] = new HisType(childNum);
+        ((HisType *)entireChild[0])->childLeft = allocateChildMemory(childNum);
+        ((HisType *)entireChild[0])->model.Train(findData, childNum);
         break;
     }
     case 3:
     {
-        BSVector.push_back(BSType(childNum));
-        BSVector[0].childLeft = allocateChildMemory(childNum);
-        BSVector[0].model.Train(findData, childNum);
+        entireChild[0] = new BSType(childNum);
+        ((BSType *)entireChild[0])->childLeft = allocateChildMemory(childNum);
+        ((BSType *)entireChild[0])->model.Train(findData, childNum);
         break;
     }
     }
@@ -101,14 +89,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         totalSpace += sizeof(LRType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = LRVector[0].model.Predict(findDatapoint[i].first);
+            int p = ((LRType *)entireChild[0])->model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = LRVector[0].model.Predict(insertDatapoint[i].first);
+            int p = ((LRType *)entireChild[0])->model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -117,7 +105,6 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            int idx;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second >= kMaxKeyNum)
@@ -136,13 +123,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             type = (structMap.find(key))->second.type;
-            idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-
-            idx += (type << 28);
-            entireChild[LRVector[0].childLeft + i] = idx;
-            // cout << "child " << i << ":\ttime is:" << resChild.first.first << ",\tnow time:" << totalTime + resChild.first.first << endl;
-            // cout << "find size: " << subFindData[i].second << ",\tinsertSize: " << subInsertData[i].second << endl;
-            // cout << "TIMESTAMP: " << __TIMESTAMP__ << endl;
+            storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
@@ -159,14 +140,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         totalSpace += sizeof(NNType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = NNVector[0].model.Predict(findDatapoint[i].first);
+            int p = ((NNType *)entireChild[0])->model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = NNVector[0].model.Predict(insertDatapoint[i].first);
+            int p = ((NNType *)entireChild[0])->model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -175,7 +156,6 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            int idx;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second >= kMaxKeyNum)
@@ -194,10 +174,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             type = (structMap.find(key))->second.type;
-            idx = idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-
-            idx += (type << 28);
-            entireChild[NNVector[0].childLeft + i] = idx;
+            storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
@@ -214,14 +191,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         totalSpace += sizeof(HisType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = HisVector[0].model.Predict(findDatapoint[i].first);
+            int p = ((HisType *)entireChild[0])->model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = HisVector[0].model.Predict(insertDatapoint[i].first);
+            int p = ((HisType *)entireChild[0])->model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -230,7 +207,6 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            int idx;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second >= kMaxKeyNum)
@@ -249,10 +225,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             type = (structMap.find(key))->second.type;
-            idx = idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-
-            idx += (type << 28);
-            entireChild[HisVector[0].childLeft + i] = idx;
+            storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
@@ -269,14 +242,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         totalSpace += sizeof(BSType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = BSVector[0].model.Predict(findDatapoint[i].first);
+            int p = ((BSType *)entireChild[0])->model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = BSVector[0].model.Predict(insertDatapoint[i].first);
+            int p = ((BSType *)entireChild[0])->model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -285,7 +258,6 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            int idx;
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second >= kMaxKeyNum)
@@ -304,10 +276,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             type = (structMap.find(key))->second.type;
-            idx = idx = storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-
-            idx += (type << 28);
-            entireChild[BSVector[0].childLeft + i] = idx;
+            storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
