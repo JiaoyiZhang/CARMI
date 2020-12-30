@@ -122,7 +122,7 @@ inline void NNModel::Train(const vector<pair<double, double>> &dataset)
 inline int NNModel::Predict(double key)
 {
     int s = 0;
-    int e = 3;
+    int e = 2;
     int mid;
     while (s < e)
     {

@@ -30,7 +30,7 @@ void constructSynthetic(double initRatio)
     NormalDataset norData = NormalDataset(datasetSize, initRatio);
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
 
-    vector<double> rate = {50, 30, 25, 20, 10, 5, 1};
+    vector<double> rate = {5, 1, 0.8, 0.6, 0.4, 0.3, 0.2, 0.1};
     for (int r = 0; r < rate.size(); r++)
     {
         kRate = rate[r];
@@ -38,11 +38,11 @@ void constructSynthetic(double initRatio)
         cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
         uniData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
-        if (r == 0)
-        {
-            btree_test(initRatio);
-            artTree_test(initRatio);
-        }
+        // if (r == 0)
+        // {
+        //     btree_test(initRatio);
+        //     artTree_test(initRatio);
+        // }
         CoreConstruct(initRatio);
 
         cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
