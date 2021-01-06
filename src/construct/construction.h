@@ -5,10 +5,11 @@
 #include "store_node.h"
 #include "dp.h"
 #include "params_struct.h"
+#include <vector>
 #include <map>
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
 
 vector<pair<double, double>> findDatapoint;
 vector<pair<double, double>> insertDatapoint;
@@ -43,36 +44,37 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
 
     int childNum = res.second;
     int rootType = res.first;
+    kInnerNodeID = rootType;
     cout << "Construction of the root node has been completed!" << endl;
     cout << "The optimal value of root is: " << res.first << ",\tthe optimal child number is: " << res.second << endl;
     switch (rootType)
     {
     case 0:
     {
-        entireChild[0] = new LRType(childNum);
-        ((LRType *)entireChild[0])->childLeft = allocateChildMemory(childNum);
-        ((LRType *)entireChild[0])->model.Train(findData, childNum);
+        lrRoot = LRType(childNum);
+        lrRoot.childLeft = allocateChildMemory(childNum);
+        lrRoot.model.Train(findData, childNum);
         break;
     }
     case 1:
     {
-        entireChild[0] = new NNType(childNum);
-        ((NNType *)entireChild[0])->childLeft = allocateChildMemory(childNum);
-        ((NNType *)entireChild[0])->model.Train(findData, childNum);
+        nnRoot = NNType(childNum);
+        nnRoot.childLeft = allocateChildMemory(childNum);
+        nnRoot.model.Train(findData, childNum);
         break;
     }
     case 2:
     {
-        entireChild[0] = new HisType(childNum);
-        ((HisType *)entireChild[0])->childLeft = allocateChildMemory(childNum);
-        ((HisType *)entireChild[0])->model.Train(findData, childNum);
+        hisRoot = HisType(childNum);
+        hisRoot.childLeft = allocateChildMemory(childNum);
+        hisRoot.model.Train(findData, childNum);
         break;
     }
     case 3:
     {
-        entireChild[0] = new BSType(childNum);
-        ((BSType *)entireChild[0])->childLeft = allocateChildMemory(childNum);
-        ((BSType *)entireChild[0])->model.Train(findData, childNum);
+        bsRoot = BSType(childNum);
+        bsRoot.childLeft = allocateChildMemory(childNum);
+        bsRoot.model.Train(findData, childNum);
         break;
     }
     }
@@ -89,14 +91,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         totalSpace += sizeof(LRType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = ((LRType *)entireChild[0])->model.Predict(findDatapoint[i].first);
+            int p = lrRoot.model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = ((LRType *)entireChild[0])->model.Predict(insertDatapoint[i].first);
+            int p = lrRoot.model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -140,14 +142,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         totalSpace += sizeof(NNType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = ((NNType *)entireChild[0])->model.Predict(findDatapoint[i].first);
+            int p = nnRoot.model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = ((NNType *)entireChild[0])->model.Predict(insertDatapoint[i].first);
+            int p = nnRoot.model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -191,14 +193,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         totalSpace += sizeof(HisType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = ((HisType *)entireChild[0])->model.Predict(findDatapoint[i].first);
+            int p = hisRoot.model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = ((HisType *)entireChild[0])->model.Predict(insertDatapoint[i].first);
+            int p = hisRoot.model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -242,14 +244,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         totalSpace += sizeof(BSType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = ((BSType *)entireChild[0])->model.Predict(findDatapoint[i].first);
+            int p = bsRoot.model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = ((BSType *)entireChild[0])->model.Predict(insertDatapoint[i].first);
+            int p = bsRoot.model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;

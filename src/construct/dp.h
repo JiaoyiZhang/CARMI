@@ -41,7 +41,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         }
         else
         {
-            double cost = kRate * sizeof(ArrayType(kMaxKeyNum)) / 1024 / 1024;
+            double cost = 0.0;
             COST.insert({{findLeft, findSize}, {0, cost}});
             ParamStruct leafP;
             leafP.type = 4;
@@ -77,16 +77,16 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
 
         // choose an array node as the leaf node
         time = 0.0;
-        space = float(sizeof(ArrayType) + 16 * findSize) / 1024 / 1024;
+        space = 16.0 * findSize / 1024 / 1024;
 
         auto tmp = ArrayType(kMaxKeyNum);
-        tmp.model.Train(findData, findData.size());
+        tmp.Train(findData);
         auto error = tmp.UpdateError(findData);
         if (error == 0)
             error = 1;
         for (int i = 0; i < findData.size(); i++)
         {
-            auto predict = tmp.model.Predict(findData[i].first);
+            auto predict = tmp.Predict(findData[i].first);
             auto d = abs(i - predict);
             time += 74.6245 * findData[i].second; // due to shuffle
             if (d <= error)
@@ -97,7 +97,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
 
         for (int i = 0; i < insertData.size(); i++)
         {
-            auto predict = tmp.model.Predict(insertData[i].first);
+            auto predict = tmp.Predict(insertData[i].first);
             auto actual = TestArrayBinarySearch(insertData[i].first, findData);
             auto d = abs(actual - predict);
             time += (74.6245 + 28.25 * (insertData.size() - actual + 1)) * insertData[i].second;
@@ -126,15 +126,15 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             time = 0.0;
             auto tmpNode = GappedArrayType(kMaxKeyNum);
             tmpNode.density = Density[i];
-            space = float(sizeof(GappedArrayType) + 16.0 / tmpNode.density * findData.size()) / 1024 / 1024;
+            space = 16.0 / tmpNode.density * findSize / 1024 / 1024;
 
-            tmpNode.model.Train(findData, findData.size());
+            tmpNode.Train(findData);
             auto errorGA = tmpNode.UpdateError(findData);
             if (errorGA == 0)
                 errorGA = 1;
             for (int t = 0; t < findData.size(); t++)
             {
-                auto predict = tmpNode.model.Predict(findData[t].first);
+                auto predict = tmpNode.Predict(findData[t].first);
                 auto d = abs(t - predict);
                 time += 74.6245 * findData[t].second; // due to shuffle
                 if (d <= errorGA)
@@ -144,7 +144,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             }
             for (int t = 0; t < insertData.size(); t++)
             {
-                auto predict = tmpNode.model.Predict(insertData[t].first);
+                auto predict = tmpNode.Predict(insertData[t].first);
                 auto actual = TestGABinarySearch(insertData[t].first, findData);
                 time += 74.6245 * insertData[t].second; // due to shuffle
                 auto d = abs(actual - predict);
@@ -200,15 +200,16 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 {
                 case 0:
                 {
-                    space = float(4 * c + sizeof(LRModel)) / 1024 / 1024; // MB
-                    double time = 12.2345;                               // ns
+                    space = 64.0 * c / 1024 / 1024; // MB
+                    double time = 12.2345;          // ns
                     time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
                     space *= kRate;
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = LRModel(c);
+                    auto node = LRModel();
+                    node.SetChildNumber(c);
                     node.Train(findData);
 
                     // divide the key and query
@@ -265,15 +266,16 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 }
                 case 1:
                 {
-                    space = float(4 * c + 192 + sizeof(NNModel)) / 1024 / 1024; // MB
-                    double time = 39.1523;                                     // ns
+                    space = 64.0 * c / 1024 / 1024; // MB
+                    double time = 39.1523;          // ns
                     time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
                     space *= kRate;
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = NNModel(c);
+                    auto node = NNModel();
+                    node.SetChildNumber(c);
                     node.Train(findData);
 
                     // divide the key and query
@@ -330,7 +332,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 }
                 case 2:
                 {
-                    space = float(5 * c + sizeof(HisModel)) / 1024 / 1024; // MB
+                    space = 64.0 * c / 1024 / 1024; // MB
                     double time = 38.5235;
                     time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
@@ -338,7 +340,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = HisModel(c);
+                    auto node = HisModel();
+                    node.SetChildNumber(c);
                     node.Train(findData);
 
                     // divide the key and query
@@ -395,7 +398,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 }
                 case 3:
                 {
-                    space = float(12 * c + sizeof(BSModel)) / 1024 / 1024;
+                    space = 64.0 * c / 1024 / 1024; // MB
                     double time = 8.23 * log(c) / log(2);
                     time = time * frequency / totalFrequency;
                     double RootCost = time + kRate * space;
@@ -403,7 +406,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = BSModel(c);
+                    auto node = BSModel();
+                    node.SetChildNumber(c);
                     node.Train(findData);
 
                     // divide the key and query

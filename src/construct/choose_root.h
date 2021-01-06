@@ -33,7 +33,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             case 0:
             {
                 time = 12.2345;
-                space = float(4 * c + sizeof(LRType)) / 1024 / 1024;
+                space = 64.0 * c / 1024 / 1024;
                 auto root = LRType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)
@@ -46,7 +46,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             case 1:
             {
                 time = 39.1523;
-                space = float(4 * c + 192 + sizeof(NNType)) / 1024 / 1024;
+                space = 64.0 * c / 1024 / 1024;
                 auto root = NNType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)
@@ -59,7 +59,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             case 2:
             {
                 time = 38.5235;
-                space = float(5 * c + sizeof(HisType)) / 1024 / 1024;
+                space = 64.0 * c / 1024 / 1024;
                 auto root = HisType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)
@@ -72,7 +72,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             case 3:
             {
                 time = 8.23 * log(c) / log(2);
-                space = float(12 * c + sizeof(BSType)) / 1024 / 1024;
+                space = 64.0 * c / 1024 / 1024;
                 auto root = BSType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)

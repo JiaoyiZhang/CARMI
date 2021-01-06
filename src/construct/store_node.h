@@ -38,11 +38,12 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         auto it = structMap.find(key);
         if (it == structMap.end())
             cout << "WRONG!" << endl;
-        auto node = new LRModel(it->second.childNum);
-        int optimalChildNumber = node->childNumber;
-        node->childLeft = allocateChildMemory(optimalChildNumber);
-        node->Train(datapoint);
-        entireChild[storeIdx] = node;
+        auto node = LRModel();
+        node.SetChildNumber(it->second.childNum);
+        int optimalChildNumber = it->second.childNum;
+        node.childLeft = allocateChildMemory(optimalChildNumber);
+        node.Train(datapoint);
+        entireChild[storeIdx].lr = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
         vector<int> subInsertData(optimalChildNumber, 0);
@@ -51,14 +52,14 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         for (int i = 0; i < size; i++)
         {
-            int p = node->Predict(datapoint[i].first);
+            int p = node.Predict(datapoint[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
                 subLeft[p] = i + left;
         }
         for (int i = 0; i < insertSize; i++)
         {
-            int p = node->Predict(insertData[i].first);
+            int p = node.Predict(insertData[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
                 subInsertLeft[p] = i + insertLeft;
@@ -70,7 +71,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
             pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
             type = (structMap.find(nowKey))->second.type;
-            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node->childLeft + i);
+            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
         }
         break;
     }
@@ -79,11 +80,12 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         auto it = structMap.find(key);
         if (it == structMap.end())
             cout << "WRONG!" << endl;
-        auto node = new NNModel(it->second.childNum);
-        int optimalChildNumber = node->childNumber;
-        node->childLeft = allocateChildMemory(optimalChildNumber);
-        node->Train(datapoint);
-        entireChild[storeIdx] = node;
+        auto node = NNModel();
+        node.SetChildNumber(it->second.childNum);
+        int optimalChildNumber = it->second.childNum;
+        node.childLeft = allocateChildMemory(optimalChildNumber);
+        node.Train(datapoint);
+        entireChild[storeIdx].nn = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
         vector<int> subInsertData(optimalChildNumber, 0);
@@ -92,14 +94,14 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         for (int i = 0; i < size; i++)
         {
-            int p = node->Predict(datapoint[i].first);
+            int p = node.Predict(datapoint[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
                 subLeft[p] = i + left;
         }
         for (int i = 0; i < insertSize; i++)
         {
-            int p = node->Predict(insertData[i].first);
+            int p = node.Predict(insertData[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
                 subInsertLeft[p] = i + insertLeft;
@@ -111,7 +113,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
             pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
             type = (structMap.find(nowKey))->second.type;
-            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node->childLeft + i);
+            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
         }
         break;
     }
@@ -120,11 +122,12 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         auto it = structMap.find(key);
         if (it == structMap.end())
             cout << "WRONG!" << endl;
-        auto node = new HisModel(it->second.childNum);
-        int optimalChildNumber = node->childNumber;
-        node->childLeft = allocateChildMemory(optimalChildNumber);
-        node->Train(datapoint);
-        entireChild[storeIdx] = node;
+        auto node = HisModel();
+        node.SetChildNumber(it->second.childNum);
+        int optimalChildNumber = it->second.childNum;
+        node.childLeft = allocateChildMemory(optimalChildNumber);
+        node.Train(datapoint);
+        entireChild[storeIdx].his = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
         vector<int> subInsertData(optimalChildNumber, 0);
@@ -133,14 +136,14 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         for (int i = 0; i < size; i++)
         {
-            int p = node->Predict(datapoint[i].first);
+            int p = node.Predict(datapoint[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
                 subLeft[p] = i + left;
         }
         for (int i = 0; i < insertSize; i++)
         {
-            int p = node->Predict(insertData[i].first);
+            int p = node.Predict(insertData[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
                 subInsertLeft[p] = i + insertLeft;
@@ -152,7 +155,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
             pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
             type = (structMap.find(nowKey))->second.type;
-            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node->childLeft + i);
+            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
         }
         break;
     }
@@ -161,11 +164,12 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         auto it = structMap.find(key);
         if (it == structMap.end())
             cout << "WRONG!" << endl;
-        auto node = new BSModel(it->second.childNum);
-        int optimalChildNumber = node->childNumber;
-        node->childLeft = allocateChildMemory(optimalChildNumber);
-        node->Train(datapoint);
-        entireChild[storeIdx] = node;
+        auto node = BSModel();
+        node.SetChildNumber(it->second.childNum);
+        int optimalChildNumber = it->second.childNum;
+        node.childLeft = allocateChildMemory(optimalChildNumber);
+        node.Train(datapoint);
+        entireChild[storeIdx].bs = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
         vector<int> subInsertData(optimalChildNumber, 0);
@@ -174,14 +178,14 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         for (int i = 0; i < size; i++)
         {
-            int p = node->Predict(datapoint[i].first);
+            int p = node.Predict(datapoint[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
                 subLeft[p] = i + left;
         }
         for (int i = 0; i < insertSize; i++)
         {
-            int p = node->Predict(insertData[i].first);
+            int p = node.Predict(insertData[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
                 subInsertLeft[p] = i + insertLeft;
@@ -193,16 +197,16 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
             pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
             type = (structMap.find(nowKey))->second.type;
-            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node->childLeft + i);
+            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
         }
         break;
     }
     case 4:
     {
         // choose an array node as the leaf node
-        auto node = new ArrayType(max(size + insertSize, kMaxKeyNum));
-        node->SetDataset(datapoint, node->m_capacity);
-        entireChild[storeIdx] = node;
+        auto node = ArrayType(max(size + insertSize, kMaxKeyNum));
+        node.SetDataset(datapoint, node.m_capacity);
+        entireChild[storeIdx].array = node;
         break;
     }
     case 5:
@@ -211,10 +215,10 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         if (it == structMap.end())
             cout << "WRONG!" << endl;
 
-        auto node = new GappedArrayType(max(size + insertSize, kMaxKeyNum));
-        node->density = it->second.density;
-        node->SetDataset(datapoint, node->capacity);
-        entireChild[storeIdx] = node;
+        auto node = GappedArrayType(max(size + insertSize, kMaxKeyNum));
+        node.density = it->second.density;
+        node.SetDataset(datapoint, node.capacity);
+        entireChild[storeIdx].ga = node;
         break;
     }
     }
