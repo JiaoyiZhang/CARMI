@@ -5,33 +5,14 @@
 #include "../leafNodeType/ga_type.h"
 #include "../dataManager/child_array.h"
 #include "../baseNode.h"
+#include <vector>
 using namespace std;
 
-extern BaseNode **entireChild;
-
-class BSModel : public BaseNode
-{
-public:
-    BSModel() { flag = 3; };
-    BSModel(int c)
-    {
-        flag = 3;
-        childNumber = min(c, 12); // childNumber = 12
-        for (int i = 0; i < 12; i++)
-            index[i] = 0;
-    }
-    void Initialize(const vector<pair<double, double>> &dataset);
-    void Train(const vector<pair<double, double>> &dataset);
-    int Predict(double key);
-
-    int childLeft;   // 4 Byte
-    int childNumber; // 4 Byte
-    float divisor;   // 4 Byte
-    float index[12]; // 48 Byte
-};
+extern vector<BaseNode> entireChild;
 
 inline void BSModel::Initialize(const vector<pair<double, double>> &dataset)
 {
+    int childNumber = flagNumber & 0x00FFFFFF;
     childLeft = allocateChildMemory(childNumber);
     if (dataset.size() == 0)
         return;
@@ -53,34 +34,35 @@ inline void BSModel::Initialize(const vector<pair<double, double>> &dataset)
     case 0:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new ArrayType(kThreshold);
-            ((ArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            ArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].array = tmp;
         }
         break;
     case 1:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new GappedArrayType(kThreshold);
-            ((GappedArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            GappedArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].ga = tmp;
         }
         break;
     }
-
-    vector<vector<pair<double, double>>>().swap(perSubDataset);
 }
 
 inline void BSModel::Train(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
-    float value = float(dataset.size()) / 12;
+    int childNumber = flagNumber & 0x00FFFFFF;
+    float value = float(dataset.size()) / childNumber;
     int cnt = 1;
     for (int i = value * cnt - 1; i < dataset.size(); i = value * (++cnt) - 1)
     {
         if (dataset[i].first != -1)
         {
-            if (cnt > 12)
-                cout << "in bs model, cnt > 12, cnt:" << cnt << endl;
+            if (cnt >= childNumber)
+                cout << "in bs model, cnt >= childNumber, cnt:" << cnt << endl;
             index[cnt - 1] = dataset[i].first;
         }
         else
@@ -89,8 +71,8 @@ inline void BSModel::Train(const vector<pair<double, double>> &dataset)
             {
                 if (dataset[j].first != -1)
                 {
-                    if (cnt > 12)
-                        cout << "in bs model, cnt > 12, cnt:" << cnt << endl;
+                    if (cnt >= childNumber)
+                        cout << "in bs model, cnt >= childNumber, cnt:" << cnt << endl;
                     index[cnt - 1] = dataset[i].first;
                     break;
                 }
@@ -102,7 +84,7 @@ inline void BSModel::Train(const vector<pair<double, double>> &dataset)
 inline int BSModel::Predict(double key)
 {
     int start_idx = 0;
-    int end_idx = childNumber - 1;
+    int end_idx = (flagNumber & 0x00FFFFFF) - 1;
     int mid;
     while (start_idx < end_idx)
     {
@@ -112,7 +94,7 @@ inline int BSModel::Predict(double key)
         else
             end_idx = mid;
     }
-    return end_idx;
+    return start_idx;
 }
 
 #endif

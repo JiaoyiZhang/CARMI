@@ -1,3 +1,4 @@
+
 #ifndef NN_MODEL_H
 #define NN_MODEL_H
 
@@ -7,32 +8,11 @@
 #include "../baseNode.h"
 using namespace std;
 
-extern BaseNode **entireChild;
-
-class NNModel : public BaseNode
-{
-public:
-    NNModel() { flag = 1; };
-    NNModel(int c)
-    {
-        flag = 1;
-        childNumber = c;
-        for (int i = 0; i < 3; i++)
-            theta[i] = {0.0001, 0.666};
-    }
-    void Initialize(const vector<pair<double, double>> &dataset);
-    void Train(const vector<pair<double, double>> &dataset);
-    int Predict(double key);
-
-    int childLeft;               // 4 Byte
-    int childNumber;             // 4 Byte
-    pair<float, float> theta[3]; // 24 Byte
-    pair<float, int> point[3];   // 24 Byte
-    int tmp;                     // 4 ?
-};
+extern vector<BaseNode> entireChild;
 
 inline void NNModel::Initialize(const vector<pair<double, double>> &dataset)
 {
+    int childNumber = flagNumber & 0x00FFFFFF;
     childLeft = allocateChildMemory(childNumber);
     if (dataset.size() == 0)
         return;
@@ -54,24 +34,25 @@ inline void NNModel::Initialize(const vector<pair<double, double>> &dataset)
     case 0:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new ArrayType(kThreshold);
-            ((ArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            ArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].array = tmp;
         }
         break;
     case 1:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new GappedArrayType(kThreshold);
-            ((GappedArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            GappedArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].ga = tmp;
         }
         break;
     }
-
-    vector<vector<pair<double, double>>>().swap(perSubDataset);
 }
 
 inline void NNModel::Train(const vector<pair<double, double>> &dataset)
 {
+    int childNumber = flagNumber & 0x00FFFFFF;
     int length = childNumber - 1;
     int actualSize = 0;
     vector<double> index;
@@ -109,7 +90,6 @@ inline void NNModel::Train(const vector<pair<double, double>> &dataset)
         auto theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
         theta1 *= childNumber;
         theta2 *= childNumber;
-        theta[k - 1] = {theta1, theta2};
         int pointIdx = theta1 * point[k - 1].first + theta2;
         if (pointIdx < 0)
             pointIdx = 0;
@@ -133,7 +113,8 @@ inline int NNModel::Predict(double key)
             e = mid;
     }
     // return the predicted idx in the children
-    int p = theta[e].first * key + theta[e].second;
+    // int p = theta[e].first * key + theta[e].second;
+    int p = 0;
     if (e == 0)
     {
         if (p < 0)

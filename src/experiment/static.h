@@ -5,7 +5,7 @@
 
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
 extern int childNum;
 extern ofstream outRes;
 

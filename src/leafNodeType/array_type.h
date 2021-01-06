@@ -161,6 +161,7 @@ inline int ArrayType::Predict(double key)
         p = left;
     else if (p >= left + bound)
         p = left + bound - 1;
+    p *= flagNumber & 0x00FFFFFF;
     return p;
 }
 

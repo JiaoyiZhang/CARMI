@@ -176,12 +176,13 @@ inline int GappedArrayType::Predict(double key)
         idx = 3;
     // return the predicted idx in the children
     int p = theta[idx].first * key + theta[idx].second;
-    int bound = (flagNumber & 0x00FFFFFF) / 4;
+    int bound = maxIndex / 4;
     int left = bound * idx;
     if (p < left)
         p = left;
     else if (p >= left + bound)
         p = left + bound - 1;
+    p *= maxIndex;
     return p;
 }
 

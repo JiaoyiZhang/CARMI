@@ -11,7 +11,8 @@
 #include "./experiment/test_synthetic.h"
 using namespace std;
 
-int datasetSize = 67108864;
+// int datasetSize = 67108864;
+int datasetSize = 1000000;
 int initDatasetSize;
 
 vector<pair<double, double>> dataset;
@@ -25,18 +26,23 @@ int kInnerNodeID = 0;
 
 ofstream outRes;
 
+LRType lrRoot;
+NNType nnRoot;
+HisType hisRoot;
+BSType bsRoot;
+
 int main()
 {
-    outRes.open("res_1223.csv", ios::app);
+    outRes.open("res_1230.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     kMaxKeyNum = 256;
     // kLeafNodeID = 1;
     cout << "kLeafNodeID:" << kLeafNodeID << endl;
     // static structure
-    // testSynthetic(1);
-    // testSynthetic(0.5);
-    // testSynthetic(0.95);
-    // testSynthetic(0);
+    testSynthetic(1);
+    testSynthetic(0.5);
+    testSynthetic(0.95);
+    testSynthetic(0);
 
     kMaxKeyNum = 2;
     constructSynthetic(1);   // read-only

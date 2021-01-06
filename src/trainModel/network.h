@@ -1,5 +1,5 @@
-#ifndef NN_H
-#define NN_H
+#ifndef NETWORK_H
+#define NETWORK_H
 
 #include "../params.h"
 #include <iostream>

@@ -7,33 +7,11 @@
 #include "../baseNode.h"
 using namespace std;
 
-extern BaseNode **entireChild;
-
-class HisModel : public BaseNode
-{
-public:
-    HisModel() { flag = 2; };
-    HisModel(int c)
-    {
-        flag = 2;
-        childNumber = min(c, 160); // childNumber = 160
-        minValue = 0;
-        divisor = 1;
-    }
-    void Initialize(const vector<pair<double, double>> &dataset);
-    void Train(const vector<pair<double, double>> &dataset);
-    int Predict(double key);
-
-    int childLeft;          // 4 Byte
-    int childNumber;        // 4 Byte
-    float divisor;          // 4 Byte
-    double minValue;        // 8 Byte
-    unsigned int table0[5]; // 20 Byte
-    unsigned int table1[5]; // 20 Byte
-};
+extern vector<BaseNode> entireChild;
 
 inline void HisModel::Initialize(const vector<pair<double, double>> &dataset)
 {
+    int childNumber = flagNumber & 0x00FFFFFF;
     childLeft = allocateChildMemory(childNumber);
     if (dataset.size() == 0)
         return;
@@ -55,26 +33,27 @@ inline void HisModel::Initialize(const vector<pair<double, double>> &dataset)
     case 0:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new ArrayType(kThreshold);
-            ((ArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            ArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].array = tmp;
         }
         break;
     case 1:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new GappedArrayType(kThreshold);
-            ((GappedArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            GappedArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].ga = tmp;
         }
         break;
     }
-
-    vector<vector<pair<double, double>>>().swap(perSubDataset);
 }
 
 inline void HisModel::Train(const vector<pair<double, double>> &dataset)
 {
     if (dataset.size() == 0)
         return;
+    int childNumber = flagNumber & 0x00FFFFFF;
     double maxValue;
     for (int i = 0; i < dataset.size(); i++)
     {
@@ -171,6 +150,7 @@ inline void HisModel::Train(const vector<pair<double, double>> &dataset)
 inline int HisModel::Predict(double key)
 {
     // return the idx in children
+    int childNumber = flagNumber & 0x00FFFFFF;
     int idx = float(key - minValue) / divisor;
     if (idx < 0)
         idx = 0;

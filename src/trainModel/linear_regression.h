@@ -1,5 +1,5 @@
-#ifndef LR_H
-#define LR_H
+#ifndef LINEAR_REGRESSION_H
+#define LINEAR_REGRESSION_H
 
 #include <iostream>
 #include <vector>

@@ -7,32 +7,11 @@
 #include "../baseNode.h"
 using namespace std;
 
-extern BaseNode **entireChild;
-
-class LRModel : public BaseNode
-{
-public:
-    LRModel() { flag = 0; };
-    LRModel(int c)
-    {
-        flag = 0;
-        childNumber = c;
-        bound = childNumber / 5;
-    }
-    void Initialize(const vector<pair<double, double>> &dataset);
-    void Train(const vector<pair<double, double>> &dataset);
-    int Predict(double key);
-
-    int childLeft;               // 4 Byte
-    int childNumber;             // 4 Byte
-    float divisor;               // 4 Byte
-    float bound;                 // 4 Byte
-    float minValue;              // 4 Byte
-    pair<float, float> theta[5]; // 40 Byte
-};
+extern vector<BaseNode> entireChild;
 
 inline void LRModel::Initialize(const vector<pair<double, double>> &dataset)
 {
+    int childNumber = flagNumber & 0x00FFFFFF;
     childLeft = allocateChildMemory(childNumber);
     if (dataset.size() == 0)
         return;
@@ -54,25 +33,26 @@ inline void LRModel::Initialize(const vector<pair<double, double>> &dataset)
     case 0:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new ArrayType(kThreshold);
-            ((ArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            ArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].array = tmp;
         }
         break;
     case 1:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new GappedArrayType(kThreshold);
-            ((GappedArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            GappedArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].ga = tmp;
         }
         break;
     }
-
-    vector<vector<pair<double, double>>>().swap(perSubDataset);
 }
 
 inline void LRModel::Train(const vector<pair<double, double>> &dataset)
 {
     int actualSize = 0;
+    int childNumber = flagNumber & 0x00FFFFFF;
     vector<double> index;
     for (int i = 0; i < dataset.size(); i++)
     {
@@ -100,10 +80,10 @@ inline void LRModel::Train(const vector<pair<double, double>> &dataset)
             break;
         }
     }
-    divisor = float(maxValue - minValue) / 5;
+    divisor = float(maxValue - minValue) / 6;
 
     int i = 0;
-    for (int k = 1; k <= 5; k++)
+    for (int k = 1; k <= 6; k++)
     {
         double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
         for (; i < dataset.size() - 1; i++)
@@ -131,10 +111,11 @@ inline int LRModel::Predict(double key)
     int idx = float(key - minValue) / divisor;
     if (idx < 0)
         idx = 0;
-    else if (idx >= 5)
-        idx = 4;
+    else if (idx >= 6)
+        idx = 5;
     // return the predicted idx in the children
     int p = theta[idx].first * key + theta[idx].second;
+    int bound = (flagNumber & 0x00FFFFFF) / 6;
     int left = bound * idx;
     if (p < left)
         p = left;

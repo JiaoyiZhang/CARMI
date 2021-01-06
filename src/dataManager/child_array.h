@@ -4,7 +4,8 @@
 #include <vector>
 #include "../baseNode.h"
 using namespace std;
-BaseNode **entireChild;
+
+vector<BaseNode> entireChild;
 unsigned int entireChildNumber;
 unsigned int nowChildNumber;
 
@@ -16,13 +17,11 @@ void initEntireChild(int size)
         len *= 2;
     len *= 2;
     entireChildNumber = len;
-    delete[] entireChild;
+    entireChild.clear();
     nowChildNumber = 0;
-    entireChild = new BaseNode *[len];
+    BaseNode tmp;
     for (int i = 0; i < len; i++)
-        entireChild[i] = new BaseNode;
-    for (int i = 0; i < len; i++)
-        entireChild[i]->flag = '0';
+        entireChild.push_back(tmp);
 }
 
 // allocate a block to the current inner node
@@ -40,16 +39,21 @@ int allocateChildMemory(int size)
     if (newLeft == -1)
     {
         cout << "need expand the entireChild!" << endl;
-        auto tmpSize = entireChildNumber;
-        auto tmpEnd = nowChildNumber;
-        vector<BaseNode *> tmpChild;
-        for (int i = 0; i < tmpSize; i++)
-            tmpChild.push_back(entireChild[i]);
+        unsigned int len = 4096;
+        while (len < entireChildNumber)
+            len *= 2;
+        len *= 2;
+        entireChildNumber = len;
+        vector<BaseNode> tmp = entireChild;
+        entireChild.clear();
 
-        initEntireChild(tmpSize);
-        for (int i = 0; i < tmpSize; i++)
-            entireChild[i] = tmpChild[i];
-        nowChildNumber = tmpEnd;
+        for (int i = 0; i < nowChildNumber; i++)
+            entireChild.push_back(tmp[i]);
+        BaseNode t;
+        for (int i = nowChildNumber; i < entireChildNumber; i++)
+            entireChild.push_back(t);
+
+        // nowChildNumber = tmpEnd;
         newLeft = nowChildNumber;
         nowChildNumber += size;
     }
