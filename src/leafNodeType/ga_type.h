@@ -1,42 +1,15 @@
 #ifndef GA_TYPE_H
 #define GA_TYPE_H
 
-#include "../params.h"
-#include "../trainModel/lr.h"
 #include <float.h>
 #include <vector>
+#include "../params.h"
 #include "../dataManager/datapoint.h"
 #include "../baseNode.h"
+#include "ga.h"
 using namespace std;
 
 extern pair<double, double> *entireData;
-class GappedArrayType : public BaseNode
-{
-public:
-    GappedArrayType() { flag = 'F'; };
-    GappedArrayType(int cap)
-    {
-        flag = 'F';
-        m_datasetSize = 0;
-        error = 0;
-        density = kDensity;
-        capacity = cap;
-        maxIndex = -2;
-        m_left = -1;
-    }
-    inline int UpdateError(const vector<pair<double, double>> &dataset);
-    inline void SetDataset(const vector<pair<double, double>> &dataset, int cap);
-    inline void SetDataset(const int left, const int size, int cap);
-
-    LinearRegression model;
-    int m_left;        // the left boundary of the leaf node in the global array
-    int m_datasetSize; // the current amount of data
-    int capacity;      // the current maximum capacity of the leaf node
-
-    int maxIndex;   // tht index of the last one
-    int error;      // the boundary of binary search
-    double density; // the maximum density of the leaf node data
-};
 
 inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subDataset, int cap)
 {
@@ -48,7 +21,7 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     capacity *= 2; // test
     if (capacity > 4096)
         capacity = 4096;
-    m_datasetSize = 0;
+    int size = 0;
     m_left = allocateMemory(capacity);
 
     int k = density / (1 - density);
@@ -67,17 +40,18 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
             }
             newDataset[j++] = subDataset[i];
             maxIndex = j - 1;
-            m_datasetSize++;
+            size++;
         }
     }
 
-    if (m_datasetSize > 4096)
-        cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:" << m_datasetSize << endl;
+    if (size > 4096)
+        cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:" << size << endl;
 
     for (int i = m_left, j = 0; j < capacity; i++, j++)
         entireData[i] = newDataset[j];
+    flagNumber += size;
 
-    model.Train(newDataset, capacity);
+    Train(newDataset);
 
     UpdateError(newDataset);
 }
@@ -93,14 +67,13 @@ inline void GappedArrayType::SetDataset(const int left, const int size, int cap)
 
 inline int GappedArrayType::UpdateError(const vector<pair<double, double>> &newDataset)
 {
-
     // find: max|pi-yi|
     int maxError = 0, p, d;
     for (int i = 0; i < newDataset.size(); i++)
     {
         if (newDataset[i].first != -1)
         {
-            p = model.PredictPrecision(newDataset[i].first, newDataset.size());
+            p = Predict(newDataset[i].first);
             d = abs(i - p);
             if (d > maxError)
                 maxError = d;
@@ -115,11 +88,11 @@ inline int GappedArrayType::UpdateError(const vector<pair<double, double>> &newD
     {
         cntBetween = 0;
         cntOut = 0;
-        for (int i = 0; i < m_datasetSize; i++)
+        for (int i = 0; i < newDataset.size(); i++)
         {
             if (newDataset[i].first != -1)
             {
-                p = model.PredictPrecision(newDataset[i].first, newDataset.size());
+                p = Predict(newDataset[i].first);
                 d = abs(i - p);
                 if (d <= e)
                     cntBetween++;
@@ -139,4 +112,77 @@ inline int GappedArrayType::UpdateError(const vector<pair<double, double>> &newD
     }
     return error;
 }
+
+inline void GappedArrayType::Train(const vector<pair<double, double>> &dataset)
+{
+    int actualSize = 0;
+    vector<double> index;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        if (dataset[i].first != -1)
+            actualSize++;
+        index.push_back(double(i) / double(dataset.size()));
+    }
+    if (actualSize == 0)
+        return;
+
+    double maxValue;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        if (dataset[i].first != -1)
+        {
+            minValue = dataset[i].first;
+            break;
+        }
+    }
+    for (int i = dataset.size() - 1; i >= 0; i--)
+    {
+        if (dataset[i].first != -1)
+        {
+            maxValue = dataset[i].first;
+            break;
+        }
+    }
+    divisor = float(maxValue - minValue) / 4;
+
+    int i = 0;
+    for (int k = 1; k <= 4; k++)
+    {
+        double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+        for (; i < dataset.size() - 1; i++)
+        {
+            if ((dataset[i].first - minValue) / divisor == k)
+                break;
+            if (dataset[i].first != -1)
+            {
+                t1 += dataset[i].first * dataset[i].first;
+                t2 += dataset[i].first;
+                t3 += dataset[i].first * index[i];
+                t4 += index[i];
+            }
+        }
+        auto theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
+        auto theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
+        theta[k - 1] = {theta1, theta2};
+    }
+}
+
+inline int GappedArrayType::Predict(double key)
+{
+    int idx = float(key - minValue) / divisor;
+    if (idx < 0)
+        idx = 0;
+    else if (idx >= 4)
+        idx = 3;
+    // return the predicted idx in the children
+    int p = theta[idx].first * key + theta[idx].second;
+    int bound = (flagNumber & 0x00FFFFFF) / 4;
+    int left = bound * idx;
+    if (p < left)
+        p = left;
+    else if (p >= left + bound)
+        p = left + bound - 1;
+    return p;
+}
+
 #endif
