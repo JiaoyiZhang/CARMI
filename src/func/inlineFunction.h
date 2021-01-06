@@ -11,7 +11,7 @@
 #include <vector>
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
 
 extern pair<double, double> *entireData;
 

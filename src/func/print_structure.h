@@ -14,7 +14,7 @@
 #include "../innerNode/his_model.h"
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
 
 void printStructure(int level, int type, int idx)
 {
@@ -25,11 +25,11 @@ void printStructure(int level, int type, int idx)
     {
     case 0:
     {
-        cout << "level " << level << ": now root is lr, idx:" << idx << ", childNumber:" << ((LRType *)entireChild[idx])->childNumber;
-        for (int i = 0; i < ((LRType *)entireChild[idx])->childNumber; i++)
+        cout << "level " << level << ": now root is lr, idx:" << idx << ", flagNumber & 0x00FFFFFF:" << (entireChild[idx].lr.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < (entireChild[idx].lr.flagNumber & 0x00FFFFFF); i++)
         {
-            auto childIdx = ((LRType *)entireChild[idx])->childLeft + i;
-            int t = entireChild[childIdx]->flag;
+            auto childIdx = entireChild[idx].lr.childLeft + i;
+            int t = (entireChild[childIdx].lr.flagNumber >> 24);
             tree[t]++;
         }
         cout << "\tchild:";
@@ -46,9 +46,9 @@ void printStructure(int level, int type, int idx)
         if (tree[70])
             cout << "\tga:" << tree[70];
         cout << endl;
-        for (int i = 0; i < ((LRType *)entireChild[idx])->childNumber; i++)
+        for (int i = 0; i < (entireChild[idx].lr.flagNumber & 0x00FFFFFF); i++)
         {
-            auto t = ((LRType *)entireChild[idx])->childLeft + i;
+            auto t = entireChild[idx].lr.childLeft + i;
             auto childIdx = t;
             if (t < 4)
                 printStructure(level + 1, t, childIdx);
@@ -57,11 +57,11 @@ void printStructure(int level, int type, int idx)
     }
     case 1:
     {
-        cout << "level " << level << ": now root is nn, idx:" << idx << ", childNumber:" << ((NNType *)entireChild[idx])->childNumber;
-        for (int i = 0; i < ((NNType *)entireChild[idx])->childNumber; i++)
+        cout << "level " << level << ": now root is nn, idx:" << idx << ", flagNumber & 0x00FFFFFF:" << (entireChild[idx].nn.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < entireChild[idx].nn.flagNumber & 0x00FFFFFF; i++)
         {
-            auto childIdx = ((LRType *)entireChild[idx])->childLeft + i;
-            int t = entireChild[childIdx]->flag;
+            auto childIdx = entireChild[idx].lr.childLeft + i;
+            int t = (entireChild[childIdx].nn.flagNumber >> 24);
             tree[t]++;
         }
         cout << "\tchild:";
@@ -78,9 +78,9 @@ void printStructure(int level, int type, int idx)
         if (tree[70])
             cout << "\tga:" << tree[70];
         cout << endl;
-        for (int i = 0; i < ((NNType *)entireChild[idx])->childNumber; i++)
+        for (int i = 0; i < entireChild[idx].nn.flagNumber & 0x00FFFFFF; i++)
         {
-            auto t = ((NNType *)entireChild[idx])->childLeft + i;
+            auto t = entireChild[idx].nn.childLeft + i;
             auto childIdx = t;
             if (t < 4)
                 printStructure(level + 1, t, childIdx);
@@ -89,11 +89,11 @@ void printStructure(int level, int type, int idx)
     }
     case 2:
     {
-        cout << "level " << level << ": now root is his, idx:" << idx << ", childNumber:" << ((HisType *)entireChild[idx])->childNumber;
-        for (int i = 0; i < ((HisType *)entireChild[idx])->childNumber; i++)
+        cout << "level " << level << ": now root is his, idx:" << idx << ", flagNumber & 0x00FFFFFF:" << (entireChild[idx].his.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < entireChild[idx].his.flagNumber & 0x00FFFFFF; i++)
         {
-            auto childIdx = ((LRType *)entireChild[idx])->childLeft + i;
-            int t = entireChild[childIdx]->flag;
+            auto childIdx = entireChild[idx].lr.childLeft + i;
+            int t = (entireChild[childIdx].his.flagNumber >> 24);
             tree[t]++;
         }
         cout << "\tchild:";
@@ -110,9 +110,9 @@ void printStructure(int level, int type, int idx)
         if (tree[70])
             cout << "\tga:" << tree[70];
         cout << endl;
-        for (int i = 0; i < ((HisType *)entireChild[idx])->childNumber; i++)
+        for (int i = 0; i < entireChild[idx].his.flagNumber & 0x00FFFFFF; i++)
         {
-            auto t = ((HisType *)entireChild[idx])->childLeft + i;
+            auto t = entireChild[idx].his.childLeft + i;
             auto childIdx = t;
             if (t < 4)
                 printStructure(level + 1, t, childIdx);
@@ -121,11 +121,11 @@ void printStructure(int level, int type, int idx)
     }
     case 3:
     {
-        cout << "level " << level << ": now root is bin, idx:" << idx << ", childNumber:" << ((BSType *)entireChild[idx])->childNumber;
-        for (int i = 0; i < ((BSType *)entireChild[idx])->childNumber; i++)
+        cout << "level " << level << ": now root is bin, idx:" << idx << ", flagNumber & 0x00FFFFFF:" << (entireChild[idx].bs.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < entireChild[idx].bs.flagNumber & 0x00FFFFFF; i++)
         {
-            auto childIdx = ((BSType *)entireChild[idx])->childLeft + i;
-            int t = entireChild[childIdx]->flag;
+            auto childIdx = entireChild[idx].bs.childLeft + i;
+            int t = (entireChild[childIdx].bs.flagNumber >> 24);
             tree[t]++;
         }
         cout << "\tchild:";
@@ -142,9 +142,9 @@ void printStructure(int level, int type, int idx)
         if (tree[70])
             cout << "\tga:" << tree[70];
         cout << endl;
-        for (int i = 0; i < ((BSType *)entireChild[idx])->childNumber; i++)
+        for (int i = 0; i < entireChild[idx].bs.flagNumber & 0x00FFFFFF; i++)
         {
-            auto t = ((BSType *)entireChild[idx])->childLeft + i;
+            auto t = entireChild[idx].bs.childLeft + i;
             auto childIdx = t;
             if (t < 4)
                 printStructure(level + 1, t, childIdx);
@@ -152,13 +152,13 @@ void printStructure(int level, int type, int idx)
         break;
     }
 
-    case 65:
+    case 4:
     {
-        cout << "level " << level << ": now root is lr inner, idx:" << idx << ", childNumber:" << ((LRModel *)entireChild[idx])->childNumber;
-        for (int i = 0; i < ((LRModel *)entireChild[idx])->childNumber; i++)
+        cout << "level " << level << ": now inner node is lr, idx:" << idx << ", flagNumber & 0x00FFFFFF:" << (entireChild[idx].lr.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < (entireChild[idx].lr.flagNumber & 0x00FFFFFF); i++)
         {
-            auto childIdx = ((LRModel *)entireChild[idx])->childLeft + i;
-            int t = entireChild[childIdx]->flag;
+            auto childIdx = entireChild[idx].lr.childLeft + i;
+            int t = (entireChild[childIdx].lr.flagNumber >> 24);
             tree[t]++;
         }
         cout << "\tchild:";
@@ -175,22 +175,22 @@ void printStructure(int level, int type, int idx)
         if (tree[70])
             cout << "\tga:" << tree[70];
         cout << endl;
-        for (int i = 0; i < ((LRModel *)entireChild[idx])->childNumber; i++)
+        for (int i = 0; i < (entireChild[idx].lr.flagNumber & 0x00FFFFFF); i++)
         {
-            auto t = ((LRModel *)entireChild[idx])->childLeft + i;
+            auto t = entireChild[idx].lr.childLeft + i;
             auto childIdx = t;
             if (t < 4)
                 printStructure(level + 1, t, childIdx);
         }
         break;
     }
-    case 66:
+    case 5:
     {
-        cout << "level " << level << ": now root is nn inner, idx:" << idx << ", childNumber:" << ((NNModel *)entireChild[idx])->childNumber;
-        for (int i = 0; i < ((NNModel *)entireChild[idx])->childNumber; i++)
+        cout << "level " << level << ": now inner node is nn, idx:" << idx << ", flagNumber & 0x00FFFFFF:" << (entireChild[idx].nn.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < entireChild[idx].nn.flagNumber & 0x00FFFFFF; i++)
         {
-            auto childIdx = ((NNModel *)entireChild[idx])->childLeft + i;
-            int t = entireChild[childIdx]->flag;
+            auto childIdx = entireChild[idx].lr.childLeft + i;
+            int t = (entireChild[childIdx].nn.flagNumber >> 24);
             tree[t]++;
         }
         cout << "\tchild:";
@@ -207,22 +207,22 @@ void printStructure(int level, int type, int idx)
         if (tree[70])
             cout << "\tga:" << tree[70];
         cout << endl;
-        for (int i = 0; i < ((NNModel *)entireChild[idx])->childNumber; i++)
+        for (int i = 0; i < entireChild[idx].nn.flagNumber & 0x00FFFFFF; i++)
         {
-            auto t = ((NNModel *)entireChild[idx])->childLeft + i;
+            auto t = entireChild[idx].nn.childLeft + i;
             auto childIdx = t;
             if (t < 4)
                 printStructure(level + 1, t, childIdx);
         }
         break;
     }
-    case 67:
+    case 6:
     {
-        cout << "level " << level << ": now root is his inner, idx:" << idx << ", childNumber:" << ((HisModel *)entireChild[idx])->childNumber;
-        for (int i = 0; i < ((HisModel *)entireChild[idx])->childNumber; i++)
+        cout << "level " << level << ": now inner node is his, idx:" << idx << ", flagNumber & 0x00FFFFFF:" << (entireChild[idx].his.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < entireChild[idx].his.flagNumber & 0x00FFFFFF; i++)
         {
-            auto childIdx = ((HisModel *)entireChild[idx])->childLeft + i;
-            int t = entireChild[childIdx]->flag;
+            auto childIdx = entireChild[idx].lr.childLeft + i;
+            int t = (entireChild[childIdx].his.flagNumber >> 24);
             tree[t]++;
         }
         cout << "\tchild:";
@@ -239,22 +239,22 @@ void printStructure(int level, int type, int idx)
         if (tree[70])
             cout << "\tga:" << tree[70];
         cout << endl;
-        for (int i = 0; i < ((HisModel *)entireChild[idx])->childNumber; i++)
+        for (int i = 0; i < entireChild[idx].his.flagNumber & 0x00FFFFFF; i++)
         {
-            auto t = ((HisModel *)entireChild[idx])->childLeft + i;
+            auto t = entireChild[idx].his.childLeft + i;
             auto childIdx = t;
             if (t < 4)
                 printStructure(level + 1, t, childIdx);
         }
         break;
     }
-    case 68:
+    case 7:
     {
-        cout << "level " << level << ": now root is bin inner, idx:" << idx << ", childNumber:" << ((BSModel *)entireChild[idx])->childNumber;
-        for (int i = 0; i < ((BSModel *)entireChild[idx])->childNumber; i++)
+        cout << "level " << level << ": now inner node is bin, idx:" << idx << ", flagNumber & 0x00FFFFFF:" << (entireChild[idx].bs.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < entireChild[idx].bs.flagNumber & 0x00FFFFFF; i++)
         {
-            auto childIdx = ((BSModel *)entireChild[idx])->childLeft + i;
-            int t = entireChild[childIdx]->flag;
+            auto childIdx = entireChild[idx].bs.childLeft + i;
+            int t = (entireChild[childIdx].bs.flagNumber >> 24);
             tree[t]++;
         }
         cout << "\tchild:";
@@ -271,9 +271,9 @@ void printStructure(int level, int type, int idx)
         if (tree[70])
             cout << "\tga:" << tree[70];
         cout << endl;
-        for (int i = 0; i < ((BSModel *)entireChild[idx])->childNumber; i++)
+        for (int i = 0; i < entireChild[idx].bs.flagNumber & 0x00FFFFFF; i++)
         {
-            auto t = ((BSModel *)entireChild[idx])->childLeft + i;
+            auto t = entireChild[idx].bs.childLeft + i;
             auto childIdx = t;
             if (t < 4)
                 printStructure(level + 1, t, childIdx);

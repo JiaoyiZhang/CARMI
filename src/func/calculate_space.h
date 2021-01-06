@@ -34,17 +34,34 @@ long double calculateSpace()
 
     long double space = 0;
 
-    for (int i = 0; i < nowChildNumber; i++)
+    switch (kInnerNodeID)
     {
-        if (entireChild[i]->flag < 'E')
-            space += 64;
-        else if (entireChild[i]->flag == 'E')
-            space += sizeof(ArrayType);
-        else
-            space += sizeof(GappedArrayType);
+    case 0:
+        space += sizeof(LRType);
+        break;
+    case 1:
+        space += sizeof(NNType);
+        break;
+    case 2:
+        space += sizeof(HisType);
+        break;
+    case 3:
+        space += sizeof(BSType);
+        break;
     }
+
+    space += 64 * nowChildNumber;
+    // for (int i = 0; i < nowChildNumber; i++)
+    // {
+    //     if ((entireChild[i].lr.flagNumber >> 24) < 8)
+    //         space += 64;
+    //     else if ((entireChild[i].lr.flagNumber >> 24) == 9)
+    //         space += sizeof(ArrayType);
+    //     else
+    //         space += sizeof(GappedArrayType);
+    // }
     space = space / 1024 / 1024;
-    cout << "\nTOTAL SPACE: " << space << "MB" << endl;
+    cout << "\tStructure SPACE: " << space << "MB" << endl;
     space += float(dataset.size()) * 16 / 1024 / 1024;
     cout << "\nTOTAL SPACE (include data): " << space << "MB" << endl;
     return space;

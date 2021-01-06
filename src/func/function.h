@@ -21,7 +21,7 @@
 #include <iomanip>
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
 
 extern pair<double, double> *entireData;
 extern unsigned int entireDataSize;
@@ -35,26 +35,31 @@ extern const int kAdaptiveChildNum;
 extern double kRate;
 extern int kMaxKeyNum;
 
+extern LRType lrRoot;
+extern NNType nnRoot;
+extern HisType hisRoot;
+extern BSType bsRoot;
+
 void Initialize(const vector<pair<double, double>> &dataset, int childNum)
 {
     // create the root node
     switch (kInnerNodeID)
     {
     case 0:
-        entireChild[0] = new LRType(childNum);
-        ((LRType *)entireChild[0])->Initialize(dataset);
+        lrRoot = LRType(childNum);
+        lrRoot.Initialize(dataset);
         break;
     case 1:
-        entireChild[0] = new NNType(childNum);
-        ((NNType *)entireChild[0])->Initialize(dataset);
+        nnRoot = NNType(childNum);
+        nnRoot.Initialize(dataset);
         break;
     case 2:
-        entireChild[0] = new HisType(childNum);
-        ((HisType *)entireChild[0])->Initialize(dataset);
+        hisRoot = HisType(childNum);
+        hisRoot.Initialize(dataset);
         break;
     case 3:
-        entireChild[0] = new BSType(childNum);
-        ((BSType *)entireChild[0])->Initialize(dataset);
+        bsRoot = BSType(childNum);
+        bsRoot.Initialize(dataset);
         break;
     }
 }

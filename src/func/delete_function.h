@@ -17,7 +17,12 @@
 #include "../dataManager/datapoint.h"
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
+
+extern LRType lrRoot;
+extern NNType nnRoot;
+extern HisType hisRoot;
+extern BSType bsRoot;
 
 bool Delete(int rootType, double key)
 {
@@ -30,63 +35,63 @@ bool Delete(int rootType, double key)
         {
         case 0:
         {
-            idx = ((LRType *)entireChild[idx])->childLeft + ((LRType *)entireChild[idx])->model.Predict(key);
-            type = entireChild[idx]->flag;
+            idx = lrRoot.childLeft + lrRoot.model.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 1:
         {
-            idx = ((NNType *)entireChild[idx])->childLeft + ((NNType *)entireChild[idx])->model.Predict(key);
-            type = entireChild[idx]->flag;
+            idx = nnRoot.childLeft + nnRoot.model.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 2:
         {
-            idx = ((HisType *)entireChild[idx])->childLeft + ((HisType *)entireChild[idx])->model.Predict(key);
-            type = entireChild[idx]->flag;
+            idx = hisRoot.childLeft + hisRoot.model.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 3:
         {
-            idx = ((BSType *)entireChild[idx])->childLeft + ((BSType *)entireChild[idx])->model.Predict(key);
-            type = entireChild[idx]->flag;
+            idx = bsRoot.childLeft + bsRoot.model.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 65:
+        case 4:
         {
-            idx = ((LRModel *)entireChild[idx])->childLeft + ((LRModel *)entireChild[idx])->Predict(key);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 66:
+        case 5:
         {
-            idx = ((NNModel *)entireChild[idx])->childLeft + ((NNModel *)entireChild[idx])->Predict(key);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].nn.childLeft + entireChild[idx].nn.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 67:
+        case 6:
         {
-            idx = ((HisModel *)entireChild[idx])->childLeft + ((HisModel *)entireChild[idx])->Predict(key);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].his.childLeft + entireChild[idx].his.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 68:
+        case 7:
         {
-            idx = ((BSModel *)entireChild[idx])->childLeft + ((BSModel *)entireChild[idx])->Predict(key);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].bs.childLeft + entireChild[idx].bs.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 69:
         {
-            auto left = ((ArrayType *)entireChild[idx])->m_left;
-            auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-            int preIdx = ((ArrayType *)entireChild[idx])->model.PredictPrecision(key, size);
+            auto left = entireChild[idx].array.m_left;
+            auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+            int preIdx = entireChild[idx].array.Predict(key);
             if (entireData[left + preIdx].first == key)
                 preIdx += left;
             else
             {
-                int start = max(0, preIdx - ((ArrayType *)entireChild[idx])->error) + left;
-                int end = min(size - 1, preIdx + ((ArrayType *)entireChild[idx])->error) + left;
+                int start = max(0, preIdx - entireChild[idx].array.error) + left;
+                int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
                 start = min(start, end);
                 int res;
                 if (key <= entireData[start].first)
@@ -107,7 +112,7 @@ bool Delete(int rootType, double key)
             for (int i = preIdx; i < left + size - 1; i++)
                 entireData[i] = entireData[i + 1];
             entireData[left + size - 1] = {DBL_MIN, DBL_MIN};
-            ((ArrayType *)entireChild[idx])->m_datasetSize--;
+            entireChild[idx].array.flagNumber--;
             return true;
         }
         break;
@@ -115,20 +120,20 @@ bool Delete(int rootType, double key)
         {
             // DBL_MIN means the data has been deleted
             // when a data has been deleted, data.second == DBL_MIN
-            auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-            int preIdx = ((GappedArrayType *)entireChild[idx])->model.PredictPrecision(key, ((GappedArrayType *)entireChild[idx])->maxIndex + 1);
+            auto left = entireChild[idx].ga.m_left;
+            int preIdx = entireChild[idx].ga.Predict(key);
             if (entireData[left + preIdx].first == key)
             {
                 entireData[left + preIdx].second = DBL_MIN;
-                ((GappedArrayType *)entireChild[idx])->m_datasetSize--;
-                if (preIdx == ((GappedArrayType *)entireChild[idx])->maxIndex)
-                    ((GappedArrayType *)entireChild[idx])->maxIndex--;
+                entireChild[idx].ga.flagNumber--;
+                if (preIdx == entireChild[idx].ga.maxIndex)
+                    entireChild[idx].ga.maxIndex--;
                 return true;
             }
             else
             {
-                int start = max(0, preIdx - ((GappedArrayType *)entireChild[idx])->error) + left;
-                int end = min(((GappedArrayType *)entireChild[idx])->maxIndex, preIdx + ((GappedArrayType *)entireChild[idx])->error) + left;
+                int start = max(0, preIdx - entireChild[idx].ga.error) + left;
+                int end = min(entireChild[idx].ga.maxIndex, preIdx + entireChild[idx].ga.error) + left;
                 start = min(start, end);
 
                 int res;
@@ -142,17 +147,17 @@ bool Delete(int rootType, double key)
                     res = GABinarySearch(key, start, end);
                 else
                 {
-                    res = GABinarySearch(key, end, left + ((GappedArrayType *)entireChild[idx])->maxIndex);
-                    if (res > left + ((GappedArrayType *)entireChild[idx])->maxIndex)
+                    res = GABinarySearch(key, end, left + entireChild[idx].ga.maxIndex);
+                    if (res > left + entireChild[idx].ga.maxIndex)
                         return false;
                 }
 
                 if (entireData[res].first != key)
                     return false;
-                ((GappedArrayType *)entireChild[idx])->m_datasetSize--;
+                entireChild[idx].ga.flagNumber--;
                 entireData[res] = {DBL_MIN, DBL_MIN};
-                if (res == left + ((GappedArrayType *)entireChild[idx])->maxIndex)
-                    ((GappedArrayType *)entireChild[idx])->maxIndex--;
+                if (res == left + entireChild[idx].ga.maxIndex)
+                    entireChild[idx].ga.maxIndex--;
                 return true;
             }
         }

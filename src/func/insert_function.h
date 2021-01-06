@@ -17,7 +17,12 @@
 #include "../dataManager/datapoint.h"
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
+
+extern LRType lrRoot;
+extern NNType nnRoot;
+extern HisType hisRoot;
+extern BSType bsRoot;
 
 bool Insert(int rootType, pair<double, double> data)
 {
@@ -31,590 +36,100 @@ bool Insert(int rootType, pair<double, double> data)
         {
         case 0:
         {
-            idx = ((LRType *)entireChild[idx])->childLeft + ((LRType *)entireChild[idx])->model.Predict(data.first);
-            type = entireChild[idx]->flag;
-
-            // check split
-            if (type == 4 && ((ArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((ArrayType *)entireChild[idx])->m_left;
-                auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new LRModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new ArrayType(kThreshold);
-                    ((ArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 65;
-            }
-            else if (type == 5 && ((GappedArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-                auto size = ((GappedArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new LRModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new GappedArrayType(kThreshold);
-                    ((GappedArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 65;
-            }
+            idx = lrRoot.childLeft + lrRoot.model.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 1:
         {
-            idx = ((NNType *)entireChild[idx])->childLeft + ((NNType *)entireChild[idx])->model.Predict(data.first);
-            type = entireChild[idx]->flag;
-
-            // check split
-            if (type == 4 && ((ArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((ArrayType *)entireChild[idx])->m_left;
-                auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new NNModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new ArrayType(kThreshold);
-                    ((ArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 66;
-            }
-            else if (type == 5 && ((GappedArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-                auto size = ((GappedArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new NNModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new GappedArrayType(kThreshold);
-                    ((GappedArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 66;
-            }
+            idx = nnRoot.childLeft + nnRoot.model.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 2:
         {
-            idx = ((HisType *)entireChild[idx])->childLeft + ((HisType *)entireChild[idx])->model.Predict(data.first);
-            type = entireChild[idx]->flag;
-
-            // check split
-            if (type == 4 && ((ArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((ArrayType *)entireChild[idx])->m_left;
-                auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new HisModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new ArrayType(kThreshold);
-                    ((ArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 67;
-            }
-            else if (type == 5 && ((GappedArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-                auto size = ((GappedArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new HisModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new GappedArrayType(kThreshold);
-                    ((GappedArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 67;
-            }
+            idx = hisRoot.childLeft + hisRoot.model.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 3:
         {
-            idx = ((BSType *)entireChild[idx])->childLeft + ((BSType *)entireChild[idx])->model.Predict(data.first);
-            type = entireChild[idx]->flag;
-
-            // check split
-            if (type == 4 && ((ArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((ArrayType *)entireChild[idx])->m_left;
-                auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new BSModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new ArrayType(kThreshold);
-                    ((ArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 68;
-            }
-            else if (type == 5 && ((GappedArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-                auto size = ((GappedArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new BSModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new GappedArrayType(kThreshold);
-                    ((GappedArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 68;
-            }
+            idx = bsRoot.childLeft + bsRoot.model.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 65:
+        case 4:
         {
-            idx = ((LRModel *)entireChild[idx])->childLeft + ((LRModel *)entireChild[idx])->Predict(data.first);
-            type = entireChild[idx]->flag;
-            // check split
-            if (type == 4 && ((ArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((ArrayType *)entireChild[idx])->m_left;
-                auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new LRModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new ArrayType(kThreshold);
-                    ((ArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 65;
-            }
-            else if (type == 5 && ((GappedArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-                auto size = ((GappedArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new LRModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new GappedArrayType(kThreshold);
-                    ((GappedArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 65;
-            }
+            idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 66:
+        case 5:
         {
-            idx = ((NNModel *)entireChild[idx])->childLeft + ((NNModel *)entireChild[idx])->Predict(data.first);
-            type = entireChild[idx]->flag;
-            // check split
-            if (type == 4 && ((ArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((ArrayType *)entireChild[idx])->m_left;
-                auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new NNModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new ArrayType(kThreshold);
-                    ((ArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 66;
-            }
-            else if (type == 5 && ((GappedArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-                auto size = ((GappedArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new NNModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new GappedArrayType(kThreshold);
-                    ((GappedArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 66;
-            }
+            idx = entireChild[idx].nn.childLeft + entireChild[idx].nn.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 67:
+        case 6:
         {
-            idx = ((HisModel *)entireChild[idx])->childLeft + ((HisModel *)entireChild[idx])->Predict(data.first);
-            type = entireChild[idx]->flag;
-            // check split
-            if (type == 4 && ((ArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((ArrayType *)entireChild[idx])->m_left;
-                auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new HisModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new ArrayType(kThreshold);
-                    ((ArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 67;
-            }
-            else if (type == 5 && ((GappedArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-                auto size = ((GappedArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new HisModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new GappedArrayType(kThreshold);
-                    ((GappedArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 67;
-            }
+            idx = entireChild[idx].his.childLeft + entireChild[idx].his.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 68:
+        case 7:
         {
-            idx = ((BSModel *)entireChild[idx])->childLeft + ((BSModel *)entireChild[idx])->Predict(data.first);
-            type = entireChild[idx]->flag;
-            // check split
-            if (type == 4 && ((ArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((ArrayType *)entireChild[idx])->m_left;
-                auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new BSModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new ArrayType(kThreshold);
-                    ((ArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 68;
-            }
-            else if (type == 5 && ((GappedArrayType *)entireChild[idx])->m_datasetSize >= 4096)
-            {
-                vector<pair<double, double>> tmpDataset;
-                auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-                auto size = ((GappedArrayType *)entireChild[idx])->m_datasetSize;
-                for (int i = left; i < left + size; i++)
-                    tmpDataset.push_back(entireData[i]);
-
-                auto node = new BSModel(128); // create a new inner node
-                int childNum = node->childNumber;
-                node->childLeft = allocateChildMemory(childNum);
-                node->Train(tmpDataset);
-                entireChild[idx] = node;
-
-                vector<vector<pair<double, double>>> subFindData;
-                vector<pair<double, double>> tmp;
-                for (int i = 0; i < childNum; i++)
-                    subFindData.push_back(tmp);
-
-                for (int i = 0; i < size; i++)
-                {
-                    int p = node->Predict(tmpDataset[i].first);
-                    subFindData[p].push_back(tmpDataset[i]);
-                }
-
-                for (int i = 0; i < childNum; i++)
-                {
-                    entireChild[node->childLeft + i] = new GappedArrayType(kThreshold);
-                    ((GappedArrayType *)entireChild[node->childLeft + i])->SetDataset(subFindData[i], kMaxKeyNum);
-                }
-                type = 68;
-            }
+            idx = entireChild[idx].bs.childLeft + entireChild[idx].bs.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 69:
+        case 8:
         {
-            auto left = ((ArrayType *)entireChild[idx])->m_left;
-            if (((ArrayType *)entireChild[idx])->m_datasetSize == 0)
+            auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+            if (size >= 4096)
+            {
+                vector<pair<double, double>> tmpDataset;
+                auto left = entireChild[idx].array.m_left;
+                auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+
+                auto node = LRModel(); // create a new inner node
+                int childNum = 128;
+                node.SetChildNumber(128);
+                node.childLeft = allocateChildMemory(childNum);
+                node.Train(tmpDataset);
+                entireChild[idx].lr = node;
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = node.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    ArrayType tmpLeaf(kThreshold);
+                    tmpLeaf.SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[node.childLeft + i].array = tmpLeaf;
+                }
+                idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
+            }
+            auto left = entireChild[idx].array.m_left;
+            if (size == 0)
             {
                 entireData[left] = data;
-                ((ArrayType *)entireChild[idx])->m_datasetSize++;
-                ((ArrayType *)entireChild[idx])->SetDataset(left, 1, ((ArrayType *)entireChild[idx])->m_capacity);
+                entireChild[idx].array.flagNumber++;
+                entireChild[idx].array.SetDataset(left, 1, entireChild[idx].array.m_capacity);
                 return true;
             }
-            auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-            int preIdx = ((ArrayType *)entireChild[idx])->model.PredictPrecision(data.first, size);
-            int start = max(0, preIdx - ((ArrayType *)entireChild[idx])->error) + left;
-            int end = min(size - 1, preIdx + ((ArrayType *)entireChild[idx])->error) + left;
+            int preIdx = entireChild[idx].array.Predict(data.first);
+            int start = max(0, preIdx - entireChild[idx].array.error) + left;
+            int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
             start = min(start, end);
 
             if (data.first <= entireData[start].first)
@@ -625,11 +140,11 @@ bool Insert(int rootType, pair<double, double> data)
                 preIdx = ArrayBinarySearch(data.first, end, left + size - 1);
 
             // expand
-            if (size >= ((ArrayType *)entireChild[idx])->m_capacity)
+            if (size >= entireChild[idx].array.m_capacity)
             {
                 auto diff = preIdx - left;
-                ((ArrayType *)entireChild[idx])->SetDataset(left, size, ((ArrayType *)entireChild[idx])->m_capacity);
-                left = ((ArrayType *)entireChild[idx])->m_left;
+                entireChild[idx].array.SetDataset(left, size, entireChild[idx].array.m_capacity);
+                left = entireChild[idx].array.m_left;
                 preIdx = left + diff;
             }
 
@@ -637,39 +152,74 @@ bool Insert(int rootType, pair<double, double> data)
             if ((preIdx == left + size - 1) && (entireData[preIdx].first < data.first))
             {
                 entireData[left + size] = data;
-                ((ArrayType *)entireChild[idx])->m_datasetSize++;
+                entireChild[idx].array.flagNumber++;
                 return true;
             }
-            ((ArrayType *)entireChild[idx])->m_datasetSize++;
+            entireChild[idx].array.flagNumber++;
             for (int i = left + size; i > preIdx; i--)
                 entireData[i] = entireData[i - 1];
             entireData[preIdx] = data;
             return true;
         }
         break;
-        case 70:
+        case 9:
         {
-            auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-            if ((float(((GappedArrayType *)entireChild[idx])->m_datasetSize) / ((GappedArrayType *)entireChild[idx])->capacity > ((GappedArrayType *)entireChild[idx])->density))
+            auto left = entireChild[idx].ga.m_left;
+            int size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
+            if (size >= 4096)
+            {
+                vector<pair<double, double>> tmpDataset;
+                auto left = entireChild[idx].ga.m_left;
+                auto size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
+                for (int i = left; i < left + size; i++)
+                    tmpDataset.push_back(entireData[i]);
+
+                auto node = LRModel(); // create a new inner node
+                node.SetChildNumber(128);
+                int childNum = 128;
+                node.childLeft = allocateChildMemory(childNum);
+                node.Train(tmpDataset);
+                entireChild[idx].lr = node;
+
+                vector<vector<pair<double, double>>> subFindData;
+                vector<pair<double, double>> tmp;
+                for (int i = 0; i < childNum; i++)
+                    subFindData.push_back(tmp);
+
+                for (int i = 0; i < size; i++)
+                {
+                    int p = node.Predict(tmpDataset[i].first);
+                    subFindData[p].push_back(tmpDataset[i]);
+                }
+
+                for (int i = 0; i < childNum; i++)
+                {
+                    GappedArrayType tmpLeaf(kThreshold);
+                    tmpLeaf.SetDataset(subFindData[i], kMaxKeyNum);
+                    entireChild[node.childLeft + i].ga = tmpLeaf;
+                }
+                idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
+            }
+            if ((float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
             {
                 // If an additional Insertion results in crossing the density
                 // then we expand the gapped array
-                ((GappedArrayType *)entireChild[idx])->SetDataset(left, ((GappedArrayType *)entireChild[idx])->m_datasetSize, ((GappedArrayType *)entireChild[idx])->capacity);
-                left = ((GappedArrayType *)entireChild[idx])->m_left;
+                entireChild[idx].ga.SetDataset(left, size, entireChild[idx].ga.capacity);
+                left = entireChild[idx].ga.m_left;
             }
 
-            if (((GappedArrayType *)entireChild[idx])->m_datasetSize == 0)
+            if (size == 0)
             {
                 entireData[left] = data;
-                ((GappedArrayType *)entireChild[idx])->m_datasetSize++;
-                ((GappedArrayType *)entireChild[idx])->maxIndex = 0;
-                ((GappedArrayType *)entireChild[idx])->SetDataset(left, 1, ((GappedArrayType *)entireChild[idx])->capacity);
+                entireChild[idx].ga.flagNumber++;
+                entireChild[idx].ga.maxIndex = 0;
+                entireChild[idx].ga.SetDataset(left, 1, entireChild[idx].ga.capacity);
                 return true;
             }
-            int preIdx = ((GappedArrayType *)entireChild[idx])->model.PredictPrecision(data.first, ((GappedArrayType *)entireChild[idx])->maxIndex + 1);
+            int preIdx = entireChild[idx].ga.Predict(data.first);
 
-            int start = max(0, preIdx - ((GappedArrayType *)entireChild[idx])->error) + left;
-            int end = min(((GappedArrayType *)entireChild[idx])->maxIndex, preIdx + ((GappedArrayType *)entireChild[idx])->error) + left;
+            int start = max(0, preIdx - entireChild[idx].ga.error) + left;
+            int end = min(entireChild[idx].ga.maxIndex, preIdx + entireChild[idx].ga.error) + left;
             start = min(start, end);
 
             if (entireData[start].first == -1)
@@ -682,15 +232,15 @@ bool Insert(int rootType, pair<double, double> data)
             else if (data.first <= entireData[end].first)
                 preIdx = GABinarySearch(data.first, start, end);
             else
-                preIdx = GABinarySearch(data.first, end, left + ((GappedArrayType *)entireChild[idx])->maxIndex);
+                preIdx = GABinarySearch(data.first, end, left + entireChild[idx].ga.maxIndex);
 
             // if the Insertion position is a gap,
             //  then we Insert the element into the gap and are done
             if (entireData[preIdx].first == -1)
             {
                 entireData[preIdx] = data;
-                ((GappedArrayType *)entireChild[idx])->m_datasetSize++;
-                ((GappedArrayType *)entireChild[idx])->maxIndex = max(((GappedArrayType *)entireChild[idx])->maxIndex, preIdx - left);
+                entireChild[idx].ga.flagNumber++;
+                entireChild[idx].ga.maxIndex = max(entireChild[idx].ga.maxIndex, preIdx - left);
                 return true;
             }
             else
@@ -698,16 +248,16 @@ bool Insert(int rootType, pair<double, double> data)
                 if (entireData[preIdx].second == DBL_MIN)
                 {
                     entireData[preIdx] = data;
-                    ((GappedArrayType *)entireChild[idx])->m_datasetSize++;
-                    ((GappedArrayType *)entireChild[idx])->maxIndex = max(((GappedArrayType *)entireChild[idx])->maxIndex, preIdx - left);
+                    entireChild[idx].ga.flagNumber++;
+                    entireChild[idx].ga.maxIndex = max(entireChild[idx].ga.maxIndex, preIdx - left);
                     return true;
                 }
-                if (preIdx == left + ((GappedArrayType *)entireChild[idx])->maxIndex && entireData[left + ((GappedArrayType *)entireChild[idx])->maxIndex].first < data.first)
+                if (preIdx == left + entireChild[idx].ga.maxIndex && entireData[left + entireChild[idx].ga.maxIndex].first < data.first)
                 {
-                    ((GappedArrayType *)entireChild[idx])->maxIndex = ((GappedArrayType *)entireChild[idx])->maxIndex + 1;
+                    entireChild[idx].ga.maxIndex = entireChild[idx].ga.maxIndex + 1;
                     ;
-                    entireData[((GappedArrayType *)entireChild[idx])->maxIndex + left] = data;
-                    ((GappedArrayType *)entireChild[idx])->m_datasetSize++;
+                    entireData[entireChild[idx].ga.maxIndex + left] = data;
+                    entireChild[idx].ga.flagNumber++;
                     return true;
                 }
 
@@ -717,7 +267,7 @@ bool Insert(int rootType, pair<double, double> data)
                 int i = preIdx + 1;
                 while (entireData[i].first != -1)
                     i++;
-                if (i >= left + ((GappedArrayType *)entireChild[idx])->capacity)
+                if (i >= left + entireChild[idx].ga.capacity)
                 {
                     i = preIdx - 1;
                     while (i >= left && entireData[i].first != -1)
@@ -728,14 +278,14 @@ bool Insert(int rootType, pair<double, double> data)
                 }
                 else
                 {
-                    if (i > ((GappedArrayType *)entireChild[idx])->maxIndex + left)
-                        ((GappedArrayType *)entireChild[idx])->maxIndex++;
+                    if (i > entireChild[idx].ga.maxIndex + left)
+                        entireChild[idx].ga.maxIndex++;
                     for (; i > preIdx; i--)
                         entireData[i] = entireData[i - 1];
                 }
                 entireData[preIdx] = data;
-                ((GappedArrayType *)entireChild[idx])->m_datasetSize++;
-                ((GappedArrayType *)entireChild[idx])->maxIndex = max(((GappedArrayType *)entireChild[idx])->maxIndex, preIdx - left);
+                entireChild[idx].ga.flagNumber++;
+                entireChild[idx].ga.maxIndex = max(entireChild[idx].ga.maxIndex, preIdx - left);
                 return true;
             }
             return false;

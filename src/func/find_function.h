@@ -17,7 +17,12 @@
 #include "../dataManager/datapoint.h"
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
+
+extern LRType lrRoot;
+extern NNType nnRoot;
+extern HisType hisRoot;
+extern BSType bsRoot;
 
 pair<double, double> Find(int rootType, double key)
 {
@@ -29,63 +34,63 @@ pair<double, double> Find(int rootType, double key)
         {
         case 0:
         {
-            idx = ((LRType *)entireChild[idx])->childLeft + ((LRType *)entireChild[idx])->model.Predict(key);
-            type = entireChild[idx]->flag;
+            idx = lrRoot.childLeft + lrRoot.model.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 1:
         {
-            idx = ((NNType *)entireChild[idx])->childLeft + ((NNType *)entireChild[idx])->model.Predict(key);
-            type = entireChild[idx]->flag;
+            idx = nnRoot.childLeft + nnRoot.model.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 2:
         {
-            idx = ((HisType *)entireChild[idx])->childLeft + ((HisType *)entireChild[idx])->model.Predict(key);
-            type = entireChild[idx]->flag;
+            idx = hisRoot.childLeft + hisRoot.model.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 3:
         {
-            idx = ((BSType *)entireChild[idx])->childLeft + ((BSType *)entireChild[idx])->model.Predict(key);
-            type = entireChild[idx]->flag;
+            idx = bsRoot.childLeft + bsRoot.model.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 65:
+        case 4:
         {
-            idx = ((LRModel *)entireChild[idx])->childLeft + ((LRModel *)entireChild[idx])->Predict(key);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 66:
+        case 5:
         {
-            idx = ((NNModel *)entireChild[idx])->childLeft + ((NNModel *)entireChild[idx])->Predict(key);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].nn.childLeft + entireChild[idx].nn.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 67:
+        case 6:
         {
-            idx = ((HisModel *)entireChild[idx])->childLeft + ((HisModel *)entireChild[idx])->Predict(key);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].his.childLeft + entireChild[idx].his.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 68:
+        case 7:
         {
-            idx = ((BSModel *)entireChild[idx])->childLeft + ((BSModel *)entireChild[idx])->Predict(key);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].bs.childLeft + entireChild[idx].bs.Predict(key);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 69:
+        case 8:
         {
-            auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-            int preIdx = ((ArrayType *)entireChild[idx])->model.PredictPrecision(key, size);
-            auto left = ((ArrayType *)entireChild[idx])->m_left;
+            auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+            int preIdx = entireChild[idx].array.Predict(key);
+            auto left = entireChild[idx].array.m_left;
             if (entireData[left + preIdx].first == key)
                 return entireData[left + preIdx];
             else
             {
-                int start = max(0, preIdx - ((ArrayType *)entireChild[idx])->error) + left;
-                int end = min(size - 1, preIdx + ((ArrayType *)entireChild[idx])->error) + left;
+                int start = max(0, preIdx - entireChild[idx].array.error) + left;
+                int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
                 start = min(start, end);
                 int res;
                 if (key <= entireData[start].first)
@@ -104,16 +109,16 @@ pair<double, double> Find(int rootType, double key)
             }
         }
         break;
-        case 70:
+        case 9:
         {
-            auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-            int preIdx = ((GappedArrayType *)entireChild[idx])->model.PredictPrecision(key, ((GappedArrayType *)entireChild[idx])->maxIndex + 1);
+            auto left = entireChild[idx].ga.m_left;
+            int preIdx = entireChild[idx].ga.Predict(key);
             if (entireData[left + preIdx].first == key)
                 return entireData[left + preIdx];
             else
             {
-                int start = max(0, preIdx - ((GappedArrayType *)entireChild[idx])->error) + left;
-                int end = min(((GappedArrayType *)entireChild[idx])->maxIndex, preIdx + ((GappedArrayType *)entireChild[idx])->error) + left;
+                int start = max(0, preIdx - entireChild[idx].ga.error) + left;
+                int end = min(entireChild[idx].ga.maxIndex, preIdx + entireChild[idx].ga.error) + left;
                 start = min(start, end);
 
                 int res;
@@ -127,8 +132,8 @@ pair<double, double> Find(int rootType, double key)
                     res = GABinarySearch(key, start, end);
                 else
                 {
-                    res = GABinarySearch(key, end, left + ((GappedArrayType *)entireChild[idx])->maxIndex);
-                    if (res > left + ((GappedArrayType *)entireChild[idx])->maxIndex)
+                    res = GABinarySearch(key, end, left + entireChild[idx].ga.maxIndex);
+                    if (res > left + entireChild[idx].ga.maxIndex)
                         return {DBL_MIN, DBL_MIN};
                 }
 

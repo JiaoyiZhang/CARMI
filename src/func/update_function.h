@@ -17,7 +17,12 @@
 #include "../dataManager/datapoint.h"
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
+
+extern LRType lrRoot;
+extern NNType nnRoot;
+extern HisType hisRoot;
+extern BSType bsRoot;
 
 bool Update(int rootType, pair<double, double> data)
 {
@@ -30,63 +35,63 @@ bool Update(int rootType, pair<double, double> data)
         {
         case 0:
         {
-            idx = ((LRType *)entireChild[idx])->childLeft + ((LRType *)entireChild[idx])->model.Predict(data.first);
-            type = entireChild[idx]->flag;
+            idx = lrRoot.childLeft + lrRoot.model.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 1:
         {
-            idx = ((NNType *)entireChild[idx])->childLeft + ((NNType *)entireChild[idx])->model.Predict(data.first);
-            type = entireChild[idx]->flag;
+            idx = nnRoot.childLeft + nnRoot.model.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 2:
         {
-            idx = ((HisType *)entireChild[idx])->childLeft + ((HisType *)entireChild[idx])->model.Predict(data.first);
-            type = entireChild[idx]->flag;
+            idx = hisRoot.childLeft + hisRoot.model.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 3:
         {
-            idx = ((BSType *)entireChild[idx])->childLeft + ((BSType *)entireChild[idx])->model.Predict(data.first);
-            type = entireChild[idx]->flag;
+            idx = bsRoot.childLeft + bsRoot.model.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 65:
+        case 4:
         {
-            idx = ((LRModel *)entireChild[idx])->childLeft + ((LRModel *)entireChild[idx])->Predict(data.first);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 66:
+        case 5:
         {
-            idx = ((NNModel *)entireChild[idx])->childLeft + ((NNModel *)entireChild[idx])->Predict(data.first);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].nn.childLeft + entireChild[idx].nn.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 67:
+        case 6:
         {
-            idx = ((HisModel *)entireChild[idx])->childLeft + ((HisModel *)entireChild[idx])->Predict(data.first);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].his.childLeft + entireChild[idx].his.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 68:
+        case 7:
         {
-            idx = ((BSModel *)entireChild[idx])->childLeft + ((BSModel *)entireChild[idx])->Predict(data.first);
-            type = entireChild[idx]->flag;
+            idx = entireChild[idx].bs.childLeft + entireChild[idx].bs.Predict(data.first);
+            type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 69:
         {
-            auto left = ((ArrayType *)entireChild[idx])->m_left;
-            auto size = ((ArrayType *)entireChild[idx])->m_datasetSize;
-            int preIdx = ((ArrayType *)entireChild[idx])->model.PredictPrecision(data.first, size);
+            auto left = entireChild[idx].array.m_left;
+            auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+            int preIdx = entireChild[idx].array.Predict(data.first);
             if (entireData[left + preIdx].first == data.first)
                 entireData[left + preIdx].second = data.second;
             else
             {
-                int start = max(0, preIdx - ((ArrayType *)entireChild[idx])->error) + left;
-                int end = min(size - 1, preIdx + ((ArrayType *)entireChild[idx])->error) + left;
+                int start = max(0, preIdx - entireChild[idx].array.error) + left;
+                int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
                 start = min(start, end);
                 if (data.first <= entireData[start].first)
                     preIdx = ArrayBinarySearch(data.first, left, start);
@@ -107,8 +112,8 @@ bool Update(int rootType, pair<double, double> data)
         break;
         case 70:
         {
-            auto left = ((GappedArrayType *)entireChild[idx])->m_left;
-            int preIdx = ((GappedArrayType *)entireChild[idx])->model.PredictPrecision(data.first, ((GappedArrayType *)entireChild[idx])->maxIndex + 1);
+            auto left = entireChild[idx].ga.m_left;
+            int preIdx = entireChild[idx].ga.Predict(data.first);
             if (entireData[left + preIdx].first == data.first)
             {
                 entireData[left + preIdx].second = data.second;
@@ -116,8 +121,8 @@ bool Update(int rootType, pair<double, double> data)
             }
             else
             {
-                int start = max(0, preIdx - ((GappedArrayType *)entireChild[idx])->error) + left;
-                int end = min(((GappedArrayType *)entireChild[idx])->maxIndex, preIdx + ((GappedArrayType *)entireChild[idx])->error) + left;
+                int start = max(0, preIdx - entireChild[idx].ga.error) + left;
+                int end = min(entireChild[idx].ga.maxIndex, preIdx + entireChild[idx].ga.error) + left;
                 start = min(start, end);
                 if (entireData[start].first == -1)
                     start--;
@@ -130,8 +135,8 @@ bool Update(int rootType, pair<double, double> data)
                     preIdx = GABinarySearch(data.first, start, end);
                 else
                 {
-                    preIdx = GABinarySearch(data.first, end, left + ((GappedArrayType *)entireChild[idx])->maxIndex);
-                    if (preIdx > left + ((GappedArrayType *)entireChild[idx])->maxIndex)
+                    preIdx = GABinarySearch(data.first, end, left + entireChild[idx].ga.maxIndex);
+                    if (preIdx > left + entireChild[idx].ga.maxIndex)
                         return false;
                 }
 
