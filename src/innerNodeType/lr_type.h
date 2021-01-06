@@ -3,7 +3,7 @@
 
 #include "../params.h"
 
-#include "../trainModel/lr.h"
+#include "../trainModel/linear_regression.h"
 #include "../leafNodeType/array_type.h"
 #include "../leafNodeType/ga_type.h"
 #include "../dataManager/child_array.h"
@@ -11,26 +11,30 @@
 #include <fstream>
 using namespace std;
 
-extern BaseNode **entireChild;
+extern vector<BaseNode> entireChild;
 
-class LRType : public BaseNode
+class LRType
 {
 public:
-    LRType() { flag = 'A'; };
+    LRType()
+    {
+        flagNumber = (0 << 24);
+    };
     LRType(int c)
     {
-        flag = 'A';
-        childNumber = c;
+        flagNumber = (0 << 24) + c;
     }
     void Initialize(const vector<pair<double, double>> &dataset);
 
-    int childLeft;          // 4c Byte + 4
+    int flagNumber; // 4 Byte (flag + childNumber)
+
+    int childLeft;          // 4 Byte
     LinearRegression model; // 20 Byte
-    int childNumber;        // 4
 };
 
 inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
 {
+    int childNumber = flagNumber & 0x00FFFFFF;
     childLeft = allocateChildMemory(childNumber);
     if (dataset.size() == 0)
         return;
@@ -52,20 +56,20 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
     case 0:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new ArrayType(kThreshold);
-            ((ArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            ArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].array = tmp;
         }
         break;
     case 1:
         for (int i = 0; i < childNumber; i++)
         {
-            entireChild[childLeft + i] = new GappedArrayType(kThreshold);
-            ((GappedArrayType *)entireChild[childLeft + i])->SetDataset(perSubDataset[i], kMaxKeyNum);
+            GappedArrayType tmp(kThreshold);
+            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
+            entireChild[childLeft + i].ga = tmp;
         }
         break;
     }
-
-    vector<vector<pair<double, double>>>().swap(perSubDataset);
 }
 
 #endif
