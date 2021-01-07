@@ -31,7 +31,7 @@ public:
 
     float divisor;               // 4 Byte
     float minValue;              // 4 Byte
-    pair<float, float> theta[5]; // 32 Byte
+    pair<float, float> theta[5]; // 40 Byte
 };
 
 #endif // !ARRAY_H

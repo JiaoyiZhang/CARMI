@@ -38,11 +38,11 @@ void constructSynthetic(double initRatio)
         cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
         uniData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
-        // if (r == 0)
-        // {
-        //     btree_test(initRatio);
-        //     artTree_test(initRatio);
-        // }
+        if (r == 0)
+        {
+            btree_test(initRatio);
+            artTree_test(initRatio);
+        }
         CoreConstruct(initRatio);
 
         cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
@@ -65,15 +65,15 @@ void constructSynthetic(double initRatio)
         }
         CoreConstruct(initRatio);
 
-        // cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-        // logData.GenerateDataset(dataset, insertDataset);
-        // initDatasetSize = dataset.size();
-        // if (r == 0)
-        // {
-        //     btree_test(initRatio);
-        //     artTree_test(initRatio);
-        // }
-        // CoreConstruct(initRatio);
+        cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+        logData.GenerateDataset(dataset, insertDataset);
+        initDatasetSize = dataset.size();
+        if (r == 0)
+        {
+            btree_test(initRatio);
+            artTree_test(initRatio);
+        }
+        CoreConstruct(initRatio);
 
         outRes << endl;
     }

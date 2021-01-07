@@ -38,11 +38,11 @@ int main()
     kMaxKeyNum = 256;
     // kLeafNodeID = 1;
     cout << "kLeafNodeID:" << kLeafNodeID << endl;
-    // static structure
-    testSynthetic(1);
-    testSynthetic(0.5);
-    testSynthetic(0.95);
-    testSynthetic(0);
+    // // static structure
+    // testSynthetic(1);
+    // testSynthetic(0.5);
+    // testSynthetic(0.95);
+    // testSynthetic(0);
 
     kMaxKeyNum = 2;
     constructSynthetic(1);   // read-only

@@ -39,28 +39,32 @@ void testSynthetic(double initRatio)
         uniData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-        RunStatic();
+        // RunStatic();
+        TestStatic();
 
         cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
         expData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-        RunStatic();
+        // RunStatic();
+        TestStatic();
 
         cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
         norData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-        RunStatic();
+        // RunStatic();
+        TestStatic();
 
         cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
         logData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-        RunStatic();
+        // RunStatic();
+        TestStatic();
     }
 }
 

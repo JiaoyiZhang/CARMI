@@ -146,24 +146,31 @@ inline void GappedArrayType::Train(const vector<pair<double, double>> &dataset)
     divisor = float(maxValue - minValue) / 4;
 
     int i = 0;
+    int cnt = 0;
     for (int k = 1; k <= 4; k++)
     {
         double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
         for (; i < dataset.size() - 1; i++)
         {
-            if ((dataset[i].first - minValue) / divisor == k)
-                break;
             if (dataset[i].first != -1)
             {
+                if (float(dataset[i].first - minValue) / divisor >= k)
+                    break;
+                cnt++;
                 t1 += dataset[i].first * dataset[i].first;
                 t2 += dataset[i].first;
                 t3 += dataset[i].first * index[i];
                 t4 += index[i];
             }
         }
-        auto theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
-        auto theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
-        theta[k - 1] = {theta1, theta2};
+        if (t1 * cnt - t2 * t2 != 0)
+        {
+            auto theta1 = (t3 * cnt - t2 * t4) / (t1 * cnt - t2 * t2);
+            auto theta2 = (t1 * t4 - t2 * t3) / (t1 * cnt - t2 * t2);
+            theta[k - 1] = {theta1, theta2};
+        }
+        else
+            theta[k - 1] = {1, 0};
     }
 }
 
@@ -176,12 +183,10 @@ inline int GappedArrayType::Predict(double key)
         idx = 3;
     // return the predicted idx in the children
     int p = theta[idx].first * key + theta[idx].second;
-    int bound = maxIndex / 4;
-    int left = bound * idx;
-    if (p < left)
-        p = left;
-    else if (p >= left + bound)
-        p = left + bound - 1;
+    if (p < 0)
+        p = 0;
+    else if (p > 1)
+        p = 1;
     p *= maxIndex;
     return p;
 }

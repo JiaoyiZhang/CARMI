@@ -59,10 +59,10 @@ inline void BSModel::Train(const vector<pair<double, double>> &dataset)
     int cnt = 1;
     for (int i = value * cnt - 1; i < dataset.size(); i = value * (++cnt) - 1)
     {
+        if (cnt >= childNumber)
+            break;
         if (dataset[i].first != -1)
         {
-            if (cnt >= childNumber)
-                cout << "in bs model, cnt >= childNumber, cnt:" << cnt << endl;
             index[cnt - 1] = dataset[i].first;
         }
         else
@@ -71,8 +71,6 @@ inline void BSModel::Train(const vector<pair<double, double>> &dataset)
             {
                 if (dataset[j].first != -1)
                 {
-                    if (cnt >= childNumber)
-                        cout << "in bs model, cnt >= childNumber, cnt:" << cnt << endl;
                     index[cnt - 1] = dataset[i].first;
                     break;
                 }

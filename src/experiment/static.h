@@ -82,7 +82,7 @@ void RunStatic()
     outRes << endl;
 }
 
-void TestStatic(bool mode)
+void TestStatic()
 {
     for (int j = 0; j < 4; j++)
     {
