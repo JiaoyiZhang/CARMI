@@ -208,8 +208,8 @@ inline void GappedArrayType::Train(const int start_idx, const int size)
     {
         t1 += findDatapoint[i].first * findDatapoint[i].first;
         t2 += findDatapoint[i].first;
-        t3 += findDatapoint[i].first * index[i];
-        t4 += index[i];
+        t3 += findDatapoint[i].first * index[i - start_idx];
+        t4 += index[i - start_idx];
     }
     theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
     theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);

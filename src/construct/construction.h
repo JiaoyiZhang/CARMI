@@ -94,7 +94,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     time(&timep);
     char tmpTime2[64];
     strftime(tmpTime2, sizeof(tmpTime2), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-    cout << "\nRoot time: " << tmpTime2 << endl;
+    cout << "Root time: " << tmpTime2 << endl;
 
     switch (rootType)
     {
@@ -128,7 +128,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
                 time(&timep);
                 char tmpTime[64];
                 strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-                cout << "\nstart time: " << tmpTime << endl;
+                cout << "start time: " << tmpTime << endl;
             }
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -156,7 +156,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
                 time(&timep);
                 char tmpTime[64];
                 strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-                cout << "\nover time: " << tmpTime << endl;
+                cout << "over time: " << tmpTime << endl;
             }
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
             if (i % 10000 == 0)
@@ -167,7 +167,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
                 time(&timep);
                 char tmpTime[64];
                 strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-                cout << "\nover time: " << tmpTime << endl;
+                cout << "over time: " << tmpTime << endl;
             }
 
             totalCost += resChild.first.first + resChild.first.second;
@@ -340,7 +340,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     time(&timep);
     char tmpTime1[64];
     strftime(tmpTime1, sizeof(tmpTime1), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-    cout << "\nRoot time: " << tmpTime1 << endl;
+    cout << "finish time: " << tmpTime1 << endl;
 
     return rootType;
 }
