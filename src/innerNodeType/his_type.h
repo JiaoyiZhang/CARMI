@@ -51,24 +51,12 @@ inline void HisType::Initialize(const vector<pair<double, double>> &dataset)
         perSubDataset[p].push_back(dataset[i]);
     }
 
-    switch (kLeafNodeID)
+    for (int i = 0; i < childNumber; i++)
     {
-    case 0:
-        for (int i = 0; i < childNumber; i++)
-        {
-            ArrayType tmp(kThreshold);
-            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
-            entireChild[childLeft + i].array = tmp;
-        }
-        break;
-    case 1:
-        for (int i = 0; i < childNumber; i++)
-        {
-            GappedArrayType tmp(kThreshold);
-            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
-            entireChild[childLeft + i].ga = tmp;
-        }
-        break;
+        HisModel innerHis;
+        innerHis.SetChildNumber(32);
+        innerHis.Initialize(perSubDataset[i]);
+        entireChild[childLeft + i].his = innerHis;
     }
 }
 

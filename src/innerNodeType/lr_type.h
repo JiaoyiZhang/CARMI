@@ -7,6 +7,7 @@
 #include "../leafNodeType/array_type.h"
 #include "../leafNodeType/ga_type.h"
 #include "../dataManager/child_array.h"
+#include "../innerNode/lr.h"
 #include <vector>
 #include <fstream>
 using namespace std;
@@ -51,24 +52,12 @@ inline void LRType::Initialize(const vector<pair<double, double>> &dataset)
         perSubDataset[p].push_back(dataset[i]);
     }
 
-    switch (kLeafNodeID)
+    for (int i = 0; i < childNumber; i++)
     {
-    case 0:
-        for (int i = 0; i < childNumber; i++)
-        {
-            ArrayType tmp(kThreshold);
-            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
-            entireChild[childLeft + i].array = tmp;
-        }
-        break;
-    case 1:
-        for (int i = 0; i < childNumber; i++)
-        {
-            GappedArrayType tmp(kThreshold);
-            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
-            entireChild[childLeft + i].ga = tmp;
-        }
-        break;
+        LRModel innerLR;
+        innerLR.SetChildNumber(32);
+        innerLR.Initialize(perSubDataset[i]);
+        entireChild[childLeft + i].lr = innerLR;
     }
 }
 

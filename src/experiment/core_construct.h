@@ -31,8 +31,8 @@ void CoreConstruct(double initRatio)
 
     for (int i = 0; i < dataset.size(); i++)
     {
-        dataset[i].second = 5;
-        totalFrequency += 5;
+        dataset[i].second = 1;
+        totalFrequency += 1;
     }
     for (int i = 0; i < insertDataset.size(); i++)
     {

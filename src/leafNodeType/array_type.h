@@ -105,6 +105,31 @@ inline void ArrayType::Train(const vector<pair<double, double>> &dataset)
     if (actualSize == 0)
         return;
 
+    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        if (dataset[i].first != -1)
+        {
+            t1 += dataset[i].first * dataset[i].first;
+            t2 += dataset[i].first;
+            t3 += dataset[i].first * index[i];
+            t4 += index[i];
+        }
+    }
+    theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
+    theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
+    /*
+    int actualSize = 0;
+    vector<double> index;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        if (dataset[i].first != -1)
+            actualSize++;
+        index.push_back(double(i) / double(dataset.size()));
+    }
+    if (actualSize == 0)
+        return;
+
     double maxValue;
     for (int i = 0; i < dataset.size(); i++)
     {
@@ -152,22 +177,32 @@ inline void ArrayType::Train(const vector<pair<double, double>> &dataset)
             theta[k - 1] = {1, 0};
         cnt = 0;
     }
+    */
 }
 
 inline int ArrayType::Predict(double key)
 {
-    int idx = float(key - minValue) / divisor;
-    if (idx < 0)
-        idx = 0;
-    else if (idx >= 5)
-        idx = 4;
-    // return the predicted idx in the children
-    int p = theta[idx].first * key + theta[idx].second;
+    // int idx = float(key - minValue) / divisor;
+    // if (idx < 0)
+    //     idx = 0;
+    // else if (idx >= 5)
+    //     idx = 4;
+    // // return the predicted idx in the children
+    // int p = theta[idx].first * key + theta[idx].second;
+    // if (p < 0)
+    //     p = 0;
+    // else if (p > 1)
+    //     p = 1;
+    // p *= (flagNumber & 0x00FFFFFF) - 1;
+    // return p;
+
+    // return the predicted idx in the leaf node
+    int size = (flagNumber & 0xFFFFFF);
+    int p = (theta1 * key + theta2) * size;
     if (p < 0)
         p = 0;
-    else if (p > 1)
-        p = 1;
-    p *= (flagNumber & 0x00FFFFFF) - 1;
+    else if (p >= size)
+        p = size - 1;
     return p;
 }
 

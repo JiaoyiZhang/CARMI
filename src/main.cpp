@@ -11,8 +11,9 @@
 #include "./experiment/test_synthetic.h"
 using namespace std;
 
-// int datasetSize = 67108864;
-int datasetSize = 1000000;
+int datasetSize = 67108864;
+// int datasetSize = 26214400;
+// int datasetSize = 1000000;
 int initDatasetSize;
 
 vector<pair<double, double>> dataset;
@@ -33,9 +34,9 @@ BSType bsRoot;
 
 int main()
 {
-    outRes.open("res_1230.csv", ios::app);
+    outRes.open("res_0107.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
-    kMaxKeyNum = 256;
+    kMaxKeyNum = 2;
     // kLeafNodeID = 1;
     cout << "kLeafNodeID:" << kLeafNodeID << endl;
     // // static structure
@@ -44,23 +45,23 @@ int main()
     // testSynthetic(0.95);
     // testSynthetic(0);
 
-    kMaxKeyNum = 2;
+    kMaxKeyNum = 512;
     constructSynthetic(1);   // read-only
-    constructSynthetic(0.5); // balance
-    constructSynthetic(0.95);
-    constructSynthetic(0); // partial
+    // constructSynthetic(0.5); // balance
+    // constructSynthetic(0.95);
+    // constructSynthetic(0); // partial
 
     constructYCSB(1);   // read-only
-    constructYCSB(0.5); // balance
-    constructYCSB(0.95);
-    constructYCSB(0); // partial
+    // constructYCSB(0.5); // balance
+    // constructYCSB(0.95);
+    // constructYCSB(0); // partial
 
     // kMaxKeyNum = 256;
 
     constructMap(1);   // read-only
-    constructMap(0.5); // balance
-    constructMap(0.95);
-    constructMap(0); // partial
+    // constructMap(0.5); // balance
+    // constructMap(0.95);
+    // constructMap(0); // partial
 
     outRes << "----------------------------------------------" << endl;
 

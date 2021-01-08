@@ -112,7 +112,12 @@ inline void HisModel::Train(const vector<pair<double, double>> &dataset)
         for (int j = i; j < i + 32; j++)
         {
             if (j - i == 16)
-                start_idx = table[i + 16];
+            {
+                if (i + 16 < childNumber)
+                    start_idx = table[i + 16];
+                else
+                    start_idx = 0;
+            }
             if (j >= childNumber)
             {
                 while (j < i + 32)

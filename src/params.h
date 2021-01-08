@@ -9,7 +9,7 @@ extern const int kMaxEpoch = 20;               // used in nn
 extern const double kLearningRate = 0.0000001; // used in nn
 int kNeuronNumber = 8;                         // used in nn
 
-int kThreshold = 256;               // used to initialize a leaf node
+int kThreshold = 2;               // used to initialize a leaf node
 int kMaxKeyNum = 16;                // used in construction
 double kRate = 0.4;                 // totalCost = space * kRate + time
 

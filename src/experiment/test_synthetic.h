@@ -31,7 +31,7 @@ void testSynthetic(double initRatio)
 
     vector<int> childNum_synthetic = {65536, 131072, 262144, 524288, 1048576};
     // for (int i = 0; i < childNum_synthetic.size(); i++)
-    for (int i = 2; i < 3; i++)
+    for (int i = 0; i < 1; i++)
     {
         childNum = childNum_synthetic[i];
         cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
@@ -39,8 +39,11 @@ void testSynthetic(double initRatio)
         uniData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-        // RunStatic();
-        TestStatic();
+        // btree_test(initRatio);
+        // artTree_test(initRatio);
+        RunStatic();
+        // TestStatic();
+        break;
 
         cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
@@ -48,6 +51,8 @@ void testSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
         // RunStatic();
+        btree_test(initRatio);
+        artTree_test(initRatio);
         TestStatic();
 
         cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
@@ -56,6 +61,8 @@ void testSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
         // RunStatic();
+        btree_test(initRatio);
+        artTree_test(initRatio);
         TestStatic();
 
         cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
@@ -64,7 +71,10 @@ void testSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
         // RunStatic();
-        TestStatic();
+        btree_test(initRatio);
+        // artTree_test(initRatio);
+        // TestStatic();
+        RunStatic();
     }
 }
 

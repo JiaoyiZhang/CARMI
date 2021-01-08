@@ -204,7 +204,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
     case 4:
     {
         // choose an array node as the leaf node
-        auto node = ArrayType(max(size + insertSize, kMaxKeyNum));
+        auto node = ArrayType(max(size + insertSize, kThreshold));
         node.SetDataset(datapoint, node.m_capacity);
         entireChild[storeIdx].array = node;
         break;
@@ -215,7 +215,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         if (it == structMap.end())
             cout << "WRONG!" << endl;
 
-        auto node = GappedArrayType(max(size + insertSize, kMaxKeyNum));
+        auto node = GappedArrayType(max(size + insertSize, kThreshold));
         node.density = it->second.density;
         node.SetDataset(datapoint, node.capacity);
         entireChild[storeIdx].ga = node;
