@@ -17,9 +17,11 @@ public:
         m_capacity = cap;
     }
     inline int UpdateError(const vector<pair<double, double>> &dataset);
+    inline int UpdateError(const int start_idx, const int size);
     inline void SetDataset(const vector<pair<double, double>> &dataset, int cap);
     inline void SetDataset(const int left, const int size, int cap);
     void Train(const vector<pair<double, double>> &dataset);
+    void Train(const int start_idx, const int size);
     int Predict(double key);
 
     int flagNumber; // 4 Byte (flag + 0)
@@ -29,12 +31,9 @@ public:
     int m_capacity; // the maximum capacity of this leaf node
     int error;      // the boundary of binary search
 
-    float divisor;  // 4 Byte
-    float minValue; // 4 Byte
-    // pair<float, float> theta[5]; // 40 Byte
     float theta1;
     float theta2;
-    pair<float, float> tmppp[4];
+    pair<float, float> tmppp[5];
 };
 
 #endif // !ARRAY_H

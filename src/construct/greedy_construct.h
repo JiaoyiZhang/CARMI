@@ -61,12 +61,6 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
             auto cost = it->second;
             return {cost, false};
         }
-        vector<pair<double, double>> findData;
-        vector<pair<double, double>> insertData;
-        for (int l = findLeft; l < findLeft + findSize; l++)
-            findData.push_back(findDatapoint[l]);
-        for (int l = insertLeft; l < insertLeft + insertSize; l++)
-            insertData.push_back(insertDatapoint[l]);
 
         double OptimalValue = DBL_MAX;
         double OptimalTime = DBL_MAX;
@@ -88,36 +82,35 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         space = 16.0 * actualSize / 1024 / 1024;
 
         auto tmp = ArrayType(kThreshold);
-        tmp.Train(findData);
-        auto error = tmp.UpdateError(findData);
-        for (int i = 0; i < findData.size(); i++)
+        tmp.Train(findLeft, findSize);
+        auto error = tmp.UpdateError(findLeft, findSize);
+        for (int i = findLeft; i < findLeft + findSize; i++)
         {
-            auto predict = tmp.Predict(findData[i].first);
+            auto predict = tmp.Predict(findDatapoint[i].first);
             auto d = abs(i - predict);
-            time += 175.324 * findData[i].second;
+            time += 175.324 * findDatapoint[i].second;
             if (d <= error)
             {
                 if (error > 0)
-                    time += log(error) / log(2) * findData[i].second * 10.9438;
+                    time += log(error) / log(2) * findDatapoint[i].second * 10.9438;
                 else
                     time += 2.4132;
             }
             else
-                time += log(actualSize) / log(2) * findData[i].second * 10.9438;
+                time += log(actualSize) / log(2) * findDatapoint[i].second * 10.9438;
         }
 
-        for (int i = 0; i < insertData.size(); i++)
+        for (int i = insertLeft; i < insertLeft + insertSize; i++)
         {
-            auto predict = tmp.Predict(insertData[i].first);
-            auto actual = TestArrayBinarySearch(insertData[i].first, findData);
+            auto predict = tmp.Predict(insertDatapoint[i].first);
+            auto actual = TestArrayBinarySearch(insertDatapoint[i].first, findLeft, findLeft + findSize);
             auto d = abs(actual - predict);
-            time += (175.324 + 28.25 * (insertData.size() - actual + 1)) * insertData[i].second;
+            time += (175.324 + 28.25 * (insertSize - actual + 1)) * insertDatapoint[i].second;
             if (d <= error)
-                time += log(error) / log(2) * insertData[i].second * 10.9438;
+                time += log(error) / log(2) * insertDatapoint[i].second * 10.9438;
             else
-                time += log(actualSize) / log(2) * insertData[i].second * 10.9438;
+                time += log(actualSize) / log(2) * insertDatapoint[i].second * 10.9438;
         }
-        // time = time / (findData.size() + insertData.size());
         time = time / totalFrequency;
 
         cost = time + space * kRate; // ns + MB * kRate
@@ -151,32 +144,31 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
             time = 0.0;
             space = 16.0 / tmpNode.density * actualSize / 1024 / 1024;
 
-            tmpNode.Train(findData);
-            auto errorGA = tmpNode.UpdateError(findData);
+            tmpNode.Train(findLeft, findSize);
+            auto errorGA = tmpNode.UpdateError(findLeft, findSize);
             if (errorGA == 0)
                 errorGA = 1;
-            for (int t = 0; t < findData.size(); t++)
+            for (int t = findLeft; t < findLeft + findSize; t++)
             {
-                auto predict = tmpNode.Predict(findData[t].first);
+                auto predict = tmpNode.Predict(findDatapoint[t].first);
                 auto d = abs(t - predict);
-                time += 175.324 * findData[t].second; // due to shuffle
+                time += 175.324 * findDatapoint[t].second; // due to shuffle
                 if (d <= errorGA)
-                    time += log(errorGA) / log(2) * findData[t].second * 10.9438 * (2 - Density[i]);
+                    time += log(errorGA) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
                 else
-                    time += log(findData.size()) / log(2) * findData[t].second * 10.9438 * (2 - Density[i]);
+                    time += log(findSize) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
             }
-            for (int t = 0; t < insertData.size(); t++)
+            for (int t = insertLeft; t < insertLeft + insertSize; t++)
             {
-                auto predict = tmpNode.Predict(insertData[t].first);
-                auto actual = TestGABinarySearch(insertData[t].first, findData);
-                time += 175.324 * insertData[t].second; // due to shuffle
+                auto predict = tmpNode.Predict(insertDatapoint[t].first);
+                auto actual = TestGABinarySearch(insertDatapoint[t].first, findLeft, findLeft + findSize);
+                time += 175.324 * insertDatapoint[t].second; // due to shuffle
                 auto d = abs(actual - predict);
                 if (d <= errorGA)
-                    time += log(errorGA) / log(2) * insertData[t].second * 10.9438 * (2 - Density[i]);
+                    time += log(errorGA) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
                 else
-                    time += log(insertData.size()) / log(2) * insertData[t].second * 10.9438 * (2 - Density[i]);
+                    time += log(insertSize) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
             }
-            // time = time / (findData.size() + insertData.size());
             time = time / totalFrequency;
 
             cost = time + space * kRate; // ns + MB * kRate

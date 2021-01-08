@@ -10,6 +10,7 @@
 using namespace std;
 
 extern pair<double, double> *entireData;
+extern vector<pair<double, double>> findDatapoint;
 
 inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subDataset, int cap)
 {
@@ -126,69 +127,93 @@ inline void GappedArrayType::Train(const vector<pair<double, double>> &dataset)
     if (actualSize == 0)
         return;
 
-    double maxValue;
+    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
     for (int i = 0; i < dataset.size(); i++)
     {
         if (dataset[i].first != -1)
         {
-            minValue = dataset[i].first;
-            break;
+            t1 += dataset[i].first * dataset[i].first;
+            t2 += dataset[i].first;
+            t3 += dataset[i].first * index[i];
+            t4 += index[i];
         }
     }
-    for (int i = dataset.size() - 1; i >= 0; i--)
-    {
-        if (dataset[i].first != -1)
-        {
-            maxValue = dataset[i].first;
-            break;
-        }
-    }
-    divisor = float(maxValue - minValue) / 4;
-
-    int i = 0;
-    int cnt = 0;
-    for (int k = 1; k <= 4; k++)
-    {
-        double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-        for (; i < dataset.size() - 1; i++)
-        {
-            if (dataset[i].first != -1)
-            {
-                if (float(dataset[i].first - minValue) / divisor >= k)
-                    break;
-                cnt++;
-                t1 += dataset[i].first * dataset[i].first;
-                t2 += dataset[i].first;
-                t3 += dataset[i].first * index[i];
-                t4 += index[i];
-            }
-        }
-        if (t1 * cnt - t2 * t2 != 0)
-        {
-            auto theta1 = (t3 * cnt - t2 * t4) / (t1 * cnt - t2 * t2);
-            auto theta2 = (t1 * t4 - t2 * t3) / (t1 * cnt - t2 * t2);
-            theta[k - 1] = {theta1, theta2};
-        }
-        else
-            theta[k - 1] = {1, 0};
-    }
+    theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
+    theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
 }
 
 inline int GappedArrayType::Predict(double key)
 {
-    int idx = float(key - minValue) / divisor;
-    if (idx < 0)
-        idx = 0;
-    else if (idx >= 4)
-        idx = 3;
-    // return the predicted idx in the children
-    int p = theta[idx].first * key + theta[idx].second;
+    // return the predicted idx in the leaf node
+    int size = (flagNumber & 0xFFFFFF);
+    int p = (theta1 * key + theta2) * maxIndex;
     if (p < 0)
         p = 0;
-    else if (p > 1)
-        p = 1;
-    p *= maxIndex;
+    else if (p >= maxIndex)
+        p = maxIndex;
     return p;
+}
+
+inline int GappedArrayType::UpdateError(const int start_idx, const int size)
+{
+    // find: max|pi-yi|
+    int maxError = 0, p, d;
+    for (int i = start_idx; i < start_idx + size; i++)
+    {
+        p = Predict(findDatapoint[i].first);
+        d = abs(i - start_idx - p);
+        if (d > maxError)
+            maxError = d;
+    }
+
+    // find the optimal value of error
+    int minRes = size * log(size) / log(2);
+    int res;
+    int cntBetween, cntOut;
+    for (int e = 0; e <= maxError; e++)
+    {
+        cntBetween = 0;
+        cntOut = 0;
+        for (int i = start_idx; i < start_idx + size; i++)
+        {
+            p = Predict(findDatapoint[i].first);
+            d = abs(i - start_idx - p);
+            if (d <= e)
+                cntBetween++;
+            else
+                cntOut++;
+        }
+        if (e != 0)
+            res = cntBetween * log(e) / log(2) + cntOut * log(size) / log(2);
+        else
+            res = cntOut * log(size) / log(2);
+        if (res < minRes)
+        {
+            minRes = res;
+            error = e;
+        }
+    }
+    error *= (2 - density);
+    return error;
+}
+
+inline void GappedArrayType::Train(const int start_idx, const int size)
+{
+    vector<double> index;
+    for (int i = start_idx; i < start_idx + size; i++)
+        index.push_back(double(i - start_idx) / double(size));
+
+    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+    for (int i = start_idx; i < start_idx + size; i++)
+    {
+        t1 += findDatapoint[i].first * findDatapoint[i].first;
+        t2 += findDatapoint[i].first;
+        t3 += findDatapoint[i].first * index[i];
+        t4 += index[i];
+    }
+    theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+    theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+    maxIndex = size;
 }
 
 #endif

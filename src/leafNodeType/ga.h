@@ -20,9 +20,11 @@ public:
         m_left = -1;
     }
     inline int UpdateError(const vector<pair<double, double>> &dataset);
+    inline int UpdateError(const int start_idx, const int size);
     inline void SetDataset(const vector<pair<double, double>> &dataset, int cap);
     inline void SetDataset(const int left, const int size, int cap);
     void Train(const vector<pair<double, double>> &dataset);
+    void Train(const int start_idx, const int size);
     int Predict(double key);
 
 
@@ -35,9 +37,9 @@ public:
     int error;      // the boundary of binary search
     float density; // the maximum density of the leaf node data
 
-    float divisor;               // 4 Byte
-    float minValue;              // 4 Byte
-    pair<float, float> theta[4]; // 32 Byte
+    float theta1;
+    float theta2;
+    pair<float, float> tmppp[4];
 };
 
 #endif // !GA_H
