@@ -27,17 +27,17 @@ extern vector<pair<double, double>> insertDatapoint;
 extern int initDatasetSize;
 extern int totalFrequency;
 
+extern pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
+
 // return {cost, true:inner, false:leaf}
 pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
 {
-    if (findSize == 0)
+    if (findSize == 0 && insertSize == 0)
     {
         auto it = COST.find({findLeft, findSize});
         if (it != COST.end())
         {
             auto cost = it->second;
-            auto itStruct = structMap.find({false, {findLeft, findSize}});
-            auto stru = itStruct->second;
             return {cost, false};
         }
         else
@@ -59,8 +59,6 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         if (it != COST.end())
         {
             auto cost = it->second;
-            auto itStruct = structMap.find({false, {findLeft, findSize}});
-            auto stru = itStruct->second;
             return {cost, false};
         }
         vector<pair<double, double>> findData;
@@ -76,57 +74,82 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         ParamStruct optimalStruct;
         double space, time, cost;
 
+        // calculate the actual space
+        int actualSize = kThreshold;
+        while (findSize >= actualSize)
+            actualSize *= kExpansionScale;
+
+        actualSize *= 2; // test
+        if (actualSize > 4096)
+            actualSize = 4096;
+
         // choose an array node as the leaf node
         time = 0.0;
-        space = 16.0 * findSize / 1024 / 1024;
+        space = 16.0 * actualSize / 1024 / 1024;
 
-        auto tmp = ArrayType(kMaxKeyNum);
+        auto tmp = ArrayType(kThreshold);
         tmp.Train(findData);
         auto error = tmp.UpdateError(findData);
-        if (error == 0)
-            error = 1;
         for (int i = 0; i < findData.size(); i++)
         {
             auto predict = tmp.Predict(findData[i].first);
             auto d = abs(i - predict);
-            time += 74.6245 * findData[i].second; // due to shuffle
+            time += 175.324 * findData[i].second;
             if (d <= error)
-                time += log(error) / log(2) * findData[i].second * 8.23;
+            {
+                if (error > 0)
+                    time += log(error) / log(2) * findData[i].second * 10.9438;
+                else
+                    time += 2.4132;
+            }
             else
-                time += log(findData.size()) / log(2) * findData[i].second * 8.23;
+                time += log(actualSize) / log(2) * findData[i].second * 10.9438;
         }
 
         for (int i = 0; i < insertData.size(); i++)
         {
             auto predict = tmp.Predict(insertData[i].first);
-            auto actual = TestArrayBinarySearch(findData[i].first, findData);
+            auto actual = TestArrayBinarySearch(insertData[i].first, findData);
             auto d = abs(actual - predict);
-            time += (74.6245 + 28.25 * (insertData.size() - actual + 1)) * insertData[i].second;
+            time += (175.324 + 28.25 * (insertData.size() - actual + 1)) * insertData[i].second;
             if (d <= error)
-                time += log(error) / log(2) * insertData[i].second * 8.23;
+                time += log(error) / log(2) * insertData[i].second * 10.9438;
             else
-                time += log(insertData.size()) / log(2) * insertData[i].second * 8.23;
+                time += log(actualSize) / log(2) * insertData[i].second * 10.9438;
         }
-        double entropy = log(findData.size()) / log(2);
+        // time = time / (findData.size() + insertData.size());
+        time = time / totalFrequency;
 
-        cost = (time + space * kRate / findData.size()) / entropy; // ns + MB * kRate
+        cost = time + space * kRate; // ns + MB * kRate
         if (cost <= OptimalValue)
         {
             OptimalValue = cost;
             optimalStruct.type = 4;
             optimalStruct.density = 2;
-            OptimalSpace = space * kRate / findData.size() / entropy;
-            OptimalTime = time / entropy;
+            OptimalSpace = space * kRate;
+            OptimalTime = time;
         }
 
         // choose a gapped array node as the leaf node
         float Density[4] = {0.5, 0.7, 0.8, 0.9}; // data/capacity
         for (int i = 0; i < 4; i++)
         {
-            time = 0.0;
-            auto tmpNode = GappedArrayType(kMaxKeyNum);
+            auto tmpNode = GappedArrayType(kThreshold);
             tmpNode.density = Density[i];
-            space = 16.0 / tmpNode.density * findData.size() / 1024 / 1024;
+            space = 16.0 / tmpNode.density * findSize / 1024 / 1024;
+
+            // calculate the actual space
+            int actualSize = kThreshold;
+            while (findSize >= actualSize)
+                actualSize *= kExpansionScale;
+            while ((float(findSize) / float(actualSize) >= Density[i]))
+                actualSize = float(actualSize) / Density[i] + 1;
+            actualSize *= 2;
+            if (actualSize > 4096)
+                actualSize = 4096;
+
+            time = 0.0;
+            space = 16.0 / tmpNode.density * actualSize / 1024 / 1024;
 
             tmpNode.Train(findData);
             auto errorGA = tmpNode.UpdateError(findData);
@@ -136,33 +159,34 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
             {
                 auto predict = tmpNode.Predict(findData[t].first);
                 auto d = abs(t - predict);
-                time += 74.6245 * findData[t].second; // due to shuffle
+                time += 175.324 * findData[t].second; // due to shuffle
                 if (d <= errorGA)
-                    time += log(errorGA) / log(2) * findData[t].second * 8.23 * (2 - Density[i]);
+                    time += log(errorGA) / log(2) * findData[t].second * 10.9438 * (2 - Density[i]);
                 else
-                    time += log(findData.size()) / log(2) * findData[t].second * 8.23 * (2 - Density[i]);
+                    time += log(findData.size()) / log(2) * findData[t].second * 10.9438 * (2 - Density[i]);
             }
             for (int t = 0; t < insertData.size(); t++)
             {
                 auto predict = tmpNode.Predict(insertData[t].first);
-                auto actual = TestGABinarySearch(findData[t].first, findData);
-                time += 74.6245 * insertData[t].second; // due to shuffle
+                auto actual = TestGABinarySearch(insertData[t].first, findData);
+                time += 175.324 * insertData[t].second; // due to shuffle
                 auto d = abs(actual - predict);
                 if (d <= errorGA)
-                    time += log(errorGA) / log(2) * insertData[t].second * 8.23 * (2 - Density[i]);
+                    time += log(errorGA) / log(2) * insertData[t].second * 10.9438 * (2 - Density[i]);
                 else
-                    time += log(insertData.size()) / log(2) * insertData[t].second * 8.23 * (2 - Density[i]);
+                    time += log(insertData.size()) / log(2) * insertData[t].second * 10.9438 * (2 - Density[i]);
             }
-            double entropy = log(findData.size()) / log(2);
+            // time = time / (findData.size() + insertData.size());
+            time = time / totalFrequency;
 
-            cost = (time + space * kRate / findData.size()) / entropy; // ns + MB * kRate
+            cost = time + space * kRate; // ns + MB * kRate
             if (cost <= OptimalValue)
             {
                 OptimalValue = cost;
                 optimalStruct.type = 5;
                 optimalStruct.density = Density[i];
-                OptimalSpace = space * kRate / findData.size() / entropy;
-                OptimalTime = time / entropy;
+                OptimalSpace = space * kRate;
+                OptimalTime = time;
             }
         }
         COST.insert({{findLeft, findSize}, {OptimalTime, OptimalSpace}});
@@ -196,6 +220,9 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 continue;
             for (int type = 0; type < 4; type++)
             {
+                if (type == 1)
+                    continue;
+
                 vector<int> perSize(c, 0);
                 for (int i = 0; i < c; i++)
                     perSize.push_back(0);
@@ -204,7 +231,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 {
                 case 0:
                 {
-                    time = 12.2345;
+                    time = 92.4801;
                     space = 64.0 * c / 1024 / 1024;
                     auto root = LRModel();
                     root.SetChildNumber(c);
@@ -218,7 +245,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 }
                 case 1:
                 {
-                    time = 39.1523;
+                    time = 97.1858;
                     space = 64.0 * c / 1024 / 1024;
                     auto root = NNModel();
                     root.SetChildNumber(c);
@@ -232,7 +259,9 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 }
                 case 2:
                 {
-                    time = 38.5235;
+                    if (c > 160)
+                        break;
+                    time = 109.8874;
                     space = 64.0 * c / 1024 / 1024;
                     auto root = HisModel();
                     root.SetChildNumber(c);
@@ -246,7 +275,9 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 }
                 case 3:
                 {
-                    time = 8.23 * log(c) / log(2);
+                    if (c > 20)
+                        break;
+                    time = 114.371;
                     space = 64.0 * c / 1024 / 1024;
                     auto root = BSModel();
                     root.SetChildNumber(c);
@@ -385,19 +416,21 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> res;
-            if (subFindData[i].second + subInsertData[i].second > 4096)
+            if (subFindData[i].second + subInsertData[i].second > 40960)
                 res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+            else if (subFindData[i].second + subInsertData[i].second > 4096)
+                res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
-                auto res1 = GreedyAlgorithm(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                auto res0 = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                 if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     res = res1;
                 else
                     res = res0;
             }
             else
-                res = GreedyAlgorithm(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
             OptimalValue += res.first.first + res.first.second;
             OptimalSpace += res.first.second;
@@ -405,7 +438,8 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         }
 
         optimalStruct.child = tmpChild;
-        structMap.insert({{true, {findLeft, findSize}}, optimalStruct});
+        if (OptimalTime < DBL_MAX)
+            structMap.insert({{true, {findLeft, findSize}}, optimalStruct});
         return {{OptimalTime, OptimalSpace}, true};
     }
 }

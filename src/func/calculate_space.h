@@ -51,18 +51,15 @@ long double calculateSpace()
     }
 
     space += 64 * nowChildNumber;
-    // for (int i = 0; i < nowChildNumber; i++)
-    // {
-    //     if ((entireChild[i].lr.flagNumber >> 24) < 8)
-    //         space += 64;
-    //     else if ((entireChild[i].lr.flagNumber >> 24) == 9)
-    //         space += sizeof(ArrayType);
-    //     else
-    //         space += sizeof(GappedArrayType);
-    // }
+    for (int i = 0; i < nowChildNumber; i++)
+    {
+        if ((entireChild[i].lr.flagNumber >> 24) == 8)
+            space += entireChild[i].array.m_capacity * 16;
+        else if ((entireChild[i].lr.flagNumber >> 24) == 9)
+            space += entireChild[i].ga.capacity * 16;
+    }
     space = space / 1024 / 1024;
     cout << "\tStructure SPACE: " << space << "MB" << endl;
-    space += float(dataset.size()) * 16 / 1024 / 1024;
     cout << "\nTOTAL SPACE (include data): " << space << "MB" << endl;
     return space;
 }

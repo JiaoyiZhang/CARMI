@@ -10,6 +10,7 @@
 #include "../leafNodeType/array_type.h"
 #include "../func/function.h"
 #include "../func/inlineFunction.h"
+#include "greedy_construct.h"
 #include "params_struct.h"
 #include <float.h>
 #include <algorithm>
@@ -71,9 +72,18 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         ParamStruct optimalStruct;
         double space, time, cost;
 
+        // calculate the actual space
+        int actualSize = kThreshold;
+        while (findSize >= actualSize)
+            actualSize *= kExpansionScale;
+
+        actualSize *= 2; // test
+        if (actualSize > 4096)
+            actualSize = 4096;
+
         // choose an array node as the leaf node
         time = 0.0;
-        space = 16.0 * findSize / 1024 / 1024;
+        space = 16.0 * actualSize / 1024 / 1024;
 
         auto tmp = ArrayType(kThreshold);
         tmp.Train(findData);
@@ -91,7 +101,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     time += 2.4132;
             }
             else
-                time += log(findData.size()) / log(2) * findData[i].second * 10.9438;
+                time += log(actualSize) / log(2) * findData[i].second * 10.9438;
         }
 
         for (int i = 0; i < insertData.size(); i++)
@@ -103,7 +113,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             if (d <= error)
                 time += log(error) / log(2) * insertData[i].second * 10.9438;
             else
-                time += log(insertData.size()) / log(2) * insertData[i].second * 10.9438;
+                time += log(actualSize) / log(2) * insertData[i].second * 10.9438;
         }
         // time = time / (findData.size() + insertData.size());
         time = time / totalFrequency;
@@ -122,10 +132,22 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         float Density[4] = {0.5, 0.7, 0.8, 0.9}; // data/capacity
         for (int i = 0; i < 4; i++)
         {
-            time = 0.0;
             auto tmpNode = GappedArrayType(kThreshold);
             tmpNode.density = Density[i];
             space = 16.0 / tmpNode.density * findSize / 1024 / 1024;
+
+            // calculate the actual space
+            int actualSize = kThreshold;
+            while (findSize >= actualSize)
+                actualSize *= kExpansionScale;
+            while ((float(findSize) / float(actualSize) >= Density[i]))
+                actualSize = float(actualSize) / Density[i] + 1;
+            actualSize *= 2;
+            if (actualSize > 4096)
+                actualSize = 4096;
+
+            time = 0.0;
+            space = 16.0 / tmpNode.density * actualSize / 1024 / 1024;
 
             tmpNode.Train(findData);
             auto errorGA = tmpNode.UpdateError(findData);
@@ -236,7 +258,9 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, bool> res;
-                        if (subFindData[i].second + subInsertData[i].second > 4096)
+                        if (subFindData[i].second + subInsertData[i].second > 40960)
+                            res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                        else if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
@@ -302,7 +326,9 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, bool> res;
-                        if (subFindData[i].second + subInsertData[i].second > 4096)
+                        if (subFindData[i].second + subInsertData[i].second > 40960)
+                            res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                        else if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
@@ -370,7 +396,9 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, bool> res;
-                        if (subFindData[i].second + subInsertData[i].second > 4096)
+                        if (subFindData[i].second + subInsertData[i].second > 40960)
+                            res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                        else if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
@@ -439,7 +467,9 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, bool> res;
-                        if (subFindData[i].second + subInsertData[i].second > 4096)
+                        if (subFindData[i].second + subInsertData[i].second > 40960)
+                            res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                        else if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {

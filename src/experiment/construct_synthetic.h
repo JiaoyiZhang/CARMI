@@ -41,7 +41,7 @@ void constructSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);
@@ -51,7 +51,7 @@ void constructSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);
@@ -61,7 +61,7 @@ void constructSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);
@@ -71,7 +71,7 @@ void constructSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);

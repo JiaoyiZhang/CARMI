@@ -34,7 +34,7 @@ BSType bsRoot;
 
 int main()
 {
-    outRes.open("res_0107.csv", ios::app);
+    outRes.open("res_0108.csv", ios::app);
     outRes << "\nTest time: " << __TIMESTAMP__ << endl;
     kMaxKeyNum = 2;
     // kLeafNodeID = 1;
