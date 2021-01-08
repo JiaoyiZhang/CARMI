@@ -33,7 +33,13 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     cout << endl;
     cout << "-------------------------------" << endl;
     cout << "Start construction!" << endl;
-    cout << "\nTest time: " << __TIMESTAMP__ << endl;
+
+    time_t timep;
+    time(&timep);
+    char tmpTime[64];
+    strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+    cout << "\nTEST time: " << tmpTime << endl;
+
     initEntireData(0, findData.size() + insertData.size(), false);
     initEntireChild(findData.size() + insertData.size());
     findDatapoint = findData;
@@ -84,7 +90,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     double totalSpace = 0.0;
     vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
     vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
-    cout << "\nRoot time: " << __TIMESTAMP__ << endl;
+
+    time(&timep);
+    char tmpTime2[64];
+    strftime(tmpTime2, sizeof(tmpTime2), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+    cout << "\nRoot time: " << tmpTime2 << endl;
+
     switch (rootType)
     {
     case 0:
@@ -112,7 +123,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             if (i % 10000 == 0)
             {
                 cout << "construct child " << i << ":\tsize:" << subFindData[i].second + subInsertData[i].second << endl;
-                cout << "start time: " << __TIMESTAMP__ << endl;
+
+                time_t timep;
+                time(&timep);
+                char tmpTime[64];
+                strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+                cout << "\nstart time: " << tmpTime << endl;
             }
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -135,13 +151,23 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             if (i % 10000 == 0)
             {
                 cout << "construct child " << i << " over!\ttype is:" << type << endl;
-                cout << "over time: " << __TIMESTAMP__ << endl;
+
+                time_t timep;
+                time(&timep);
+                char tmpTime[64];
+                strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+                cout << "\nover time: " << tmpTime << endl;
             }
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
             if (i % 10000 == 0)
             {
                 cout << "store child " << i << " over!" << endl;
-                cout << "over time: " << __TIMESTAMP__ << endl;
+
+                time_t timep;
+                time(&timep);
+                char tmpTime[64];
+                strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+                cout << "\nover time: " << tmpTime << endl;
             }
 
             totalCost += resChild.first.first + resChild.first.second;
@@ -310,7 +336,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     cout << "total cost: " << totalCost << endl;
     cout << "total time: " << totalTime << endl;
     cout << "total space: " << totalSpace << endl;
-    cout << "\nover time: " << __TIMESTAMP__ << endl;
+
+    time(&timep);
+    char tmpTime1[64];
+    strftime(tmpTime1, sizeof(tmpTime1), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+    cout << "\nRoot time: " << tmpTime1 << endl;
+
     return rootType;
 }
 

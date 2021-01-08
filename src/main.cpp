@@ -35,7 +35,13 @@ BSType bsRoot;
 int main()
 {
     outRes.open("res_0108.csv", ios::app);
-    outRes << "\nTest time: " << __TIMESTAMP__ << endl;
+
+    time_t timep;
+    time(&timep);
+    char tmpTime[64];
+    strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+    cout << "\nTest time: " << tmpTime << endl;
+
     kMaxKeyNum = 2;
     // kLeafNodeID = 1;
     cout << "kLeafNodeID:" << kLeafNodeID << endl;
@@ -46,19 +52,19 @@ int main()
     // testSynthetic(0);
 
     kMaxKeyNum = 512;
-    constructSynthetic(1);   // read-only
+    constructSynthetic(1); // read-only
     // constructSynthetic(0.5); // balance
     // constructSynthetic(0.95);
     // constructSynthetic(0); // partial
 
-    constructYCSB(1);   // read-only
+    constructYCSB(1); // read-only
     // constructYCSB(0.5); // balance
     // constructYCSB(0.95);
     // constructYCSB(0); // partial
 
     // kMaxKeyNum = 256;
 
-    constructMap(1);   // read-only
+    constructMap(1); // read-only
     // constructMap(0.5); // balance
     // constructMap(0.95);
     // constructMap(0); // partial
