@@ -23,18 +23,18 @@ public:
     inline int UpdateError(const int start_idx, const int size);
     inline void SetDataset(const vector<pair<double, double>> &dataset, int cap);
     inline void SetDataset(const int left, const int size, int cap);
+    inline void SetDataset(const int start_idx, const int size);
     void Train(const vector<pair<double, double>> &dataset);
     void Train(const int start_idx, const int size);
     int Predict(double key);
-
 
     int flagNumber; // 4 Byte (flag + 0)
 
     int m_left;   // the left boundary of the leaf node in the global array
     int capacity; // the current maximum capacity of the leaf node
 
-    int maxIndex;   // tht index of the last one
-    int error;      // the boundary of binary search
+    int maxIndex;  // tht index of the last one
+    int error;     // the boundary of binary search
     float density; // the maximum density of the leaf node data
 
     float theta1;

@@ -20,9 +20,10 @@ public:
     inline int UpdateError(const int start_idx, const int size);
     inline void SetDataset(const vector<pair<double, double>> &dataset, int cap);
     inline void SetDataset(const int left, const int size, int cap);
-    void Train(const vector<pair<double, double>> &dataset);
-    void Train(const int start_idx, const int size);
-    int Predict(double key);
+    inline void SetDataset(const int start_idx, const int size);
+    inline void Train(const vector<pair<double, double>> &dataset);
+    inline void Train(const int start_idx, const int size);
+    inline int Predict(double key);
 
     int flagNumber; // 4 Byte (flag + 0)
 

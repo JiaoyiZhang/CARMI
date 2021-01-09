@@ -9,6 +9,7 @@
 using namespace std;
 
 extern vector<BaseNode> entireChild;
+extern vector<pair<double, double>> findActualDataset;
 
 inline void NNModel::Initialize(const vector<pair<double, double>> &dataset)
 {
@@ -130,6 +131,48 @@ inline int NNModel::Predict(double key)
             p = point[e].second;
     }
     return p;
+}
+
+inline void NNModel::Train(const int left, const int size)
+{
+    return;
+    if (size == 0)
+        return;
+    int childNumber = flagNumber & 0x00FFFFFF;
+    int length = childNumber - 1;
+    vector<double> index;
+    int end = left + size;
+    for (int i = left; i < end; i++)
+    {
+        index.push_back(double(i) / double(size));
+    }
+
+    int seg = size / 3;
+    int i = 0;
+    int cnt = 0;
+    for (int k = 1; k <= 3; k++)
+    {
+        double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+        int end = min(k * seg, int(size - 1));
+        point[cnt++] = {findActualDataset[end].first, length};
+        for (; i < end; i++)
+        {
+            t1 += findActualDataset[i].first * findActualDataset[i].first;
+            t2 += findActualDataset[i].first;
+            t3 += findActualDataset[i].first * index[i];
+            t4 += index[i];
+        }
+        auto theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+        auto theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+        theta1 *= childNumber;
+        theta2 *= childNumber;
+        int pointIdx = theta1 * point[k - 1].first + theta2;
+        if (pointIdx < 0)
+            pointIdx = 0;
+        else if (pointIdx > length)
+            pointIdx = length;
+        point[k - 1].second = pointIdx;
+    }
 }
 
 #endif

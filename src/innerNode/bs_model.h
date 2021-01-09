@@ -9,6 +9,7 @@
 using namespace std;
 
 extern vector<BaseNode> entireChild;
+extern vector<pair<double, double>> findActualDataset;
 
 inline void BSModel::Initialize(const vector<pair<double, double>> &dataset)
 {
@@ -95,4 +96,35 @@ inline int BSModel::Predict(double key)
     return start_idx;
 }
 
+inline void BSModel::Train(const int left, const int size)
+{
+    if (size == 0)
+        return;
+    int childNumber = flagNumber & 0x00FFFFFF;
+    float value = float(size) / childNumber;
+    int cnt = 1;
+    int start = min(float(left), left + value * cnt - 1);
+    int end = left + size;
+    for (int i = start; i < end; i += value)
+    {
+        if (cnt >= childNumber)
+            break;
+        if (findActualDataset[i].first != -1)
+        {
+            index[cnt - 1] = findActualDataset[i].first;
+        }
+        else
+        {
+            for (int j = i + 1; j < end; j++)
+            {
+                if (findActualDataset[j].first != -1)
+                {
+                    index[cnt - 1] = findActualDataset[i].first;
+                    break;
+                }
+            }
+        }
+        cnt++;
+    }
+}
 #endif

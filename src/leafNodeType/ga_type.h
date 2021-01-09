@@ -10,7 +10,7 @@
 using namespace std;
 
 extern pair<double, double> *entireData;
-extern vector<pair<double, double>> findDatapoint;
+extern vector<pair<double, double>> findActualDataset;
 
 inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subDataset, int cap)
 {
@@ -19,7 +19,7 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     capacity = cap;
     while ((float(subDataset.size()) / float(capacity) >= density))
         capacity = float(capacity) / density + 1;
-    capacity *= 2; // test
+    // capacity *= 2; // test
     if (capacity > 4096)
         capacity = 4096;
     int size = 0;
@@ -160,7 +160,7 @@ inline int GappedArrayType::UpdateError(const int start_idx, const int size)
     int maxError = 0, p, d;
     for (int i = start_idx; i < start_idx + size; i++)
     {
-        p = Predict(findDatapoint[i].first);
+        p = Predict(findActualDataset[i].first);
         d = abs(i - start_idx - p);
         if (d > maxError)
             maxError = d;
@@ -176,7 +176,7 @@ inline int GappedArrayType::UpdateError(const int start_idx, const int size)
         cntOut = 0;
         for (int i = start_idx; i < start_idx + size; i++)
         {
-            p = Predict(findDatapoint[i].first);
+            p = Predict(findActualDataset[i].first);
             d = abs(i - start_idx - p);
             if (d <= e)
                 cntBetween++;
@@ -206,14 +206,37 @@ inline void GappedArrayType::Train(const int start_idx, const int size)
     double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
     for (int i = start_idx; i < start_idx + size; i++)
     {
-        t1 += findDatapoint[i].first * findDatapoint[i].first;
-        t2 += findDatapoint[i].first;
-        t3 += findDatapoint[i].first * index[i - start_idx];
+        t1 += findActualDataset[i].first * findActualDataset[i].first;
+        t2 += findActualDataset[i].first;
+        t3 += findActualDataset[i].first * index[i - start_idx];
         t4 += index[i - start_idx];
     }
     theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
     theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
     maxIndex = size;
+}
+
+inline void GappedArrayType::SetDataset(const int left, const int size)
+{
+    if (m_left != -1)
+        releaseMemory(m_left, capacity);
+    while ((float(size) / float(capacity) >= density))
+        capacity = float(capacity) / density + 1;
+    // capacity *= 2; // test
+    if (capacity > 4096)
+        capacity = 4096;
+    m_left = allocateMemory(capacity);
+
+    if (size > 4096)
+        cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:" << size << endl;
+
+    int end = left + size;
+    for (int i = m_left, j = left; j < end; i++, j++)
+        entireData[i] = findActualDataset[j];
+    flagNumber += size;
+
+    Train(left, size);
+    UpdateError(left, size);
 }
 
 #endif

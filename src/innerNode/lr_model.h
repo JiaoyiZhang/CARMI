@@ -8,6 +8,7 @@
 using namespace std;
 
 extern vector<BaseNode> entireChild;
+extern vector<pair<double, double>> findActualDataset;
 
 inline void LRModel::Initialize(const vector<pair<double, double>> &dataset)
 {
@@ -131,6 +132,61 @@ inline int LRModel::Predict(double key)
     else if (p >= left + bound)
         p = left + bound - 1;
     return p;
+}
+
+inline void LRModel::Train(const int left, const int size)
+{
+    if (size == 0)
+        return;
+    int childNumber = flagNumber & 0x00FFFFFF;
+    vector<double> index;
+    int end = left + size;
+    for (int i = left; i < end; i++)
+    {
+        index.push_back(double(i - left) / double(size));
+    }
+
+    double maxValue;
+    for (int i = left; i < end; i++)
+    {
+        minValue = findActualDataset[i].first;
+        break;
+    }
+    for (int i = end - 1; i >= left; i--)
+    {
+        maxValue = findActualDataset[i].first;
+        break;
+    }
+    divisor = float(maxValue - minValue) / 6;
+
+    int i = left;
+    int cnt = 0;
+    for (int k = 1; k <= 6; k++)
+    {
+        double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+        for (; i < end - 1; i++)
+        {
+            if (float(findActualDataset[i].first - minValue) / divisor >= k)
+                break;
+            cnt++;
+            t1 += findActualDataset[i].first * findActualDataset[i].first;
+            t2 += findActualDataset[i].first;
+            t3 += findActualDataset[i].first * index[i - left];
+            t4 += index[i - left];
+        }
+        if (t1 * cnt - t2 * t2 != 0)
+        {
+            auto theta1 = (t3 * cnt - t2 * t4) / (t1 * cnt - t2 * t2);
+            auto theta2 = (t1 * t4 - t2 * t3) / (t1 * cnt - t2 * t2);
+            theta1 *= childNumber;
+            theta2 *= childNumber;
+            theta[k - 1] = {theta1, theta2};
+        }
+        else
+        {
+            theta[k - 1] = {childNumber, 0};
+        }
+    }
 }
 
 #endif

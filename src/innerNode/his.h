@@ -17,6 +17,7 @@ public:
     }
     void Initialize(const vector<pair<double, double>> &dataset);
     void Train(const vector<pair<double, double>> &dataset);
+    void Train(const int left, const int size);
     int Predict(double key);
 
     int flagNumber; // 4 Byte (flag + childNumber)

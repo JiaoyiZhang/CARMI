@@ -8,6 +8,7 @@
 using namespace std;
 
 extern vector<BaseNode> entireChild;
+extern vector<pair<double, double>> findActualDataset;
 
 inline void HisModel::Initialize(const vector<pair<double, double>> &dataset)
 {
@@ -187,6 +188,101 @@ inline int HisModel::Predict(double key)
         }
     }
     return base;
+}
+
+inline void HisModel::Train(const int left, const int size)
+{
+    if (size == 0)
+        return;
+    int childNumber = flagNumber & 0x00FFFFFF;
+    double maxValue;
+    int end = left + size;
+    for (int i = left; i < end; i++)
+    {
+        minValue = findActualDataset[i].first;
+        break;
+    }
+    for (int i = end - 1; i >= left; i--)
+    {
+        maxValue = findActualDataset[i].first;
+        break;
+    }
+    divisor = float(maxValue - minValue) / childNumber;
+    vector<int> table;
+    for (int i = 0; i < childNumber; i++)
+        table.push_back(0);
+    for (int i = left; i < end; i++)
+    {
+        int idx = float(findActualDataset[i].first - minValue) / divisor;
+        idx = min(idx, int(table.size()) - 1);
+        table[idx]++;
+    }
+    int cnt = 0;
+    int nowSize = 0;
+    int avg = size / childNumber;
+    for (int i = 0; i < table.size(); i++)
+    {
+        nowSize += table[i];
+        if (table[i] >= avg || nowSize >= avg)
+        {
+            cnt++;
+            nowSize = 0;
+        }
+        if (cnt >= childNumber / 2)
+            cnt = childNumber / 2 - 1;
+        table[i] = cnt;
+    }
+
+    int i = 0;
+    int idx0 = 0, idx1 = 1;
+    vector<unsigned int> table00; // 2c/32*8 = c/2 Byte
+    vector<unsigned int> table11; // c/2 Byte
+    for (; i < childNumber; i += 32)
+    {
+        //  & 0x0FFFFFFF;
+        unsigned int start_idx = table[i];
+        int tmp = 0;
+        for (int j = i; j < i + 32; j++)
+        {
+            if (j - i == 16)
+            {
+                if (i + 16 < childNumber)
+                    start_idx = table[i + 16];
+                else
+                    start_idx = 0;
+            }
+            if (j >= childNumber)
+            {
+                while (j < i + 32)
+                {
+                    tmp = tmp << 1;
+                    j++;
+                }
+                table11.push_back(int(table[i]) << 16);
+                if (i + 16 < childNumber)
+                    table11[table11.size() - 1] = (int(table[i]) << 16) + int(table[i + 16]);
+                table00.push_back(tmp);
+                for (int t = 0; t < table00.size(); t++)
+                {
+                    table0[t] = table00[t];
+                    table1[t] = table11[t];
+                }
+                return;
+            }
+            int diff = int(table[j]) - start_idx;
+            tmp = (tmp << 1) + diff;
+            if (diff > 0)
+                start_idx += diff;
+        }
+        start_idx = (int(table[i]) << 16) + int(table[i + 16]);
+        table11.push_back(start_idx);
+        table00.push_back(tmp);
+    }
+    for (int t = 0; t < table00.size(); t++)
+    {
+        table0[t] = table00[t];
+        table1[t] = table11[t];
+    }
 }
 
 #endif
