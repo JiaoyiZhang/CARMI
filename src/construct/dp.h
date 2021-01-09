@@ -71,7 +71,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         while (findSize >= actualSize)
             actualSize *= kExpansionScale;
 
-        actualSize *= 2; // test
+        // actualSize *= 2; // test
         if (actualSize > 4096)
             actualSize = 4096;
 
@@ -86,7 +86,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         {
             auto predict = tmp.Predict(findDatapoint[i].first);
             auto d = abs(i - predict);
-            time += 175.324 * findDatapoint[i].second;
+            time += 161.241 * findDatapoint[i].second;
             if (d <= error)
             {
                 if (error > 0)
@@ -103,9 +103,14 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             auto predict = tmp.Predict(insertDatapoint[i].first);
             auto actual = TestArrayBinarySearch(insertDatapoint[i].first, findLeft, findLeft + findSize);
             auto d = abs(actual - predict);
-            time += (175.324 + 28.25 * (insertSize - actual + 1)) * insertDatapoint[i].second;
+            time += (161.241 + 6.25 * (insertSize - actual + 1)) * insertDatapoint[i].second;
             if (d <= error)
-                time += log(error) / log(2) * insertDatapoint[i].second * 10.9438;
+            {
+                if (error > 0)
+                    time += log(error) / log(2) * insertDatapoint[i].second * 10.9438;
+                else
+                    time += 2.4132;
+            }
             else
                 time += log(actualSize) / log(2) * insertDatapoint[i].second * 10.9438;
         }
@@ -127,7 +132,6 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         {
             auto tmpNode = GappedArrayType(kThreshold);
             tmpNode.density = Density[i];
-            space = 16.0 / tmpNode.density * findSize / 1024 / 1024;
 
             // calculate the actual space
             int actualSize = kThreshold;
@@ -135,12 +139,12 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 actualSize *= kExpansionScale;
             while ((float(findSize) / float(actualSize) >= Density[i]))
                 actualSize = float(actualSize) / Density[i] + 1;
-            actualSize *= 2;
+            // actualSize *= 2;
             if (actualSize > 4096)
                 actualSize = 4096;
 
             time = 0.0;
-            space = 16.0 / tmpNode.density * actualSize / 1024 / 1024;
+            space = 16.0 * actualSize / 1024 / 1024;
 
             tmpNode.Train(findLeft, findSize);
             auto errorGA = tmpNode.UpdateError(findLeft, findSize);
@@ -150,22 +154,32 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             {
                 auto predict = tmpNode.Predict(findDatapoint[t].first);
                 auto d = abs(t - predict);
-                time += 175.324 * findDatapoint[t].second; // due to shuffle
+                time += 161.241 * findDatapoint[t].second; // due to shuffle
                 if (d <= errorGA)
-                    time += log(errorGA) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                {
+                    if (d > 0)
+                        time += log(errorGA) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                    else
+                        time += 2.4132;
+                }
                 else
-                    time += log(findSize) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                    time += log(actualSize) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
             }
             for (int t = insertLeft; t < insertLeft + insertSize; t++)
             {
                 auto predict = tmpNode.Predict(insertDatapoint[t].first);
                 auto actual = TestGABinarySearch(insertDatapoint[t].first, findLeft, findLeft + findSize);
-                time += 175.324 * insertDatapoint[t].second; // due to shuffle
+                time += 161.241 * insertDatapoint[t].second; // due to shuffle
                 auto d = abs(actual - predict);
                 if (d <= errorGA)
-                    time += log(errorGA) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                {
+                    if (d > 0)
+                        time += log(errorGA) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                    else
+                        time += 2.4132;
+                }
                 else
-                    time += log(insertSize) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                    time += log(actualSize) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
             }
             time = time / totalFrequency;
 
@@ -190,22 +204,19 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         double OptimalSpace = DBL_MAX;
         double space;
         ParamStruct optimalStruct = {0, 32, 2, vector<pair<bool, pair<int, int>>>()};
-        vector<pair<double, double>> findData;
-        vector<pair<double, double>> insertData;
         int frequency = 0;
         for (int l = findLeft; l < findLeft + findSize; l++)
         {
-            findData.push_back(findDatapoint[l]);
             frequency += findDatapoint[l].second;
         }
         for (int l = insertLeft; l < insertLeft + insertSize; l++)
         {
-            insertData.push_back(insertDatapoint[l]);
             frequency += insertDatapoint[l].second;
         }
-        for (int c = 16; c < findData.size(); c *= 2)
+        int tmpEnd = findSize / 2;
+        for (int c = 16; c < tmpEnd; c *= 2)
         {
-            if (512 * c < findData.size())
+            if (512 * c < findSize)
                 continue;
             for (int type = 0; type < 4; type++)
             {
@@ -226,21 +237,23 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
 
                     auto node = LRModel();
                     node.SetChildNumber(c);
-                    node.Train(findData);
+                    node.Train(findLeft, findSize);
 
                     // divide the key and query
                     vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
                     vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
-                    for (int i = 0; i < findData.size(); i++)
+                    int findEnd = findLeft + findSize;
+                    for (int i = findLeft; i < findEnd; i++)
                     {
-                        int p = node.Predict(findData[i].first);
+                        int p = node.Predict(findDatapoint[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
                         subFindData[p].second++;
                     }
-                    for (int i = 0; i < insertData.size(); i++)
+                    int insertEnd = insertLeft + insertSize;
+                    for (int i = insertLeft; i < insertEnd; i++)
                     {
-                        int p = node.Predict(insertData[i].first);
+                        int p = node.Predict(insertDatapoint[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
                         subInsertData[p].second++;
@@ -250,10 +263,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, bool> res;
-                        if (subFindData[i].second + subInsertData[i].second > 40960)
+                        if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                        else if (subFindData[i].second + subInsertData[i].second > 4096)
-                            res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
                             auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
@@ -294,21 +305,23 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
 
                     auto node = NNModel();
                     node.SetChildNumber(c);
-                    node.Train(findData);
+                    node.Train(findLeft, findSize);
 
                     // divide the key and query
                     vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
                     vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
-                    for (int i = 0; i < findData.size(); i++)
+                    int findEnd = findLeft + findSize;
+                    for (int i = findLeft; i < findEnd; i++)
                     {
-                        int p = node.Predict(findData[i].first);
+                        int p = node.Predict(findDatapoint[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
                         subFindData[p].second++;
                     }
-                    for (int i = 0; i < insertData.size(); i++)
+                    int insertEnd = insertLeft + insertSize;
+                    for (int i = insertLeft; i < insertEnd; i++)
                     {
-                        int p = node.Predict(insertData[i].first);
+                        int p = node.Predict(insertDatapoint[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
                         subInsertData[p].second++;
@@ -318,10 +331,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, bool> res;
-                        if (subFindData[i].second + subInsertData[i].second > 40960)
+                        if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                        else if (subFindData[i].second + subInsertData[i].second > 4096)
-                            res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
                             auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
@@ -364,34 +375,34 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
 
                     auto node = HisModel();
                     node.SetChildNumber(c);
-                    node.Train(findData);
+                    node.Train(findLeft, findSize);
 
                     // divide the key and query
                     vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
                     vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
-                    for (int i = 0; i < findData.size(); i++)
+                    int findEnd = findLeft + findSize;
+                    for (int i = findLeft; i < findEnd; i++)
                     {
-                        int p = node.Predict(findData[i].first);
+                        int p = node.Predict(findDatapoint[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
-                        subFindData[p].second = subFindData[p].second + 1;
+                        subFindData[p].second++;
                     }
-                    for (int i = 0; i < insertData.size(); i++)
+                    int insertEnd = insertLeft + insertSize;
+                    for (int i = insertLeft; i < insertEnd; i++)
                     {
-                        int p = node.Predict(insertData[i].first);
+                        int p = node.Predict(insertDatapoint[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
-                        subInsertData[p].second = subInsertData[p].second + 1;
+                        subInsertData[p].second++;
                     }
 
                     vector<pair<bool, pair<int, int>>> tmpChild;
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, bool> res;
-                        if (subFindData[i].second + subInsertData[i].second > 40960)
+                        if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                        else if (subFindData[i].second + subInsertData[i].second > 4096)
-                            res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
                             auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
@@ -435,21 +446,23 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
 
                     auto node = BSModel();
                     node.SetChildNumber(c);
-                    node.Train(findData);
+                    node.Train(findLeft, findSize);
 
                     // divide the key and query
                     vector<pair<int, int>> subFindData(c, {-1, 0});   // {left, size}
                     vector<pair<int, int>> subInsertData(c, {-1, 0}); // {left, size}
-                    for (int i = 0; i < findData.size(); i++)
+                    int findEnd = findLeft + findSize;
+                    for (int i = findLeft; i < findEnd; i++)
                     {
-                        int p = node.Predict(findData[i].first);
+                        int p = node.Predict(findDatapoint[i].first);
                         if (subFindData[p].first == -1)
                             subFindData[p].first = i;
                         subFindData[p].second++;
                     }
-                    for (int i = 0; i < insertData.size(); i++)
+                    int insertEnd = insertLeft + insertSize;
+                    for (int i = insertLeft; i < insertEnd; i++)
                     {
-                        int p = node.Predict(insertData[i].first);
+                        int p = node.Predict(insertDatapoint[i].first);
                         if (subInsertData[p].first == -1)
                             subInsertData[p].first = i;
                         subInsertData[p].second++;
@@ -459,10 +472,8 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     for (int i = 0; i < c; i++)
                     {
                         pair<pair<double, double>, bool> res;
-                        if (subFindData[i].second + subInsertData[i].second > 40960)
+                        if (subFindData[i].second + subInsertData[i].second > 4096)
                             res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                        else if (subFindData[i].second + subInsertData[i].second > 4096)
-                            res = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                         else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
                         {
                             auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node

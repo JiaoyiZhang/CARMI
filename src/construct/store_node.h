@@ -24,13 +24,6 @@ extern vector<pair<double, double>> insertActualDataset;
 // tmpIdx: key in the corresponding struct
 void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx)
 {
-    vector<pair<double, double>> datapoint;
-    for (int i = left; i < left + size; i++)
-        datapoint.push_back(findActualDataset[i]);
-    vector<pair<double, double>> insertData;
-    for (int i = insertLeft; i < insertLeft + insertSize; i++)
-        insertData.push_back(insertActualDataset[i]);
-    // int idx;
     switch (optimalType)
     {
     case 0:
@@ -42,7 +35,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);
-        node.Train(datapoint);
+        node.Train(left, size);
         entireChild[storeIdx].lr = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
@@ -50,19 +43,21 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         vector<int> subLeft(optimalChildNumber, -1);       // {left, size}
         vector<int> subInsertLeft(optimalChildNumber, -1); // {left, size}
 
-        for (int i = 0; i < size; i++)
+        int end = left + size;
+        for (int i = left; i < end; i++)
         {
-            int p = node.Predict(datapoint[i].first);
+            int p = node.Predict(findActualDataset[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
-                subLeft[p] = i + left;
+                subLeft[p] = i;
         }
-        for (int i = 0; i < insertSize; i++)
+        int insertEnd = insertLeft + insertSize;
+        for (int i = insertLeft; i < insertEnd; i++)
         {
-            int p = node.Predict(insertData[i].first);
+            int p = node.Predict(insertActualDataset[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
-                subInsertLeft[p] = i + insertLeft;
+                subInsertLeft[p] = i;
         }
 
         for (int i = 0; i < optimalChildNumber; i++)
@@ -84,7 +79,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);
-        node.Train(datapoint);
+        node.Train(left, size);
         entireChild[storeIdx].nn = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
@@ -92,19 +87,21 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         vector<int> subLeft(optimalChildNumber, -1);       // {left, size}
         vector<int> subInsertLeft(optimalChildNumber, -1); // {left, size}
 
-        for (int i = 0; i < size; i++)
+        int end = left + size;
+        for (int i = left; i < end; i++)
         {
-            int p = node.Predict(datapoint[i].first);
+            int p = node.Predict(findActualDataset[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
-                subLeft[p] = i + left;
+                subLeft[p] = i;
         }
-        for (int i = 0; i < insertSize; i++)
+        int insertEnd = insertLeft + insertSize;
+        for (int i = insertLeft; i < insertEnd; i++)
         {
-            int p = node.Predict(insertData[i].first);
+            int p = node.Predict(insertActualDataset[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
-                subInsertLeft[p] = i + insertLeft;
+                subInsertLeft[p] = i;
         }
 
         for (int i = 0; i < optimalChildNumber; i++)
@@ -126,7 +123,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);
-        node.Train(datapoint);
+        node.Train(left, size);
         entireChild[storeIdx].his = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
@@ -134,19 +131,21 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         vector<int> subLeft(optimalChildNumber, -1);       // {left, size}
         vector<int> subInsertLeft(optimalChildNumber, -1); // {left, size}
 
-        for (int i = 0; i < size; i++)
+        int end = left + size;
+        for (int i = left; i < end; i++)
         {
-            int p = node.Predict(datapoint[i].first);
+            int p = node.Predict(findActualDataset[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
-                subLeft[p] = i + left;
+                subLeft[p] = i;
         }
-        for (int i = 0; i < insertSize; i++)
+        int insertEnd = insertLeft + insertSize;
+        for (int i = insertLeft; i < insertEnd; i++)
         {
-            int p = node.Predict(insertData[i].first);
+            int p = node.Predict(insertActualDataset[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
-                subInsertLeft[p] = i + insertLeft;
+                subInsertLeft[p] = i;
         }
 
         for (int i = 0; i < optimalChildNumber; i++)
@@ -168,7 +167,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);
-        node.Train(datapoint);
+        node.Train(left, size);
         entireChild[storeIdx].bs = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
@@ -176,19 +175,21 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         vector<int> subLeft(optimalChildNumber, -1);       // {left, size}
         vector<int> subInsertLeft(optimalChildNumber, -1); // {left, size}
 
-        for (int i = 0; i < size; i++)
+        int end = left + size;
+        for (int i = left; i < end; i++)
         {
-            int p = node.Predict(datapoint[i].first);
+            int p = node.Predict(findActualDataset[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
-                subLeft[p] = i + left;
+                subLeft[p] = i;
         }
-        for (int i = 0; i < insertSize; i++)
+        int insertEnd = insertLeft + insertSize;
+        for (int i = insertLeft; i < insertEnd; i++)
         {
-            int p = node.Predict(insertData[i].first);
+            int p = node.Predict(insertActualDataset[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
-                subInsertLeft[p] = i + insertLeft;
+                subInsertLeft[p] = i;
         }
 
         for (int i = 0; i < optimalChildNumber; i++)
@@ -205,7 +206,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
     {
         // choose an array node as the leaf node
         auto node = ArrayType(max(size + insertSize, kThreshold));
-        node.SetDataset(datapoint, node.m_capacity);
+        node.SetDataset(left, size);
         entireChild[storeIdx].array = node;
         break;
     }
@@ -217,7 +218,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         auto node = GappedArrayType(max(size + insertSize, kThreshold));
         node.density = it->second.density;
-        node.SetDataset(datapoint, node.capacity);
+        node.SetDataset(left, size);
         entireChild[storeIdx].ga = node;
         break;
     }
