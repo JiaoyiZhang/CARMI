@@ -36,24 +36,14 @@ int allocateChildMemory(int size)
         newLeft = nowChildNumber;
         nowChildNumber += size;
     }
-    if (newLeft == -1)
+    else
     {
         cout << "need expand the entireChild!" << endl;
-        unsigned int len = 4096;
-        while (len < entireChildNumber)
-            len *= 2;
-        len *= 2;
-        entireChildNumber = len;
-        vector<BaseNode> tmp = entireChild;
-        entireChild.clear();
-
-        for (int i = 0; i < nowChildNumber; i++)
-            entireChild.push_back(tmp[i]);
+        entireChildNumber *= 1.5;
         BaseNode t;
         for (int i = nowChildNumber; i < entireChildNumber; i++)
             entireChild.push_back(t);
 
-        // nowChildNumber = tmpEnd;
         newLeft = nowChildNumber;
         nowChildNumber += size;
     }

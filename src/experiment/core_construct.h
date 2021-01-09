@@ -21,6 +21,8 @@ extern vector<pair<double, double>> insertDataset;
 
 extern ofstream outRes;
 
+vector<int> levelVec(10, 0);
+
 int totalFrequency = 0;
 
 void CoreConstruct(double initRatio)
@@ -54,6 +56,13 @@ void CoreConstruct(double initRatio)
     cout << "print structure:" << endl;
     printStructure(1, rootType, 0);
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
+
+    for (int i = 0; i < 10; i++)
+    {
+        if (levelVec[i] != 0)
+            cout << "level " << i << ": " << levelVec[i] << endl;
+        levelVec[i] = 0;
+    }
 
     if (initRatio == 0.5)
         WorkloadA(rootType); // write-heavy

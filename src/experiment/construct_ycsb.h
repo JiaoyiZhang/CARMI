@@ -21,8 +21,7 @@ void constructYCSB(double initRatio)
     outRes << "initRatio," << initRatio << endl;
     YCSBDataset ycsbData = YCSBDataset(initRatio);
 
-    // vector<double> rate = {5, 1, 0.8, 0.6, 0.4, 0.3, 0.2, 0.1};
-    vector<double> rate = {5, 1, 0.8, 0.6, 0.4, 0.2};
+    vector<double> rate = {0.3, 0.2, 0.1, 0.08, 0.05, 0.03, 0.01};
 
     cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
     ycsbData.GenerateDataset(dataset, insertDataset);

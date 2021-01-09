@@ -18,8 +18,8 @@ void WorkloadC(int rootType)
 {
     dataset = findActualDataset;
 
-    if (kRate == 1)
-    {
+    // if (kRate == 1)
+    // {
         for (int i = 0; i < dataset.size(); i++)
         {
             auto res = Find(rootType, dataset[i].first);
@@ -27,7 +27,7 @@ void WorkloadC(int rootType)
                 cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
         }
         cout << "check FIND over!" << endl;
-    }
+    // }
 
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(dataset.begin(), dataset.end(), default_random_engine(seed));
