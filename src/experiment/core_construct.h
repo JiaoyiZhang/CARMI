@@ -30,6 +30,7 @@ void CoreConstruct(double initRatio)
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
     findActualDataset = dataset;
     insertActualDataset = insertDataset;
+    totalFrequency = 0;
 
     for (int i = 0; i < dataset.size(); i++)
     {

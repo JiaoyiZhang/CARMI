@@ -35,8 +35,8 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
     for (int i = m_left, j = 0; j < size; i++, j++)
         entireData[i] = dataset[j];
 
-    Train(dataset);
-    UpdateError(dataset);
+    Train();
+    UpdateError();
 }
 
 inline void ArrayType::SetDataset(const int left, const int size, int cap)
@@ -50,14 +50,15 @@ inline void ArrayType::SetDataset(const int left, const int size, int cap)
     SetDataset(tmp, cap);
 }
 
-inline int ArrayType::UpdateError(const vector<pair<double, double>> &dataset)
+inline int ArrayType::UpdateError()
 {
     // find: max|pi-yi|
     int maxError = 0, p, d;
     int size = flagNumber & 0x00FFFFFF;
-    for (int i = 0; i < size; i++)
+    int end = m_left + size;
+    for (int i = m_left; i < end; i++)
     {
-        p = Predict(dataset[i].first);
+        p = Predict(entireData[i].first) + m_left;
         d = abs(i - p);
         if (d > maxError)
             maxError = d;
@@ -71,9 +72,9 @@ inline int ArrayType::UpdateError(const vector<pair<double, double>> &dataset)
     {
         cntBetween = 0;
         cntOut = 0;
-        for (int i = 0; i < size; i++)
+        for (int i = m_left; i < end; i++)
         {
-            p = Predict(dataset[i].first);
+            p = Predict(entireData[i].first) + m_left;
             d = abs(i - p);
             if (d <= e)
                 cntBetween++;
@@ -93,28 +94,30 @@ inline int ArrayType::UpdateError(const vector<pair<double, double>> &dataset)
     return error;
 }
 
-inline void ArrayType::Train(const vector<pair<double, double>> &dataset)
+inline void ArrayType::Train()
 {
     int actualSize = 0;
     vector<double> index;
-    for (int i = 0; i < dataset.size(); i++)
+    int size = flagNumber & 0x00FFFFFF;
+    int end = m_left + size;
+    for (int i = m_left; i < end; i++)
     {
-        if (dataset[i].first != -1)
+        if (entireData[i].first != DBL_MIN)
             actualSize++;
-        index.push_back(double(i) / double(dataset.size()));
+        index.push_back(double(i - m_left) / double(size));
     }
     if (actualSize == 0)
         return;
 
     double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-    for (int i = 0; i < dataset.size(); i++)
+    for (int i = m_left; i < end; i++)
     {
-        if (dataset[i].first != -1)
+        if (entireData[i].first != DBL_MIN)
         {
-            t1 += dataset[i].first * dataset[i].first;
-            t2 += dataset[i].first;
-            t3 += dataset[i].first * index[i];
-            t4 += index[i];
+            t1 += entireData[i].first * entireData[i].first;
+            t2 += entireData[i].first;
+            t3 += entireData[i].first * index[i - m_left];
+            t4 += index[i - m_left];
         }
     }
     theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
@@ -124,7 +127,7 @@ inline void ArrayType::Train(const vector<pair<double, double>> &dataset)
 inline int ArrayType::Predict(double key)
 {
     // return the predicted idx in the leaf node
-    int size = (flagNumber & 0xFFFFFF);
+    int size = (flagNumber & 0x00FFFFFF);
     int p = (theta1 * key + theta2) * size;
     if (p < 0)
         p = 0;
@@ -177,6 +180,8 @@ inline int ArrayType::UpdateError(const int start_idx, const int size)
 
 inline void ArrayType::Train(const int start_idx, const int size)
 {
+    if ((flagNumber & 0x00FFFFFF) != size)
+        flagNumber += size;
     vector<double> index;
     int end = start_idx + size;
     for (int i = start_idx; i < end; i++)

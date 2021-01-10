@@ -222,9 +222,9 @@ bool Insert(int rootType, pair<double, double> data)
             int end = min(entireChild[idx].ga.maxIndex, preIdx + entireChild[idx].ga.error) + left;
             start = min(start, end);
 
-            if (entireData[start].first == -1)
+            if (entireData[start].first == DBL_MIN)
                 start--;
-            if (entireData[end].first == -1)
+            if (entireData[end].first == DBL_MIN)
                 end--;
 
             if (data.first <= entireData[start].first)
@@ -236,7 +236,7 @@ bool Insert(int rootType, pair<double, double> data)
 
             // if the Insertion position is a gap,
             //  then we Insert the element into the gap and are done
-            if (entireData[preIdx].first == -1)
+            if (entireData[preIdx].first == DBL_MIN)
             {
                 entireData[preIdx] = data;
                 entireChild[idx].ga.flagNumber++;
@@ -265,12 +265,12 @@ bool Insert(int rootType, pair<double, double> data)
                 // a gap at the Insertion position by shifting the elements
                 // by one position in the direction of the closest gap
                 int i = preIdx + 1;
-                while (entireData[i].first != -1)
+                while (entireData[i].first != DBL_MIN)
                     i++;
                 if (i >= left + entireChild[idx].ga.capacity)
                 {
                     i = preIdx - 1;
-                    while (i >= left && entireData[i].first != -1)
+                    while (i >= left && entireData[i].first != DBL_MIN)
                         i--;
                     for (int j = i; j < preIdx - 1; j++)
                         entireData[j] = entireData[j + 1];

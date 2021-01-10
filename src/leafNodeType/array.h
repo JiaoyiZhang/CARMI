@@ -16,12 +16,12 @@ public:
         m_left = -1;
         m_capacity = cap;
     }
-    inline int UpdateError(const vector<pair<double, double>> &dataset);
+    inline int UpdateError();
     inline int UpdateError(const int start_idx, const int size);
     inline void SetDataset(const vector<pair<double, double>> &dataset, int cap);
     inline void SetDataset(const int left, const int size, int cap);
     inline void SetDataset(const int start_idx, const int size);
-    inline void Train(const vector<pair<double, double>> &dataset);
+    inline void Train();
     inline void Train(const int start_idx, const int size);
     inline int Predict(double key);
 

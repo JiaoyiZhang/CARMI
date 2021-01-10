@@ -27,11 +27,11 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
 
     int k = density / (1 - density);
     int cnt = 0;
-    vector<pair<double, double>> newDataset(capacity, pair<double, double>{-1, -1});
+    vector<pair<double, double>> newDataset(capacity, pair<double, double>{DBL_MIN, DBL_MIN});
     int j = 0;
     for (int i = 0; i < subDataset.size(); i++)
     {
-        if ((subDataset[i].first != -1) && (subDataset[i].second != DBL_MIN))
+        if (subDataset[i].second != DBL_MIN)
         {
             cnt++;
             if (cnt > k)
@@ -40,7 +40,7 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
                 cnt = 0;
             }
             newDataset[j++] = subDataset[i];
-            maxIndex = j - 1;
+            maxIndex = j - 1 - m_left;
             size++;
         }
     }
@@ -52,9 +52,9 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
         entireData[i] = newDataset[j];
     flagNumber += size;
 
-    Train(newDataset);
+    Train();
 
-    UpdateError(newDataset);
+    UpdateError();
 }
 
 inline void GappedArrayType::SetDataset(const int left, const int size, int cap)
@@ -66,15 +66,16 @@ inline void GappedArrayType::SetDataset(const int left, const int size, int cap)
     SetDataset(newDataset, cap);
 }
 
-inline int GappedArrayType::UpdateError(const vector<pair<double, double>> &newDataset)
+inline int GappedArrayType::UpdateError()
 {
     // find: max|pi-yi|
     int maxError = 0, p, d;
-    for (int i = 0; i < newDataset.size(); i++)
+    int end = m_left + capacity;
+    for (int i = m_left; i < end; i++)
     {
-        if (newDataset[i].first != -1)
+        if (entireData[i].first != DBL_MIN)
         {
-            p = Predict(newDataset[i].first);
+            p = Predict(entireData[i].first) + m_left;
             d = abs(i - p);
             if (d > maxError)
                 maxError = d;
@@ -82,18 +83,18 @@ inline int GappedArrayType::UpdateError(const vector<pair<double, double>> &newD
     }
 
     // find the optimal value of error
-    int minRes = newDataset.size() * log(newDataset.size()) / log(2);
+    int minRes = maxIndex * log(maxIndex) / log(2);
     int res;
     int cntBetween, cntOut;
     for (int e = 0; e <= maxError; e++)
     {
         cntBetween = 0;
         cntOut = 0;
-        for (int i = 0; i < newDataset.size(); i++)
+        for (int i = m_left; i < end; i++)
         {
-            if (newDataset[i].first != -1)
+            if (entireData[i].first != DBL_MIN)
             {
-                p = Predict(newDataset[i].first);
+                p = Predict(entireData[i].first) + m_left;
                 d = abs(i - p);
                 if (d <= e)
                     cntBetween++;
@@ -102,9 +103,9 @@ inline int GappedArrayType::UpdateError(const vector<pair<double, double>> &newD
             }
         }
         if (e != 0)
-            res = cntBetween * log(e) / log(2) + cntOut * log(newDataset.size()) / log(2);
+            res = cntBetween * log(e) / log(2) + cntOut * log(maxIndex) / log(2);
         else
-            res = cntOut * log(newDataset.size()) / log(2);
+            res = cntOut * log(maxIndex) / log(2);
         if (res < minRes)
         {
             minRes = res;
@@ -114,28 +115,30 @@ inline int GappedArrayType::UpdateError(const vector<pair<double, double>> &newD
     return error;
 }
 
-inline void GappedArrayType::Train(const vector<pair<double, double>> &dataset)
+inline void GappedArrayType::Train()
 {
     int actualSize = 0;
     vector<double> index;
-    for (int i = 0; i < dataset.size(); i++)
+    int end = m_left + capacity;
+    int size = flagNumber & 0x00FFFFFF;
+    for (int i = m_left; i < end; i++)
     {
-        if (dataset[i].first != -1)
+        if (entireData[i].first != DBL_MIN)
             actualSize++;
-        index.push_back(double(i) / double(dataset.size()));
+        index.push_back(double(i - m_left) / double(maxIndex));
     }
     if (actualSize == 0)
         return;
 
     double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-    for (int i = 0; i < dataset.size(); i++)
+    for (int i = m_left; i < end; i++)
     {
-        if (dataset[i].first != -1)
+        if (entireData[i].first != DBL_MIN)
         {
-            t1 += dataset[i].first * dataset[i].first;
-            t2 += dataset[i].first;
-            t3 += dataset[i].first * index[i];
-            t4 += index[i];
+            t1 += entireData[i].first * entireData[i].first;
+            t2 += entireData[i].first;
+            t3 += entireData[i].first * index[i - m_left];
+            t4 += index[i - m_left];
         }
     }
     theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
@@ -145,7 +148,7 @@ inline void GappedArrayType::Train(const vector<pair<double, double>> &dataset)
 inline int GappedArrayType::Predict(double key)
 {
     // return the predicted idx in the leaf node
-    int size = (flagNumber & 0xFFFFFF);
+    int size = (flagNumber & 0x00FFFFFF);
     int p = (theta1 * key + theta2) * maxIndex;
     if (p < 0)
         p = 0;
@@ -199,6 +202,8 @@ inline int GappedArrayType::UpdateError(const int start_idx, const int size)
 
 inline void GappedArrayType::Train(const int start_idx, const int size)
 {
+    if ((flagNumber & 0x00FFFFFF) != size)
+        flagNumber += size;
     vector<double> index;
     for (int i = start_idx; i < start_idx + size; i++)
         index.push_back(double(i - start_idx) / double(size));
@@ -222,7 +227,7 @@ inline void GappedArrayType::SetDataset(const int left, const int size)
         releaseMemory(m_left, capacity);
     while ((float(size) / float(capacity) >= density))
         capacity = float(capacity) / density + 1;
-    // capacity *= 2; // test
+    capacity *= 2; // test
     if (capacity > 4096)
         capacity = 4096;
     m_left = allocateMemory(capacity);
@@ -230,13 +235,26 @@ inline void GappedArrayType::SetDataset(const int left, const int size)
     if (size > 4096)
         cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:" << size << endl;
 
+    int k = density / (1 - density);
+    int cnt = 0;
+    int j = m_left;
     int end = left + size;
-    for (int i = m_left, j = left; j < end; i++, j++)
-        entireData[i] = findActualDataset[j];
+    for (int i = left; i < end; i++)
+    {
+        cnt++;
+        if (cnt > k)
+        {
+            j++;
+            cnt = 0;
+        }
+        entireData[j++] = findActualDataset[i];
+        maxIndex = j - 1 - m_left;
+    }
+
     flagNumber += size;
 
-    Train(left, size);
-    UpdateError(left, size);
+    Train();
+    UpdateError();
 }
 
 #endif

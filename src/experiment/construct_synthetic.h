@@ -30,7 +30,7 @@ void constructSynthetic(double initRatio)
     NormalDataset norData = NormalDataset(datasetSize, initRatio);
     ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
 
-    vector<double> rate = {0.3, 0.2, 0.1, 0.08, 0.05, 0.03, 0.01};
+    vector<double> rate = {0.4, 0.3, 0.25, 0.22, 0.2, 0.1,};
     for (int r = 0; r < rate.size(); r++)
     {
         kRate = rate[r];

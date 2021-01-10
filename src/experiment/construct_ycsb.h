@@ -21,20 +21,21 @@ void constructYCSB(double initRatio)
     outRes << "initRatio," << initRatio << endl;
     YCSBDataset ycsbData = YCSBDataset(initRatio);
 
-    vector<double> rate = {0.3, 0.2, 0.1, 0.08, 0.05, 0.03, 0.01};
 
-    cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
+    vector<double> rate = {0.4, 0.3, 0.25, 0.22, 0.2, 0.1,};
+
     ycsbData.GenerateDataset(dataset, insertDataset);
     for (int r = 0; r < rate.size(); r++)
     {
         kRate = rate[r];
+        cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
         outRes << "kRate:" << kRate << endl;
 
         // cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
         // ycsbData.GenerateDataset(dataset, insertDataset);
         // if (r == 0)
         // {
-            btree_test(initRatio);
+        // btree_test(initRatio);
         //     artTree_test(initRatio);
         // }
         CoreConstruct(initRatio);

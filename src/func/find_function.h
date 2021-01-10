@@ -122,9 +122,9 @@ pair<double, double> Find(int rootType, double key)
                 start = min(start, end);
 
                 int res;
-                if (entireData[start].first == -1)
+                if (entireData[start].first == DBL_MIN)
                     start--;
-                if (entireData[end].first == -1)
+                if (entireData[end].first == DBL_MIN)
                     end--;
                 if (key <= entireData[start].first)
                     res = GABinarySearch(key, left, start);

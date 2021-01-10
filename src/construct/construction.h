@@ -96,6 +96,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     strftime(tmpTime2, sizeof(tmpTime2), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     cout << "Root time: " << tmpTime2 << endl;
 
+    COST.insert({{-1, 0}, {0, 0}});
+    ParamStruct leafP;
+    leafP.type = 4;
+    leafP.density = 0.5;
+    structMap.insert({{false, {-1, 0}}, leafP});
+
     switch (rootType)
     {
     case 0:
@@ -130,10 +136,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
                 strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
                 cout << "start time: " << tmpTime << endl;
             }
-            if (subFindData[i].second + subInsertData[i].second > 8192)
+            if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-            else if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
                 auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -203,10 +207,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            if (subFindData[i].second + subInsertData[i].second > 8192)
+            if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-            else if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
                 auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -256,10 +258,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            if (subFindData[i].second + subInsertData[i].second > 8192)
+            if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-            else if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
                 auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
@@ -309,10 +309,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            if (subFindData[i].second + subInsertData[i].second > 8192)
+            if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-            else if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
                 auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node

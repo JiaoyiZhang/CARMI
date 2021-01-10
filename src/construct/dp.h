@@ -32,22 +32,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
 {
     if (findSize == 0 && insertSize == 0)
     {
-        auto it = COST.find({findLeft, findSize});
-        if (it != COST.end())
-        {
-            auto cost = it->second;
-            return {cost, false};
-        }
-        else
-        {
-            double cost = 0.0;
-            COST.insert({{findLeft, findSize}, {0, cost}});
-            ParamStruct leafP;
-            leafP.type = 4;
-            leafP.density = 0.5;
-            structMap.insert({{false, {findLeft, findSize}}, leafP});
-            return {{0, cost}, false};
-        }
+        return {{0, 0}, false};
     }
 
     // construct a leaf node
@@ -79,7 +64,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         time = 0.0;
         space = 16.0 * actualSize / 1024 / 1024;
 
-        auto tmp = ArrayType(kThreshold);
+        auto tmp = ArrayType(actualSize);
         tmp.Train(findLeft, findSize);
         auto error = tmp.UpdateError(findLeft, findSize);
         for (int i = findLeft; i < findLeft + findSize; i++)
@@ -89,7 +74,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             time += 161.241 * findDatapoint[i].second;
             if (d <= error)
             {
-                if (error > 0)
+                if (d > 0 && error > 0)
                     time += log(error) / log(2) * findDatapoint[i].second * 10.9438;
                 else
                     time += 2.4132;
@@ -106,7 +91,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             time += (161.241 + 6.25 * (insertSize - actual + 1)) * insertDatapoint[i].second;
             if (d <= error)
             {
-                if (error > 0)
+                if (d > 0 && error > 0)
                     time += log(error) / log(2) * insertDatapoint[i].second * 10.9438;
                 else
                     time += 2.4132;
@@ -127,40 +112,36 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         }
 
         // choose a gapped array node as the leaf node
-        float Density[4] = {0.5, 0.7, 0.8, 0.9}; // data/capacity
-        for (int i = 0; i < 4; i++)
+        float Density[4] = {0.5, 0.7, 0.8}; // data/capacity
+        for (int i = 0; i < 3; i++)
         {
-            auto tmpNode = GappedArrayType(kThreshold);
-            tmpNode.density = Density[i];
-
             // calculate the actual space
             int actualSize = kThreshold;
-            while (findSize >= actualSize)
-                actualSize *= kExpansionScale;
             while ((float(findSize) / float(actualSize) >= Density[i]))
                 actualSize = float(actualSize) / Density[i] + 1;
-            // actualSize *= 2;
+            actualSize *= 2;
             if (actualSize > 4096)
                 actualSize = 4096;
+
+            auto tmpNode = GappedArrayType(actualSize);
+            tmpNode.density = Density[i];
 
             time = 0.0;
             space = 16.0 * actualSize / 1024 / 1024;
 
             tmpNode.Train(findLeft, findSize);
             auto errorGA = tmpNode.UpdateError(findLeft, findSize);
-            if (errorGA == 0)
-                errorGA = 1;
             for (int t = findLeft; t < findLeft + findSize; t++)
             {
                 auto predict = tmpNode.Predict(findDatapoint[t].first);
-                auto d = abs(t - predict);
-                time += 161.241 * findDatapoint[t].second; // due to shuffle
+                auto d = abs(t - predict) * (2 - Density[i]);
+                time += 16100.241 * findDatapoint[t].second;
                 if (d <= errorGA)
                 {
-                    if (d > 0)
+                    if (d > 0 && errorGA > 0)
                         time += log(errorGA) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
                     else
-                        time += 2.4132;
+                        time += 2.4132 * (2 - Density[i]);
                 }
                 else
                     time += log(actualSize) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
@@ -170,13 +151,13 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                 auto predict = tmpNode.Predict(insertDatapoint[t].first);
                 auto actual = TestGABinarySearch(insertDatapoint[t].first, findLeft, findLeft + findSize);
                 time += 161.241 * insertDatapoint[t].second; // due to shuffle
-                auto d = abs(actual - predict);
+                auto d = abs(actual - predict) * (2 - Density[i]);
                 if (d <= errorGA)
                 {
-                    if (d > 0)
+                    if (d > 0 && errorGA > 0)
                         time += log(errorGA) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
                     else
-                        time += 2.4132;
+                        time += 2.4132 * (2 - Density[i]);
                 }
                 else
                     time += log(actualSize) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);

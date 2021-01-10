@@ -39,7 +39,7 @@ inline int GABinarySearch(double key, int start_idx, int end_idx)
     while (end_idx - start_idx >= 2)
     {
         int mid = (start_idx + end_idx) >> 1;
-        if (entireData[mid].first == -1)
+        if (entireData[mid].first == DBL_MIN)
         {
             if (entireData[mid - 1].first >= key)
                 end_idx = mid - 1;

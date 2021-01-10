@@ -24,18 +24,17 @@ void constructMap(double initRatio)
     outRes << "initRatio," << initRatio << endl;
     LongitudesDataset longData = LongitudesDataset(initRatio);
     LonglatDataset latData = LonglatDataset(initRatio);
-    vector<double> rate = {0.3, 0.2, 0.1, 0.08, 0.05, 0.03, 0.01};
+    vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1,};
     for (int r = 0; r < rate.size(); r++)
     {
         kRate = rate[r];
         outRes << "kRate:" << kRate << endl;
 
-        kMaxKeyNum = 16;
         cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
         latData.GenerateDataset(dataset, insertDataset);
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);

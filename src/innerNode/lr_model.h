@@ -54,16 +54,6 @@ inline void LRModel::Train(const vector<pair<double, double>> &dataset)
 {
     int actualSize = 0;
     int childNumber = flagNumber & 0x00FFFFFF;
-    vector<double> index;
-    for (int i = 0; i < dataset.size(); i++)
-    {
-        if (dataset[i].first != -1)
-            actualSize++;
-        index.push_back(double(i) / double(dataset.size()));
-    }
-    if (actualSize == 0)
-        return;
-
     double maxValue;
     for (int i = 0; i < dataset.size(); i++)
     {
@@ -83,8 +73,32 @@ inline void LRModel::Train(const vector<pair<double, double>> &dataset)
     }
     divisor = float(maxValue - minValue) / 6;
 
+    vector<double> index;
+    int j = 0, cnt = 0;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        if (dataset[i].first != -1)
+        {
+            actualSize++;
+            int idx = float(dataset[i].first - minValue) / divisor;
+            if (idx < 0)
+                idx = 0;
+            else if (idx >= 6)
+                idx = 5;
+            if (idx != cnt)
+            {
+                cnt = idx;
+                j = 0;
+            }
+        }
+        index.push_back(double(j));
+        j++;
+    }
+    if (actualSize == 0)
+        return;
+
     int i = 0;
-    int cnt = 0;
+    cnt = 0;
     for (int k = 1; k <= 6; k++)
     {
         double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
@@ -101,6 +115,8 @@ inline void LRModel::Train(const vector<pair<double, double>> &dataset)
                 t4 += index[i];
             }
         }
+        t3 /= cnt;
+        t4 /= cnt;
         if (t1 * cnt - t2 * t2 != 0)
         {
             auto theta1 = (t3 * cnt - t2 * t4) / (t1 * cnt - t2 * t2);
@@ -139,13 +155,7 @@ inline void LRModel::Train(const int left, const int size)
     if (size == 0)
         return;
     int childNumber = flagNumber & 0x00FFFFFF;
-    vector<double> index;
     int end = left + size;
-    for (int i = left; i < end; i++)
-    {
-        index.push_back(double(i - left) / double(size));
-    }
-
     double maxValue;
     for (int i = left; i < end; i++)
     {
@@ -159,8 +169,27 @@ inline void LRModel::Train(const int left, const int size)
     }
     divisor = float(maxValue - minValue) / 6;
 
-    int i = left;
+    vector<double> index;
+    int j = 0;
     int cnt = 0;
+    for (int i = left; i < end; i++)
+    {
+        int idx = float(findActualDataset[i].first - minValue) / divisor;
+        if (idx < 0)
+            idx = 0;
+        else if (idx >= 6)
+            idx = 5;
+        if (idx != cnt)
+        {
+            cnt = idx;
+            j = 0;
+        }
+        index.push_back(double(j));
+        j++;
+    }
+
+    int i = left;
+    cnt = 0;
     for (int k = 1; k <= 6; k++)
     {
         double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
@@ -174,6 +203,8 @@ inline void LRModel::Train(const int left, const int size)
             t3 += findActualDataset[i].first * index[i - left];
             t4 += index[i - left];
         }
+        t3 /= cnt;
+        t4 /= cnt;
         if (t1 * cnt - t2 * t2 != 0)
         {
             auto theta1 = (t3 * cnt - t2 * t4) / (t1 * cnt - t2 * t2);
