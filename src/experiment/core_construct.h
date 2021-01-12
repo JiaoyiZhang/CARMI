@@ -21,7 +21,8 @@ extern vector<pair<double, double>> insertDataset;
 
 extern ofstream outRes;
 
-vector<int> levelVec(10, 0);
+vector<int> levelVec(20, 0);
+vector<int> nodeVec(10, 0);
 
 int totalFrequency = 0;
 
@@ -58,11 +59,17 @@ void CoreConstruct(double initRatio)
     printStructure(1, rootType, 0);
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 20; i++)
     {
         if (levelVec[i] != 0)
             cout << "level " << i << ": " << levelVec[i] << endl;
         levelVec[i] = 0;
+    }
+    for (int i = 0; i < 10; i++)
+    {
+        if (nodeVec[i] != 0)
+            cout << "node " << i << ": " << nodeVec[i] << endl;
+        nodeVec[i] = 0;
     }
 
     if (initRatio == 0.5)
