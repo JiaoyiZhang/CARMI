@@ -140,7 +140,7 @@ bool Insert(int rootType, pair<double, double> data)
                 preIdx = ArrayBinarySearch(data.first, end, left + size - 1);
 
             // expand
-            if (size >= entireChild[idx].array.m_capacity)
+            if ((size >= entireChild[idx].array.m_capacity) && entireChild[idx].array.m_capacity < 4096)
             {
                 auto diff = preIdx - left;
                 entireChild[idx].array.SetDataset(left, size, entireChild[idx].array.m_capacity);
@@ -200,7 +200,7 @@ bool Insert(int rootType, pair<double, double> data)
                 }
                 idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
             }
-            if ((float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
+            if (entireChild[idx].ga.capacity < 4096 && (float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
             {
                 // If an additional Insertion results in crossing the density
                 // then we expand the gapped array
@@ -226,6 +226,7 @@ bool Insert(int rootType, pair<double, double> data)
                 start--;
             if (entireData[end].first == DBL_MIN)
                 end--;
+            
 
             if (data.first <= entireData[start].first)
                 preIdx = GABinarySearch(data.first, left, start);
@@ -245,11 +246,10 @@ bool Insert(int rootType, pair<double, double> data)
             }
             else
             {
-                if (entireData[preIdx].second == DBL_MIN)
+                if (entireData[preIdx - 1].first == DBL_MIN)
                 {
-                    entireData[preIdx] = data;
+                    entireData[preIdx - 1] = data;
                     entireChild[idx].ga.flagNumber++;
-                    entireChild[idx].ga.maxIndex = max(entireChild[idx].ga.maxIndex, preIdx - left);
                     return true;
                 }
                 if (preIdx == left + entireChild[idx].ga.maxIndex && entireData[left + entireChild[idx].ga.maxIndex].first < data.first)
