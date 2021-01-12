@@ -26,6 +26,9 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     m_left = allocateMemory(capacity);
 
     int k = density / (1 - density);
+    float rate = float(subDataset.size()) / capacity;
+    if (rate > density)
+        k = rate / (1 - rate);
     int cnt = 0;
     vector<pair<double, double>> newDataset(capacity, pair<double, double>{DBL_MIN, DBL_MIN});
     int j = 0;
@@ -33,14 +36,16 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     {
         if (subDataset[i].second != DBL_MIN)
         {
-            cnt++;
-            if (cnt > k)
+            if (cnt >= k)
             {
                 j++;
                 cnt = 0;
+                if (j > 2048)
+                    k += 2;
             }
+            cnt++;
             newDataset[j++] = subDataset[i];
-            maxIndex = j - 1 - m_left;
+            maxIndex = j - 1;
             size++;
         }
     }
@@ -48,7 +53,8 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     if (size > 4096)
         cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:" << size << endl;
 
-    for (int i = m_left, j = 0; j < capacity; i++, j++)
+    // for (int i = m_left, j = 0; j < capacity; i++, j++)
+    for (int i = m_left, j = 0; j <= maxIndex; i++, j++)
         entireData[i] = newDataset[j];
     flagNumber += size;
 
@@ -236,17 +242,20 @@ inline void GappedArrayType::SetDataset(const int left, const int size)
         cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:" << size << endl;
 
     int k = density / (1 - density);
+    float rate = float(size) / capacity;
+    if (rate > density)
+        k = rate / (1 - rate);
     int cnt = 0;
     int j = m_left;
     int end = left + size;
     for (int i = left; i < end; i++)
     {
-        cnt++;
-        if (cnt > k)
+        if (cnt >= k)
         {
             j++;
             cnt = 0;
         }
+        cnt++;
         entireData[j++] = findActualDataset[i];
         maxIndex = j - 1 - m_left;
     }
