@@ -21,7 +21,9 @@ public:
     int flagNumber; // 4 Byte (flag + childNumber)
 
     int childLeft;             // 4 Byte
-    pair<float, int> point[7]; // 56 Byte
+    pair<float, int> point[6]; // 48 Byte
+    float maxX;
+    float tmp;
 };
 
 #endif
