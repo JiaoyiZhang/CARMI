@@ -153,7 +153,11 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
-            type = (structMap.find(key))->second.type;
+            auto it = structMap.find(key);
+            if (it == structMap.end())
+                type = 4;
+            else
+                type = it->second.type;
             if (i % 10000 == 0)
             {
                 cout << "construct child " << i << " over!\ttype is:" << type << endl;
@@ -224,7 +228,11 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
-            type = (structMap.find(key))->second.type;
+            auto it = structMap.find(key);
+            if (it == structMap.end())
+                type = 4;
+            else
+                type = it->second.type;
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
@@ -275,7 +283,11 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
-            type = (structMap.find(key))->second.type;
+            auto it = structMap.find(key);
+            if (it == structMap.end())
+                type = 4;
+            else
+                type = it->second.type;
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
@@ -326,7 +338,11 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
-            type = (structMap.find(key))->second.type;
+            auto it = structMap.find(key);
+            if (it == structMap.end())
+                type = 4;
+            else
+                type = it->second.type;
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;

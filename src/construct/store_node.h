@@ -24,6 +24,17 @@ extern vector<pair<double, double>> insertActualDataset;
 // tmpIdx: key in the corresponding struct
 void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx)
 {
+    if (size == 0)
+    {
+        // choose an array node as the leaf node
+        auto node = ArrayType(max(size + insertSize, kThreshold));
+        node.SetDataset(left, size);
+        entireChild[storeIdx].array = node;
+        if (optimalType < 4)
+            cout << "WRONG! size==0, type is:" << optimalType << endl;
+        return;
+    }
+
     switch (optimalType)
     {
     case 0:
@@ -65,7 +76,11 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
             auto nowChild = it->second.child[i];
             pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
-            type = (structMap.find(nowKey))->second.type;
+            auto iter = structMap.find(nowKey);
+            if (iter == structMap.end())
+                type = 4;
+            else
+                type = iter->second.type;
             storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
         }
         break;
@@ -109,7 +124,11 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
             auto nowChild = it->second.child[i];
             pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
-            type = (structMap.find(nowKey))->second.type;
+            auto iter = structMap.find(nowKey);
+            if (iter == structMap.end())
+                type = 4;
+            else
+                type = iter->second.type;
             storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
         }
         break;
@@ -153,7 +172,11 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
             auto nowChild = it->second.child[i];
             pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
-            type = (structMap.find(nowKey))->second.type;
+            auto iter = structMap.find(nowKey);
+            if (iter == structMap.end())
+                type = 4;
+            else
+                type = iter->second.type;
             storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
         }
         break;
@@ -197,7 +220,11 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
             auto nowChild = it->second.child[i];
             pair<bool, pair<int, int>> nowKey = nowChild;
             int actualIdx, type;
-            type = (structMap.find(nowKey))->second.type;
+            auto iter = structMap.find(nowKey);
+            if (iter == structMap.end())
+                type = 4;
+            else
+                type = iter->second.type;
             storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
         }
         break;

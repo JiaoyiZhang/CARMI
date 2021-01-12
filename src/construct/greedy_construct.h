@@ -150,8 +150,8 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 if (cost <= OptimalValue)
                 {
                     OptimalValue = cost;
-                    OptimalSpace = float(kRate * space) / pi / entropy;
-                    OptimalTime = time / entropy;
+                    OptimalSpace = float(kRate * space);
+                    OptimalTime = time * frequency / totalFrequency;
                     optimalStruct.type = type;
                     optimalStruct.childNum = c;
                 }
@@ -293,6 +293,11 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         if (OptimalTime < DBL_MAX)
             structMap.insert({{true, {findLeft, findSize}}, optimalStruct});
         return {{OptimalTime, OptimalSpace}, true};
+    }
+    else
+    {
+        cout << "enter greedy leaf!" << endl;
+        return {{0, 0}, false};
     }
 }
 #endif // !GREEDY_H
