@@ -7,6 +7,7 @@
 #include <chrono>
 #include <random>
 #include <algorithm>
+#include <stdio.h>
 using namespace std;
 
 extern ofstream outRes;
@@ -19,22 +20,18 @@ void artTree_test(double initRatio)
     cout << "artTree,";
     art_tree t;
     art_tree_init(&t);
+    cout<<"start"<<endl;
     for (int i = 0; i < dataset.size(); i++)
     {
-        auto key = (const unsigned char *)to_string(dataset[i].first).data();
-        auto value = (const unsigned char *)to_string(dataset[i].second).data();
-        art_insert(&t, key, strlen((const char *)key), (uint64_t)dataset[i].second);
-    }
-    for (int i = 0; i < insertDataset.size(); i++)
-    {
-        auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
-        auto value = (const unsigned char *)to_string(insertDataset[i].second).data();
-        art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
+        char key[64];
+        sprintf(key, "%f", dataset[i].first);
+        art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)dataset[i].second);
     }
 
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     shuffle(dataset.begin(), dataset.end(), default_random_engine(seed));
     shuffle(insertDataset.begin(), insertDataset.end(), default_random_engine(seed));
+    cout << "shuffle over" << endl;
 
     if (initRatio == 0.5)
     {
@@ -46,10 +43,11 @@ void artTree_test(double initRatio)
         s = chrono::system_clock::now();
         for (int i = 0; i < end; i++)
         {
-            auto key = (const unsigned char *)to_string(dataset[i].first).data();
-            art_search(&t, key, strlen((const char *)key), rets);
-            key = (const unsigned char *)to_string(insertDataset[i].first).data();
-            art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
+            char key[64];
+            sprintf(key, "%f", dataset[i].first);
+            art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
+            sprintf(key, "%f", insertDataset[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
         }
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
@@ -57,8 +55,9 @@ void artTree_test(double initRatio)
         s = chrono::system_clock::now();
         for (int i = 0; i < end; i++)
         {
-            auto key = (const unsigned char *)to_string(dataset[i].first).data();
-            key = (const unsigned char *)to_string(insertDataset[i].first).data();
+            char key[64];
+            sprintf(key, "%f", dataset[i].first);
+            sprintf(key, "%f", insertDataset[i].first);
         }
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
@@ -80,12 +79,14 @@ void artTree_test(double initRatio)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
             {
-                auto key = (const unsigned char *)to_string(dataset[findCnt].first).data();
-                art_search(&t, key, strlen((const char *)key), rets);
+                char key[64];
+                sprintf(key, "%f", dataset[findCnt].first);
+                art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
                 findCnt++;
             }
-            auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
-            art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
+            char key[64];
+            sprintf(key, "%f", insertDataset[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
         }
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
@@ -96,10 +97,12 @@ void artTree_test(double initRatio)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
             {
-                auto key = (const unsigned char *)to_string(dataset[findCnt].first).data();
+                char key[64];
+                sprintf(key, "%f", dataset[findCnt].first);
                 findCnt++;
             }
-            auto key = (const unsigned char *)to_string(insertDataset[i].first).data();
+            char key[64];
+            sprintf(key, "%f", insertDataset[i].first);
         }
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
@@ -118,8 +121,9 @@ void artTree_test(double initRatio)
         s = chrono::system_clock::now();
         for (int i = 0; i < end; i++)
         {
-            auto key = (const unsigned char *)to_string(dataset[i].first).data();
-            art_search(&t, key, strlen((const char *)key), rets);
+            char key[64];
+            sprintf(key, "%f", dataset[i].first);
+            art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
         }
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
@@ -127,7 +131,8 @@ void artTree_test(double initRatio)
         s = chrono::system_clock::now();
         for (int i = 0; i < end; i++)
         {
-            auto key = (const unsigned char *)to_string(dataset[i].first).data();
+            char key[64];
+            sprintf(key, "%f", dataset[i].first);
         }
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
@@ -150,14 +155,16 @@ void artTree_test(double initRatio)
         {
             for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
             {
-                auto key = (const unsigned char *)to_string(dataset[findCnt].first).data();
-                art_search(&t, key, strlen((const char *)key), rets);
+                char key[64];
+                sprintf(key, "%f", dataset[findCnt].first);
+                art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
                 findCnt++;
             }
             for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
             {
-                auto key = (const unsigned char *)to_string(insertDataset[insertCnt].first).data();
-                art_insert(&t, key, strlen((const char *)key), (uint64_t)insertDataset[insertCnt].second);
+                char key[64];
+                sprintf(key, "%f", insertDataset[insertCnt].first);
+                art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[insertCnt].second);
                 insertCnt++;
             }
         }
@@ -171,12 +178,14 @@ void artTree_test(double initRatio)
         {
             for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
             {
-                auto key = (const unsigned char *)to_string(dataset[findCnt].first).data();
+                char key[64];
+                sprintf(key, "%f", dataset[findCnt].first);
                 findCnt++;
             }
             for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
             {
-                auto key = (const unsigned char *)to_string(insertDataset[insertCnt].first).data();
+                char key[64];
+                sprintf(key, "%f", insertDataset[insertCnt].first);
                 insertCnt++;
             }
         }
