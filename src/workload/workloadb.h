@@ -30,10 +30,15 @@ void WorkloadB(int rootType)
     }
     cout << "check FIND over!" << endl;
     // }
-
+    default_random_engine engine;
+    
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    shuffle(dataset.begin(), dataset.end(), default_random_engine(seed));
-    shuffle(insertDataset.begin(), insertDataset.end(), default_random_engine(seed));
+    engine = default_random_engine(seed);
+    shuffle(dataset.begin(), dataset.end(), engine);
+    
+    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+    engine = default_random_engine(seed1);
+    shuffle(insertDataset.begin(), insertDataset.end(), engine);
 
     int end = insertDataset.size();
     int findCnt = 0;

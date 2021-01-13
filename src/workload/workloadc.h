@@ -30,8 +30,12 @@ void WorkloadC(int rootType)
     cout << "check FIND over!" << endl;
     // }
 
+    default_random_engine engine;
+    
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    shuffle(dataset.begin(), dataset.end(), default_random_engine(seed));
+    engine = default_random_engine(seed);
+    shuffle(dataset.begin(), dataset.end(), engine);
+
     int end = dataset.size();
     Zipfian zipFind;
     zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
