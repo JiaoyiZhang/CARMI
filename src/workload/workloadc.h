@@ -31,7 +31,7 @@ void WorkloadC(int rootType)
     // }
 
     default_random_engine engine;
-    
+
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed);
     shuffle(dataset.begin(), dataset.end(), engine);
@@ -39,6 +39,12 @@ void WorkloadC(int rootType)
     int end = dataset.size();
     Zipfian zipFind;
     zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
+    vector<int> index;
+    for (int i = 0; i < end; i++)
+    {
+        int idx = zipFind.GenerateNextIndex();
+        index.push_back(idx);
+    }
 
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
@@ -46,8 +52,7 @@ void WorkloadC(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        int idx = zipFind.GenerateNextIndex();
-        Find(rootType, dataset[idx].first);
+        Find(rootType, dataset[index[i]].first);
     }
 #else
     for (int i = 0; i < end; i++)
@@ -59,12 +64,11 @@ void WorkloadC(int rootType)
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
     s = chrono::system_clock::now();
-    
+
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        int idx = zipFind.GenerateNextIndex();
-        TestFind(rootType, dataset[idx].first);
+        TestFind(rootType, dataset[index[i]].first);
     }
 #else
     for (int i = 0; i < end; i++)
@@ -74,11 +78,13 @@ void WorkloadC(int rootType)
 #endif
     e = chrono::system_clock::now();
     double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    cout << "tmp:" << tmp << endl;
+    cout << "tmp0:" << tmp0 << endl;
     tmp -= tmp0;
 
     cout << "total time:" << tmp / float(dataset.size()) * 1000000000 << endl;
 
-    outRes << tmp / float(dataset.size()) * 1000000000 - 5 << ",";
+    outRes << tmp / float(dataset.size()) * 1000000000 << ",";
 
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
         return p1.first < p2.first;

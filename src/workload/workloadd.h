@@ -32,20 +32,26 @@ void WorkloadD(int rootType)
     // }
 
     default_random_engine engine;
-    
+
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed);
     shuffle(dataset.begin(), dataset.end(), engine);
-    
+
     unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed1);
     shuffle(insertDataset.begin(), insertDataset.end(), engine);
-    
+
     int end = insertDataset.size();
     int findCnt = 0;
     int insertCnt = 0;
     Zipfian zipFind;
     zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
+    vector<int> index;
+    for (int i = 0; i < end; i++)
+    {
+        int idx = zipFind.GenerateNextIndex();
+        index.push_back(idx);
+    }
 
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
@@ -55,8 +61,8 @@ void WorkloadD(int rootType)
     {
         for (int j = 0; j < 17; j++)
         {
-            int idx = zipFind.GenerateNextIndex();
-            Find(rootType, dataset[idx].first);
+            Find(rootType, dataset[index[findCnt]].first);
+            findCnt++;
         }
         for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
         {
@@ -90,8 +96,8 @@ void WorkloadD(int rootType)
     {
         for (int j = 0; j < 17; j++)
         {
-            int idx = zipFind.GenerateNextIndex();
-            TestFind(rootType, dataset[findCnt].first);
+            TestFind(rootType, dataset[index[findCnt]].first);
+            findCnt++;
         }
         for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
         {
@@ -118,8 +124,8 @@ void WorkloadD(int rootType)
     double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     tmp -= tmp0;
 
-    cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 - 5 << endl;
-    outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 - 5 << ",";
+    cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
+    outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
 
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
         return p1.first < p2.first;

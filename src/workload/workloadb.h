@@ -31,11 +31,11 @@ void WorkloadB(int rootType)
     cout << "check FIND over!" << endl;
     // }
     default_random_engine engine;
-    
+
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed);
     shuffle(dataset.begin(), dataset.end(), engine);
-    
+
     unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed1);
     shuffle(insertDataset.begin(), insertDataset.end(), engine);
@@ -44,6 +44,12 @@ void WorkloadB(int rootType)
     int findCnt = 0;
     Zipfian zipFind;
     zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
+    vector<int> index;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        int idx = zipFind.GenerateNextIndex();
+        index.push_back(idx);
+    }
 
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
@@ -53,8 +59,8 @@ void WorkloadB(int rootType)
     {
         for (int j = 0; j < 19; j++)
         {
-            int idx = zipFind.GenerateNextIndex();
-            Find(rootType, dataset[idx].first);
+            Find(rootType, dataset[index[findCnt]].first);
+            findCnt++;
         }
         Insert(rootType, insertDataset[i]);
     }
@@ -79,8 +85,8 @@ void WorkloadB(int rootType)
     {
         for (int j = 0; j < 19; j++)
         {
-            int idx = zipFind.GenerateNextIndex();
-            TestFind(rootType, dataset[idx].first);
+            TestFind(rootType, dataset[index[findCnt]].first);
+            findCnt++;
         }
         TestFind(rootType, insertDataset[i].first);
     }

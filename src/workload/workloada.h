@@ -43,6 +43,12 @@ void WorkloadA(int rootType)
     int end = min(dataset.size(), insertDataset.size());
     Zipfian zip;
     zip.InitZipfian(PARAM_ZIPFIAN, end);
+    vector<int> index;
+    for (int i = 0; i < end; i++)
+    {
+        int idx = zip.GenerateNextIndex();
+        index.push_back(idx);
+    }
 
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
@@ -50,8 +56,7 @@ void WorkloadA(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        int idx = zip.GenerateNextIndex();
-        Find(rootType, dataset[idx].first);
+        Find(rootType, dataset[index[i]].first);
         Insert(rootType, insertDataset[i]);
     }
 #else
@@ -68,8 +73,7 @@ void WorkloadA(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        int idx = zip.GenerateNextIndex();
-        TestFind(rootType, dataset[idx].first);
+        TestFind(rootType, dataset[index[i]].first);
         TestFind(rootType, insertDataset[i].first);
     }
 #else
