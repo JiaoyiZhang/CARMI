@@ -1,6 +1,9 @@
 #ifndef PARAMS
 #define PARAMS
 
+#define ZIPFIAN 1
+#define PARAM_ZIPFIAN 1.25
+
 extern int kLeafNodeID;  // for static structure
 extern int kInnerNodeID; // for static structure
 int childNum = 3907;     // for static structure
