@@ -2,6 +2,7 @@
 #define WORKLOAD_D_H
 #include <vector>
 #include "../func/function.h"
+#include "zipfian.h"
 using namespace std;
 
 extern vector<pair<double, double>> findActualDataset;
@@ -21,13 +22,13 @@ void WorkloadD(int rootType)
 
     // if (kRate == 1)
     // {
-        for (int i = 0; i < dataset.size(); i++)
-        {
-            auto res = Find(rootType, dataset[i].first);
-            if (res.first != dataset[i].first)
-                cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
-        }
-        cout << "check FIND over!" << endl;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        auto res = Find(rootType, dataset[i].first);
+        if (res.first != dataset[i].first)
+            cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
+    }
+    cout << "check FIND over!" << endl;
     // }
 
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
@@ -36,10 +37,27 @@ void WorkloadD(int rootType)
     int end = insertDataset.size();
     int findCnt = 0;
     int insertCnt = 0;
+    Zipfian zipFind;
+    zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
 
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
     s = chrono::system_clock::now();
+#if ZIPFIAN
+    for (int i = 0; i < end; i++)
+    {
+        for (int j = 0; j < 17; j++)
+        {
+            int idx = zipFind.GenerateNextIndex();
+            Find(rootType, dataset[idx].first);
+        }
+        for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+        {
+            Insert(rootType, insertDataset[insertCnt]);
+            insertCnt++;
+        }
+    }
+#else
     for (int i = 0; i < end; i++)
     {
         for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
@@ -53,12 +71,28 @@ void WorkloadD(int rootType)
             insertCnt++;
         }
     }
+#endif
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
     findCnt = 0;
     insertCnt = 0;
     s = chrono::system_clock::now();
+#if ZIPFIAN
+    for (int i = 0; i < end; i++)
+    {
+        for (int j = 0; j < 17; j++)
+        {
+            int idx = zipFind.GenerateNextIndex();
+            TestFind(rootType, dataset[findCnt].first);
+        }
+        for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+        {
+            TestFind(rootType, insertDataset[insertCnt].first);
+            insertCnt++;
+        }
+    }
+#else
     for (int i = 0; i < end; i++)
     {
         for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
@@ -72,6 +106,7 @@ void WorkloadD(int rootType)
             insertCnt++;
         }
     }
+#endif
     e = chrono::system_clock::now();
     double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     tmp -= tmp0;
