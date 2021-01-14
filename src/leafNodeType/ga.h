@@ -18,6 +18,8 @@ public:
         capacity = cap;
         maxIndex = -2;
         m_left = -1;
+        previousLeaf = -1;
+        nextLeaf = -1;
     }
     inline int UpdateError();
     inline int UpdateError(const int start_idx, const int size);
@@ -29,6 +31,8 @@ public:
     int Predict(double key);
 
     int flagNumber; // 4 Byte (flag + 0)
+    int previousLeaf;
+    int nextLeaf;
 
     int m_left;   // the left boundary of the leaf node in the global array
     int capacity; // the current maximum capacity of the leaf node
@@ -39,7 +43,7 @@ public:
 
     float theta1;
     float theta2;
-    pair<float, float> tmppp[4];
+    pair<float, float> tmppp[3];
 };
 
 #endif // !GA_H

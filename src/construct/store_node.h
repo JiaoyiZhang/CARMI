@@ -19,6 +19,7 @@ extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 
 extern vector<pair<double, double>> findActualDataset;
 extern vector<pair<double, double>> insertActualDataset;
+extern map<double, int> scanLeaf;
 
 // store the optimal node into the index structure
 // tmpIdx: key in the corresponding struct
@@ -235,6 +236,8 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         auto node = ArrayType(max(size + insertSize, kThreshold));
         node.SetDataset(left, size);
         entireChild[storeIdx].array = node;
+        if (size > 0)
+            scanLeaf.insert({findActualDataset[left].first, storeIdx});
         break;
     }
     case 5:
@@ -247,6 +250,8 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.density = it->second.density;
         node.SetDataset(left, size);
         entireChild[storeIdx].ga = node;
+        if (size > 0)
+            scanLeaf.insert({findActualDataset[left].first, storeIdx});
         break;
     }
     }

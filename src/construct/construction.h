@@ -21,7 +21,7 @@ map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 
 extern int kMaxKeyNum;
 extern double kRate;
-
+map<double, int> scanLeaf;
 // main function of construction
 // return the type of root
 // findDatapoint: the dataset used to initialize the index

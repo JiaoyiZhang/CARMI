@@ -15,6 +15,8 @@ public:
         error = 0;
         m_left = -1;
         m_capacity = cap;
+        previousLeaf = -1;
+        nextLeaf = -1;
     }
     inline int UpdateError();
     inline int UpdateError(const int start_idx, const int size);
@@ -26,6 +28,8 @@ public:
     inline int Predict(double key);
 
     int flagNumber; // 4 Byte (flag + 0)
+    int previousLeaf;
+    int nextLeaf;
 
     int m_left; // the left boundary of the leaf node in the global array
     // int m_datasetSize; // the current amount of data
@@ -34,7 +38,7 @@ public:
 
     float theta1;
     float theta2;
-    pair<float, float> tmppp[5];
+    pair<float, float> tmppp[4];
 };
 
 #endif // !ARRAY_H
