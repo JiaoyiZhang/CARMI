@@ -126,16 +126,16 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            if (i % 10000 == 0)
-            {
-                cout << "construct child " << i << ":\tsize:" << subFindData[i].second + subInsertData[i].second << endl;
+            // if (i % 10000 == 0)
+            // {
+            //     cout << "construct child " << i << ":\tsize:" << subFindData[i].second + subInsertData[i].second << endl;
 
-                time_t timep;
-                time(&timep);
-                char tmpTime[64];
-                strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-                cout << "start time: " << tmpTime << endl;
-            }
+            //     time_t timep;
+            //     time(&timep);
+            //     char tmpTime[64];
+            //     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+            //     cout << "start time: " << tmpTime << endl;
+            // }
             if (subFindData[i].second + subInsertData[i].second > 4096)
                 resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
@@ -158,27 +158,27 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
                 type = 4;
             else
                 type = it->second.type;
-            if (i % 10000 == 0)
-            {
-                cout << "construct child " << i << " over!\ttype is:" << type << endl;
+            // if (i % 10000 == 0)
+            // {
+            //     cout << "construct child " << i << " over!\ttype is:" << type << endl;
 
-                time_t timep;
-                time(&timep);
-                char tmpTime[64];
-                strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-                cout << "over time: " << tmpTime << endl;
-            }
+            //     time_t timep;
+            //     time(&timep);
+            //     char tmpTime[64];
+            //     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+            //     cout << "over time: " << tmpTime << endl;
+            // }
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
-            if (i % 10000 == 0)
-            {
-                cout << "store child " << i << " over!" << endl;
+            // if (i % 10000 == 0)
+            // {
+            //     cout << "store child " << i << " over!" << endl;
 
-                time_t timep;
-                time(&timep);
-                char tmpTime[64];
-                strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-                cout << "over time: " << tmpTime << endl;
-            }
+            //     time_t timep;
+            //     time(&timep);
+            //     char tmpTime[64];
+            //     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+            //     cout << "over time: " << tmpTime << endl;
+            // }
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;

@@ -113,7 +113,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
 
         // choose a gapped array node as the leaf node
         float Density[3] = {0.5, 0.7, 0.8}; // data/capacity
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 1; i++)
         {
             // calculate the actual space
             int actualSize = kThreshold;
