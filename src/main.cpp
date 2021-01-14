@@ -75,6 +75,12 @@ int main()
     kMaxKeyNum = 2048;
     constructMap(0); // partial
 
+    kMaxKeyNum = 1024;
+    constructSynthetic(2); // range scan
+    constructYCSB(2); // range scan
+    kMaxKeyNum = 2048;
+    constructMap(2); // range scan
+
     outRes << "----------------------------------------------" << endl;
 
     return 0;

@@ -11,6 +11,7 @@
 #include "../workload/workloadb.h"
 #include "../workload/workloadc.h"
 #include "../workload/workloadd.h"
+#include "../workload/workloade.h"
 using namespace std;
 
 extern vector<pair<double, double>> findActualDataset;
@@ -80,6 +81,8 @@ void CoreConstruct(double initRatio)
         WorkloadC(rootType); // read-only
     else if (initRatio == 0)
         WorkloadD(rootType); // write-partially
+    else if(initRatio == 2)
+        WorkloadE(rootType); // range scan
 }
 
 #endif // !CORE_CONSTRUCT_H
