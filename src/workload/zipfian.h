@@ -9,7 +9,7 @@ class Zipfian
 {
 public:
     double *pf;
-    void InitZipfian(int A, int num)
+    void InitZipfian(double A, int num)
     {
         pf = new double[num];
         double sum = 0.0;

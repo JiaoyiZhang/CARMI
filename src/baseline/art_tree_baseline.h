@@ -8,6 +8,8 @@
 #include <random>
 #include <algorithm>
 #include <stdio.h>
+#include "../params.h"
+#include "../workload/zipfian.h"
 using namespace std;
 
 extern ofstream outRes;
@@ -28,9 +30,25 @@ void artTree_test(double initRatio)
         art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)dataset[i].second);
     }
 
+
+    default_random_engine engine;
+
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    shuffle(dataset.begin(), dataset.end(), default_random_engine(seed));
-    shuffle(insertDataset.begin(), insertDataset.end(), default_random_engine(seed));
+    engine = default_random_engine(seed);
+    shuffle(dataset.begin(), dataset.end(), engine);
+
+    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+    engine = default_random_engine(seed1);
+    shuffle(insertDataset.begin(), insertDataset.end(), engine);
+
+    Zipfian zipFind;
+    zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
+    vector<int> index;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        int idx = zipFind.GenerateNextIndex();
+        index.push_back(idx);
+    }
     cout << "shuffle over" << endl;
 
     if (initRatio == 0.5)
@@ -41,6 +59,16 @@ void artTree_test(double initRatio)
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            char key[64];
+            sprintf(key, "%f", dataset[index[i]].first);
+            art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
+            sprintf(key, "%f", insertDataset[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             char key[64];
@@ -49,16 +77,26 @@ void artTree_test(double initRatio)
             sprintf(key, "%f", insertDataset[i].first);
             art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
         }
+#endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            char key[64];
+            sprintf(key, "%f", dataset[index[i]].first);
+            sprintf(key, "%f", insertDataset[i].first);
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             char key[64];
             sprintf(key, "%f", dataset[i].first);
             sprintf(key, "%f", insertDataset[i].first);
         }
+#endif
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
@@ -75,6 +113,21 @@ void artTree_test(double initRatio)
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", dataset[index[findCnt]].first);
+                art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
+                findCnt++;
+            }
+            char key[64];
+            sprintf(key, "%f", insertDataset[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
@@ -88,11 +141,25 @@ void artTree_test(double initRatio)
             sprintf(key, "%f", insertDataset[i].first);
             art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
         }
+#endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
         findCnt = 0;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", dataset[index[findCnt]].first);
+                findCnt++;
+            }
+            char key[64];
+            sprintf(key, "%f", insertDataset[i].first);
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
@@ -104,6 +171,7 @@ void artTree_test(double initRatio)
             char key[64];
             sprintf(key, "%f", insertDataset[i].first);
         }
+#endif
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
@@ -119,21 +187,38 @@ void artTree_test(double initRatio)
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            char key[64];
+            sprintf(key, "%f", dataset[index[i]].first);
+            art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             char key[64];
             sprintf(key, "%f", dataset[i].first);
             art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
         }
+#endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            char key[64];
+            sprintf(key, "%f", dataset[index[i]].first);
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             char key[64];
             sprintf(key, "%f", dataset[i].first);
         }
+#endif
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
@@ -151,6 +236,25 @@ void artTree_test(double initRatio)
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", dataset[index[findCnt]].first);
+                art_search(&t, (const unsigned char *)key, strlen((const char *)key), rets);
+                findCnt++;
+            }
+            for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", insertDataset[insertCnt].first);
+                art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[insertCnt].second);
+                insertCnt++;
+            }
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
@@ -168,12 +272,30 @@ void artTree_test(double initRatio)
                 insertCnt++;
             }
         }
+#endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
         findCnt = 0;
         insertCnt = 0;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", dataset[index[findCnt]].first);
+                findCnt++;
+            }
+            for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", insertDataset[insertCnt].first);
+                insertCnt++;
+            }
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
@@ -189,6 +311,7 @@ void artTree_test(double initRatio)
                 insertCnt++;
             }
         }
+#endif
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;

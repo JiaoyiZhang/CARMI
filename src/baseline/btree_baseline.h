@@ -8,6 +8,8 @@
 #include <random>
 #include <algorithm>
 #include "../../stx_btree/btree_map.h"
+#include "../params.h"
+#include "../workload/zipfian.h"
 using namespace std;
 
 extern ofstream outRes;
@@ -22,9 +24,24 @@ void btree_test(double initRatio)
     cout << "btree,";
     outRes << "btree,";
 
+    default_random_engine engine;
+
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    shuffle(dataset.begin(), dataset.end(), default_random_engine(seed));
-    shuffle(insertDataset.begin(), insertDataset.end(), default_random_engine(seed));
+    engine = default_random_engine(seed);
+    shuffle(dataset.begin(), dataset.end(), engine);
+
+    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+    engine = default_random_engine(seed1);
+    shuffle(insertDataset.begin(), insertDataset.end(), engine);
+
+    Zipfian zipFind;
+    zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
+    vector<int> index;
+    for (int i = 0; i < dataset.size(); i++)
+    {
+        int idx = zipFind.GenerateNextIndex();
+        index.push_back(idx);
+    }
 
     if (initRatio == 0.5)
     {
@@ -34,18 +51,32 @@ void btree_test(double initRatio)
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            btree.find(dataset[index[i]].first);
+            btree.insert(insertDataset[i]);
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             btree.find(dataset[i].first);
             btree.insert(insertDataset[i]);
         }
+#endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
         s = chrono::system_clock::now();
+#if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
         }
+#else
+        for (int i = 0; i < end; i++)
+        {
+        }
+#endif
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
@@ -62,20 +93,33 @@ void btree_test(double initRatio)
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
+#if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
             {
-                btree.find(dataset[findCnt].first);
+                btree.find(dataset[index[findCnt]].first);
                 findCnt++;
             }
             btree.insert(insertDataset[i]);
         }
+#else
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                btree.find(dataset[index[findCnt]].first);
+                findCnt++;
+            }
+            btree.insert(insertDataset[i]);
+        }
+#endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
         findCnt = 0;
         s = chrono::system_clock::now();
+#if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
@@ -83,6 +127,15 @@ void btree_test(double initRatio)
                 findCnt++;
             }
         }
+#else
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                findCnt++;
+            }
+        }
+#endif
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
@@ -98,17 +151,30 @@ void btree_test(double initRatio)
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            btree.find(dataset[index[i]].first);
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             btree.find(dataset[i].first);
         }
+#endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
         s = chrono::system_clock::now();
+#if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
         }
+#else
+        for (int i = 0; i < end; i++)
+        {
+        }
+#endif
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
@@ -126,6 +192,21 @@ void btree_test(double initRatio)
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
+            {
+                btree.find(dataset[index[findCnt]].first);
+                findCnt++;
+            }
+            for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+            {
+                btree.insert(insertDataset[insertCnt]);
+                insertCnt++;
+            }
+        }
+#else
         for (int i = 0; i < end; i++)
         {
             for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
@@ -139,12 +220,14 @@ void btree_test(double initRatio)
                 insertCnt++;
             }
         }
+#endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
 
         findCnt = 0;
         insertCnt = 0;
         s = chrono::system_clock::now();
+#if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
             for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
@@ -156,6 +239,19 @@ void btree_test(double initRatio)
                 insertCnt++;
             }
         }
+#else
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
+            {
+                findCnt++;
+            }
+            for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+            {
+                insertCnt++;
+            }
+        }
+#endif
         e = chrono::system_clock::now();
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
