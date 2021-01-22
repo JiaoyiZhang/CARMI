@@ -71,35 +71,36 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         {
             auto predict = tmp.Predict(findDatapoint[i].first) + findLeft;
             auto d = abs(i - predict);
-            time += 161.241 * findDatapoint[i].second;
+            time += (161.241 * findDatapoint[i].second) / totalFrequency;
             if (d <= error)
             {
                 if (d > 0 && error > 0)
-                    time += log(error) / log(2) * findDatapoint[i].second * 10.9438;
+                    time += (log(error) / log(2) * findDatapoint[i].second * 10.9438) / totalFrequency;
                 else
-                    time += 2.4132;
+                    time += 2.4132 / totalFrequency;
             }
             else
-                time += log(actualSize) / log(2) * findDatapoint[i].second * 10.9438;
+                time += (log(actualSize) / log(2) * findDatapoint[i].second * 10.9438) / totalFrequency;
         }
+        // time = time / totalFrequency;
 
         for (int i = insertLeft; i < insertLeft + insertSize; i++)
         {
             auto predict = tmp.Predict(insertDatapoint[i].first) + insertLeft;
             auto actual = TestArrayBinarySearch(insertDatapoint[i].first, findLeft, findLeft + findSize);
             auto d = abs(actual - predict);
-            time += (161.241 + 6.25 * (findSize + insertLeft + insertSize - actual + 1)) * insertDatapoint[i].second;
+            time += ((161.241 + 6.25 * (findSize + findLeft + insertSize - actual + 1)) * insertDatapoint[i].second) / totalFrequency;
             if (d <= error)
             {
                 if (d > 0 && error > 0)
-                    time += log(error) / log(2) * insertDatapoint[i].second * 10.9438;
+                    time += (log(error) / log(2) * insertDatapoint[i].second * 10.9438) / totalFrequency;
                 else
-                    time += 2.4132;
+                    time += 2.4132 / totalFrequency;
             }
             else
-                time += log(actualSize) / log(2) * insertDatapoint[i].second * 10.9438;
+                time += (log(actualSize) / log(2) * insertDatapoint[i].second * 10.9438) / totalFrequency;
         }
-        time = time / totalFrequency;
+        // time = time / totalFrequency;
 
         cost = time + space * kRate; // ns + MB * kRate
         if (cost <= OptimalValue)
@@ -134,34 +135,34 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
             {
                 auto predict = tmpNode.Predict(findDatapoint[t].first) + findLeft;
                 auto d = abs(t - predict);
-                time += 161.241 * findDatapoint[t].second;
+                time += (161.241 * findDatapoint[t].second) / totalFrequency;
                 if (d <= errorGA)
                 {
                     if (d > 0 && errorGA > 0)
-                        time += log(errorGA) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                        time += (log(errorGA) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i])) / totalFrequency;
                     else
-                        time += 2.4132;
+                        time += 2.4132 / totalFrequency;
                 }
                 else
-                    time += log(actualSize) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                    time += (log(actualSize) / log(2) * findDatapoint[t].second * 10.9438 * (2 - Density[i])) / totalFrequency;
             }
             for (int t = insertLeft; t < insertLeft + insertSize; t++)
             {
                 auto predict = tmpNode.Predict(insertDatapoint[t].first) + insertLeft;
                 auto actual = TestGABinarySearch(insertDatapoint[t].first, findLeft, findLeft + findSize);
-                time += (161.241 + 6.25 * (Density[i] / (1 - Density[i]) - 1)) * insertDatapoint[t].second; // due to shuffle
+                time += ((161.241 + 6.25 * (Density[i] / (1 - Density[i]) - 1)) * insertDatapoint[t].second) / totalFrequency; // due to shuffle
                 auto d = abs(actual - predict);
                 if (d <= errorGA)
                 {
                     if (d > 0 && errorGA > 0)
-                        time += log(errorGA) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                        time += (log(errorGA) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i])) / totalFrequency;
                     else
-                        time += 2.4132;
+                        time += 2.4132 / totalFrequency;
                 }
                 else
-                    time += log(actualSize) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i]);
+                    time += (log(actualSize) / log(2) * insertDatapoint[t].second * 10.9438 * (2 - Density[i])) / totalFrequency;
             }
-            time = time / totalFrequency;
+            // time = time / totalFrequency;
 
             cost = time + space * kRate; // ns + MB * kRate
             if (cost < OptimalValue)

@@ -15,9 +15,11 @@
 
 #include "inlineFunction.h"
 #include "../dataManager/datapoint.h"
+#include <map>
 using namespace std;
 
 extern vector<BaseNode> entireChild;
+extern map<double, int> scanLeaf;
 
 extern LRType lrRoot;
 extern NNType nnRoot;
@@ -117,14 +119,45 @@ bool Insert(int rootType, pair<double, double> data)
                     tmpLeaf.SetDataset(subFindData[i], kMaxKeyNum);
                     entireChild[node.childLeft + i].array = tmpLeaf;
                 }
+                // cout << ">4096" << endl;
+                auto previousIdx = entireChild[idx].array.previousLeaf;
+                entireChild[previousIdx].array.nextLeaf = node.childLeft;
+                entireChild[node.childLeft].array.previousLeaf = previousIdx;
+                for (int i = node.childLeft + 1; i < node.childLeft + childNum - 1; i++)
+                {
+                    entireChild[i].array.previousLeaf = i - 1;
+                    entireChild[i].array.nextLeaf = i + 1;
+                }
+                entireChild[node.childLeft + childNum - 1].array.previousLeaf = node.childLeft + childNum - 2;
+
                 idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
             }
             auto left = entireChild[idx].array.m_left;
             if (size == 0)
             {
+                // cout << "size == 0" << endl;
                 entireData[left] = data;
                 entireChild[idx].array.flagNumber++;
                 entireChild[idx].array.SetDataset(left, 1, entireChild[idx].array.m_capacity);
+                if (entireChild[idx].array.nextLeaf == -1)
+                {
+                    scanLeaf.insert({data.first, idx});
+                    auto it = scanLeaf.find(data.first);
+                    auto pre = it;
+                    pre--;
+                    if (pre != scanLeaf.begin())
+                    {
+                        entireChild[pre->second].array.nextLeaf = idx;
+                        entireChild[it->second].array.previousLeaf = pre->second;
+                    }
+                    auto next = it;
+                    next++;
+                    if (next != scanLeaf.end())
+                    {
+                        entireChild[it->second].array.nextLeaf = next->second;
+                        entireChild[next->second].array.previousLeaf = idx;
+                    }
+                }
                 return true;
             }
             int preIdx = entireChild[idx].array.Predict(data.first);
@@ -198,6 +231,17 @@ bool Insert(int rootType, pair<double, double> data)
                     tmpLeaf.SetDataset(subFindData[i], kMaxKeyNum);
                     entireChild[node.childLeft + i].ga = tmpLeaf;
                 }
+
+                auto previousIdx = entireChild[idx].ga.previousLeaf;
+                entireChild[previousIdx].ga.nextLeaf = node.childLeft;
+                entireChild[node.childLeft].ga.previousLeaf = previousIdx;
+                for (int i = node.childLeft + 1; i < node.childLeft + childNum - 1; i++)
+                {
+                    entireChild[i].ga.previousLeaf = i - 1;
+                    entireChild[i].ga.nextLeaf = i + 1;
+                }
+                entireChild[node.childLeft + childNum - 1].ga.previousLeaf = node.childLeft + childNum - 2;
+
                 idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
             }
             if (entireChild[idx].ga.capacity < 4096 && (float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
@@ -214,6 +258,25 @@ bool Insert(int rootType, pair<double, double> data)
                 entireChild[idx].ga.flagNumber++;
                 entireChild[idx].ga.maxIndex = 0;
                 entireChild[idx].ga.SetDataset(left, 1, entireChild[idx].ga.capacity);
+                if (entireChild[idx].ga.nextLeaf == -1)
+                {
+                    scanLeaf.insert({data.first, idx});
+                    auto it = scanLeaf.find(data.first);
+                    auto pre = it;
+                    pre--;
+                    if (pre != scanLeaf.begin())
+                    {
+                        entireChild[pre->second].array.nextLeaf = idx;
+                        entireChild[it->second].array.previousLeaf = pre->second;
+                    }
+                    auto next = it;
+                    next++;
+                    if (next != scanLeaf.end())
+                    {
+                        entireChild[it->second].array.nextLeaf = next->second;
+                        entireChild[next->second].array.previousLeaf = idx;
+                    }
+                }
                 return true;
             }
             int preIdx = entireChild[idx].ga.Predict(data.first);

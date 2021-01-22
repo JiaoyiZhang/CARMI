@@ -13,6 +13,7 @@
 #include <float.h>
 #include <vector>
 #include <map>
+#include <set>
 using namespace std;
 
 extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
@@ -21,10 +22,16 @@ extern vector<pair<double, double>> findActualDataset;
 extern vector<pair<double, double>> insertActualDataset;
 extern map<double, int> scanLeaf;
 
+set<int> storeIdxSet;
+
 // store the optimal node into the index structure
 // tmpIdx: key in the corresponding struct
 void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx)
 {
+    if (storeIdxSet.find(storeIdx) == storeIdxSet.end())
+        storeIdxSet.insert(storeIdx);
+    else
+        cout << "storeIdx is duplicated, storeIdx:" << storeIdx << endl;
     if (size == 0)
     {
         // choose an array node as the leaf node
@@ -74,9 +81,8 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         for (int i = 0; i < optimalChildNumber; i++)
         {
-            auto nowChild = it->second.child[i];
-            pair<bool, pair<int, int>> nowKey = nowChild;
-            int actualIdx, type;
+            auto nowKey = it->second.child[i];
+            int type;
             auto iter = structMap.find(nowKey);
             if (iter == structMap.end())
                 type = 4;
@@ -122,9 +128,8 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         for (int i = 0; i < optimalChildNumber; i++)
         {
-            auto nowChild = it->second.child[i];
-            pair<bool, pair<int, int>> nowKey = nowChild;
-            int actualIdx, type;
+            auto nowKey = it->second.child[i];
+            int type;
             auto iter = structMap.find(nowKey);
             if (iter == structMap.end())
                 type = 4;
@@ -170,9 +175,8 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         for (int i = 0; i < optimalChildNumber; i++)
         {
-            auto nowChild = it->second.child[i];
-            pair<bool, pair<int, int>> nowKey = nowChild;
-            int actualIdx, type;
+            auto nowKey = it->second.child[i];
+            int type;
             auto iter = structMap.find(nowKey);
             if (iter == structMap.end())
                 type = 4;
@@ -218,9 +222,8 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         for (int i = 0; i < optimalChildNumber; i++)
         {
-            auto nowChild = it->second.child[i];
-            pair<bool, pair<int, int>> nowKey = nowChild;
-            int actualIdx, type;
+            auto nowKey = it->second.child[i];
+            int type;
             auto iter = structMap.find(nowKey);
             if (iter == structMap.end())
                 type = 4;

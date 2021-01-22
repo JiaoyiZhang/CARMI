@@ -15,10 +15,11 @@ void UpdateLeaf()
     auto next = it;
     next++;
     entireChild[it->second].array.nextLeaf = next->second;
+    it++;
 
     for (; it != scanLeaf.end(); it++)
     {
-        auto next = it;
+        next = it;
         next++;
         if (next == scanLeaf.end())
         {

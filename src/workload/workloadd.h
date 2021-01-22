@@ -47,9 +47,11 @@ void WorkloadD(int rootType)
     Zipfian zipFind;
     zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
     vector<int> index;
-    for (int i = 0; i < end; i++)
+    for (int i = 0; i < dataset.size(); i++)
     {
         int idx = zipFind.GenerateNextIndex();
+        while (idx >= dataset.size())
+            idx = zipFind.GenerateNextIndex();
         index.push_back(idx);
     }
 
@@ -59,7 +61,7 @@ void WorkloadD(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        for (int j = 0; j < 17; j++)
+        for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
         {
             Find(rootType, dataset[index[findCnt]].first);
             findCnt++;
@@ -94,7 +96,7 @@ void WorkloadD(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        for (int j = 0; j < 17; j++)
+        for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
         {
             TestFind(rootType, dataset[index[findCnt]].first);
             findCnt++;

@@ -25,61 +25,35 @@ extern NNType nnRoot;
 extern HisType hisRoot;
 extern BSType bsRoot;
 
-vector<pair<double, double>> GetValues(int idx, int length)
+inline void GetValues(int idx, int &firstIdx, int &length, vector<pair<double, double>> &ret)
 {
-    vector<pair<double, double>> values;
     if ((entireChild[idx].array.flagNumber >> 24) == 8)
     {
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         auto left = entireChild[idx].array.m_left;
-        if (length > size)
-        {
-            int end = left + size;
-            for (int i = left; i < end; i++)
-            {
-                values.push_back(entireData[i]);
-            }
-            length = length - size;
-            auto otherValues = GetValues(entireChild[idx].array.nextLeaf, length);
-            values.insert(values.end(), otherValues.begin(), otherValues.end());
-        }
+        bool isOver = scan(left, left + size, ret, firstIdx, length);
+        if (isOver)
+            return;
         else
-        {
-            int end = left + length;
-            for (int i = left; i < end; i++)
-            {
-                values.push_back(entireData[i]);
-            }
-        }
+            GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
+        return;
     }
     else
     {
         auto left = entireChild[idx].ga.m_left;
-        auto size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
-        int end = left + entireChild[idx].ga.maxIndex;
-        for (int i = left; i < end; i++)
-        {
-            if (entireData[i].first != DBL_MIN)
-            {
-                values.push_back(entireData[i]);
-                length--;
-            }
-            if (length == 0)
-                break;
-        }
-        if (length > 0)
-        {
-            auto otherValues = GetValues(entireChild[idx].array.nextLeaf, length);
-            values.insert(values.end(), otherValues.begin(), otherValues.end());
-        }
+        bool isOver = scan(left, left + entireChild[idx].ga.maxIndex, ret, firstIdx, length);
+        if (isOver)
+            return;
+        else
+            GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
+        return;
     }
-
-    return values;
 }
 
-vector<pair<double, double>> RangeScan(int rootType, double key, int length)
+void RangeScan(int rootType, double key, int length, vector<pair<double, double>> &ret)
 {
     int idx = 0; // idx in the INDEX
+    int firstIdx = 0;
     int type = rootType;
     while (1)
     {
@@ -135,32 +109,17 @@ vector<pair<double, double>> RangeScan(int rootType, double key, int length)
         break;
         case 8:
         {
-            vector<pair<double, double>> values;
             auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
             int preIdx = entireChild[idx].array.Predict(key);
             auto left = entireChild[idx].array.m_left;
             if (entireData[left + preIdx].first == key)
             {
-                if (length > size - preIdx + 1)
-                {
-                    int end = left + size;
-                    for (int i = left + preIdx; i < end; i++)
-                    {
-                        values.push_back(entireData[i]);
-                    }
-                    length = length - (size - preIdx);
-                    auto otherValues = GetValues(entireChild[idx].array.nextLeaf, length);
-                    values.insert(values.end(), otherValues.begin(), otherValues.end());
-                }
+                bool isOver = scan(left + preIdx, left + size, ret, firstIdx, length);
+                if (isOver)
+                    return;
                 else
-                {
-                    int end = left + preIdx + length;
-                    for (int i = left + preIdx; i < end; i++)
-                    {
-                        values.push_back(entireData[i]);
-                    }
-                }
-                return values;
+                    GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
+                return;
             }
             else
             {
@@ -176,60 +135,30 @@ vector<pair<double, double>> RangeScan(int rootType, double key, int length)
                 {
                     res = ArrayBinarySearch(key, end, left + size - 1);
                     if (res >= left + size)
-                        return {};
+                        return;
                 }
-                if (entireData[res].first == key)
-                {
-                    if (length > size - res)
-                    {
-                        int end = left + size;
-                        for (int i = left + res; i < end; i++)
-                        {
-                            values.push_back(entireData[i]);
-                        }
-                        length = length - (size - res);
-                        auto otherValues = GetValues(entireChild[idx].array.nextLeaf, length);
-                        values.insert(values.end(), otherValues.begin(), otherValues.end());
-                    }
-                    else
-                    {
-                        int end = left + res + length;
-                        for (int i = left + res; i < end; i++)
-                        {
-                            values.push_back(entireData[i]);
-                        }
-                    }
-                    return values;
-                }
-                return {};
+                bool isOver = scan(res, left + size, ret, firstIdx, length);
+                if (isOver)
+                    return;
+                else
+                    GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
+                return;
             }
         }
         break;
         case 9:
         {
-            vector<pair<double, double>> values;
             auto left = entireChild[idx].ga.m_left;
             int preIdx = entireChild[idx].ga.Predict(key);
             auto size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
             if (entireData[left + preIdx].first == key)
             {
-                int end = left + entireChild[idx].ga.maxIndex;
-                for (int i = left + preIdx; i < end; i++)
-                {
-                    if (entireData[i].first != DBL_MIN)
-                    {
-                        values.push_back(entireData[i]);
-                        length--;
-                    }
-                    if (length == 0)
-                        break;
-                }
-                if (length > 0)
-                {
-                    auto otherValues = GetValues(entireChild[idx].array.nextLeaf, length);
-                    values.insert(values.end(), otherValues.begin(), otherValues.end());
-                }
-                return values;
+                bool isOver = scan(left + preIdx, left + entireChild[idx].ga.maxIndex, ret, firstIdx, length);
+                if (isOver)
+                    return;
+                else
+                    GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
+                return;
             }
             else
             {
@@ -250,30 +179,19 @@ vector<pair<double, double>> RangeScan(int rootType, double key, int length)
                 {
                     res = GABinarySearch(key, end, left + entireChild[idx].ga.maxIndex);
                     if (res > left + entireChild[idx].ga.maxIndex)
-                        return {};
+                        return;
                 }
 
                 if (entireData[res].first == key)
                 {
-                    int end = left + entireChild[idx].ga.maxIndex;
-                    for (int i = left + res; i < end; i++)
-                    {
-                        if (entireData[i].first != DBL_MIN)
-                        {
-                            values.push_back(entireData[i]);
-                            length--;
-                        }
-                        if (length == 0)
-                            break;
-                    }
-                    if (length > 0)
-                    {
-                        auto otherValues = GetValues(entireChild[idx].array.nextLeaf, length);
-                        values.insert(values.end(), otherValues.begin(), otherValues.end());
-                    }
-                    return values;
+                    bool isOver = scan(res, left + entireChild[idx].ga.maxIndex, ret, firstIdx, length);
+                    if (isOver)
+                        return;
+                    else
+                        GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
+                    return;
                 }
-                return {};
+                return;
             }
         }
         break;

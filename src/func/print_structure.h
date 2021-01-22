@@ -33,7 +33,7 @@ void printStructure(int level, int type, int idx)
     {
     case 0:
     {
-        // cout << "level " << level << ": now root is lr, idx:" << idx << ", number:" << (lrRoot.flagNumber & 0x00FFFFFF);
+        cout << "level " << level << ": now root is lr, idx:" << idx << ", number:" << (lrRoot.flagNumber & 0x00FFFFFF);
         for (int i = 0; i < (lrRoot.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = lrRoot.childLeft + i;
@@ -41,20 +41,20 @@ void printStructure(int level, int type, int idx)
             tree[t]++;
             nodeVec[t]++;
         }
-        // cout << "\tchild:";
-        // if(tree[4])
-        // cout << "\tlr:" << tree[4];
-        // if(tree[5])
-        // cout << "\tnn:" << tree[5];
-        // if(tree[6])
-        // cout << "\this:" << tree[6];
-        // if(tree[7])
-        // cout << "\tbin:" << tree[7];
-        // if(tree[8])
-        // cout << "\tarray:" << tree[8];
-        // if(tree[9])
-        // cout << "\tga:" << tree[9];
-        // cout << endl;
+        cout << "\tchild:";
+        if (tree[4])
+            cout << "\tlr:" << tree[4];
+        if (tree[5])
+            cout << "\tnn:" << tree[5];
+        if (tree[6])
+            cout << "\this:" << tree[6];
+        if (tree[7])
+            cout << "\tbin:" << tree[7];
+        if (tree[8])
+            cout << "\tarray:" << tree[8];
+        if (tree[9])
+            cout << "\tga:" << tree[9];
+        cout << endl;
         for (int i = 0; i < (lrRoot.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = lrRoot.childLeft + i;
@@ -66,7 +66,7 @@ void printStructure(int level, int type, int idx)
     }
     case 1:
     {
-        // cout << "level " << level << ": now root is nn, idx:" << idx << ", number:" << (nnRoot.flagNumber & 0x00FFFFFF);
+        cout << "level " << level << ": now root is nn, idx:" << idx << ", number:" << (nnRoot.flagNumber & 0x00FFFFFF);
         for (int i = 0; i < (nnRoot.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = nnRoot.childLeft + i;
@@ -74,20 +74,20 @@ void printStructure(int level, int type, int idx)
             tree[t]++;
             nodeVec[t]++;
         }
-        // cout << "\tchild:";
-        // if(tree[4])
-        // cout << "\tlr:" << tree[4];
-        // if(tree[5])
-        // cout << "\tnn:" << tree[5];
-        // if(tree[6])
-        // cout << "\this:" << tree[6];
-        // if(tree[7])
-        // cout << "\tbin:" << tree[7];
-        // if(tree[8])
-        // cout << "\tarray:" << tree[8];
-        // if(tree[9])
-        // cout << "\tga:" << tree[9];
-        // cout << endl;
+        cout << "\tchild:";
+        if (tree[4])
+            cout << "\tlr:" << tree[4];
+        if (tree[5])
+            cout << "\tnn:" << tree[5];
+        if (tree[6])
+            cout << "\this:" << tree[6];
+        if (tree[7])
+            cout << "\tbin:" << tree[7];
+        if (tree[8])
+            cout << "\tarray:" << tree[8];
+        if (tree[9])
+            cout << "\tga:" << tree[9];
+        cout << endl;
         for (int i = 0; i < (nnRoot.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = nnRoot.childLeft + i;
@@ -99,7 +99,7 @@ void printStructure(int level, int type, int idx)
     }
     case 2:
     {
-        // cout << "level " << level << ": now root is his, idx:" << idx << ", number:" << (hisRoot.flagNumber & 0x00FFFFFF);
+        cout << "level " << level << ": now root is his, idx:" << idx << ", number:" << (hisRoot.flagNumber & 0x00FFFFFF);
         for (int i = 0; i < (hisRoot.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = hisRoot.childLeft + i;
@@ -107,20 +107,20 @@ void printStructure(int level, int type, int idx)
             tree[t]++;
             nodeVec[t]++;
         }
-        // cout << "\tchild:";
-        // if(tree[4])
-        // cout << "\tlr:" << tree[4];
-        // if(tree[5])
-        // cout << "\tnn:" << tree[5];
-        // if(tree[6])
-        // cout << "\this:" << tree[6];
-        // if(tree[7])
-        // cout << "\tbin:" << tree[7];
-        // if(tree[8])
-        // cout << "\tarray:" << tree[8];
-        // if(tree[9])
-        // cout << "\tga:" << tree[9];
-        // cout << endl;
+        cout << "\tchild:";
+        if (tree[4])
+            cout << "\tlr:" << tree[4];
+        if (tree[5])
+            cout << "\tnn:" << tree[5];
+        if (tree[6])
+            cout << "\this:" << tree[6];
+        if (tree[7])
+            cout << "\tbin:" << tree[7];
+        if (tree[8])
+            cout << "\tarray:" << tree[8];
+        if (tree[9])
+            cout << "\tga:" << tree[9];
+        cout << endl;
         for (int i = 0; i < (hisRoot.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = hisRoot.childLeft + i;
@@ -132,7 +132,7 @@ void printStructure(int level, int type, int idx)
     }
     case 3:
     {
-        // cout << "level " << level << ": now root is bin, idx:" << idx << ", number:" << (bsRoot.flagNumber & 0x00FFFFFF);
+        cout << "level " << level << ": now root is bin, idx:" << idx << ", number:" << (bsRoot.flagNumber & 0x00FFFFFF);
         for (int i = 0; i < (bsRoot.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = bsRoot.childLeft + i;
@@ -140,20 +140,20 @@ void printStructure(int level, int type, int idx)
             tree[t]++;
             nodeVec[t]++;
         }
-        // cout << "\tchild:";
-        // if(tree[4])
-        // cout << "\tlr:" << tree[4];
-        // if(tree[5])
-        // cout << "\tnn:" << tree[5];
-        // if(tree[6])
-        // cout << "\this:" << tree[6];
-        // if(tree[7])
-        // cout << "\tbin:" << tree[7];
-        // if(tree[8])
-        // cout << "\tarray:" << tree[8];
-        // if(tree[9])
-        // cout << "\tga:" << tree[9];
-        // cout << endl;
+        cout << "\tchild:";
+        if (tree[4])
+            cout << "\tlr:" << tree[4];
+        if (tree[5])
+            cout << "\tnn:" << tree[5];
+        if (tree[6])
+            cout << "\this:" << tree[6];
+        if (tree[7])
+            cout << "\tbin:" << tree[7];
+        if (tree[8])
+            cout << "\tarray:" << tree[8];
+        if (tree[9])
+            cout << "\tga:" << tree[9];
+        cout << endl;
         for (int i = 0; i < (bsRoot.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = bsRoot.childLeft + i;
@@ -176,17 +176,17 @@ void printStructure(int level, int type, int idx)
         }
         // cout << "\tchild:";
         // if (tree[4])
-        // cout << "\tlr:" << tree[4];
+        //     cout << "\tlr:" << tree[4];
         // if (tree[5])
-        // cout << "\tnn:" << tree[5];
+        //     cout << "\tnn:" << tree[5];
         // if (tree[6])
-        // cout << "\this:" << tree[6];
+        //     cout << "\this:" << tree[6];
         // if (tree[7])
-        // cout << "\tbin:" << tree[7];
+        //     cout << "\tbin:" << tree[7];
         // if (tree[8])
-        // cout << "\tarray:" << tree[8];
+        //     cout << "\tarray:" << tree[8];
         // if (tree[9])
-        // cout << "\tga:" << tree[9];
+        //     cout << "\tga:" << tree[9];
         // cout << endl;
         for (int i = 0; i < (entireChild[idx].lr.flagNumber & 0x00FFFFFF); i++)
         {
@@ -208,18 +208,18 @@ void printStructure(int level, int type, int idx)
             nodeVec[t]++;
         }
         // cout << "\tchild:";
-        // if(tree[4])
-        // cout << "\tlr:" << tree[4];
-        // if(tree[5])
-        // cout << "\tnn:" << tree[5];
-        // if(tree[6])
-        // cout << "\this:" << tree[6];
-        // if(tree[7])
-        // cout << "\tbin:" << tree[7];
-        // if(tree[8])
-        // cout << "\tarray:" << tree[8];
-        // if(tree[9])
-        // cout << "\tga:" << tree[9];
+        // if (tree[4])
+        //     cout << "\tlr:" << tree[4];
+        // if (tree[5])
+        //     cout << "\tnn:" << tree[5];
+        // if (tree[6])
+        //     cout << "\this:" << tree[6];
+        // if (tree[7])
+        //     cout << "\tbin:" << tree[7];
+        // if (tree[8])
+        //     cout << "\tarray:" << tree[8];
+        // if (tree[9])
+        //     cout << "\tga:" << tree[9];
         // cout << endl;
         for (int i = 0; i < (entireChild[idx].nn.flagNumber & 0x00FFFFFF); i++)
         {
@@ -241,18 +241,18 @@ void printStructure(int level, int type, int idx)
             nodeVec[t]++;
         }
         // cout << "\tchild:";
-        // if(tree[4])
-        // cout << "\tlr:" << tree[4];
-        // if(tree[5])
-        // cout << "\tnn:" << tree[5];
-        // if(tree[6])
-        // cout << "\this:" << tree[6];
-        // if(tree[7])
-        // cout << "\tbin:" << tree[7];
-        // if(tree[8])
-        // cout << "\tarray:" << tree[8];
-        // if(tree[9])
-        // cout << "\tga:" << tree[9];
+        // if (tree[4])
+        //     cout << "\tlr:" << tree[4];
+        // if (tree[5])
+        //     cout << "\tnn:" << tree[5];
+        // if (tree[6])
+        //     cout << "\this:" << tree[6];
+        // if (tree[7])
+        //     cout << "\tbin:" << tree[7];
+        // if (tree[8])
+        //     cout << "\tarray:" << tree[8];
+        // if (tree[9])
+        //     cout << "\tga:" << tree[9];
         // cout << endl;
         for (int i = 0; i < (entireChild[idx].his.flagNumber & 0x00FFFFFF); i++)
         {
@@ -274,23 +274,28 @@ void printStructure(int level, int type, int idx)
             nodeVec[t]++;
         }
         // cout << "\tchild:";
-        // if(tree[4])
-        // cout << "\tlr:" << tree[4];
-        // if(tree[5])
-        // cout << "\tnn:" << tree[5];
-        // if(tree[6])
-        // cout << "\this:" << tree[6];
-        // if(tree[7])
-        // cout << "\tbin:" << tree[7];
-        // if(tree[8])
-        // cout << "\tarray:" << tree[8];
-        // if(tree[9])
-        // cout << "\tga:" << tree[9];
+        // if (tree[4])
+        //     cout << "\tlr:" << tree[4];
+        // if (tree[5])
+        //     cout << "\tnn:" << tree[5];
+        // if (tree[6])
+        //     cout << "\this:" << tree[6];
+        // if (tree[7])
+        //     cout << "\tbin:" << tree[7];
+        // if (tree[8])
+        //     cout << "\tarray:" << tree[8];
+        // if (tree[9])
+        //     cout << "\tga:" << tree[9];
         // cout << endl;
         for (int i = 0; i < (entireChild[idx].bs.flagNumber & 0x00FFFFFF); i++)
         {
             auto childIdx = entireChild[idx].bs.childLeft + i;
             auto t = (entireChild[childIdx].lr.flagNumber >> 24);
+            // if (childIdx == idx)
+            // {
+            //     cout << " child wrong!" << endl;
+            //     break;
+            // }
             if (t > 3 && t < 8)
                 printStructure(level + 1, t, childIdx);
         }

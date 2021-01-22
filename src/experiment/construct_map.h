@@ -22,8 +22,11 @@ void constructMap(double initRatio)
     cout << "construct map" << endl;
     outRes << "construct map" << endl;
     outRes << "initRatio," << initRatio << endl;
-    LongitudesDataset longData = LongitudesDataset(initRatio);
-    LonglatDataset latData = LonglatDataset(initRatio);
+    double init = initRatio;
+    if (init == 2)
+        init = 0.95;
+    LongitudesDataset longData = LongitudesDataset(init);
+    LonglatDataset latData = LonglatDataset(init);
     vector<double> rate = {0.3, 0.2, 0.75, 0.5, 0.25, 0.1};
     vector<double> rate1 = {0.6, 0.4, 0.3, 0.25, 0.2, 0.1};  // 0.5
     for (int r = 0; r < rate.size(); r++)
@@ -39,7 +42,7 @@ void constructMap(double initRatio)
         latData.GenerateDataset(dataset, insertDataset);
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);
@@ -48,7 +51,7 @@ void constructMap(double initRatio)
         longData.GenerateDataset(dataset, insertDataset);
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);

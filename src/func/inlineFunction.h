@@ -16,6 +16,25 @@ extern vector<BaseNode> entireChild;
 extern pair<double, double> *entireData;
 extern vector<pair<double, double>> findDatapoint;
 
+inline bool scan(const int left, const int end, vector<pair<double, double>> &ret, int &firstIdx, int &length)
+{
+    for (int i = left; i < end; i++)
+    {
+        if (length == 0)
+            return true;
+        if (entireData[i].first != DBL_MIN)
+        {
+            ret[firstIdx] = entireData[i];
+            firstIdx++;
+            length--;
+        }
+    }
+    if (length != 0)
+        return false;
+    else
+        return true;
+}
+
 // search a key-value through binary search in
 // the array leaf node
 inline int ArrayBinarySearch(double key, int start, int end)

@@ -15,7 +15,6 @@
 #include "insert_function.h"
 #include "delete_function.h"
 #include "update_function.h"
-#include "rangeinsert_function.h"
 #include "rangescan_function.h"
 #include "../dataManager/datapoint.h"
 #include <float.h>

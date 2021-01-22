@@ -5,6 +5,7 @@
 #include "store_node.h"
 #include "dp.h"
 #include "params_struct.h"
+#include "update_leaf.h"
 #include <vector>
 #include <map>
 using namespace std;
@@ -20,6 +21,7 @@ map<pair<int, int>, pair<double, double>> COST; // int:left; double:time, space
 map<pair<bool, pair<int, int>>, ParamStruct> structMap;
 
 extern int kMaxKeyNum;
+extern set<int> storeIdxSet;
 extern double kRate;
 map<double, int> scanLeaf;
 // main function of construction
@@ -33,6 +35,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     cout << endl;
     cout << "-------------------------------" << endl;
     cout << "Start construction!" << endl;
+    storeIdxSet.clear();
 
     time_t timep;
     time(&timep);
@@ -48,6 +51,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
 
     COST.clear();
     structMap.clear();
+    scanLeaf.clear();
 
     int childNum = res.second;
     int rootType = res.first;
@@ -355,6 +359,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     }
     break;
     }
+    UpdateLeaf();
     cout << "total cost: " << totalCost << endl;
     cout << "total time: " << totalTime << endl;
     cout << "total space: " << totalSpace << endl;

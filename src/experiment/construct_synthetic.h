@@ -25,10 +25,13 @@ void constructSynthetic(double initRatio)
     cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
     cout << "initRatio is: " << initRatio << endl;
     outRes << "initRatio," << initRatio << endl;
-    LognormalDataset logData = LognormalDataset(datasetSize, initRatio);
-    UniformDataset uniData = UniformDataset(datasetSize, initRatio);
-    NormalDataset norData = NormalDataset(datasetSize, initRatio);
-    ExponentialDataset expData = ExponentialDataset(datasetSize, initRatio);
+    double init = initRatio;
+    if (init == 2)
+        init = 0.95;
+    LognormalDataset logData = LognormalDataset(datasetSize, init);
+    UniformDataset uniData = UniformDataset(datasetSize, init);
+    NormalDataset norData = NormalDataset(datasetSize, init);
+    ExponentialDataset expData = ExponentialDataset(datasetSize, init);
 
     vector<double> rate = {0.4, 0.3, 0.25, 0.22, 0.2, 0.1};
     vector<double> rate1 = {0.6, 0.4, 0.3, 0.25, 0.2, 0.1,};  // 0.5
@@ -45,7 +48,7 @@ void constructSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);
@@ -55,7 +58,7 @@ void constructSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);
@@ -65,7 +68,7 @@ void constructSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);
@@ -75,7 +78,7 @@ void constructSynthetic(double initRatio)
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            btree_test(initRatio);
+            // btree_test(initRatio);
             // artTree_test(initRatio);
         }
         CoreConstruct(initRatio);

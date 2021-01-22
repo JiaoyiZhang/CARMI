@@ -45,7 +45,7 @@ void WorkloadE(int rootType)
     srand(time(0));
     for (int i = 0; i < dataset.size(); i++)
     {
-        length.push_back((rand() % (dataset.size()) + 1));
+        length.push_back(rand() % 100 + 1);
     }
 
     chrono::_V2::system_clock::time_point s, e;
@@ -54,22 +54,24 @@ void WorkloadE(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        for (int j = 0; j < 19; j++)
+        for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
         {
-            RangeScan(rootType, dataset[index[findCnt]].first, length[findCnt]);
+            vector<pair<double, double>> ret(length[findCnt], {-1, -1});
+            RangeScan(rootType, dataset[index[findCnt]].first, length[findCnt], ret);
             findCnt++;
         }
-        RangeInsert(rootType, insertDataset[i]);
+        Insert(rootType, insertDataset[i]);
     }
 #else
     for (int i = 0; i < end; i++)
     {
         for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
         {
-            RangeScan(rootType, dataset[findCnt].first, length[findCnt]);
+            vector<pair<double, double>> ret(length[findCnt], {-1, -1});
+            RangeScan(rootType, dataset[findCnt].first, length[findCnt], ret);
             findCnt++;
         }
-        RangeInsert(rootType, insertDataset[i]);
+        Insert(rootType, insertDataset[i]);
     }
 #endif
     e = chrono::system_clock::now();
@@ -80,8 +82,9 @@ void WorkloadE(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        for (int j = 0; j < 19; j++)
+        for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
         {
+            vector<pair<double, double>> ret(length[findCnt], {-1, -1});
             TestFind(rootType, dataset[index[findCnt]].first);
             findCnt++;
         }
@@ -92,6 +95,7 @@ void WorkloadE(int rootType)
     {
         for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
         {
+            vector<pair<double, double>> ret(length[findCnt], {-1, -1});
             TestFind(rootType, dataset[findCnt].first);
             findCnt++;
         }
