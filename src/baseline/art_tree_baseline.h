@@ -22,14 +22,13 @@ void artTree_test(double initRatio)
     cout << "artTree,";
     art_tree t;
     art_tree_init(&t);
-    cout<<"start"<<endl;
+    cout << "start" << endl;
     for (int i = 0; i < dataset.size(); i++)
     {
         char key[64];
         sprintf(key, "%f", dataset[i].first);
         art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)dataset[i].second);
     }
-
 
     default_random_engine engine;
 
@@ -310,6 +309,110 @@ void artTree_test(double initRatio)
                 sprintf(key, "%f", insertDataset[insertCnt].first);
                 insertCnt++;
             }
+        }
+#endif
+        e = chrono::system_clock::now();
+        double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+        tmp -= tmp0;
+
+        cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
+        outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
+    }
+    else if (initRatio == 2)
+    {
+        int end = insertDataset.size();
+        int findCnt = 0;
+
+        vector<int> length;
+        srand(time(0));
+        for (int i = 0; i < dataset.size(); i++)
+        {
+            length.push_back(rand() % 100 + 1);
+        }
+
+        vector<uint64_t> rets;
+        chrono::_V2::system_clock::time_point s, e;
+        double tmp;
+        s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", dataset[index[findCnt]].first);
+                char rightKey[64];
+                int idx = index[findCnt] + length[findCnt] >= dataset.size();
+                while (idx >= dataset.size())
+                    idx--;
+                sprintf(rightKey, "%f", dataset[idx].first);
+
+                art_range_scan(&t, (const unsigned char *)key, strlen((const char *)key), (const unsigned char *)rightKey, strlen((const char *)rightKey), rets);
+                findCnt++;
+            }
+            char key[64];
+            sprintf(key, "%f", insertDataset[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
+        }
+#else
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", dataset[findCnt].first);
+                char rightKey[64];
+                int idx = findCnt + length[findCnt] >= dataset.size();
+                while (idx >= dataset.size())
+                    idx--;
+                sprintf(rightKey, "%f", dataset[idx].first);
+
+                art_range_scan(&t, (const unsigned char *)key, strlen((const char *)key), (const unsigned char *)rightKey, strlen((const char *)rightKey), rets);
+                findCnt++;
+            }
+            char key[64];
+            sprintf(key, "%f", insertDataset[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key), (uint64_t)insertDataset[i].second);
+        }
+#endif
+        e = chrono::system_clock::now();
+        tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+
+        findCnt = 0;
+        s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", dataset[index[findCnt]].first);
+                char rightKey[64];
+                int idx = index[findCnt] + length[findCnt] >= dataset.size();
+                while (idx >= dataset.size())
+                    idx--;
+                sprintf(rightKey, "%f", dataset[idx].first);
+                findCnt++;
+            }
+            char key[64];
+            sprintf(key, "%f", insertDataset[i].first);
+        }
+#else
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                char key[64];
+                sprintf(key, "%f", dataset[findCnt].first);
+                char rightKey[64];
+                int idx = findCnt + length[findCnt] >= dataset.size();
+                while (idx >= dataset.size())
+                    idx--;
+                sprintf(rightKey, "%f", dataset[idx].first);
+                findCnt++;
+            }
+            char key[64];
+            sprintf(key, "%f", insertDataset[i].first);
         }
 #endif
         e = chrono::system_clock::now();

@@ -259,6 +259,86 @@ void btree_test(double initRatio)
         cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
         outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
     }
+    else if (initRatio == 2)
+    {
+        int end = insertDataset.size();
+        int findCnt = 0;
+
+        vector<int> length;
+        srand(time(0));
+        for (int i = 0; i < dataset.size(); i++)
+        {
+            length.push_back(rand() % 100 + 1);
+        }
+
+        vector<uint64_t> rets;
+        chrono::_V2::system_clock::time_point s, e;
+        double tmp;
+        s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                int idx = index[findCnt] + length[findCnt] >= dataset.size();
+                while (idx >= dataset.size())
+                    idx--;
+                btree.lower_bound(dataset[index[findCnt]].first);
+                btree.upper_bound(dataset[idx].first);
+                findCnt++;
+            }
+            btree.insert(insertDataset[i]);
+        }
+#else
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                int idx = findCnt + length[findCnt] >= dataset.size();
+                while (idx >= dataset.size())
+                    idx--;
+                btree.lower_bound(dataset[findCnt].first);
+                btree.upper_bound(dataset[idx].first);
+                findCnt++;
+            }
+            btree.insert(insertDataset[i]);
+        }
+#endif
+        e = chrono::system_clock::now();
+        tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+
+        findCnt = 0;
+        s = chrono::system_clock::now();
+#if ZIPFIAN
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                int idx = index[findCnt] + length[findCnt] >= dataset.size();
+                while (idx >= dataset.size())
+                    idx--;
+                findCnt++;
+            }
+        }
+#else
+        for (int i = 0; i < end; i++)
+        {
+            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            {
+                int idx = findCnt + length[findCnt] >= dataset.size();
+                while (idx >= dataset.size())
+                    idx--;
+                findCnt++;
+            }
+        }
+#endif
+        e = chrono::system_clock::now();
+        double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+        tmp -= tmp0;
+
+        cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
+        outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
+    }
 
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
         return p1.first < p2.first;
