@@ -12,6 +12,7 @@
 
 #include "../leafNodeType/ga_type.h"
 #include "../leafNodeType/array_type.h"
+#include "../leafNodeType/ycsb_leaf_type.h"
 
 #include "inlineFunction.h"
 #include "../dataManager/datapoint.h"
@@ -244,13 +245,13 @@ bool Insert(int rootType, pair<double, double> data)
 
                 idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
             }
-            if (entireChild[idx].ga.capacity < 4096 && (float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
-            {
-                // If an additional Insertion results in crossing the density
-                // then we expand the gapped array
-                entireChild[idx].ga.SetDataset(left, size, entireChild[idx].ga.capacity);
-                left = entireChild[idx].ga.m_left;
-            }
+            // if (entireChild[idx].ga.capacity < 4096 && (float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
+            // {
+            //     // If an additional Insertion results in crossing the density
+            //     // then we expand the gapped array
+            //     entireChild[idx].ga.SetDataset(left, size, entireChild[idx].ga.capacity);
+            //     left = entireChild[idx].ga.m_left;
+            // }
 
             if (size == 0)
             {
@@ -351,6 +352,12 @@ bool Insert(int rootType, pair<double, double> data)
                 return true;
             }
             return false;
+        }
+        break;
+        case 10:
+        {
+            findActualDataset.push_back(data);
+            return true;
         }
         break;
         }

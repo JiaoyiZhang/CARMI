@@ -27,7 +27,7 @@ void printStructure(int level, int type, int idx)
 {
     levelVec[level]++;
     vector<int> tree;
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 11; i++)
         tree.push_back(0);
     switch (type)
     {
@@ -54,6 +54,8 @@ void printStructure(int level, int type, int idx)
             cout << "\tarray:" << tree[8];
         if (tree[9])
             cout << "\tga:" << tree[9];
+        if (tree[10])
+            cout << "\tycsb:" << tree[10];
         cout << endl;
         for (int i = 0; i < (lrRoot.flagNumber & 0x00FFFFFF); i++)
         {
@@ -87,6 +89,8 @@ void printStructure(int level, int type, int idx)
             cout << "\tarray:" << tree[8];
         if (tree[9])
             cout << "\tga:" << tree[9];
+        if (tree[10])
+            cout << "\tycsb:" << tree[10];
         cout << endl;
         for (int i = 0; i < (nnRoot.flagNumber & 0x00FFFFFF); i++)
         {
@@ -120,6 +124,8 @@ void printStructure(int level, int type, int idx)
             cout << "\tarray:" << tree[8];
         if (tree[9])
             cout << "\tga:" << tree[9];
+        if (tree[10])
+            cout << "\tycsb:" << tree[10];
         cout << endl;
         for (int i = 0; i < (hisRoot.flagNumber & 0x00FFFFFF); i++)
         {
@@ -153,6 +159,8 @@ void printStructure(int level, int type, int idx)
             cout << "\tarray:" << tree[8];
         if (tree[9])
             cout << "\tga:" << tree[9];
+        if (tree[10])
+            cout << "\tycsb:" << tree[10];
         cout << endl;
         for (int i = 0; i < (bsRoot.flagNumber & 0x00FFFFFF); i++)
         {
@@ -187,6 +195,8 @@ void printStructure(int level, int type, int idx)
         //     cout << "\tarray:" << tree[8];
         // if (tree[9])
         //     cout << "\tga:" << tree[9];
+        // if (tree[10])
+        //     cout << "\tycsb:" << tree[10];
         // cout << endl;
         for (int i = 0; i < (entireChild[idx].lr.flagNumber & 0x00FFFFFF); i++)
         {
@@ -220,6 +230,8 @@ void printStructure(int level, int type, int idx)
         //     cout << "\tarray:" << tree[8];
         // if (tree[9])
         //     cout << "\tga:" << tree[9];
+        // if (tree[10])
+        //     cout << "\tycsb:" << tree[10];
         // cout << endl;
         for (int i = 0; i < (entireChild[idx].nn.flagNumber & 0x00FFFFFF); i++)
         {
@@ -253,6 +265,8 @@ void printStructure(int level, int type, int idx)
         //     cout << "\tarray:" << tree[8];
         // if (tree[9])
         //     cout << "\tga:" << tree[9];
+        // if (tree[10])
+        //     cout << "\tycsb:" << tree[10];
         // cout << endl;
         for (int i = 0; i < (entireChild[idx].his.flagNumber & 0x00FFFFFF); i++)
         {
@@ -286,6 +300,8 @@ void printStructure(int level, int type, int idx)
         //     cout << "\tarray:" << tree[8];
         // if (tree[9])
         //     cout << "\tga:" << tree[9];
+        // if (tree[10])
+        //     cout << "\tycsb:" << tree[10];
         // cout << endl;
         for (int i = 0; i < (entireChild[idx].bs.flagNumber & 0x00FFFFFF); i++)
         {

@@ -31,6 +31,7 @@ long double calculateSpace()
     cout << "BSModel:" << sizeof(BSModel) << endl;
     cout << "ArrayType:" << sizeof(ArrayType) << endl;
     cout << "GappedArrayType:" << sizeof(GappedArrayType) << endl;
+    cout << "YCSBLeaf:" << sizeof(YCSBLeaf) << endl;
 
     long double space = 0;
 
@@ -51,12 +52,15 @@ long double calculateSpace()
     }
 
     space += 64 * nowChildNumber;
-    for (int i = 0; i < nowChildNumber; i++)
+    if (!kIsYCSB)
     {
-        if ((entireChild[i].lr.flagNumber >> 24) == 8)
-            space += entireChild[i].array.m_capacity * 16;
-        else if ((entireChild[i].lr.flagNumber >> 24) == 9)
-            space += entireChild[i].ga.capacity * 16;
+        for (int i = 0; i < nowChildNumber; i++)
+        {
+            if ((entireChild[i].lr.flagNumber >> 24) == 8)
+                space += entireChild[i].array.m_capacity * 16;
+            else if ((entireChild[i].lr.flagNumber >> 24) == 9)
+                space += entireChild[i].ga.capacity * 16;
+        }
     }
     space = space / 1024 / 1024;
     cout << "\tStructure SPACE: " << space << "MB" << endl;

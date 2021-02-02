@@ -15,6 +15,7 @@ extern vector<BaseNode> entireChild;
 
 extern pair<double, double> *entireData;
 extern vector<pair<double, double>> findDatapoint;
+extern vector<pair<double, double>> findActualDataset;
 
 inline bool scan(const int left, const int end, vector<pair<double, double>> &ret, int &firstIdx, int &length)
 {
@@ -77,6 +78,21 @@ inline int GABinarySearch(double key, int start_idx, int end_idx)
         return start_idx;
     else
         return end_idx;
+}
+
+// search a key-value through binary search in
+// the YCSB leaf node
+inline int YCSBBinarySearch(double key, int start, int end)
+{
+    while (start < end)
+    {
+        int mid = (start + end) / 2;
+        if (findActualDataset[mid].first < key)
+            start = mid + 1;
+        else
+            end = mid;
+    }
+    return start;
 }
 
 // designed for construction

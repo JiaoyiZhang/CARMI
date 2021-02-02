@@ -12,6 +12,7 @@
 
 #include "../leafNodeType/ga_type.h"
 #include "../leafNodeType/array_type.h"
+#include "../leafNodeType/ycsb_leaf_type.h"
 
 #include "inlineFunction.h"
 #include "../dataManager/datapoint.h"
@@ -140,6 +141,35 @@ pair<double, double> Find(int rootType, double key)
                 if (entireData[res].first == key)
                     return entireData[res];
                 return {DBL_MIN, DBL_MIN};
+            }
+        }
+        break;
+        case 10:
+        {
+            auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
+            int preIdx = entireChild[idx].ycsbLeaf.Predict(key);
+            auto left = entireChild[idx].ycsbLeaf.m_left;
+            if (findActualDataset[left + preIdx].first == key)
+                return findActualDataset[left + preIdx];
+            else
+            {
+                int start = max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
+                int end = min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
+                start = min(start, end);
+                int res;
+                if (key <= findActualDataset[start].first)
+                    res = YCSBBinarySearch(key, left, start);
+                else if (key <= findActualDataset[end].first)
+                    res = YCSBBinarySearch(key, start, end);
+                else
+                {
+                    res = YCSBBinarySearch(key, end, left + size - 1);
+                    if (res >= left + size)
+                        return {};
+                }
+                if (findActualDataset[res].first == key)
+                    return findActualDataset[res];
+                return {};
             }
         }
         break;
