@@ -32,7 +32,6 @@ public:
     int nextLeaf;
 
     int m_left; // the left boundary of the leaf node in the global array
-    // int m_datasetSize; // the current amount of data
     int m_capacity; // the maximum capacity of this leaf node
     int error;      // the boundary of binary search
 

@@ -12,6 +12,7 @@ extern vector<pair<double, double>> dataset;
 extern vector<pair<double, double>> insertDataset;
 
 extern ofstream outRes;
+extern vector<int> length;
 
 // read mostly workload (range scan)
 // a mix of 95/5 reads and writes
@@ -19,6 +20,8 @@ void WorkloadE(int rootType)
 {
     dataset = findActualDataset;
     insertDataset = insertActualDataset;
+    vector<pair<double, double>>().swap(findActualDataset);
+    vector<pair<double, double>>().swap(insertActualDataset);
 
     default_random_engine engine;
 
@@ -39,13 +42,6 @@ void WorkloadE(int rootType)
     {
         int idx = zipFind.GenerateNextIndex();
         index.push_back(idx);
-    }
-
-    vector<int> length;
-    srand(time(0));
-    for (int i = 0; i < dataset.size(); i++)
-    {
-        length.push_back(rand() % 100 + 1);
     }
 
     chrono::_V2::system_clock::time_point s, e;
@@ -76,6 +72,7 @@ void WorkloadE(int rootType)
 #endif
     e = chrono::system_clock::now();
     tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+    cout << "over!" << endl;
 
     findCnt = 0;
     s = chrono::system_clock::now();
@@ -109,12 +106,12 @@ void WorkloadE(int rootType)
     cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
     outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
 
-    std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
-    std::sort(insertDataset.begin(), insertDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
+    // std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+    //     return p1.first < p2.first;
+    // });
+    // std::sort(insertDataset.begin(), insertDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+    //     return p1.first < p2.first;
+    // });
 }
 
 #endif // !WORKLOAD_B_H

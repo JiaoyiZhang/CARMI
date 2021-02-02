@@ -8,6 +8,7 @@
 
 #include "leafNodeType/array.h"
 #include "leafNodeType/ga.h"
+#include "leafNodeType/ycsb_leaf.h"
 using namespace std;
 
 union BaseNode
@@ -19,6 +20,8 @@ union BaseNode
 
     ArrayType array;
     GappedArrayType ga;
+    YCSBLeaf ycsbLeaf;
+
     BaseNode(){};
     ~BaseNode(){};
 };

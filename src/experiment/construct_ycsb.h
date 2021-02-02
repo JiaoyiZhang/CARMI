@@ -11,6 +11,7 @@ extern double kRate;
 extern vector<pair<double, double>> dataset;
 extern vector<pair<double, double>> insertDataset;
 extern ofstream outRes;
+extern vector<int> length;
 
 void constructYCSB(double initRatio)
 {
@@ -27,16 +28,26 @@ void constructYCSB(double initRatio)
     vector<double> rate = {0.4, 0.3, 0.25, 0.22, 0.2, 0.1};
     vector<double> rate1 = {0.6, 0.4, 0.3, 0.25, 0.2, 0.1}; // 0.5
 
-    for (int r = 0; r < rate.size(); r++)
-    // for (int r = 0; r < 1; r++)
+    // for (int r = 0; r < rate.size(); r++)
+    for (int r = 0; r < 1; r++)
     {
         if (initRatio == 0.5)
-            kRate = rate1[r];
+            // kRate = rate1[r];
+            kRate = 0.2;
         else
             kRate = rate[r];
         cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
         outRes << "kRate:" << kRate << endl;
         ycsbData.GenerateDataset(dataset, insertDataset);
+        if (initRatio == 2)
+        {
+            length.clear();
+            srand(time(0));
+            for (int i = 0; i < dataset.size(); i++)
+            {
+                length.push_back(rand() % 100 + 1);
+            }
+        }
 
         if (r == 0)
         {

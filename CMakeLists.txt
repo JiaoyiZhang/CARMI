@@ -15,6 +15,7 @@ project(learned_index)
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")  # debug mode
+# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 
 file(GLOB stx_btree_sources stx_btree/*.h)
 add_library(stx_btree STATIC ${stx_btree_sources})

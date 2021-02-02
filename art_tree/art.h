@@ -17,6 +17,7 @@
 #define NODE48  3
 #define NODE256 4
 
+
 #define MAX_PREFIX_LEN 10
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -30,7 +31,8 @@
 # endif
 #endif
 
-typedef uint64_t ValueT;
+typedef double ValueT;
+// typedef uint64_t ValueT;
 
 typedef int(*art_callback)(void *data, const unsigned char *key, uint32_t key_len, ValueT value);
 
@@ -174,7 +176,7 @@ void art_search(const art_tree *t, const unsigned char *key, int key_len, std::v
  * @arg rhs_key_len The length of the right-hand-side key
  * @arg rets The vector of matched results
  */
-void art_range_scan(const art_tree *t, const unsigned char *lhs_key, int lhs_key_len, const unsigned char *rhs_key, int rhs_key_len, std::vector<ValueT> &rets);
+void art_range_scan(const art_tree *t, const unsigned char *lhs_key, int lhs_key_len, const unsigned char *rhs_key, int rhs_key_len, std::vector<ValueT> &rets, int len);
 
 /**
  * Returns the minimum valued leaf

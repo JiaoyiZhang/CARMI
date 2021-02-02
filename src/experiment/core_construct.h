@@ -23,14 +23,16 @@ extern vector<pair<double, double>> insertDataset;
 extern ofstream outRes;
 
 vector<int> levelVec(20, 0);
-vector<int> nodeVec(10, 0);
+vector<int> nodeVec(11, 0);
 
 int totalFrequency = 0;
 
 void CoreConstruct(double initRatio)
 {
     cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
+    findActualDataset.clear();
     findActualDataset = dataset;
+    insertActualDataset.clear();
     insertActualDataset = insertDataset;
     totalFrequency = 0;
 
@@ -39,13 +41,16 @@ void CoreConstruct(double initRatio)
         dataset[i].second = 1;
         totalFrequency += 1;
     }
-    for (int i = 0; i < insertDataset.size(); i++)
+    if (!kIsYCSB)
     {
-        insertDataset[i].second = 1;
-        totalFrequency += 1;
+        for (int i = 0; i < insertDataset.size(); i++)
+        {
+            insertDataset[i].second = 1;
+            totalFrequency += 1;
+        }
     }
-
-    initEntireData(0, dataset.size() + insertDataset.size(), false);
+    if (!kIsYCSB)
+        initEntireData(0, dataset.size() + insertDataset.size(), false);
     initEntireChild(dataset.size() + insertDataset.size());
     auto rootType = Construction(dataset, insertDataset);
     cout << "Construction over!" << endl;
@@ -66,7 +71,7 @@ void CoreConstruct(double initRatio)
             cout << "level " << i << ": " << levelVec[i] << endl;
         levelVec[i] = 0;
     }
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 11; i++)
     {
         if (nodeVec[i] != 0)
             cout << "node " << i << ": " << nodeVec[i] << endl;
@@ -81,7 +86,7 @@ void CoreConstruct(double initRatio)
         WorkloadC(rootType); // read-only
     else if (initRatio == 0)
         WorkloadD(rootType); // write-partially
-    else if(initRatio == 2)
+    else if (initRatio == 2)
         WorkloadE(rootType); // range scan
 }
 
