@@ -15,6 +15,7 @@ using namespace std;
 extern ofstream outRes;
 extern vector<pair<double, double>> dataset;
 extern vector<pair<double, double>> insertDataset;
+extern vector<int> length;
 
 void btree_test(double initRatio)
 {
@@ -46,8 +47,6 @@ void btree_test(double initRatio)
     if (initRatio == 0.5)
     {
         int end = min(dataset.size(), insertDataset.size());
-
-        vector<uint64_t> rets;
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
@@ -66,6 +65,8 @@ void btree_test(double initRatio)
 #endif
         e = chrono::system_clock::now();
         tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+        cout<<"tmp:"<<tmp<<endl;
+        cout << "tmp time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
 
         s = chrono::system_clock::now();
 #if ZIPFIAN
@@ -89,7 +90,6 @@ void btree_test(double initRatio)
         int end = insertDataset.size();
         int findCnt = 0;
 
-        vector<uint64_t> rets;
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
@@ -108,7 +108,7 @@ void btree_test(double initRatio)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
             {
-                btree.find(dataset[index[findCnt]].first);
+                btree.find(dataset[findCnt].first);
                 findCnt++;
             }
             btree.insert(insertDataset[i]);
@@ -147,7 +147,6 @@ void btree_test(double initRatio)
     {
         int end = dataset.size();
 
-        vector<uint64_t> rets;
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
@@ -188,7 +187,6 @@ void btree_test(double initRatio)
         int findCnt = 0;
         int insertCnt = 0;
 
-        vector<uint64_t> rets;
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
@@ -264,14 +262,6 @@ void btree_test(double initRatio)
         int end = insertDataset.size();
         int findCnt = 0;
 
-        vector<int> length;
-        srand(time(0));
-        for (int i = 0; i < dataset.size(); i++)
-        {
-            length.push_back(rand() % 100 + 1);
-        }
-
-        vector<uint64_t> rets;
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
         s = chrono::system_clock::now();
@@ -280,11 +270,13 @@ void btree_test(double initRatio)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
             {
-                int idx = index[findCnt] + length[findCnt] >= dataset.size();
-                while (idx >= dataset.size())
-                    idx--;
-                btree.lower_bound(dataset[index[findCnt]].first);
-                btree.upper_bound(dataset[idx].first);
+                vector<pair<double, double>> ret(length[index[findCnt]], {-1, -1});
+                auto it = btree.find(dataset[index[findCnt]].first);
+                for (int l = 0; l < length[index[findCnt]]; l++)
+                {
+                    ret[l] = {it->first, it->second};
+                    it++;
+                }
                 findCnt++;
             }
             btree.insert(insertDataset[i]);
@@ -294,11 +286,13 @@ void btree_test(double initRatio)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
             {
-                int idx = findCnt + length[findCnt] >= dataset.size();
-                while (idx >= dataset.size())
-                    idx--;
-                btree.lower_bound(dataset[findCnt].first);
-                btree.upper_bound(dataset[idx].first);
+                vector<pair<double, double>> ret(length[findCnt], {-1, -1});
+                auto it = btree.find(dataset[findCnt].first);
+                for (int l = 0; l < length[findCnt]; l++)
+                {
+                    ret[l] = {it->first, it->second};
+                    it++;
+                }
                 findCnt++;
             }
             btree.insert(insertDataset[i]);
@@ -314,9 +308,11 @@ void btree_test(double initRatio)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
             {
-                int idx = index[findCnt] + length[findCnt] >= dataset.size();
-                while (idx >= dataset.size())
-                    idx--;
+                vector<pair<double, double>> ret(length[index[findCnt]], {-1, -1});
+                stx::btree<double, double>::iterator it;
+                for (int l = 0; l < length[index[findCnt]]; l++)
+                {
+                }
                 findCnt++;
             }
         }
@@ -325,9 +321,11 @@ void btree_test(double initRatio)
         {
             for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
             {
-                int idx = findCnt + length[findCnt] >= dataset.size();
-                while (idx >= dataset.size())
-                    idx--;
+                vector<pair<double, double>> ret(length[findCnt], {-1, -1});
+                stx::btree<double, double>::iterator it;
+                for (int l = 0; l < length[findCnt]; l++)
+                {
+                }
                 findCnt++;
             }
         }
@@ -339,6 +337,14 @@ void btree_test(double initRatio)
         cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
         outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
     }
+
+    auto stat = btree.get_stats();
+    cout << "btree : innernodes" << stat.innernodes << "，\tleaf nodes:" << stat.leaves << endl;
+    double space = float(stat.innernodes * 272 + stat.leaves * 280) / 1024 / 1024;
+    cout << "btree space:" << space << endl;
+    // space += float(dataset.size() + insertDataset.size()) * 16 / 1024 / 1024;
+    // cout << "btree total space: " << space << endl;
+    outRes << space << endl;
 
     std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
         return p1.first < p2.first;
