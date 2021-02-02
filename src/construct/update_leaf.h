@@ -10,6 +10,8 @@ extern map<double, int> scanLeaf;
 
 void UpdateLeaf()
 {
+    if (kIsYCSB)
+        return;
     auto it = scanLeaf.begin();
     int pre = it->second;
     auto next = it;

@@ -37,7 +37,6 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         return {{0, 0}, false};
     }
 
-    // construct a leaf node
     if (isLeaf == false)
     {
         double OptimalValue = DBL_MAX;

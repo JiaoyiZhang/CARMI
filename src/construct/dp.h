@@ -8,6 +8,7 @@
 #include "../innerNodeType/nn_type.h"
 #include "../leafNodeType/ga_type.h"
 #include "../leafNodeType/array_type.h"
+#include "../leafNodeType/ycsb_leaf_type.h"
 #include "../func/function.h"
 #include "../func/inlineFunction.h"
 #include "greedy_construct.h"
@@ -26,6 +27,7 @@ extern vector<pair<double, double>> findDatapoint;
 extern vector<pair<double, double>> insertDatapoint;
 
 extern int totalFrequency;
+extern bool kIsYCSB;
 
 // return {cost, true:inner, false:leaf}
 pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
@@ -50,6 +52,48 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
         double OptimalSpace = DBL_MAX;
         ParamStruct optimalStruct;
         double space, time, cost;
+
+        if (kIsYCSB)
+        {
+            time = 0.0;
+            space = 0.0;
+
+            auto tmp = YCSBLeaf();
+            tmp.Train(findLeft, findSize);
+            auto error = tmp.UpdateError(findLeft, findSize);
+            for (int i = findLeft; i < findLeft + findSize; i++)
+            {
+                auto predict = tmp.Predict(findDatapoint[i].first) + findLeft;
+                auto d = abs(i - predict);
+                time += (161.241 * findDatapoint[i].second) / totalFrequency;
+                if (d <= error)
+                {
+                    if (d > 0 && error > 0)
+                        time += (log(error) / log(2) * findDatapoint[i].second * 10.9438) / totalFrequency;
+                    else
+                        time += 2.4132 / totalFrequency;
+                }
+                else
+                    time += (log(findSize) / log(2) * findDatapoint[i].second * 10.9438) / totalFrequency;
+            }
+
+            for (int i = insertLeft; i < insertLeft + insertSize; i++)
+            {
+                auto predict = tmp.Predict(insertDatapoint[i].first) + insertLeft;
+                auto actual = TestArrayBinarySearch(insertDatapoint[i].first, findLeft, findLeft + findSize);
+                auto d = abs(actual - predict);
+                time += ((161.241 + 6.25) * insertDatapoint[i].second) / totalFrequency; // due to shuffle
+            }
+            // time = time / totalFrequency;
+
+            cost = time + space * kRate; // ns + MB * kRate
+            OptimalValue = cost;
+            optimalStruct.type = 6;
+            optimalStruct.density = 2;
+            OptimalSpace = space * kRate;
+            OptimalTime = time;
+            return {{OptimalTime, OptimalSpace}, false};
+        }
 
         // calculate the actual space
         int actualSize = kThreshold;

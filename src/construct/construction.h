@@ -43,10 +43,14 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     cout << "\nTEST time: " << tmpTime << endl;
 
-    initEntireData(0, findData.size() + insertData.size(), false);
+    if (!kIsYCSB)
+        initEntireData(0, findData.size() + insertData.size(), false);
     initEntireChild(findData.size() + insertData.size());
+    findDatapoint.clear();
+    insertDatapoint.clear();
     findDatapoint = findData;
-    insertDatapoint = insertData;
+    if (!kIsYCSB)
+        insertDatapoint = insertData;
     auto res = ChooseRoot(findData);
 
     COST.clear();
@@ -132,7 +136,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             pair<pair<double, double>, bool> resChild;
             // if (i % 10000 == 0)
             // {
-            //     cout << "construct child " << i << ":\tsize:" << subFindData[i].second + subInsertData[i].second << endl;
+            // cout << "construct child " << i << ":\tsize:" << subFindData[i].second << ",\tinsert:" << subInsertData[i].second << endl;
 
             //     time_t timep;
             //     time(&timep);
@@ -159,7 +163,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             auto it = structMap.find(key);
             if (it == structMap.end())
-                type = 4;
+            {
+                if (kIsYCSB)
+                    type = 6;
+                else
+                    type = 4;
+            }
             else
                 type = it->second.type;
             // if (i % 10000 == 0)
@@ -234,7 +243,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             auto it = structMap.find(key);
             if (it == structMap.end())
-                type = 4;
+            {
+                if (kIsYCSB)
+                    type = 6;
+                else
+                    type = 4;
+            }
             else
                 type = it->second.type;
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
@@ -289,7 +303,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             auto it = structMap.find(key);
             if (it == structMap.end())
-                type = 4;
+            {
+                if (kIsYCSB)
+                    type = 6;
+                else
+                    type = 4;
+            }
             else
                 type = it->second.type;
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
@@ -344,7 +363,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
             auto it = structMap.find(key);
             if (it == structMap.end())
-                type = 4;
+            {
+                if (kIsYCSB)
+                    type = 6;
+                else
+                    type = 4;
+            }
             else
                 type = it->second.type;
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
