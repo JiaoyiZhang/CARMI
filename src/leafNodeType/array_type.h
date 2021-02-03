@@ -18,7 +18,7 @@ inline void ArrayType::SetDataset(const vector<pair<double, double>> &dataset, i
     m_capacity = cap;
     int size = dataset.size();
     flagNumber += size;
-    while (size >= m_capacity)
+    while (size > m_capacity)
         m_capacity *= kExpansionScale;
 
     // m_capacity *= 2; // test
@@ -204,7 +204,7 @@ inline void ArrayType::SetDataset(const int start_idx, const int size)
     if (m_left != -1)
         releaseMemory(m_left, m_capacity);
     flagNumber += size;
-    while (size >= m_capacity)
+    while (size > m_capacity)
         m_capacity *= kExpansionScale;
 
     // m_capacity *= 2; // test

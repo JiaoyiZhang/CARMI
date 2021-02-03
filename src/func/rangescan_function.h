@@ -34,7 +34,7 @@ inline void GetValues(int idx, int &firstIdx, int &length, vector<pair<double, d
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         auto left = entireChild[idx].array.m_left;
         bool isOver = scan(left, left + size, ret, firstIdx, length);
-        if (isOver)
+        if (isOver || entireChild[idx].array.nextLeaf == -1)
             return;
         else
             GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
@@ -44,7 +44,7 @@ inline void GetValues(int idx, int &firstIdx, int &length, vector<pair<double, d
     {
         auto left = entireChild[idx].ga.m_left;
         bool isOver = scan(left, left + entireChild[idx].ga.maxIndex, ret, firstIdx, length);
-        if (isOver)
+        if (isOver || entireChild[idx].array.nextLeaf == -1)
             return;
         else
             GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
@@ -117,7 +117,7 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
             if (entireData[left + preIdx].first == key)
             {
                 bool isOver = scan(left + preIdx, left + size, ret, firstIdx, length);
-                if (isOver)
+                if (isOver || entireChild[idx].array.nextLeaf == -1)
                     return;
                 else
                     GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
@@ -140,7 +140,7 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
                         return;
                 }
                 bool isOver = scan(res, left + size, ret, firstIdx, length);
-                if (isOver)
+                if (isOver || entireChild[idx].array.nextLeaf == -1)
                     return;
                 else
                     GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
@@ -156,7 +156,7 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
             if (entireData[left + preIdx].first == key)
             {
                 bool isOver = scan(left + preIdx, left + entireChild[idx].ga.maxIndex, ret, firstIdx, length);
-                if (isOver)
+                if (isOver || entireChild[idx].array.nextLeaf == -1)
                     return;
                 else
                     GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);
@@ -187,7 +187,7 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
                 if (entireData[res].first == key)
                 {
                     bool isOver = scan(res, left + entireChild[idx].ga.maxIndex, ret, firstIdx, length);
-                    if (isOver)
+                    if (isOver || entireChild[idx].array.nextLeaf == -1)
                         return;
                     else
                         GetValues(entireChild[idx].array.nextLeaf, firstIdx, length, ret);

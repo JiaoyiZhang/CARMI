@@ -17,7 +17,7 @@ inline void GappedArrayType::SetDataset(const vector<pair<double, double>> &subD
     if (m_left != -1)
         releaseMemory(m_left, capacity);
     capacity = cap;
-    while ((float(subDataset.size()) / float(capacity) >= density))
+    while ((float(subDataset.size()) / float(capacity) > density))
         capacity = float(capacity) / density + 1;
     // capacity *= 2; // test
     if (capacity > 4096)
@@ -231,7 +231,7 @@ inline void GappedArrayType::SetDataset(const int left, const int size)
 {
     if (m_left != -1)
         releaseMemory(m_left, capacity);
-    while ((float(size) / float(capacity) >= density))
+    while ((float(size) / float(capacity) > density))
         capacity = float(capacity) / density + 1;
     capacity *= 2; // test
     if (capacity > 4096)
