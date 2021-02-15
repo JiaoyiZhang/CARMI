@@ -237,8 +237,8 @@ void artTree_test(double initRatio)
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
 
-        cout << "total time:" << tmp / float(dataset.size()) * 1000000000 << endl;
-        outRes << tmp / float(dataset.size()) * 1000000000 << ",";
+        cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
+        outRes << tmp / 100000.0 * 1000000000 << ",";
     }
     else if (initRatio == 0)
     {
