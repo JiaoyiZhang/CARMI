@@ -27,8 +27,8 @@ void RunStatic(int initRatio)
         kInnerNodeID = j;
         cout << "childNum is: " << childNum << endl;
         cout << "root type:" << kInnerNodeID << endl;
-        initEntireData(0, dataset.size() + insertDataset.size(), false);
-        initEntireChild(dataset.size() + insertDataset.size());
+        initEntireData(0, dataset.size() * 1.1, false);
+        initEntireChild(dataset.size() * 1.1);
         Initialize(dataset, childNum);
         cout << "index init over!" << endl;
         switch (kInnerNodeID)

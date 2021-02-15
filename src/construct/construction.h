@@ -44,8 +44,8 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     cout << "\nTEST time: " << tmpTime << endl;
 
     if (!kIsYCSB)
-        initEntireData(0, findData.size() + insertData.size(), false);
-    initEntireChild(findData.size() + insertData.size());
+        initEntireData(0, findData.size() * 1.1, false);
+    initEntireChild(findData.size() * 1.1);
     findDatapoint.clear();
     insertDatapoint.clear();
     findDatapoint = findData;

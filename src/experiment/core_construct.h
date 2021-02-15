@@ -50,8 +50,8 @@ void CoreConstruct(double initRatio)
         }
     }
     if (!kIsYCSB)
-        initEntireData(0, dataset.size() + insertDataset.size(), false);
-    initEntireChild(dataset.size() + insertDataset.size());
+        initEntireData(0, dataset.size() * 1.1, false);
+    initEntireChild(dataset.size() * 1.1);
     auto rootType = Construction(dataset, insertDataset);
     cout << "Construction over!" << endl;
     cout << endl;
