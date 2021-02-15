@@ -393,6 +393,17 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     strftime(tmpTime1, sizeof(tmpTime1), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     cout << "finish time: " << tmpTime1 << endl;
 
+    double entropy = 0.0;
+    int size = findData.size();
+    float p = 0;
+    for (int i = 0; i < childNum; i++)
+    {
+        p = float(subFindData[i].second) / size;
+        if (p != 0)
+            entropy -= p * log(p) / log(2);
+    }
+    cout << "entropy: " << entropy;
+
     return rootType;
 }
 
