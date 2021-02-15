@@ -20,6 +20,7 @@ void constructYCSB(double initRatio)
     cout << "construct ycsb" << endl;
     outRes << "construct ycsb" << endl;
     outRes << "initRatio," << initRatio << endl;
+    kIsYCSB = true;
     double init = initRatio;
     if (init == 2)
         init = 0.95;
@@ -28,12 +29,11 @@ void constructYCSB(double initRatio)
     vector<double> rate = {0.4, 0.3, 0.25, 0.22, 0.2, 0.1};
     vector<double> rate1 = {0.6, 0.4, 0.3, 0.25, 0.2, 0.1}; // 0.5
 
-    // for (int r = 0; r < rate.size(); r++)
-    for (int r = 0; r < 1; r++)
+    for (int r = 0; r < rate.size(); r++)
+    // for (int r = 0; r < 1; r++)
     {
         if (initRatio == 0.5)
-            // kRate = rate1[r];
-            kRate = 0.2;
+            kRate = rate1[r];
         else
             kRate = rate[r];
         cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
@@ -58,6 +58,7 @@ void constructYCSB(double initRatio)
 
         outRes << endl;
     }
+    kIsYCSB = false;
 }
 
 #endif // !CONSTRUCT_YCSB_H

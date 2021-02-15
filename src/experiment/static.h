@@ -3,6 +3,12 @@
 
 #include "../func/function.h"
 
+#include "../workload/workloada.h"
+#include "../workload/workloadb.h"
+#include "../workload/workloadc.h"
+#include "../workload/workloadd.h"
+#include "../workload/workloade.h"
+
 using namespace std;
 
 extern vector<BaseNode> entireChild;
@@ -12,9 +18,11 @@ extern ofstream outRes;
 extern vector<pair<double, double>> dataset;
 extern vector<pair<double, double>> insertDataset;
 
-void RunStatic()
+void RunStatic(int initRatio)
 {
-    for (int j = 0; j < 4; j++)
+    findActualDataset = dataset;
+    insertActualDataset = insertDataset;
+    for (int j = 0; j < 1; j++)
     {
         kInnerNodeID = j;
         cout << "childNum is: " << childNum << endl;
@@ -39,45 +47,49 @@ void RunStatic()
             break;
         }
 
-        chrono::_V2::system_clock::time_point s, e;
-        double tmp;
-        s = chrono::system_clock::now();
-        for (int i = 0; i < dataset.size(); i++)
-            Find(kInnerNodeID, dataset[i].first);
-        e = chrono::system_clock::now();
-        tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
-        cout << "Find time:" << tmp / (float)dataset.size() << endl;
-        outRes << tmp / (float)dataset.size() << ",";
+        if (initRatio == 0.5)
+            WorkloadA(kInnerNodeID); // write-heavy
+        else if (initRatio == 0.95)
+            WorkloadB(kInnerNodeID); // read-mostly
+        else if (initRatio == 1)
+            WorkloadC(kInnerNodeID); // read-only
+        else if (initRatio == 0)
+            WorkloadD(kInnerNodeID); // write-partially
+        else if (initRatio == 2)
+            WorkloadE(kInnerNodeID); // range scan
 
-        unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-        shuffle(dataset.begin(), dataset.end(), default_random_engine(seed));
+        // chrono::_V2::system_clock::time_point s, e;
+        // double tmp;
 
-        s = chrono::system_clock::now();
-        for (int i = 0; i < dataset.size(); i++)
-            Find(kInnerNodeID, dataset[i].first);
-        e = chrono::system_clock::now();
-        double temp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
-        cout << "Find time:" << temp / (float)dataset.size() << endl;
+        // unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+        // shuffle(dataset.begin(), dataset.end(), default_random_engine(seed));
+
+        // s = chrono::system_clock::now();
+        // for (int i = 0; i < dataset.size(); i++)
+        //     Find(kInnerNodeID, dataset[i].first);
+        // e = chrono::system_clock::now();
+        // double temp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
+        // cout << "Find time:" << temp / (float)dataset.size() << endl;
 
         // auto entropy = GetEntropy(dataset.size());
-        auto entropy = 2;
-        cout << "Entropy:" << entropy << endl;
-        outRes << "ENTROPY," << entropy << ",";
-        cout << "time / entropy: " << tmp / (float)dataset.size() / entropy << endl;
-        outRes << "ratio," << tmp / (float)dataset.size() / entropy << ",";
+        // auto entropy = 2;
+        // cout << "Entropy:" << entropy << endl;
+        // outRes << "ENTROPY," << entropy << ",";
+        // cout << "time / entropy: " << tmp / (float)dataset.size() / entropy << endl;
+        // outRes << "ratio," << tmp / (float)dataset.size() / entropy << ",";
 
-        s = chrono::system_clock::now();
-        for (int i = 0; i < insertDataset.size(); i++)
-            Insert(kInnerNodeID, insertDataset[i]);
-        e = chrono::system_clock::now();
-        tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
-        cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
-        outRes << tmp / (float)insertDataset.size() << ",";
-        cout << "-------------------------------" << endl;
+        // s = chrono::system_clock::now();
+        // for (int i = 0; i < insertDataset.size(); i++)
+        //     Insert(kInnerNodeID, insertDataset[i]);
+        // e = chrono::system_clock::now();
+        // tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den * 1000000000;
+        // cout << "Insert time:" << tmp / (float)insertDataset.size() << endl;
+        // outRes << tmp / (float)insertDataset.size() << ",";
+        // cout << "-------------------------------" << endl;
 
-        std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-            return p1.first < p2.first;
-        });
+        // std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
+        //     return p1.first < p2.first;
+        // });
     }
     outRes << endl;
 }
