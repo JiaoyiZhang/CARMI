@@ -15,18 +15,23 @@ class LonglatDataset
 public:
 	LonglatDataset(double initRatio)
 	{
-		if (initRatio == 0)
-			num = 0;
-		else if (initRatio == 1)
-			num = -1;
-		else
-			num = initRatio / (1 - initRatio);
+        init = initRatio;
+        if (initRatio == 0)
+        {
+            num = 0;
+            init = 0.85;
+        }
+        else if (initRatio == 1)
+            num = -1;
+        else
+            num = round(initRatio / (1 - initRatio));
 	}
 
 	void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
 
 private:
-	int num;
+    int num;
+    float init;
 };
 
 void LonglatDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
@@ -56,8 +61,8 @@ void LonglatDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
 		double k = stod(key);
 		double v = stod(value);
 		ds.push_back({k, v});
-		if (ds.size() == 100000000)
-			break;
+        if (ds.size() == round(67108864.0 / init))
+            break;
 	}
 
 	std::sort(ds.begin(), ds.end());

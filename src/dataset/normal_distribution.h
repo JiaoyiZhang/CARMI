@@ -12,12 +12,13 @@ class NormalDataset
 public:
     NormalDataset(int total, double initRatio)
     {
-        totalSize = total;
         num = 2;
+        totalSize = total / initRatio;
         if (initRatio == 0)
         { // several leaf nodes are inserted
             insertSize = 0;
             initSize = 0;
+            totalSize = total / 0.85 + 1;
         }
         else if (initRatio == 1)
         {
@@ -27,9 +28,9 @@ public:
         }
         else
         {
-            initSize = total * initRatio;
+            initSize = total;
             insertSize = totalSize - initSize;
-            num = initRatio / (1 - initRatio);
+            num = round(initRatio / (1 - initRatio));
         }
     }
 
@@ -72,7 +73,7 @@ void NormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset, v
     if (initSize == 0)
     {
         int i = 0;
-        for (; i < 0.6 * totalSize; i++)
+        for (; i <= 0.6 * totalSize; i++)
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
         for (; i < 0.9 * totalSize; i += 2)
         {
