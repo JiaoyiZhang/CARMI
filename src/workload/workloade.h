@@ -34,7 +34,7 @@ void WorkloadE(int rootType)
     shuffle(insertDataset.begin(), insertDataset.end(), engine);
 
     // int end = insertDataset.size();
-    int end = 15000;
+    int end = 5000;
     int findCnt = 0;
     Zipfian zipFind;
     zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
@@ -104,8 +104,8 @@ void WorkloadE(int rootType)
     double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     tmp -= tmp0;
 
-    cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
-    outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
+    cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
+    outRes << tmp / 100000.0 * 1000000000 << ",";
 
     // std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
     //     return p1.first < p2.first;

@@ -58,7 +58,7 @@ void artTree_test(double initRatio)
 
     if (initRatio == 0.5)
     {
-        int end = min(dataset.size(), insertDataset.size());
+        int end = 50000;
 
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
@@ -109,12 +109,12 @@ void artTree_test(double initRatio)
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
 
-        cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
-        outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
+        cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
+        outRes << tmp / 100000.0 * 1000000000 << ",";
     }
     else if (initRatio == 0.95)
     {
-        int end = insertDataset.size();
+        int end = 5000;
         int findCnt = 0;
 
         chrono::_V2::system_clock::time_point s, e;
@@ -187,12 +187,12 @@ void artTree_test(double initRatio)
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
 
-        cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
-        outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
+        cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
+        outRes << tmp / 100000.0 * 1000000000 << ",";
     }
     else if (initRatio == 1)
     {
-        int end = dataset.size();
+        int end = 100000;
 
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
@@ -242,7 +242,7 @@ void artTree_test(double initRatio)
     }
     else if (initRatio == 0)
     {
-        int end = insertDataset.size();
+        int end = 15000;
         int findCnt = 0;
         int insertCnt = 0;
 
@@ -333,12 +333,12 @@ void artTree_test(double initRatio)
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
 
-        cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
-        outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
+        cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
+        outRes << tmp / 100000.0 * 1000000000 << ",";
     }
     else if (initRatio == 2)
     {
-        int end = insertDataset.size();
+        int end = 5000;
         int findCnt = 0;
 
         for (int i = 0; i < dataset.size(); i++)
@@ -434,8 +434,8 @@ void artTree_test(double initRatio)
         double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
         tmp -= tmp0;
 
-        cout << "total time:" << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << endl;
-        outRes << tmp / float(dataset.size() + insertDataset.size()) * 1000000000 << ",";
+        cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
+        outRes << tmp / 100000.0 * 1000000000 << ",";
     }
 
     outRes << endl;
