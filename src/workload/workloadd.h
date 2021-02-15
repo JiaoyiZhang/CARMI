@@ -22,13 +22,13 @@ void WorkloadD(int rootType)
 
     // if (kRate == 1)
     // {
-    for (int i = 0; i < dataset.size(); i++)
-    {
-        auto res = Find(rootType, dataset[i].first);
-        if (res.first != dataset[i].first)
-            cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
-    }
-    cout << "check FIND over!" << endl;
+    // for (int i = 0; i < dataset.size(); i++)
+    // {
+    //     auto res = Find(rootType, dataset[i].first);
+    //     if (res.first != dataset[i].first)
+    //         cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
+    // }
+    // cout << "check FIND over!" << endl;
     // }
 
     default_random_engine engine;
@@ -41,7 +41,8 @@ void WorkloadD(int rootType)
     engine = default_random_engine(seed1);
     shuffle(insertDataset.begin(), insertDataset.end(), engine);
 
-    int end = insertDataset.size();
+    // int end = insertDataset.size();
+    int end = 15000;
     int findCnt = 0;
     int insertCnt = 0;
     Zipfian zipFind;

@@ -33,7 +33,8 @@ void WorkloadE(int rootType)
     engine = default_random_engine(seed1);
     shuffle(insertDataset.begin(), insertDataset.end(), engine);
 
-    int end = insertDataset.size();
+    // int end = insertDataset.size();
+    int end = 15000;
     int findCnt = 0;
     Zipfian zipFind;
     zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
