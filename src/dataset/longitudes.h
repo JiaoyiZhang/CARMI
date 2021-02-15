@@ -16,18 +16,23 @@ class LongitudesDataset
 public:
 	LongitudesDataset(double initRatio)
 	{
+		init = initRatio;
 		if (initRatio == 0)
+		{
 			num = 0;
+			init = 0.85;
+		}
 		else if (initRatio == 1)
 			num = -1;
 		else
-			num = initRatio / (1 - initRatio);
+			num = round(initRatio / (1 - initRatio));
 	}
 
 	void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
 
 private:
 	int num;
+	float init;
 };
 
 void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
@@ -57,7 +62,7 @@ void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDatase
 		double k = stod(key);
 		double v = stod(value);
 		ds.push_back({k, v});
-		if (ds.size() == 100000000)
+		if (ds.size() == round(67108864.0 / init))
 			break;
 	}
 
@@ -94,6 +99,13 @@ void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDatase
 				cnt = 0;
 			}
 		}
+	}
+	auto data = ds[ds.size() - 1];
+	int k = 1;
+	while (initDataset.size() < 67108864)
+	{
+		initDataset.push_back({data.first + k, data.second + k});
+		k++;
 	}
 	cout << "longitudes: Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
 }

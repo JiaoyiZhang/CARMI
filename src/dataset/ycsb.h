@@ -18,18 +18,23 @@ class YCSBDataset
 public:
     YCSBDataset(double initRatio)
     {
+        init = initRatio;
         if (initRatio == 0)
+        {
             num = 0;
+            init = 0.85;
+        }
         else if (initRatio == 1)
             num = -1;
         else
-            num = initRatio / (1 - initRatio);
+            num = round(initRatio / (1 - initRatio));
     }
 
     void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
 
 private:
     int num;
+    float init;
 };
 
 void YCSBDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
@@ -59,69 +64,19 @@ void YCSBDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vec
         double k = stod(key);
         double v = k / 10;
         ds.push_back({k, v});
+        if (ds.size() == round(67108864.0 / init))
+            break;
     }
 
     std::sort(ds.begin(), ds.end());
     if (kIsYCSB)
     {
-        if (num == 0)
-        {
-            int i = 0;
-            for (; i < 0.85 * ds.size(); i++)
-                initDataset.push_back(ds[i]);
-            for (; i < ds.size(); i++)
-                insertDataset.push_back(ds[i]);
-        }
-        else if (num == -1)
-        {
-            for (int i = 0; i < ds.size(); i++)
-                initDataset.push_back(ds[i]);
-        }
-        else
-        {
-            float k = float(num) / (1 + num);
-            int i = 0;
-            for (; i < k * ds.size(); i++)
-                initDataset.push_back(ds[i]);
-            for (; i < ds.size(); i++)
-                insertDataset.push_back(ds[i]);
-        }
-        cout << "YCSB Dataset: Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
-        return;
-    }
-
-    if (num == 0)
-    {
-        int i = 0;
-        for (; i < 0.6 * ds.size(); i++)
-            initDataset.push_back(ds[i]);
-        for (; i < 0.9 * ds.size(); i += 2)
-        {
-            initDataset.push_back(ds[i]);
-            insertDataset.push_back(ds[i + 1]);
-        }
-        for (; i < ds.size(); i++)
-            initDataset.push_back(ds[i]);
-    }
-    else if (num == -1)
-    {
         for (int i = 0; i < ds.size(); i++)
             initDataset.push_back(ds[i]);
-    }
-    else
-    {
-        int cnt = 0;
-        for (int i = 0; i < ds.size(); i++)
-        {
-            cnt++;
-            if (cnt <= num)
-                initDataset.push_back(ds[i]);
-            else
-            {
-                insertDataset.push_back(ds[i]);
-                cnt = 0;
-            }
-        }
+        int end = 100000 * (1 - init);
+        auto maxValue = ds[ds.size() - 1];
+        for (int i = 1; i <= end; i++)
+            insertDataset.push_back({maxValue.first + i, maxValue.second + i});
     }
     cout << "YCSB Dataset: Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
 }
