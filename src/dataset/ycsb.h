@@ -73,7 +73,7 @@ void YCSBDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vec
     {
         for (int i = 0; i < ds.size(); i++)
             initDataset.push_back(ds[i]);
-        int end = 100000 * (1 - init);
+        int end = round(100000 * (1 - init));
         auto maxValue = ds[ds.size() - 1];
         for (int i = 1; i <= end; i++)
             insertDataset.push_back({maxValue.first + i, maxValue.second + i});
