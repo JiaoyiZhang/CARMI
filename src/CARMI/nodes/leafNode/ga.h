@@ -21,13 +21,6 @@ public:
         previousLeaf = -1;
         nextLeaf = -1;
     }
-    inline int UpdateError();
-    inline int UpdateError(const int start_idx, const int size);
-    inline void SetDataset(const vector<pair<double, double>> &dataset, int cap);
-    inline void SetDataset(const int left, const int size, int cap);
-    inline void SetDataset(const int start_idx, const int size);
-    void Train();
-    void Train(const int start_idx, const int size);
     int Predict(double key);
 
     int flagNumber; // 4 Byte (flag + 0)
