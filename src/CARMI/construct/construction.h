@@ -6,36 +6,22 @@
 #include "dp.h"
 #include "params_struct.h"
 #include "update_leaf.h"
+#include "../carmi.h"
 #include <vector>
 #include <map>
 using namespace std;
 
-extern vector<BaseNode> entireChild;
-
-vector<pair<double, double>> findDatapoint;
-vector<pair<double, double>> insertDatapoint;
-
-extern pair<double, double> *entireData;
-
-map<pair<int, int>, pair<double, double>> COST; // int:left; double:time, space
-map<pair<bool, pair<int, int>>, ParamStruct> structMap;
-
-extern int kMaxKeyNum;
-extern set<int> storeIdxSet;
-extern double kRate;
-map<double, int> scanLeaf;
 // main function of construction
 // return the type of root
 // findDatapoint: the dataset used to initialize the index
 // insertDatapoint: the dataset to be inserted into the index
 // readCnt: the number of READ corresponding to each key
 // writeCnt: the number of WRITE corresponding to each key
-int Construction(const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
+int CARMI::Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
 {
     cout << endl;
     cout << "-------------------------------" << endl;
     cout << "Start construction!" << endl;
-    storeIdxSet.clear();
 
     time_t timep;
     time(&timep);
@@ -44,13 +30,11 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     cout << "\nTEST time: " << tmpTime << endl;
 
     if (!kIsYCSB)
-        initEntireData(0, findData.size() * 1.1, false);
-    initEntireChild(findData.size() * 1.1);
-    findDatapoint.clear();
-    insertDatapoint.clear();
-    findDatapoint = findData;
-    if (!kIsYCSB)
-        insertDatapoint = insertData;
+        initEntireData(0, initData.size() * 1.1, false);
+    initEntireChild(initData.size() * 1.1);
+    initDataset = initData;
+    findQuery = findData;
+    insertQuery = insertData;
     auto res = ChooseRoot(findData);
 
     COST.clear();
@@ -66,36 +50,37 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     {
     case 0:
     {
-        lrRoot = LRType(childNum);
-        lrRoot.childLeft = allocateChildMemory(childNum);
-        lrRoot.model.Train(findData, childNum);
+        root.lrRoot = LRType(childNum);
+        root.lrRoot.childLeft = allocateChildMemory(childNum);
+        root.lrRoot.model.Train(findData, childNum);
         break;
     }
     case 1:
     {
-        plrRoot = PLRType(childNum);
-        plrRoot.childLeft = allocateChildMemory(childNum);
-        plrRoot.model.Train(findData, childNum);
+        root.plrRoot = PLRType(childNum);
+        root.plrRoot.childLeft = allocateChildMemory(childNum);
+        root.plrRoot.model.Train(findData, childNum);
         break;
     }
     case 2:
     {
-        hisRoot = HisType(childNum);
-        hisRoot.childLeft = allocateChildMemory(childNum);
-        hisRoot.model.Train(findData, childNum);
+        root.hisRoot = HisType(childNum);
+        root.hisRoot.childLeft = allocateChildMemory(childNum);
+        root.hisRoot.model.Train(findData, childNum);
         break;
     }
     case 3:
     {
-        bsRoot = BSType(childNum);
-        bsRoot.childLeft = allocateChildMemory(childNum);
-        bsRoot.model.Train(findData, childNum);
+        root.bsRoot = BSType(childNum);
+        root.bsRoot.childLeft = allocateChildMemory(childNum);
+        root.bsRoot.model.Train(findData, childNum);
         break;
     }
     }
     double totalCost = 0.0;
     double totalTime = 0.0;
     double totalSpace = 0.0;
+    vector<pair<int, int>> subInitData(childNum, {-1, 0});   // {left, size}
     vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
     vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
 
@@ -116,16 +101,23 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     {
         totalTime = 12.7013;
         totalSpace += sizeof(LRType);
-        for (int i = 0; i < findDatapoint.size(); i++)
+        for (int i = 0; i < initDataset.size(); i++)
         {
-            int p = lrRoot.model.Predict(findDatapoint[i].first);
+            int p = root.lrRoot.model.Predict(initDataset[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
-        for (int i = 0; i < insertDatapoint.size(); i++)
+        for (int i = 0; i < findQuery.size(); i++)
         {
-            int p = lrRoot.model.Predict(insertDatapoint[i].first);
+            int p = root.lrRoot.model.Predict(findQuery[i].first);
+            if (subFindData[p].first == -1)
+                subFindData[p].first = i;
+            subFindData[p].second++;
+        }
+        for (int i = 0; i < insertQuery.size(); i++)
+        {
+            int p = root.lrRoot.model.Predict(insertQuery[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -134,22 +126,12 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         for (int i = 0; i < childNum; i++)
         {
             pair<pair<double, double>, bool> resChild;
-            // if (i % 10000 == 0)
-            // {
-            // cout << "construct child " << i << ":\tsize:" << subFindData[i].second << ",\tinsert:" << subInsertData[i].second << endl;
-
-            //     time_t timep;
-            //     time(&timep);
-            //     char tmpTime[64];
-            //     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-            //     cout << "start time: " << tmpTime << endl;
-            // }
             if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                resChild = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
-                auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                 if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     resChild = res1;
                 else
@@ -157,7 +139,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             else
             {
-                resChild = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             }
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
@@ -171,27 +153,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             else
                 type = it->second.type;
-            // if (i % 10000 == 0)
-            // {
-            //     cout << "construct child " << i << " over!\ttype is:" << type << endl;
-
-            //     time_t timep;
-            //     time(&timep);
-            //     char tmpTime[64];
-            //     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-            //     cout << "over time: " << tmpTime << endl;
-            // }
             storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
-            // if (i % 10000 == 0)
-            // {
-            //     cout << "store child " << i << " over!" << endl;
-
-            //     time_t timep;
-            //     time(&timep);
-            //     char tmpTime[64];
-            //     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-            //     cout << "over time: " << tmpTime << endl;
-            // }
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
@@ -206,16 +168,23 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     {
         totalTime = 39.6429;
         totalSpace += sizeof(PLRType);
-        for (int i = 0; i < findDatapoint.size(); i++)
+        for (int i = 0; i < initDataset.size(); i++)
         {
-            int p = plrRoot.model.Predict(findDatapoint[i].first);
+            int p = root.lrRoot.model.Predict(initDataset[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
-        for (int i = 0; i < insertDatapoint.size(); i++)
+        for (int i = 0; i < findQuery.size(); i++)
         {
-            int p = plrRoot.model.Predict(insertDatapoint[i].first);
+            int p = root.lrRoot.model.Predict(findQuery[i].first);
+            if (subFindData[p].first == -1)
+                subFindData[p].first = i;
+            subFindData[p].second++;
+        }
+        for (int i = 0; i < insertQuery.size(); i++)
+        {
+            int p = root.lrRoot.model.Predict(insertQuery[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -225,11 +194,11 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         {
             pair<pair<double, double>, bool> resChild;
             if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                resChild = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
-                auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                 if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     resChild = res1;
                 else
@@ -237,7 +206,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             else
             {
-                resChild = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             }
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
@@ -266,16 +235,23 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     {
         totalTime = 44.2824;
         totalSpace += sizeof(HisType);
-        for (int i = 0; i < findDatapoint.size(); i++)
+        for (int i = 0; i < initDataset.size(); i++)
         {
-            int p = hisRoot.model.Predict(findDatapoint[i].first);
+            int p = root.lrRoot.model.Predict(initDataset[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
-        for (int i = 0; i < insertDatapoint.size(); i++)
+        for (int i = 0; i < findQuery.size(); i++)
         {
-            int p = hisRoot.model.Predict(insertDatapoint[i].first);
+            int p = root.lrRoot.model.Predict(findQuery[i].first);
+            if (subFindData[p].first == -1)
+                subFindData[p].first = i;
+            subFindData[p].second++;
+        }
+        for (int i = 0; i < insertQuery.size(); i++)
+        {
+            int p = root.lrRoot.model.Predict(insertQuery[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -285,11 +261,11 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         {
             pair<pair<double, double>, bool> resChild;
             if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                resChild = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
-                auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                 if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     resChild = res1;
                 else
@@ -297,7 +273,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             else
             {
-                resChild = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             }
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
@@ -326,16 +302,23 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     {
         totalTime = 10.9438 * log(childNum) / log(2);
         totalSpace += sizeof(BSType);
-        for (int i = 0; i < findDatapoint.size(); i++)
+        for (int i = 0; i < initDataset.size(); i++)
         {
-            int p = bsRoot.model.Predict(findDatapoint[i].first);
+            int p = root.lrRoot.model.Predict(initDataset[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
-        for (int i = 0; i < insertDatapoint.size(); i++)
+        for (int i = 0; i < findQuery.size(); i++)
         {
-            int p = bsRoot.model.Predict(insertDatapoint[i].first);
+            int p = root.lrRoot.model.Predict(findQuery[i].first);
+            if (subFindData[p].first == -1)
+                subFindData[p].first = i;
+            subFindData[p].second++;
+        }
+        for (int i = 0; i < insertQuery.size(); i++)
+        {
+            int p = root.lrRoot.model.Predict(insertQuery[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;
@@ -345,11 +328,11 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
         {
             pair<pair<double, double>, bool> resChild;
             if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                resChild = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
-                auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
                 if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     resChild = res1;
                 else
@@ -357,7 +340,7 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
             }
             else
             {
-                resChild = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             }
             int type;
             pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};

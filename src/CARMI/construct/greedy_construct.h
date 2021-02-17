@@ -11,20 +11,8 @@
 #include <map>
 using namespace std;
 
-extern map<pair<int, int>, pair<double, double>> COST;
-;
-extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
-
-extern vector<pair<double, double>> findDatapoint;
-extern vector<pair<double, double>> insertDatapoint;
-
-extern int initDatasetSize;
-extern int totalFrequency;
-
-extern pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
-
 // return {cost, true:inner, false:leaf}
-pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
+pair<pair<double, double>, bool> CARMI::GreedyAlgorithm(bool isLeaf, const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
 {
     if (findSize == 0 && insertSize == 0)
     {
@@ -37,16 +25,16 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         double OptimalTime = DBL_MAX;
         double OptimalSpace = DBL_MAX;
         double time, space;
-        double pi = float(findSize + insertSize) / (findDatapoint.size() + insertDatapoint.size());
+        double pi = float(findSize + insertSize) / querySize;
         ParamStruct optimalStruct = {0, 32, 2, vector<pair<bool, pair<int, int>>>()};
         int frequency = 0;
         for (int l = findLeft; l < findLeft + findSize; l++)
         {
-            frequency += findDatapoint[l].second;
+            frequency += findQuery[l].second;
         }
         for (int l = insertLeft; l < insertLeft + insertSize; l++)
         {
-            frequency += insertDatapoint[l].second;
+            frequency += insertQuery[l].second;
         }
         int tmpEnd = findSize / 2;
         for (int c = 16; c < tmpEnd; c *= 2)
@@ -70,11 +58,11 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                     space = 64.0 * c / 1024 / 1024;
                     auto root = LRModel();
                     root.SetChildNumber(c);
-                    root.Train(findLeft, findSize);
+                    Train(&root, findLeft, findSize);
                     int end = findLeft + findSize;
                     for (int i = findLeft; i < end; i++)
                     {
-                        int p = root.Predict(findDatapoint[i].first);
+                        int p = root.Predict(findQuery[i].first);
                         perSize[p]++;
                     }
                     break;
@@ -85,11 +73,11 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                     space = 64.0 * c / 1024 / 1024;
                     auto root = PLRModel();
                     root.SetChildNumber(c);
-                    root.Train(findLeft, findSize);
+                    Train(&root, findLeft, findSize);
                     int end = findLeft + findSize;
                     for (int i = findLeft; i < end; i++)
                     {
-                        int p = root.Predict(findDatapoint[i].first);
+                        int p = root.Predict(findQuery[i].first);
                         perSize[p]++;
                     }
                     break;
@@ -102,11 +90,11 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                     space = 64.0 * c / 1024 / 1024;
                     auto root = HisModel();
                     root.SetChildNumber(c);
-                    root.Train(findLeft, findSize);
+                    Train(&root, findLeft, findSize);
                     int end = findLeft + findSize;
                     for (int i = findLeft; i < end; i++)
                     {
-                        int p = root.Predict(findDatapoint[i].first);
+                        int p = root.Predict(findQuery[i].first);
                         perSize[p]++;
                     }
                     break;
@@ -119,11 +107,11 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                     space = 64.0 * c / 1024 / 1024;
                     auto root = BSModel();
                     root.SetChildNumber(c);
-                    root.Train(findLeft, findSize);
+                    Train(&root, findLeft, findSize);
                     int end = findLeft + findSize;
                     for (int i = findLeft; i < end; i++)
                     {
-                        int p = root.Predict(findDatapoint[i].first);
+                        int p = root.Predict(findQuery[i].first);
                         perSize[p]++;
                     }
                     break;
@@ -144,7 +132,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 {
                     OptimalValue = cost;
                     OptimalSpace = float(kRate * space);
-                    OptimalTime = time * frequency / totalFrequency;
+                    OptimalTime = time * frequency / querySize;
                     optimalStruct.type = type;
                     optimalStruct.childNum = c;
                 }
@@ -154,6 +142,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         // construct child
         vector<pair<bool, pair<int, int>>> tmpChild;
         int childNum = optimalStruct.childNum;
+        vector<pair<int, int>> subInitData(childNum, {-1, 0});   // {left, size}
         vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
         vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
         switch (optimalStruct.type)
@@ -162,13 +151,21 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         {
             auto node = LRModel();
             node.SetChildNumber(childNum);
-            node.Train(findLeft, findSize);
+            Train(&node, findLeft, findSize);
 
             // divide the key and query
+            int initEnd = initLeft + initSize;
+            for (int i = initLeft; i < initEnd; i++)
+            {
+                int p = node.Predict(initDataset[i].first);
+                if (initDataset[p].first == -1)
+                    initDataset[p].first = i;
+                initDataset[p].second++;
+            }
             int findEnd = findLeft + findSize;
             for (int i = findLeft; i < findEnd; i++)
             {
-                int p = node.Predict(findDatapoint[i].first);
+                int p = node.Predict(findQuery[i].first);
                 if (subFindData[p].first == -1)
                     subFindData[p].first = i;
                 subFindData[p].second++;
@@ -176,7 +173,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
             int insertEnd = insertLeft + insertSize;
             for (int i = insertLeft; i < insertEnd; i++)
             {
-                int p = node.Predict(insertDatapoint[i].first);
+                int p = node.Predict(insertQuery[i].first);
                 if (subInsertData[p].first == -1)
                     subInsertData[p].first = i;
                 subInsertData[p].second++;
@@ -187,13 +184,21 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         {
             auto node = PLRModel();
             node.SetChildNumber(childNum);
-            node.Train(findLeft, findSize);
+            Train(&node, findLeft, findSize);
 
             // divide the key and query
+            int initEnd = initLeft + initSize;
+            for (int i = initLeft; i < initEnd; i++)
+            {
+                int p = node.Predict(initDataset[i].first);
+                if (initDataset[p].first == -1)
+                    initDataset[p].first = i;
+                initDataset[p].second++;
+            }
             int findEnd = findLeft + findSize;
             for (int i = findLeft; i < findEnd; i++)
             {
-                int p = node.Predict(findDatapoint[i].first);
+                int p = node.Predict(findQuery[i].first);
                 if (subFindData[p].first == -1)
                     subFindData[p].first = i;
                 subFindData[p].second++;
@@ -201,7 +206,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
             int insertEnd = insertLeft + insertSize;
             for (int i = insertLeft; i < insertEnd; i++)
             {
-                int p = node.Predict(insertDatapoint[i].first);
+                int p = node.Predict(insertQuery[i].first);
                 if (subInsertData[p].first == -1)
                     subInsertData[p].first = i;
                 subInsertData[p].second++;
@@ -212,13 +217,21 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         {
             auto node = HisModel();
             node.SetChildNumber(childNum);
-            node.Train(findLeft, findSize);
+            Train(&node, findLeft, findSize);
 
             // divide the key and query
+            int initEnd = initLeft + initSize;
+            for (int i = initLeft; i < initEnd; i++)
+            {
+                int p = node.Predict(initDataset[i].first);
+                if (initDataset[p].first == -1)
+                    initDataset[p].first = i;
+                initDataset[p].second++;
+            }
             int findEnd = findLeft + findSize;
             for (int i = findLeft; i < findEnd; i++)
             {
-                int p = node.Predict(findDatapoint[i].first);
+                int p = node.Predict(findQuery[i].first);
                 if (subFindData[p].first == -1)
                     subFindData[p].first = i;
                 subFindData[p].second++;
@@ -226,7 +239,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
             int insertEnd = insertLeft + insertSize;
             for (int i = insertLeft; i < insertEnd; i++)
             {
-                int p = node.Predict(insertDatapoint[i].first);
+                int p = node.Predict(insertQuery[i].first);
                 if (subInsertData[p].first == -1)
                     subInsertData[p].first = i;
                 subInsertData[p].second++;
@@ -237,13 +250,21 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         {
             auto node = BSModel();
             node.SetChildNumber(childNum);
-            node.Train(findLeft, findSize);
+            Train(&node, findLeft, findSize);
 
             // divide the key and query
+            int initEnd = initLeft + initSize;
+            for (int i = initLeft; i < initEnd; i++)
+            {
+                int p = node.Predict(initDataset[i].first);
+                if (initDataset[p].first == -1)
+                    initDataset[p].first = i;
+                initDataset[p].second++;
+            }
             int findEnd = findLeft + findSize;
             for (int i = findLeft; i < findEnd; i++)
             {
-                int p = node.Predict(findDatapoint[i].first);
+                int p = node.Predict(findQuery[i].first);
                 if (subFindData[p].first == -1)
                     subFindData[p].first = i;
                 subFindData[p].second++;
@@ -251,7 +272,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
             int insertEnd = insertLeft + insertSize;
             for (int i = insertLeft; i < insertEnd; i++)
             {
-                int p = node.Predict(insertDatapoint[i].first);
+                int p = node.Predict(insertQuery[i].first);
                 if (subInsertData[p].first == -1)
                     subInsertData[p].first = i;
                 subInsertData[p].second++;
@@ -264,18 +285,18 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         {
             pair<pair<double, double>, bool> res;
             if (subFindData[i].second + subInsertData[i].second > 4096)
-                res = GreedyAlgorithm(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                res = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
             else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
             {
-                auto res1 = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                auto res0 = dp(false, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
+                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
+                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
                 if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
                     res = res1;
                 else
                     res = res0;
             }
             else
-                res = dp(true, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
+                res = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             tmpChild.push_back({res.second, {subFindData[i].first, subFindData[i].second}});
             OptimalValue += res.first.first + res.first.second;
             OptimalSpace += res.first.second;

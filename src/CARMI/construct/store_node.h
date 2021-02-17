@@ -16,16 +16,10 @@ extern vector<pair<double, double>> findActualDataset;
 extern vector<pair<double, double>> insertActualDataset;
 extern map<double, int> scanLeaf;
 
-set<int> storeIdxSet;
-
 // store the optimal node into the index structure
 // tmpIdx: key in the corresponding struct
-void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx)
+void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx)
 {
-    if (storeIdxSet.find(storeIdx) == storeIdxSet.end())
-        storeIdxSet.insert(storeIdx);
-    else
-        cout << "storeIdx is duplicated, storeIdx:" << storeIdx << endl;
     if (size == 0)
     {
         // choose an array node as the leaf node
@@ -38,7 +32,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         else
         {
             auto node = ArrayType(max(size + insertSize, kThreshold));
-            node.SetDataset(left, size);
+            initArray(&node, left, size);
             entireChild[storeIdx].array = node;
             if (optimalType < 4)
                 cout << "WRONG! size==0, type is:" << optimalType << endl;
@@ -57,7 +51,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);
-        node.Train(left, size);
+        Train(&node, left, size);
         entireChild[storeIdx].lr = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
@@ -104,8 +98,8 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);
-        node.Train(left, size);
-        entireChild[storeIdx].nn = node;
+        Train(&node, left, size);
+        entireChild[storeIdx].plr = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
         vector<int> subInsertData(optimalChildNumber, 0);
@@ -151,7 +145,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);
-        node.Train(left, size);
+        Train(&node, left, size);
         entireChild[storeIdx].his = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
@@ -198,7 +192,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);
-        node.Train(left, size);
+        Train(&node, left, size);
         entireChild[storeIdx].bs = node;
         // divide the key and query
         vector<int> subFindData(optimalChildNumber, 0);
@@ -240,7 +234,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
     {
         // choose an array node as the leaf node
         auto node = ArrayType(max(size + insertSize, kThreshold));
-        node.SetDataset(left, size);
+        initArray(&node, left, size);
         entireChild[storeIdx].array = node;
         if (size > 0)
             scanLeaf.insert({findActualDataset[left].first, storeIdx});
@@ -254,7 +248,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
 
         auto node = GappedArrayType(max(size + insertSize, kThreshold));
         node.density = it->second.density;
-        node.SetDataset(left, size);
+        initGA(&node, left, size);
         entireChild[storeIdx].ga = node;
         if (size > 0)
             scanLeaf.insert({findActualDataset[left].first, storeIdx});
