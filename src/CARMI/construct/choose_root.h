@@ -1,10 +1,10 @@
 #ifndef CHOOSE_ROOT_H
 #define CHOOSE_ROOT_H
 
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
+#include "../nodes/rootNode/bin_type.h"
+#include "../nodes/rootNode/his_type.h"
+#include "../nodes/rootNode/lr_type.h"
+#include "../nodes/rootNode/plr_type.h"
 #include "../func/function.h"
 #include <vector>
 using namespace std;
@@ -49,7 +49,7 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             {
                 time = 39.6429;
                 space = 64.0 * c / 1024 / 1024;
-                auto root = NNType(c);
+                auto root = PLRType(c);
                 root.model.Train(dataset, c);
                 for (int i = 0; i < dataset.size(); i++)
                 {

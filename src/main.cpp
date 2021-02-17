@@ -29,7 +29,7 @@ int kInnerNodeID = 0;
 ofstream outRes;
 
 LRType lrRoot;
-NNType nnRoot;
+PLRType plrRoot;
 HisType hisRoot;
 BSType bsRoot;
 

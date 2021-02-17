@@ -1,14 +1,7 @@
 #ifndef FUNCTION_H
 #define FUNCTION_H
 
-#include "../params.h"
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
+#include "../../params.h"
 
 #include "inlineFunction.h"
 #include "find_function.h"
@@ -37,7 +30,7 @@ extern double kRate;
 extern int kMaxKeyNum;
 
 extern LRType lrRoot;
-extern NNType nnRoot;
+extern PLRType plrRoot;
 extern HisType hisRoot;
 extern BSType bsRoot;
 
@@ -51,8 +44,8 @@ void Initialize(const vector<pair<double, double>> &dataset, int childNum)
         lrRoot.Initialize(dataset);
         break;
     case 1:
-        nnRoot = NNType(childNum);
-        nnRoot.Initialize(dataset);
+        plrRoot = PLRType(childNum);
+        plrRoot.Initialize(dataset);
         break;
     case 2:
         hisRoot = HisType(childNum);

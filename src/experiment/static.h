@@ -1,13 +1,13 @@
 #ifndef STATIC_H
 #define STATIC_H
 
-#include "../func/function.h"
+#include "../CARMI/func/function.h"
 
-#include "../workload/workloada.h"
-#include "../workload/workloadb.h"
-#include "../workload/workloadc.h"
-#include "../workload/workloadd.h"
-#include "../workload/workloade.h"
+#include "workload/workloada.h"
+#include "workload/workloadb.h"
+#include "workload/workloadc.h"
+#include "workload/workloadd.h"
+#include "workload/workloade.h"
 
 using namespace std;
 

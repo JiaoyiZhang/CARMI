@@ -1,26 +1,25 @@
 #ifndef NN_TYPE_H
 #define NN_TYPE_H
 
-#include "../params.h"
-
-#include "../trainModel/piecewiseLR.h"
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../dataManager/child_array.h"
+#include "../../../params.h"
+#include "trainModel/piecewiseLR.h"
+#include "../leafNode/array_type.h"
+#include "../leafNode/ga.h"
+#include "../../dataManager/child_array.h"
 #include <vector>
 #include <fstream>
 using namespace std;
 
 extern vector<BaseNode> entireChild;
 
-class NNType
+class PLRType
 {
 public:
-    NNType()
+    PLRType()
     {
         flagNumber = (1 << 24);
     }
-    NNType(int c)
+    PLRType(int c)
     {
         flagNumber = (1 << 24) + c;
     }
@@ -32,7 +31,7 @@ public:
     PiecewiseLR model; // 24*8+4 Byte
 };
 
-inline void NNType::Initialize(const vector<pair<double, double>> &dataset)
+inline void PLRType::Initialize(const vector<pair<double, double>> &dataset)
 {
     int childNumber = flagNumber & 0x00FFFFFF;
     childLeft = allocateChildMemory(childNumber);
@@ -53,7 +52,7 @@ inline void NNType::Initialize(const vector<pair<double, double>> &dataset)
 
     for (int i = 0; i < childNumber; i++)
     {
-        NNModel innerNN;
+        PLRModel innerNN;
         innerNN.SetChildNumber(32);
         innerNN.Initialize(perSubDataset[i]);
         entireChild[childLeft + i].nn = innerNN;

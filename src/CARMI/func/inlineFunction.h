@@ -1,14 +1,22 @@
 #ifndef INLINE_FUNCTION_H
 #define INLINE_FUNCTION_H
 
-#include "../params.h"
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
+#include "../../params.h"
+#include "../nodes/rootNode/bin_type.h"
+#include "../nodes/rootNode/his_type.h"
+#include "../nodes/rootNode/lr_type.h"
+#include "../nodes/rootNode/plr_type.h"
+
+#include "../nodes/innerNode/bs_model.h"
+#include "../nodes/innerNode/lr_model.h"
+#include "../nodes/innerNode/plr_model.h"
+#include "../nodes/innerNode/his_model.h"
+
+#include "../nodes/leafNode/ga_type.h"
+#include "../nodes/leafNode/array.h"
+#include "../nodes/leafNode/ycsb_leaf_type.h"
 #include <vector>
+#include <float.h>
 using namespace std;
 
 extern vector<BaseNode> entireChild;

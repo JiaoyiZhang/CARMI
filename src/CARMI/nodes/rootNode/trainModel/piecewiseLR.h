@@ -6,20 +6,15 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
-#include "../params.h"
 #include <math.h>
 using namespace std;
-
-extern const int kMaxEpoch;
-extern const double kLearningRate;
-extern int kNeuronNumber;
 
 class PiecewiseLR
 {
 public:
     PiecewiseLR()
     {
-        for (int i = 0; i < kNeuronNumber; i++)
+        for (int i = 0; i < 8; i++)
             theta.push_back({0.0001, 0.666});
     }
 
@@ -27,7 +22,7 @@ public:
     int Predict(double key)
     {
         int s = 0;
-        int e = kNeuronNumber - 1;
+        int e = 7;
         int mid;
         while (s < e)
         {
@@ -76,9 +71,9 @@ void PiecewiseLR::Train(const vector<pair<double, double>> &dataset, int len)
     if (actualSize == 0)
         return;
         
-    int seg = dataset.size() / kNeuronNumber;
+    int seg = dataset.size() / 8;
     int i = 0;
-    for (int k = 1; k <= kNeuronNumber; k++)
+    for (int k = 1; k <= 8; k++)
     {
         double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
         int end = min(k * seg, int(dataset.size() - 1));

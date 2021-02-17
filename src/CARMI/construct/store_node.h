@@ -1,13 +1,7 @@
 #ifndef STORE_NODE_H
 #define STORE_NODE_H
 
-#include "../params.h"
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
+#include "../../params.h"
 #include "../func/function.h"
 #include "params_struct.h"
 #include <float.h>
@@ -106,7 +100,7 @@ void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int
         auto it = structMap.find(key);
         if (it == structMap.end())
             cout << "WRONG!" << endl;
-        auto node = NNModel();
+        auto node = PLRModel();
         node.SetChildNumber(it->second.childNum);
         int optimalChildNumber = it->second.childNum;
         node.childLeft = allocateChildMemory(optimalChildNumber);

@@ -5,10 +5,10 @@
 #include <vector>
 using namespace std;
 
-class NNModel
+class PLRModel
 {
 public:
-    NNModel() = default;
+    PLRModel() = default;
     void SetChildNumber(int c)
     {
         flagNumber = (5 << 24) + c;

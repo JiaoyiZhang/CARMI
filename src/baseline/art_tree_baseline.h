@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <stdio.h>
 #include "../params.h"
-#include "../workload/zipfian.h"
+#include "../experiment/workload/zipfian.h"
 #include "iostream"
 using namespace std;
 

@@ -1,12 +1,12 @@
 #ifndef LR_TYPE_H
 #define LR_TYPE_H
 
-#include "../params.h"
+#include "../../../params.h"
 
-#include "../trainModel/linear_regression.h"
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../dataManager/child_array.h"
+#include "trainModel/linear_regression.h"
+#include "../leafNode/array_type.h"
+#include "../leafNode/ga.h"
+#include "../../dataManager/child_array.h"
 #include "../innerNode/lr.h"
 #include <vector>
 #include <fstream>

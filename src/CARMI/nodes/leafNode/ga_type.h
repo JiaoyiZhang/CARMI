@@ -3,9 +3,8 @@
 
 #include <float.h>
 #include <vector>
-#include "../params.h"
-#include "../dataManager/datapoint.h"
-#include "../baseNode.h"
+#include "../../dataManager/datapoint.h"
+#include "../../baseNode.h"
 #include "ga.h"
 using namespace std;
 

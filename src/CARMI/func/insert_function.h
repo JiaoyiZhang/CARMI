@@ -1,18 +1,5 @@
 #ifndef INSERT_FUNCTION_H
 #define INSERT_FUNCTION_H
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-
-#include "../innerNode/bs_model.h"
-#include "../innerNode/lr_model.h"
-#include "../innerNode/nn_model.h"
-#include "../innerNode/his_model.h"
-
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ycsb_leaf_type.h"
 
 #include "inlineFunction.h"
 #include "../dataManager/datapoint.h"
@@ -23,7 +10,7 @@ extern vector<BaseNode> entireChild;
 extern map<double, int> scanLeaf;
 
 extern LRType lrRoot;
-extern NNType nnRoot;
+extern PLRType plrRoot;
 extern HisType hisRoot;
 extern BSType bsRoot;
 
@@ -45,7 +32,7 @@ bool Insert(int rootType, pair<double, double> data)
         break;
         case 1:
         {
-            idx = nnRoot.childLeft + nnRoot.model.Predict(data.first);
+            idx = plrRoot.childLeft + plrRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;

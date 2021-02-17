@@ -1,13 +1,13 @@
 #ifndef CONSTRUCT_MAP_H
 #define CONSTRUCT_MAP_H
 
-#include "../dataset/longitudes.h"
-#include "../dataset/longlat.h"
+#include "dataset/longitudes.h"
+#include "dataset/longlat.h"
 
 #include "../baseline/art_tree_baseline.h"
 #include "../baseline/btree_baseline.h"
 
-#include "./core_construct.h"
+#include "core_construct.h"
 
 extern double kRate;
 

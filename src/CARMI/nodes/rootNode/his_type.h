@@ -1,11 +1,11 @@
 #ifndef HIS_TYPE_H
 #define HIS_TYPE_H
 
-#include "../params.h"
-#include "../trainModel/histogram.h"
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../dataManager/child_array.h"
+#include "trainModel/histogram.h"
+#include "../leafNode/array_type.h"
+#include "../leafNode/ga.h"
+#include "../../../params.h"
+#include "../../dataManager/child_array.h"
 #include <vector>
 #include <fstream>
 using namespace std;

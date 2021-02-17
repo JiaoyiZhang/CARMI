@@ -1,20 +1,20 @@
 #ifndef BASE_NODE_H
 #define BASE_NODE_H
 #include <iostream>
-#include "innerNode/bs.h"
-#include "innerNode/his.h"
-#include "innerNode/lr.h"
-#include "innerNode/nn.h"
+#include "nodes/innerNode/bs.h"
+#include "nodes/innerNode/his.h"
+#include "nodes/innerNode/lr.h"
+#include "nodes/innerNode/plr.h"
 
-#include "leafNodeType/array.h"
-#include "leafNodeType/ga.h"
-#include "leafNodeType/ycsb_leaf.h"
+#include "nodes/leafNode/array.h"
+#include "nodes/leafNode/ga.h"
+#include "nodes/leafNode/ycsb_leaf.h"
 using namespace std;
 
 union BaseNode
 {
     LRModel lr;
-    NNModel nn;
+    PLRModel nn;
     HisModel his;
     BSModel bs;
 

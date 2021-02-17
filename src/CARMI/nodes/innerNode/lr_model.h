@@ -1,10 +1,10 @@
 #ifndef LR_MODEL_H
 #define LR_MODEL_H
 
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../dataManager/child_array.h"
-#include "../baseNode.h"
+#include "../leafNode/array_type.h"
+#include "../leafNode/ga.h"
+#include "../../dataManager/child_array.h"
+#include "../../baseNode.h"
 using namespace std;
 
 extern vector<BaseNode> entireChild;

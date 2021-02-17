@@ -1,7 +1,7 @@
 #ifndef CONSTRUCT_YCSB_H
 #define CONSTRUCT_YCSB_H
 
-#include "../dataset/ycsb.h"
+#include "dataset/ycsb.h"
 #include "../baseline/art_tree_baseline.h"
 #include "../baseline/btree_baseline.h"
 #include "./core_construct.h"

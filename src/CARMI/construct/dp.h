@@ -1,14 +1,7 @@
 #ifndef DP_H
 #define DP_H
 
-#include "../params.h"
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ycsb_leaf_type.h"
+#include "../../params.h"
 #include "../func/function.h"
 #include "../func/inlineFunction.h"
 #include "greedy_construct.h"
@@ -328,7 +321,7 @@ pair<pair<double, double>, bool> dp(bool isLeaf, const int findLeft, const int f
                     if (RootCost > OptimalValue)
                         break;
 
-                    auto node = NNModel();
+                    auto node = PLRModel();
                     node.SetChildNumber(c);
                     node.Train(findLeft, findSize);
 

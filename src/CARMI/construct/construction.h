@@ -73,9 +73,9 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     }
     case 1:
     {
-        nnRoot = NNType(childNum);
-        nnRoot.childLeft = allocateChildMemory(childNum);
-        nnRoot.model.Train(findData, childNum);
+        plrRoot = PLRType(childNum);
+        plrRoot.childLeft = allocateChildMemory(childNum);
+        plrRoot.model.Train(findData, childNum);
         break;
     }
     case 2:
@@ -205,17 +205,17 @@ int Construction(const vector<pair<double, double>> &findData, const vector<pair
     case 1:
     {
         totalTime = 39.6429;
-        totalSpace += sizeof(NNType);
+        totalSpace += sizeof(PLRType);
         for (int i = 0; i < findDatapoint.size(); i++)
         {
-            int p = nnRoot.model.Predict(findDatapoint[i].first);
+            int p = plrRoot.model.Predict(findDatapoint[i].first);
             if (subFindData[p].first == -1)
                 subFindData[p].first = i;
             subFindData[p].second++;
         }
         for (int i = 0; i < insertDatapoint.size(); i++)
         {
-            int p = nnRoot.model.Predict(insertDatapoint[i].first);
+            int p = plrRoot.model.Predict(insertDatapoint[i].first);
             if (subInsertData[p].first == -1)
                 subInsertData[p].first = i;
             subInsertData[p].second++;

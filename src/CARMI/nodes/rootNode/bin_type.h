@@ -1,11 +1,11 @@
 #ifndef BIN_TYPE_H
 #define BIN_TYPE_H
 
-#include "../params.h"
-#include "../trainModel/binary_search_model.h"
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../dataManager/child_array.h"
+#include "../../../params.h"
+#include "trainModel/binary_search_model.h"
+#include "../leafNode/array_type.h"
+#include "../leafNode/ga.h"
+#include "../../dataManager/child_array.h"
 #include <vector>
 #include <fstream>
 using namespace std;

@@ -1,17 +1,18 @@
 #ifndef DELETE_FUNCTION_H
 #define DELETE_FUNCTION_H
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
+#include "../nodes/rootNode/bin_type.h"
+#include "../nodes/rootNode/his_type.h"
+#include "../nodes/rootNode/lr_type.h"
+#include "../nodes/rootNode/plr_type.h"
 
-#include "../innerNode/bs_model.h"
-#include "../innerNode/lr_model.h"
-#include "../innerNode/nn_model.h"
-#include "../innerNode/his_model.h"
+#include "../nodes/innerNode/bs_model.h"
+#include "../nodes/innerNode/lr_model.h"
+#include "../nodes/innerNode/plr_model.h"
+#include "../nodes/innerNode/his_model.h"
 
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
+#include "../nodes/leafNode/ga_type.h"
+#include "../nodes/leafNode/array_type.h"
+#include "../nodes/leafNode/ycsb_leaf.h"
 
 #include "inlineFunction.h"
 #include "../dataManager/datapoint.h"
@@ -20,7 +21,7 @@ using namespace std;
 extern vector<BaseNode> entireChild;
 
 extern LRType lrRoot;
-extern NNType nnRoot;
+extern PLRType plrRoot;
 extern HisType hisRoot;
 extern BSType bsRoot;
 
@@ -41,7 +42,7 @@ bool Delete(int rootType, double key)
         break;
         case 1:
         {
-            idx = nnRoot.childLeft + nnRoot.model.Predict(key);
+            idx = plrRoot.childLeft + plrRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;

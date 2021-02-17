@@ -2,17 +2,19 @@
 #define CALCULATE_SPACE_H
 
 #include <vector>
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
+#include "../nodes/rootNode/bin_type.h"
+#include "../nodes/rootNode/his_type.h"
+#include "../nodes/rootNode/lr_type.h"
+#include "../nodes/rootNode/plr_type.h"
 
-#include "../innerNode/bs_model.h"
-#include "../innerNode/lr_model.h"
-#include "../innerNode/nn_model.h"
-#include "../innerNode/his_model.h"
+#include "../nodes/innerNode/bs_model.h"
+#include "../nodes/innerNode/lr_model.h"
+#include "../nodes/innerNode/plr_model.h"
+#include "../nodes/innerNode/his_model.h"
+
+#include "../nodes/leafNode/ga_type.h"
+#include "../nodes/leafNode/array_type.h"
+#include "../nodes/leafNode/ycsb_leaf.h"
 using namespace std;
 
 extern vector<pair<double, double>> dataset;
@@ -22,11 +24,11 @@ long double calculateSpace()
 {
     cout << "Space of different classes (sizeof):" << endl;
     cout << "LRType:" << sizeof(LRType) << "\tlr model:" << sizeof(LinearRegression) << endl;
-    cout << "NNType:" << sizeof(NNType) << "\tnn model:" << sizeof(PiecewiseLR) << endl;
+    cout << "PLRType:" << sizeof(PLRType) << "\tnn model:" << sizeof(PiecewiseLR) << endl;
     cout << "HisType:" << sizeof(HisType) << "\this model:" << sizeof(HistogramModel) << endl;
     cout << "BSType:" << sizeof(BSType) << "\tbs model:" << sizeof(BinarySearchModel) << endl;
     cout << "LRModel:" << sizeof(LRModel) << endl;
-    cout << "NNModel:" << sizeof(NNModel) << endl;
+    cout << "PLRModel:" << sizeof(PLRModel) << endl;
     cout << "HisModel:" << sizeof(HisModel) << endl;
     cout << "BSModel:" << sizeof(BSModel) << endl;
     cout << "ArrayType:" << sizeof(ArrayType) << endl;
@@ -41,7 +43,7 @@ long double calculateSpace()
         space += sizeof(LRType);
         break;
     case 1:
-        space += sizeof(NNType);
+        space += sizeof(PLRType);
         break;
     case 2:
         space += sizeof(HisType);

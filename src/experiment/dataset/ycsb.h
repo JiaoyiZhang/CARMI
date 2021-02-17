@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "../params.h"
+#include "../../params.h"
 #include <iomanip>
 using namespace std;
 extern bool kIsYCSB;

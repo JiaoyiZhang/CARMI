@@ -1,20 +1,6 @@
 #ifndef RANGE_SCAN_FUNCTION_H
 #define RANGE_SCAN_FUNCTION_H
 
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-
-#include "../innerNode/bs_model.h"
-#include "../innerNode/lr_model.h"
-#include "../innerNode/nn_model.h"
-#include "../innerNode/his_model.h"
-
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ycsb_leaf_type.h"
-
 #include "inlineFunction.h"
 #include "../dataManager/datapoint.h"
 using namespace std;
@@ -23,7 +9,7 @@ extern vector<BaseNode> entireChild;
 extern vector<pair<double, double>> findActualDataset;
 
 extern LRType lrRoot;
-extern NNType nnRoot;
+extern PLRType plrRoot;
 extern HisType hisRoot;
 extern BSType bsRoot;
 
@@ -69,7 +55,7 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
         break;
         case 1:
         {
-            idx = nnRoot.childLeft + nnRoot.model.Predict(key);
+            idx = plrRoot.childLeft + plrRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;

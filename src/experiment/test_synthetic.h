@@ -1,15 +1,15 @@
 #ifndef TEST_SYNTHETIC_H
 #define TEST_SYNTHETIC_H
 
-#include "../dataset/lognormal_distribution.h"
-#include "../dataset/uniform_distribution.h"
-#include "../dataset/normal_distribution.h"
-#include "../dataset/exponential_distribution.h"
+#include "dataset/lognormal_distribution.h"
+#include "dataset/uniform_distribution.h"
+#include "dataset/normal_distribution.h"
+#include "dataset/exponential_distribution.h"
 
 #include "../baseline/art_tree_baseline.h"
 #include "../baseline/btree_baseline.h"
 
-#include "./static.h"
+#include "static.h"
 
 extern int datasetSize;
 extern int initDatasetSize;

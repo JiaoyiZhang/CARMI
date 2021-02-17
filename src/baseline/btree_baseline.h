@@ -9,7 +9,7 @@
 #include <algorithm>
 #include "../../stx_btree/btree_map.h"
 #include "../params.h"
-#include "../workload/zipfian.h"
+#include "../experiment/workload/zipfian.h"
 using namespace std;
 
 extern ofstream outRes;

@@ -2,9 +2,9 @@
 #define YCSB_LEAF_TYPE_H
 
 #include <vector>
-#include "../params.h"
-#include "../dataManager/datapoint.h"
-#include "../baseNode.h"
+#include "../../../params.h"
+#include "../../dataManager/datapoint.h"
+#include "../../baseNode.h"
 #include "ycsb_leaf.h"
 using namespace std;
 

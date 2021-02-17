@@ -2,10 +2,10 @@
 #define ARRAY_TYPE_H
 
 #include <vector>
-#include "../params.h"
-#include "../dataManager/datapoint.h"
-#include "../baseNode.h"
-#include "array.h"
+#include "../../../params.h"
+#include "../../dataManager/datapoint.h"
+#include "../../baseNode.h"
+#include "array_type.h"
 using namespace std;
 
 extern pair<double, double> *entireData;

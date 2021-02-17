@@ -1,17 +1,17 @@
 #ifndef CORE_CONSTRUCT_H
 #define CORE_CONSTRUCT_H
 
-#include "../construct/construction.h"
+#include "../CARMI/construct/construction.h"
 
-#include "../func/print_structure.h"
-#include "../func/function.h"
-#include "../func/calculate_space.h"
+#include "../CARMI/func/print_structure.h"
+#include "../CARMI/func/function.h"
+#include "../CARMI/func/calculate_space.h"
 
-#include "../workload/workloada.h"
-#include "../workload/workloadb.h"
-#include "../workload/workloadc.h"
-#include "../workload/workloadd.h"
-#include "../workload/workloade.h"
+#include "workload/workloada.h"
+#include "workload/workloadb.h"
+#include "workload/workloadc.h"
+#include "workload/workloadd.h"
+#include "workload/workloade.h"
 using namespace std;
 
 extern vector<pair<double, double>> findActualDataset;

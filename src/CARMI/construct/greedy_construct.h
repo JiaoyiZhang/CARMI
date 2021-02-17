@@ -1,13 +1,7 @@
 #ifndef GREEDY_CHILD_H
 #define GREEDY_CHILD_H
 
-#include "../params.h"
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
+#include "../../params.h"
 #include "../func/function.h"
 #include "../func/inlineFunction.h"
 #include "params_struct.h"
@@ -89,7 +83,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
                 {
                     time = 97.1858;
                     space = 64.0 * c / 1024 / 1024;
-                    auto root = NNModel();
+                    auto root = PLRModel();
                     root.SetChildNumber(c);
                     root.Train(findLeft, findSize);
                     int end = findLeft + findSize;
@@ -191,7 +185,7 @@ pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int findLeft
         }
         case 1:
         {
-            auto node = NNModel();
+            auto node = PLRModel();
             node.SetChildNumber(childNum);
             node.Train(findLeft, findSize);
 

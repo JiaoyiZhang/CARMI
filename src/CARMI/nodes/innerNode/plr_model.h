@@ -2,17 +2,18 @@
 #ifndef NN_MODEL_H
 #define NN_MODEL_H
 
-#include "../leafNodeType/array_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../dataManager/child_array.h"
-#include "../baseNode.h"
+#include "../leafNode/array_type.h"
+#include "../leafNode/ga.h"
+#include "../../dataManager/child_array.h"
+#include "../../baseNode.h"
+#include <float.h>
 #include <vector>
 using namespace std;
 
 extern vector<BaseNode> entireChild;
 extern vector<pair<double, double>> findActualDataset;
 
-inline void NNModel::Initialize(const vector<pair<double, double>> &dataset)
+inline void PLRModel::Initialize(const vector<pair<double, double>> &dataset)
 {
     int childNumber = flagNumber & 0x00FFFFFF;
     childLeft = allocateChildMemory(childNumber);
@@ -52,7 +53,7 @@ inline void NNModel::Initialize(const vector<pair<double, double>> &dataset)
     }
 }
 
-inline void NNModel::Train(const vector<pair<double, double>> &dataset)
+inline void PLRModel::Train(const vector<pair<double, double>> &dataset)
 {
     int childNumber = flagNumber & 0x00FFFFFF;
     int actualSize = 0;
@@ -162,7 +163,7 @@ inline void NNModel::Train(const vector<pair<double, double>> &dataset)
     }
 }
 
-inline int NNModel::Predict(double key)
+inline int PLRModel::Predict(double key)
 {
     int s = 0;
     int e = 5;
@@ -198,7 +199,7 @@ inline int NNModel::Predict(double key)
     return p;
 }
 
-inline void NNModel::Train(const int left, const int size)
+inline void PLRModel::Train(const int left, const int size)
 {
     int childNumber = flagNumber & 0x00FFFFFF;
     int actualSize = 0;

@@ -1,7 +1,7 @@
 #ifndef WORKLOAD_D_H
 #define WORKLOAD_D_H
 #include <vector>
-#include "../func/function.h"
+#include "../../CARMI/func/function.h"
 #include "zipfian.h"
 using namespace std;
 

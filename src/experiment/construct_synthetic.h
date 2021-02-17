@@ -1,10 +1,10 @@
 #ifndef CONSTRUCT_SYNTHETIC_H
 #define CONSTRUCT_SYNTHETIC_H
 
-#include "../dataset/lognormal_distribution.h"
-#include "../dataset/uniform_distribution.h"
-#include "../dataset/normal_distribution.h"
-#include "../dataset/exponential_distribution.h"
+#include "dataset/lognormal_distribution.h"
+#include "dataset/uniform_distribution.h"
+#include "dataset/normal_distribution.h"
+#include "dataset/exponential_distribution.h"
 
 #include "../baseline/art_tree_baseline.h"
 #include "../baseline/btree_baseline.h"

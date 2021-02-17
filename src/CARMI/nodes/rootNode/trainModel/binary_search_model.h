@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
-#include "../params.h"
 using namespace std;
 class BinarySearchModel
 {

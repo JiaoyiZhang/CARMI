@@ -1,17 +1,19 @@
 #ifndef PRINT_STRUCTURE_H
 #define PRINT_STRUCTURE_H
 #include <vector>
-#include "../innerNodeType/bin_type.h"
-#include "../innerNodeType/his_type.h"
-#include "../innerNodeType/lr_type.h"
-#include "../innerNodeType/nn_type.h"
-#include "../leafNodeType/ga_type.h"
-#include "../leafNodeType/array_type.h"
+#include "../nodes/rootNode/bin_type.h"
+#include "../nodes/rootNode/his_type.h"
+#include "../nodes/rootNode/lr_type.h"
+#include "../nodes/rootNode/plr_type.h"
 
-#include "../innerNode/bs_model.h"
-#include "../innerNode/lr_model.h"
-#include "../innerNode/nn_model.h"
-#include "../innerNode/his_model.h"
+#include "../nodes/innerNode/bs_model.h"
+#include "../nodes/innerNode/lr_model.h"
+#include "../nodes/innerNode/plr_model.h"
+#include "../nodes/innerNode/his_model.h"
+
+#include "../nodes/leafNode/ga_type.h"
+#include "../nodes/leafNode/array_type.h"
+#include "../nodes/leafNode/ycsb_leaf.h"
 using namespace std;
 
 extern vector<BaseNode> entireChild;
@@ -19,7 +21,7 @@ extern vector<int> levelVec;
 extern vector<int> nodeVec;
 
 extern LRType lrRoot;
-extern NNType nnRoot;
+extern PLRType plrRoot;
 extern HisType hisRoot;
 extern BSType bsRoot;
 
@@ -68,10 +70,10 @@ void printStructure(int level, int type, int idx)
     }
     case 1:
     {
-        cout << "level " << level << ": now root is nn, idx:" << idx << ", number:" << (nnRoot.flagNumber & 0x00FFFFFF);
-        for (int i = 0; i < (nnRoot.flagNumber & 0x00FFFFFF); i++)
+        cout << "level " << level << ": now root is nn, idx:" << idx << ", number:" << (plrRoot.flagNumber & 0x00FFFFFF);
+        for (int i = 0; i < (plrRoot.flagNumber & 0x00FFFFFF); i++)
         {
-            auto childIdx = nnRoot.childLeft + i;
+            auto childIdx = plrRoot.childLeft + i;
             int t = (entireChild[childIdx].nn.flagNumber >> 24);
             tree[t]++;
             nodeVec[t]++;
@@ -92,9 +94,9 @@ void printStructure(int level, int type, int idx)
         if (tree[10])
             cout << "\tycsb:" << tree[10];
         cout << endl;
-        for (int i = 0; i < (nnRoot.flagNumber & 0x00FFFFFF); i++)
+        for (int i = 0; i < (plrRoot.flagNumber & 0x00FFFFFF); i++)
         {
-            auto childIdx = nnRoot.childLeft + i;
+            auto childIdx = plrRoot.childLeft + i;
             auto t = (entireChild[childIdx].lr.flagNumber >> 24);
             if (t > 3 && t < 8)
                 printStructure(level + 1, t, childIdx);
