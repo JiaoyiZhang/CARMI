@@ -1,23 +1,18 @@
 #ifndef LR_MODEL_H
 #define LR_MODEL_H
 
-#include "../leafNode/array_type.h"
-#include "../leafNode/ga.h"
-#include "../../dataManager/child_array.h"
-#include "../../baseNode.h"
+#include "../../carmi.h"
+#include <vector>
 using namespace std;
 
-extern vector<BaseNode> entireChild;
-extern vector<pair<double, double>> findActualDataset;
-
-inline void LRModel::Initialize(const vector<pair<double, double>> &dataset)
+inline void CARMI::initLR(LRModel *lr, const vector<pair<double, double>> &dataset)
 {
-    int childNumber = flagNumber & 0x00FFFFFF;
-    childLeft = allocateChildMemory(childNumber);
+    int childNumber = lr->flagNumber & 0x00FFFFFF;
+    lr->childLeft = allocateChildMemory(childNumber);
     if (dataset.size() == 0)
         return;
 
-    Train(dataset);
+    lr->Train(dataset);
 
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -25,7 +20,7 @@ inline void LRModel::Initialize(const vector<pair<double, double>> &dataset)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        int p = Predict(dataset[i].first);
+        int p = lr->Predict(dataset[i].first);
         perSubDataset[p].push_back(dataset[i]);
     }
 
@@ -35,18 +30,88 @@ inline void LRModel::Initialize(const vector<pair<double, double>> &dataset)
         for (int i = 0; i < childNumber; i++)
         {
             ArrayType tmp(kThreshold);
-            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
-            entireChild[childLeft + i].array = tmp;
+            initArray(&tmp, perSubDataset[i], kMaxKeyNum);
+            entireChild[lr->childLeft + i].array = tmp;
         }
         break;
     case 1:
         for (int i = 0; i < childNumber; i++)
         {
             GappedArrayType tmp(kThreshold);
-            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
-            entireChild[childLeft + i].ga = tmp;
+            initGA(&tmp, perSubDataset[i], kMaxKeyNum);
+            entireChild[lr->childLeft + i].ga = tmp;
         }
         break;
+    }
+}
+
+inline void CARMI::Train(LRModel *lr, const int left, const int size)
+{
+    if (size == 0)
+        return;
+    int childNumber = lr->flagNumber & 0x00FFFFFF;
+    int end = left + size;
+    double maxValue;
+    for (int i = left; i < end; i++)
+    {
+        lr->minValue = initDataset[i].first;
+        break;
+    }
+    for (int i = end - 1; i >= left; i--)
+    {
+        maxValue = initDataset[i].first;
+        break;
+    }
+    lr->divisor = float(maxValue - lr->minValue) / 6;
+
+    vector<double> index;
+    int j = 0;
+    int cnt = 0;
+    for (int i = left; i < end; i++)
+    {
+        int idx = float(initDataset[i].first - lr->minValue) / lr->divisor;
+        if (idx < 0)
+            idx = 0;
+        else if (idx >= 6)
+            idx = 5;
+        if (idx != cnt)
+        {
+            cnt = idx;
+            j = 0;
+        }
+        index.push_back(double(j));
+        j++;
+    }
+
+    int i = left;
+    cnt = 0;
+    for (int k = 1; k <= 6; k++)
+    {
+        double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+        for (; i < end - 1; i++)
+        {
+            if (float(initDataset[i].first - lr->minValue) / lr->divisor >= k)
+                break;
+            cnt++;
+            t1 += initDataset[i].first * initDataset[i].first;
+            t2 += initDataset[i].first;
+            t3 += initDataset[i].first * index[i - left];
+            t4 += index[i - left];
+        }
+        t3 /= cnt;
+        t4 /= cnt;
+        if (t1 * cnt - t2 * t2 != 0)
+        {
+            auto theta1 = (t3 * cnt - t2 * t4) / (t1 * cnt - t2 * t2);
+            auto theta2 = (t1 * t4 - t2 * t3) / (t1 * cnt - t2 * t2);
+            theta1 *= childNumber;
+            theta2 *= childNumber;
+            lr->theta[k - 1] = {theta1, theta2};
+        }
+        else
+        {
+            lr->theta[k - 1] = {childNumber, 0};
+        }
     }
 }
 
@@ -149,75 +214,4 @@ inline int LRModel::Predict(double key)
         p = left + bound - 1;
     return p;
 }
-
-inline void LRModel::Train(const int left, const int size)
-{
-    if (size == 0)
-        return;
-    int childNumber = flagNumber & 0x00FFFFFF;
-    int end = left + size;
-    double maxValue;
-    for (int i = left; i < end; i++)
-    {
-        minValue = findActualDataset[i].first;
-        break;
-    }
-    for (int i = end - 1; i >= left; i--)
-    {
-        maxValue = findActualDataset[i].first;
-        break;
-    }
-    divisor = float(maxValue - minValue) / 6;
-
-    vector<double> index;
-    int j = 0;
-    int cnt = 0;
-    for (int i = left; i < end; i++)
-    {
-        int idx = float(findActualDataset[i].first - minValue) / divisor;
-        if (idx < 0)
-            idx = 0;
-        else if (idx >= 6)
-            idx = 5;
-        if (idx != cnt)
-        {
-            cnt = idx;
-            j = 0;
-        }
-        index.push_back(double(j));
-        j++;
-    }
-
-    int i = left;
-    cnt = 0;
-    for (int k = 1; k <= 6; k++)
-    {
-        double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-        for (; i < end - 1; i++)
-        {
-            if (float(findActualDataset[i].first - minValue) / divisor >= k)
-                break;
-            cnt++;
-            t1 += findActualDataset[i].first * findActualDataset[i].first;
-            t2 += findActualDataset[i].first;
-            t3 += findActualDataset[i].first * index[i - left];
-            t4 += index[i - left];
-        }
-        t3 /= cnt;
-        t4 /= cnt;
-        if (t1 * cnt - t2 * t2 != 0)
-        {
-            auto theta1 = (t3 * cnt - t2 * t4) / (t1 * cnt - t2 * t2);
-            auto theta2 = (t1 * t4 - t2 * t3) / (t1 * cnt - t2 * t2);
-            theta1 *= childNumber;
-            theta2 *= childNumber;
-            theta[k - 1] = {theta1, theta2};
-        }
-        else
-        {
-            theta[k - 1] = {childNumber, 0};
-        }
-    }
-}
-
 #endif

@@ -2,25 +2,19 @@
 #ifndef NN_MODEL_H
 #define NN_MODEL_H
 
-#include "../leafNode/array_type.h"
-#include "../leafNode/ga.h"
-#include "../../dataManager/child_array.h"
-#include "../../baseNode.h"
+#include "../../carmi.h"
 #include <float.h>
 #include <vector>
 using namespace std;
 
-extern vector<BaseNode> entireChild;
-extern vector<pair<double, double>> findActualDataset;
-
-inline void PLRModel::Initialize(const vector<pair<double, double>> &dataset)
+inline void CARMI::initPLR(PLRModel *plr, const vector<pair<double, double>> &dataset)
 {
-    int childNumber = flagNumber & 0x00FFFFFF;
-    childLeft = allocateChildMemory(childNumber);
+    int childNumber = plr->flagNumber & 0x00FFFFFF;
+    plr->childLeft = allocateChildMemory(childNumber);
     if (dataset.size() == 0)
         return;
 
-    Train(dataset);
+    plr->Train(dataset);
 
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;
@@ -28,7 +22,7 @@ inline void PLRModel::Initialize(const vector<pair<double, double>> &dataset)
         perSubDataset.push_back(tmp);
     for (int i = 0; i < dataset.size(); i++)
     {
-        int p = Predict(dataset[i].first);
+        int p = plr->Predict(dataset[i].first);
         perSubDataset[p].push_back(dataset[i]);
     }
 
@@ -38,18 +32,112 @@ inline void PLRModel::Initialize(const vector<pair<double, double>> &dataset)
         for (int i = 0; i < childNumber; i++)
         {
             ArrayType tmp(kThreshold);
-            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
-            entireChild[childLeft + i].array = tmp;
+            initArray(&tmp, perSubDataset[i], kMaxKeyNum);
+            entireChild[plr->childLeft + i].array = tmp;
         }
         break;
     case 1:
         for (int i = 0; i < childNumber; i++)
         {
             GappedArrayType tmp(kThreshold);
-            tmp.SetDataset(perSubDataset[i], kMaxKeyNum);
-            entireChild[childLeft + i].ga = tmp;
+            initGA(&tmp, perSubDataset[i], kMaxKeyNum);
+            entireChild[plr->childLeft + i].ga = tmp;
         }
         break;
+    }
+}
+
+inline void CARMI::Train(PLRModel *plr, const int left, const int size)
+{
+    int childNumber = plr->flagNumber & 0x00FFFFFF;
+    int actualSize = 0;
+    vector<double> xx(7, 0.0);
+    vector<double> x(7, 0.0);
+    vector<double> px(7, 0.0);
+    vector<double> pp(7, 0.0);
+    if (size == 0)
+        return;
+    int width = size / 7;
+    for (int i = 0; i < 7; i++)
+    {
+        plr->point[i] = {initDataset[(i + 1) * width].first, childNumber * (i + 1) / 7};
+    }
+    if (childNumber <= 32)
+        return;
+    for (int k = 0; k < 7; k++)
+    {
+        int start = k * width;
+        int end = (k + 1) * width;
+        for (int i = start; i < end; i++)
+        {
+            xx[k] += initDataset[i].first * initDataset[i].first;
+            x[k] += initDataset[i].first;
+            px[k] += float(i) / size * initDataset[i].first;
+            pp[k] += float(i * i) / size / size;
+        }
+        px[k] *= childNumber;
+        pp[k] *= childNumber * childNumber;
+    }
+    double opt = DBL_MAX;
+    vector<pair<double, double>> theta(6, {1, 1});
+    int bound = childNumber / 7;
+    int a, b;
+    for (int t1 = -2; t1 < 2; t1++)
+    {
+        theta[0] = {float(bound + t1) / plr->point[0].first, 0};
+        for (int t2 = -2; t2 < 2; t2++)
+        {
+            a = float(bound + t2 - t1) / (plr->point[1].first - plr->point[0].first);
+            b = bound * 2 + t2 - a * plr->point[1].first;
+            theta[1] = {a, b};
+            for (int t3 = -2; t3 < 2; t3++)
+            {
+                a = float(bound + t3 - t2) / (plr->point[2].first - plr->point[1].first);
+                b = bound * 3 + t3 - a * plr->point[2].first;
+                theta[2] = {a, b};
+                for (int t4 = -2; t4 < 2; t4++)
+                {
+                    a = float(bound + t4 - t3) / (plr->point[3].first - plr->point[2].first);
+                    b = bound * 4 + t4 - a * plr->point[3].first;
+                    theta[3] = {a, b};
+                    for (int t5 = -2; t5 < 2; t5++)
+                    {
+                        a = float(bound + t5 - t4) / (plr->point[4].first - plr->point[3].first);
+                        b = bound * 5 + t5 - a * plr->point[4].first;
+                        theta[4] = {a, b};
+                        for (int t6 = -2; t6 < 2; t6++)
+                        {
+                            a = float(bound + t6 - t5) / (plr->point[5].first - plr->point[4].first);
+                            b = bound * 6 + t6 - a * plr->point[5].first;
+                            theta[5] = {a, b};
+                            a = float(childNumber - 6 * bound - t6) / (plr->maxX - plr->point[5].first);
+                            b = childNumber - a * plr->maxX;
+                            theta[6] = {a, b};
+
+                            double value = 0.0;
+                            for (int i = 0; i < 7; i++)
+                            {
+                                value += theta[i].first * theta[i].first * xx[i];
+                                value += 2 * theta[i].first * theta[i].second * x[i];
+                                value -= 2 * (theta[i].first + theta[i].second) * px[i];
+                                value += theta[i].second * theta[i].second;
+                                value += pp[i];
+                            }
+                            if (value < opt)
+                            {
+                                opt = value;
+                                plr->point[0].second = bound + t1;
+                                plr->point[1].second = 2 * bound + t2;
+                                plr->point[2].second = 3 * bound + t3;
+                                plr->point[3].second = 4 * bound + t4;
+                                plr->point[4].second = 5 * bound + t5;
+                                plr->point[5].second = 6 * bound + t6;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -197,100 +285,6 @@ inline int PLRModel::Predict(double key)
     }
 
     return p;
-}
-
-inline void PLRModel::Train(const int left, const int size)
-{
-    int childNumber = flagNumber & 0x00FFFFFF;
-    int actualSize = 0;
-    vector<double> xx(7, 0.0);
-    vector<double> x(7, 0.0);
-    vector<double> px(7, 0.0);
-    vector<double> pp(7, 0.0);
-    if (size == 0)
-        return;
-    int width = size / 7;
-    for (int i = 0; i < 7; i++)
-    {
-        point[i] = {findActualDataset[(i + 1) * width].first, childNumber * (i + 1) / 7};
-    }
-    if (childNumber <= 32)
-        return;
-    for (int k = 0; k < 7; k++)
-    {
-        int start = k * width;
-        int end = (k + 1) * width;
-        for (int i = start; i < end; i++)
-        {
-            xx[k] += findActualDataset[i].first * findActualDataset[i].first;
-            x[k] += findActualDataset[i].first;
-            px[k] += float(i) / size * findActualDataset[i].first;
-            pp[k] += float(i * i) / size / size;
-        }
-        px[k] *= childNumber;
-        pp[k] *= childNumber * childNumber;
-    }
-    double opt = DBL_MAX;
-    vector<pair<double, double>> theta(6, {1, 1});
-    int bound = childNumber / 7;
-    int a, b;
-    for (int t1 = -2; t1 < 2; t1++)
-    {
-        theta[0] = {float(bound + t1) / point[0].first, 0};
-        for (int t2 = -2; t2 < 2; t2++)
-        {
-            a = float(bound + t2 - t1) / (point[1].first - point[0].first);
-            b = bound * 2 + t2 - a * point[1].first;
-            theta[1] = {a, b};
-            for (int t3 = -2; t3 < 2; t3++)
-            {
-                a = float(bound + t3 - t2) / (point[2].first - point[1].first);
-                b = bound * 3 + t3 - a * point[2].first;
-                theta[2] = {a, b};
-                for (int t4 = -2; t4 < 2; t4++)
-                {
-                    a = float(bound + t4 - t3) / (point[3].first - point[2].first);
-                    b = bound * 4 + t4 - a * point[3].first;
-                    theta[3] = {a, b};
-                    for (int t5 = -2; t5 < 2; t5++)
-                    {
-                        a = float(bound + t5 - t4) / (point[4].first - point[3].first);
-                        b = bound * 5 + t5 - a * point[4].first;
-                        theta[4] = {a, b};
-                        for (int t6 = -2; t6 < 2; t6++)
-                        {
-                            a = float(bound + t6 - t5) / (point[5].first - point[4].first);
-                            b = bound * 6 + t6 - a * point[5].first;
-                            theta[5] = {a, b};
-                            a = float(childNumber - 6 * bound - t6) / (maxX - point[5].first);
-                            b = childNumber - a * maxX;
-                            theta[6] = {a, b};
-
-                            double value = 0.0;
-                            for (int i = 0; i < 7; i++)
-                            {
-                                value += theta[i].first * theta[i].first * xx[i];
-                                value += 2 * theta[i].first * theta[i].second * x[i];
-                                value -= 2 * (theta[i].first + theta[i].second) * px[i];
-                                value += theta[i].second * theta[i].second;
-                                value += pp[i];
-                            }
-                            if (value < opt)
-                            {
-                                opt = value;
-                                point[0].second = bound + t1;
-                                point[1].second = 2 * bound + t2;
-                                point[2].second = 3 * bound + t3;
-                                point[3].second = 4 * bound + t4;
-                                point[4].second = 5 * bound + t5;
-                                point[5].second = 6 * bound + t6;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 #endif

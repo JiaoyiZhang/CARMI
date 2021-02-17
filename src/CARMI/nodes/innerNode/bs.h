@@ -13,9 +13,9 @@ public:
         for (int i = 0; i < 14; i++)
             index[i] = 0;
     }
-    void Initialize(const vector<pair<double, double>> &dataset);
+    // void Initialize(const vector<pair<double, double>> &dataset);
     void Train(const vector<pair<double, double>> &dataset);
-    void Train(const int left, const int size);
+    // void Train(const int left, const int size);
     int Predict(double key);
 
     int flagNumber;  // 4 Byte (flag + childNumber)
