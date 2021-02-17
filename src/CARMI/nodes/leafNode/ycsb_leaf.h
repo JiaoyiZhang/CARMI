@@ -15,11 +15,17 @@ public:
         error = 0;
         m_left = -1;
     }
-    inline int UpdateError(const int start_idx, const int size);
-    inline void SetDataset(const int start_idx, const int size);
-    
-    inline void Train(const int start_idx, const int size);
-    inline int Predict(double key);
+    inline int Predict(double key)
+    {
+        // return the predicted idx in the leaf node
+        int size = (flagNumber & 0x00FFFFFF);
+        int p = (theta1 * key + theta2) * size;
+        if (p < 0)
+            p = 0;
+        else if (p >= size)
+            p = size - 1;
+        return p;
+    }
 
     int flagNumber; // 4 Byte (flag + 0)
 

@@ -3,32 +3,17 @@
 
 #include <vector>
 #include "../../../params.h"
-#include "../../dataManager/datapoint.h"
-#include "../../baseNode.h"
 #include "ycsb_leaf.h"
+#include "../../carmi.h"
 using namespace std;
 
-extern vector<pair<double, double>> findActualDataset;
-
-inline int YCSBLeaf::Predict(double key)
-{
-    // return the predicted idx in the leaf node
-    int size = (flagNumber & 0x00FFFFFF);
-    int p = (theta1 * key + theta2) * size;
-    if (p < 0)
-        p = 0;
-    else if (p >= size)
-        p = size - 1;
-    return p;
-}
-
-inline int YCSBLeaf::UpdateError(const int start_idx, const int size)
+inline int CARMI::UpdateError(YCSBLeaf *ycsb, const int start_idx, const int size)
 {
     // find: max|pi-yi|
     int maxError = 0, p, d;
     for (int i = start_idx; i < start_idx + size; i++)
     {
-        p = Predict(findActualDataset[i].first);
+        p = ycsb->Predict(initDataset[i].first);
         d = abs(i - start_idx - p);
         if (d > maxError)
             maxError = d;
@@ -44,7 +29,7 @@ inline int YCSBLeaf::UpdateError(const int start_idx, const int size)
         cntOut = 0;
         for (int i = start_idx; i < start_idx + size; i++)
         {
-            p = Predict(findActualDataset[i].first);
+            p = ycsb->Predict(initDataset[i].first);
             d = abs(i - start_idx - p);
             if (d <= e)
                 cntBetween++;
@@ -58,16 +43,16 @@ inline int YCSBLeaf::UpdateError(const int start_idx, const int size)
         if (res < minRes)
         {
             minRes = res;
-            error = e;
+            ycsb->error = e;
         }
     }
-    return error;
+    return ycsb->error;
 }
 
-inline void YCSBLeaf::Train(const int start_idx, const int size)
+inline void CARMI::Train(YCSBLeaf *ycsb, const int start_idx, const int size)
 {
-    if ((flagNumber & 0x00FFFFFF) != size)
-        flagNumber += size;
+    if ((ycsb->flagNumber & 0x00FFFFFF) != size)
+        ycsb->flagNumber += size;
     vector<double> index;
     int end = start_idx + size;
     for (int i = start_idx; i < end; i++)
@@ -76,24 +61,24 @@ inline void YCSBLeaf::Train(const int start_idx, const int size)
     double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
     for (int i = start_idx; i < end; i++)
     {
-        t1 += findActualDataset[i].first * findActualDataset[i].first;
-        t2 += findActualDataset[i].first;
-        t3 += findActualDataset[i].first * index[i - start_idx];
+        t1 += initDataset[i].first * initDataset[i].first;
+        t2 += initDataset[i].first;
+        t3 += initDataset[i].first * index[i - start_idx];
         t4 += index[i - start_idx];
     }
-    theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
-    theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+    ycsb->theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+    ycsb->theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
 }
 
-inline void YCSBLeaf::SetDataset(const int start_idx, const int size)
+inline void CARMI::initYCSB(YCSBLeaf *ycsb, const int start_idx, const int size)
 {
-    flagNumber += size;
-    m_left = start_idx;
+    ycsb->flagNumber += size;
+    ycsb->m_left = start_idx;
     if (size == 0)
         return;
 
-    Train(start_idx, size);
-    UpdateError(start_idx, size);
+    Train(ycsb, start_idx, size);
+    UpdateError(ycsb, start_idx, size);
 }
 
 #endif // !YCSB_LEAF_TYPE_H
