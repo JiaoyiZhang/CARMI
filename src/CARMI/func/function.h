@@ -34,30 +34,6 @@ extern PLRType plrRoot;
 extern HisType hisRoot;
 extern BSType bsRoot;
 
-void Initialize(const vector<pair<double, double>> &dataset, int childNum)
-{
-    // create the root node
-    switch (kInnerNodeID)
-    {
-    case 0:
-        lrRoot = LRType(childNum);
-        lrRoot.Initialize(dataset);
-        break;
-    case 1:
-        plrRoot = PLRType(childNum);
-        plrRoot.Initialize(dataset);
-        break;
-    case 2:
-        hisRoot = HisType(childNum);
-        hisRoot.Initialize(dataset);
-        break;
-    case 3:
-        bsRoot = BSType(childNum);
-        bsRoot.Initialize(dataset);
-        break;
-    }
-}
-
 pair<double, double> TestFind(int rootType, double key)
 {
     return {};

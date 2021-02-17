@@ -1,8 +1,7 @@
 #ifndef INSERT_FUNCTION_H
 #define INSERT_FUNCTION_H
 
-#include "inlineFunction.h"
-#include "../dataManager/datapoint.h"
+#include "../carmi.h"
 #include <map>
 using namespace std;
 
@@ -14,7 +13,7 @@ extern PLRType plrRoot;
 extern HisType hisRoot;
 extern BSType bsRoot;
 
-bool Insert(int rootType, pair<double, double> data)
+bool CARMI::Insert(pair<double, double> data)
 {
     int idx = 0; // idx in the INDEX
     int content;
@@ -26,25 +25,25 @@ bool Insert(int rootType, pair<double, double> data)
         {
         case 0:
         {
-            idx = lrRoot.childLeft + lrRoot.model.Predict(data.first);
+            idx = root.lrRoot.childLeft + root.lrRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 1:
         {
-            idx = plrRoot.childLeft + plrRoot.model.Predict(data.first);
+            idx = root.plrRoot.childLeft + root.plrRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 2:
         {
-            idx = hisRoot.childLeft + hisRoot.model.Predict(data.first);
+            idx = root.hisRoot.childLeft + root.hisRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 3:
         {
-            idx = bsRoot.childLeft + bsRoot.model.Predict(data.first);
+            idx = root.bsRoot.childLeft + root.bsRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
@@ -56,7 +55,7 @@ bool Insert(int rootType, pair<double, double> data)
         break;
         case 5:
         {
-            idx = entireChild[idx].nn.childLeft + entireChild[idx].nn.Predict(data.first);
+            idx = entireChild[idx].plr.childLeft + entireChild[idx].plr.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
@@ -83,7 +82,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = left; i < left + size; i++)
                     tmpDataset.push_back(entireData[i]);
 
-                auto node = LRModel(); // create a new inner node
+                auto node = LRModel(); // create a new iplrer node
                 int childNum = 128;
                 node.SetChildNumber(128);
                 node.childLeft = allocateChildMemory(childNum);
@@ -104,7 +103,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = 0; i < childNum; i++)
                 {
                     ArrayType tmpLeaf(kThreshold);
-                    tmpLeaf.SetDataset(subFindData[i], kMaxKeyNum);
+                    initArray(&tmpLeaf, subFindData[i], kMaxKeyNum);
                     entireChild[node.childLeft + i].array = tmpLeaf;
                 }
                 // cout << ">4096" << endl;
@@ -126,7 +125,7 @@ bool Insert(int rootType, pair<double, double> data)
                 // cout << "size == 0" << endl;
                 entireData[left] = data;
                 entireChild[idx].array.flagNumber++;
-                entireChild[idx].array.SetDataset(left, 1, entireChild[idx].array.m_capacity);
+                initArray(&entireChild[idx].array, left, 1, entireChild[idx].array.m_capacity);
                 if (entireChild[idx].array.nextLeaf == -1)
                 {
                     scanLeaf.insert({data.first, idx});
@@ -164,7 +163,7 @@ bool Insert(int rootType, pair<double, double> data)
             if ((size >= entireChild[idx].array.m_capacity) && entireChild[idx].array.m_capacity < 4096)
             {
                 auto diff = preIdx - left;
-                entireChild[idx].array.SetDataset(left, size, entireChild[idx].array.m_capacity);
+                initArray(&entireChild[idx].array, left, 1, entireChild[idx].array.m_capacity);
                 left = entireChild[idx].array.m_left;
                 preIdx = left + diff;
             }
@@ -195,7 +194,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = left; i < left + size; i++)
                     tmpDataset.push_back(entireData[i]);
 
-                auto node = LRModel(); // create a new inner node
+                auto node = LRModel(); // create a new iplrer node
                 node.SetChildNumber(128);
                 int childNum = 128;
                 node.childLeft = allocateChildMemory(childNum);
@@ -216,7 +215,7 @@ bool Insert(int rootType, pair<double, double> data)
                 for (int i = 0; i < childNum; i++)
                 {
                     GappedArrayType tmpLeaf(kThreshold);
-                    tmpLeaf.SetDataset(subFindData[i], kMaxKeyNum);
+                    initGA(&tmpLeaf, subFindData[i], kMaxKeyNum);
                     entireChild[node.childLeft + i].ga = tmpLeaf;
                 }
 
@@ -232,20 +231,20 @@ bool Insert(int rootType, pair<double, double> data)
 
                 idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
             }
-            // if (entireChild[idx].ga.capacity < 4096 && (float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
-            // {
-            //     // If an additional Insertion results in crossing the density
-            //     // then we expand the gapped array
-            //     entireChild[idx].ga.SetDataset(left, size, entireChild[idx].ga.capacity);
-            //     left = entireChild[idx].ga.m_left;
-            // }
+            if (entireChild[idx].ga.capacity < 4096 && (float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
+            {
+                // If an additional Insertion results in crossing the density
+                // then we expand the gapped array
+                initGA(&entireChild[idx].ga, left, size, entireChild[idx].ga.capacity);
+                left = entireChild[idx].ga.m_left;
+            }
 
             if (size == 0)
             {
                 entireData[left] = data;
                 entireChild[idx].ga.flagNumber++;
                 entireChild[idx].ga.maxIndex = 0;
-                entireChild[idx].ga.SetDataset(left, 1, entireChild[idx].ga.capacity);
+                initGA(&entireChild[idx].ga, left, 1, entireChild[idx].ga.capacity);
                 if (entireChild[idx].ga.nextLeaf == -1)
                 {
                     scanLeaf.insert({data.first, idx});
@@ -343,7 +342,7 @@ bool Insert(int rootType, pair<double, double> data)
         break;
         case 10:
         {
-            findActualDataset.push_back(data);
+            initDataset.push_back(data);
             return true;
         }
         break;

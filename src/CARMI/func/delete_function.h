@@ -1,31 +1,11 @@
 #ifndef DELETE_FUNCTION_H
 #define DELETE_FUNCTION_H
-#include "../nodes/rootNode/bin_type.h"
-#include "../nodes/rootNode/his_type.h"
-#include "../nodes/rootNode/lr_type.h"
-#include "../nodes/rootNode/plr_type.h"
 
-#include "../nodes/innerNode/bs_model.h"
-#include "../nodes/innerNode/lr_model.h"
-#include "../nodes/innerNode/plr_model.h"
-#include "../nodes/innerNode/his_model.h"
-
-#include "../nodes/leafNode/ga_type.h"
-#include "../nodes/leafNode/array_type.h"
-#include "../nodes/leafNode/ycsb_leaf.h"
-
+#include "../carmi.h"
 #include "inlineFunction.h"
-#include "../dataManager/datapoint.h"
 using namespace std;
 
-extern vector<BaseNode> entireChild;
-
-extern LRType lrRoot;
-extern PLRType plrRoot;
-extern HisType hisRoot;
-extern BSType bsRoot;
-
-bool Delete(int rootType, double key)
+bool CARMI::Delete(double key)
 {
     int idx = 0; // idx in the INDEX
     int content;
@@ -36,25 +16,25 @@ bool Delete(int rootType, double key)
         {
         case 0:
         {
-            idx = lrRoot.childLeft + lrRoot.model.Predict(key);
+            idx = root.lrRoot.childLeft + root.lrRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 1:
         {
-            idx = plrRoot.childLeft + plrRoot.model.Predict(key);
+            idx = root.plrRoot.childLeft + root.plrRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 2:
         {
-            idx = hisRoot.childLeft + hisRoot.model.Predict(key);
+            idx = root.hisRoot.childLeft + root.hisRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 3:
         {
-            idx = bsRoot.childLeft + bsRoot.model.Predict(key);
+            idx = root.bsRoot.childLeft + root.bsRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
@@ -66,7 +46,7 @@ bool Delete(int rootType, double key)
         break;
         case 5:
         {
-            idx = entireChild[idx].nn.childLeft + entireChild[idx].nn.Predict(key);
+            idx = entireChild[idx].plr.childLeft + entireChild[idx].plr.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
@@ -82,7 +62,7 @@ bool Delete(int rootType, double key)
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 69:
+        case 8:
         {
             auto left = entireChild[idx].array.m_left;
             auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
@@ -117,7 +97,7 @@ bool Delete(int rootType, double key)
             return true;
         }
         break;
-        case 70:
+        case 9:
         {
             // DBL_MIN means the data has been deleted
             // when a data has been deleted, data.second == DBL_MIN
@@ -160,6 +140,41 @@ bool Delete(int rootType, double key)
                 if (res == left + entireChild[idx].ga.maxIndex)
                     entireChild[idx].ga.maxIndex--;
                 return true;
+            }
+        }
+        break;
+        case 10:
+        {
+            auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
+            int preIdx = entireChild[idx].ycsbLeaf.Predict(key);
+            auto left = entireChild[idx].ycsbLeaf.m_left;
+            if (initDataset[left + preIdx].first == key)
+            {
+                initDataset.erase(initDataset.begin() + left + preIdx);
+                return true;
+            }
+            else
+            {
+                int start = max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
+                int end = min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
+                start = min(start, end);
+                int res;
+                if (key <= initDataset[start].first)
+                    res = YCSBBinarySearch(key, left, start);
+                else if (key <= initDataset[end].first)
+                    res = YCSBBinarySearch(key, start, end);
+                else
+                {
+                    res = YCSBBinarySearch(key, end, left + size - 1);
+                    if (res >= left + size)
+                        return false;
+                }
+                if (initDataset[res].first == key)
+                {
+                    initDataset.erase(initDataset.begin() + res);
+                    return true;
+                }
+                return false;
             }
         }
         break;

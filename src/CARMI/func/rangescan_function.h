@@ -2,18 +2,10 @@
 #define RANGE_SCAN_FUNCTION_H
 
 #include "inlineFunction.h"
-#include "../dataManager/datapoint.h"
+#include "../carmi.h"
 using namespace std;
 
-extern vector<BaseNode> entireChild;
-extern vector<pair<double, double>> findActualDataset;
-
-extern LRType lrRoot;
-extern PLRType plrRoot;
-extern HisType hisRoot;
-extern BSType bsRoot;
-
-inline void GetValues(int idx, int &firstIdx, int &length, vector<pair<double, double>> &ret)
+inline void CARMI::GetValues(int idx, int &firstIdx, int &length, vector<pair<double, double>> &ret)
 {
     if ((entireChild[idx].array.flagNumber >> 24) == 8)
     {
@@ -38,7 +30,7 @@ inline void GetValues(int idx, int &firstIdx, int &length, vector<pair<double, d
     }
 }
 
-void RangeScan(int rootType, double key, int length, vector<pair<double, double>> &ret)
+void CARMI::RangeScan(double key, int length, vector<pair<double, double>> &ret)
 {
     int idx = 0; // idx in the INDEX
     int firstIdx = 0;
@@ -49,25 +41,25 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
         {
         case 0:
         {
-            idx = lrRoot.childLeft + lrRoot.model.Predict(key);
+            idx = root.lrRoot.childLeft + root.lrRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 1:
         {
-            idx = plrRoot.childLeft + plrRoot.model.Predict(key);
+            idx = root.plrRoot.childLeft + root.plrRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 2:
         {
-            idx = hisRoot.childLeft + hisRoot.model.Predict(key);
+            idx = root.hisRoot.childLeft + root.hisRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 3:
         {
-            idx = bsRoot.childLeft + bsRoot.model.Predict(key);
+            idx = root.bsRoot.childLeft + root.bsRoot.model.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
@@ -79,7 +71,7 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
         break;
         case 5:
         {
-            idx = entireChild[idx].nn.childLeft + entireChild[idx].nn.Predict(key);
+            idx = entireChild[idx].plr.childLeft + entireChild[idx].plr.Predict(key);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
@@ -188,13 +180,13 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
             auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
             int preIdx = entireChild[idx].ycsbLeaf.Predict(key);
             auto left = entireChild[idx].ycsbLeaf.m_left;
-            if (findActualDataset[left + preIdx].first == key)
+            if (initDataset[left + preIdx].first == key)
             {
                 int j = 0;
                 int end = length + left;
                 for (int i = left + preIdx; i < end; i++)
                 {
-                    ret[j++] = findActualDataset[i];
+                    ret[j++] = initDataset[i];
                 }
                 return;
             }
@@ -204,9 +196,9 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
                 int end = min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
                 start = min(start, end);
                 int res;
-                if (key <= findActualDataset[start].first)
+                if (key <= initDataset[start].first)
                     res = YCSBBinarySearch(key, left, start);
-                else if (key <= findActualDataset[end].first)
+                else if (key <= initDataset[end].first)
                     res = YCSBBinarySearch(key, start, end);
                 else
                 {
@@ -214,13 +206,13 @@ void RangeScan(int rootType, double key, int length, vector<pair<double, double>
                     if (res >= left + size)
                         return;
                 }
-                if (findActualDataset[res].first == key)
+                if (initDataset[res].first == key)
                 {
                     int j = 0;
                     end = length + left;
                     for (int i = res; i < end; i++)
                     {
-                        ret[j++] = findActualDataset[i];
+                        ret[j++] = initDataset[i];
                     }
                     return;
                 }

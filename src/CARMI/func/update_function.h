@@ -2,17 +2,10 @@
 #define UPDATE_FUNCTION_H
 
 #include "inlineFunction.h"
-#include "../dataManager/datapoint.h"
+#include "../carmi.h"
 using namespace std;
 
-extern vector<BaseNode> entireChild;
-
-extern LRType lrRoot;
-extern PLRType plrRoot;
-extern HisType hisRoot;
-extern BSType bsRoot;
-
-bool Update(int rootType, pair<double, double> data)
+bool CARMI::Update(pair<double, double> data)
 {
     int idx = 0; // idx in the INDEX
     int content;
@@ -23,25 +16,25 @@ bool Update(int rootType, pair<double, double> data)
         {
         case 0:
         {
-            idx = lrRoot.childLeft + lrRoot.model.Predict(data.first);
+            idx = root.lrRoot.childLeft + root.lrRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 1:
         {
-            idx = plrRoot.childLeft + plrRoot.model.Predict(data.first);
+            idx = root.plrRoot.childLeft + root.plrRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 2:
         {
-            idx = hisRoot.childLeft + hisRoot.model.Predict(data.first);
+            idx = root.hisRoot.childLeft + root.hisRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
         case 3:
         {
-            idx = bsRoot.childLeft + bsRoot.model.Predict(data.first);
+            idx = root.bsRoot.childLeft + root.bsRoot.model.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
@@ -53,7 +46,7 @@ bool Update(int rootType, pair<double, double> data)
         break;
         case 5:
         {
-            idx = entireChild[idx].nn.childLeft + entireChild[idx].nn.Predict(data.first);
+            idx = entireChild[idx].plr.childLeft + entireChild[idx].plr.Predict(data.first);
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
@@ -69,7 +62,7 @@ bool Update(int rootType, pair<double, double> data)
             type = entireChild[idx].lr.flagNumber >> 24;
         }
         break;
-        case 69:
+        case 8:
         {
             auto left = entireChild[idx].array.m_left;
             auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
@@ -98,7 +91,7 @@ bool Update(int rootType, pair<double, double> data)
             return true;
         }
         break;
-        case 70:
+        case 9:
         {
             auto left = entireChild[idx].ga.m_left;
             int preIdx = entireChild[idx].ga.Predict(data.first);
@@ -132,6 +125,39 @@ bool Update(int rootType, pair<double, double> data)
                     return false;
                 entireData[preIdx].second = data.second;
                 return true;
+            }
+        }
+        break;
+        case 10:
+        {
+            auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
+            int preIdx = entireChild[idx].ycsbLeaf.Predict(data.first);
+            auto left = entireChild[idx].ycsbLeaf.m_left;
+            if (initDataset[left + preIdx].first == data.first)
+            {
+                initDataset[left + preIdx].second = data.second;
+                return true;
+            }
+            else
+            {
+                int start = max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
+                int end = min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
+                start = min(start, end);
+                int res;
+                if (data.first <= initDataset[start].first)
+                    res = YCSBBinarySearch(data.first, left, start);
+                else if (data.first <= initDataset[end].first)
+                    res = YCSBBinarySearch(data.first, start, end);
+                else
+                {
+                    res = YCSBBinarySearch(data.first, end, left + size - 1);
+                    if (res >= left + size)
+                        return false;
+                }
+                if (initDataset[res].first == data.first)
+                    initDataset[res].second = data.second;
+                return true;
+                return false;
             }
         }
         break;
