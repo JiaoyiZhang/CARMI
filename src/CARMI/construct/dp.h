@@ -2,10 +2,6 @@
 #define DP_H
 
 #include "../../params.h"
-#include "../func/function.h"
-#include "../func/inlineFunction.h"
-#include "greedy_construct.h"
-#include "params_struct.h"
 #include <float.h>
 #include <algorithm>
 #include <vector>
@@ -42,8 +38,8 @@ pair<pair<double, double>, bool> CARMI::dp(bool isLeaf, const int initLeft, cons
             space = 0.0;
 
             auto tmp = YCSBLeaf();
-            tmp.Train(initLeft, initSize);
-            auto error = tmp.UpdateError(initLeft, initSize);
+            Train(&tmp, initLeft, initSize);
+            auto error = UpdateError(&tmp, initLeft, initSize);
             for (int i = findLeft; i < findLeft + findSize; i++)
             {
                 auto predict = tmp.Predict(findQuery[i].first) + findLeft;

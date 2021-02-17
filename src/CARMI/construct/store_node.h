@@ -2,8 +2,7 @@
 #define STORE_NODE_H
 
 #include "../../params.h"
-#include "../func/function.h"
-#include "params_struct.h"
+#include "../carmi.h"
 #include <float.h>
 #include <vector>
 #include <map>
@@ -26,7 +25,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         if (kIsYCSB)
         {
             auto node = YCSBLeaf();
-            node.SetDataset(left, size);
+            initYCSB(&node, left, size);
             entireChild[storeIdx].ycsbLeaf = node;
         }
         else
@@ -257,7 +256,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
     case 6:
     {
         auto node = YCSBLeaf();
-        node.SetDataset(left, size);
+        initYCSB(&node, left, size);
         entireChild[storeIdx].ycsbLeaf = node;
         break;
     }
