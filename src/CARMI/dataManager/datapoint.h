@@ -5,15 +5,13 @@
 #include <vector>
 #include <math.h>
 #include "empty_block.h"
+#include "../carmi.h"
 using namespace std;
-pair<double, double> *entireData;
-unsigned int entireDataSize;
-vector<EmptyBlock> emptyBlocks;
 
 // allocate empty blocks into emptyBlocks[i]
 // left: the beginning idx of empty blocks
 // len: the length of the blocks
-inline bool allocateEmptyBlock(int left, int len)
+inline bool CARMI::allocateEmptyBlock(int left, int len)
 {
     if (len == 0)
         return true;
@@ -34,7 +32,7 @@ inline bool allocateEmptyBlock(int left, int len)
 
 // find the corresponding index in emptyBlocks
 // return idx
-inline int getIndex(int size)
+inline int CARMI::getIndex(int size)
 {
     if (size > 4096 || size < 1)
         cout << "size: " << size << ",\tsize > 4096 || size < 1, getIndex WRONG!" << endl;
@@ -48,7 +46,7 @@ inline int getIndex(int size)
 }
 
 // initialize entireData
-void initEntireData(int left, int size, bool reinit)
+void CARMI::initEntireData(int left, int size, bool reinit)
 {
     unsigned int len = 4096;
     while (len < size)
@@ -75,7 +73,7 @@ void initEntireData(int left, int size, bool reinit)
 // size: the size of the leaf node needs to be allocated
 // return the starting position of the allocation
 // return -1, if it fails
-int allocateMemory(int size)
+int CARMI::allocateMemory(int size)
 {
     int idx = getIndex(size); // idx in emptyBlocks[]
     size = emptyBlocks[idx].m_width;
@@ -128,7 +126,7 @@ int allocateMemory(int size)
 }
 
 // release the specified space
-void releaseMemory(int left, int size)
+void CARMI::releaseMemory(int left, int size)
 {
     int idx = getIndex(size);
     for (int i = idx; i < 13; i++)

@@ -2,15 +2,11 @@
 #define CHILD_ARRAY_H
 #include <iostream>
 #include <vector>
-#include "../baseNode.h"
+#include "../carmi.h"
 using namespace std;
 
-vector<BaseNode> entireChild;
-unsigned int entireChildNumber;
-unsigned int nowChildNumber;
-
 // initialize entireChild
-void initEntireChild(int size)
+void CARMI::initEntireChild(int size)
 {
     unsigned int len = 4096;
     while (len < size)
@@ -28,7 +24,7 @@ void initEntireChild(int size)
 // size: the size of the inner node needs to be allocated
 // return the starting position of the allocation
 // return -1, if it fails
-int allocateChildMemory(int size)
+int CARMI::allocateChildMemory(int size)
 {
     int newLeft = -1;
     if (nowChildNumber + size <= entireChildNumber)
