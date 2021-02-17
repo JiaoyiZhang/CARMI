@@ -1,8 +1,8 @@
 #ifndef PARAMS
 #define PARAMS
 
-#define ZIPFIAN 0
-#define PARAM_ZIPFIAN 1.25
+#define ZIPFIAN 1
+#define PARAM_ZIPFIAN 0.99
 
 bool kIsYCSB = false;
 

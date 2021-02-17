@@ -35,7 +35,7 @@ BSType bsRoot;
 
 int main()
 {
-    outRes.open("res_0208.csv", ios::app);
+    outRes.open("res_0217.csv", ios::app);
 
     time_t timep;
     time(&timep);
@@ -58,34 +58,34 @@ int main()
     // testSynthetic(0);
 
     kMaxKeyNum = 1024;
-    // constructSynthetic(1); // read-only
+    constructSynthetic(1); // read-only
     constructYCSB(1);      // read-only
     kMaxKeyNum = 2048;
-    // constructMap(1); // read-only
+    constructMap(1); // read-only
 
     // kMaxKeyNum = 1024;
     // constructSynthetic(0.5); // balance
-    constructYCSB(0.5);      // balance
+    // constructYCSB(0.5);      // balance
     // kMaxKeyNum = 2048;
     // constructMap(0.5); // balance
 
     // kMaxKeyNum = 1024;
     // constructSynthetic(0); // partial
-    constructYCSB(0);      // partial
+    // constructYCSB(0);      // partial
     // kMaxKeyNum = 2048;
     // constructMap(0); // partial
 
-    // kMaxKeyNum = 1024;
-    // constructSynthetic(2); // range scan
+    kMaxKeyNum = 1024;
+    constructSynthetic(2); // range scan
     constructYCSB(2);      // range scan
-    // kMaxKeyNum = 2048;
-    // constructMap(2); // range scan
+    kMaxKeyNum = 2048;
+    constructMap(2); // range scan
 
-    // kMaxKeyNum = 1024;
-    // constructSynthetic(0.95);
+    kMaxKeyNum = 1024;
+    constructSynthetic(0.95);
     constructYCSB(0.95);
-    // kMaxKeyNum = 2048;
-    // constructMap(0.95);
+    kMaxKeyNum = 2048;
+    constructMap(0.95);
 
     outRes << "----------------------------------------------" << endl;
 

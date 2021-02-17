@@ -19,9 +19,14 @@ extern vector<int> length;
 
 void btree_test(double initRatio)
 {
-    stx::btree_map<double, double> btree;
-    for (int l = 0; l < dataset.size(); l++)
-        btree.insert(dataset[l]);
+    cout<<"dataset size:"<<dataset.size()<<endl;
+    stx::btree_map<double, double> btree(dataset.begin(), dataset.end()); // vector begin-> end
+    auto stat = btree.get_stats();
+    cout << "btree : innernodes:" << stat.innernodes << "，\tleaf nodes:" << stat.leaves << endl;
+    double space = float(stat.innernodes * 272 + stat.leaves * 280) / 1024 / 1024;
+    cout << "btree space:" << space << endl;
+    // for (int l = 0; l < dataset.size(); l++)
+    //     btree.insert(dataset[l]);
     cout << "btree,";
     outRes << "btree,";
 
@@ -336,9 +341,9 @@ void btree_test(double initRatio)
         outRes << tmp / 100000.0 * 1000000000 << ",";
     }
 
-    auto stat = btree.get_stats();
-    cout << "btree : innernodes" << stat.innernodes << "，\tleaf nodes:" << stat.leaves << endl;
-    double space = float(stat.innernodes * 272 + stat.leaves * 280) / 1024 / 1024;
+    // auto stat = btree.get_stats();
+    // cout << "btree : innernodes" << stat.innernodes << "，\tleaf nodes:" << stat.leaves << endl;
+    // double space = float(stat.innernodes * 272 + stat.leaves * 280) / 1024 / 1024;
     cout << "btree space:" << space << endl;
     // space += float(dataset.size() + insertDataset.size()) * 16 / 1024 / 1024;
     // cout << "btree total space: " << space << endl;

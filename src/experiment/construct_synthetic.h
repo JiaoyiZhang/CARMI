@@ -44,8 +44,8 @@ void constructSynthetic(double initRatio)
         0.1,
     }; // 0.5
 
-    for (int r = 0; r < rate.size(); r++)
-    // for (int r = 0; r < 1; r++)
+    // for (int r = 0; r < rate.size(); r++)
+    for (int r = 0; r < 1; r++)
     {
         if (initRatio == 0.5)
             kRate = rate1[r];
@@ -66,40 +66,40 @@ void constructSynthetic(double initRatio)
         }
         if (r == 0)
         {
-            // btree_test(initRatio);
+            btree_test(initRatio);
             // artTree_test(initRatio);
         }
-        CoreConstruct(initRatio);
+        // CoreConstruct(initRatio);
 
-        cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-        expData.GenerateDataset(dataset, insertDataset);
-        initDatasetSize = dataset.size();
-        if (r == 0)
-        {
-            // btree_test(initRatio);
-            // artTree_test(initRatio);
-        }
-        CoreConstruct(initRatio);
+        // cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+        // expData.GenerateDataset(dataset, insertDataset);
+        // initDatasetSize = dataset.size();
+        // if (r == 0)
+        // {
+        //     // btree_test(initRatio);
+        //     // artTree_test(initRatio);
+        // }
+        // CoreConstruct(initRatio);
 
         cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
         norData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            // btree_test(initRatio);
+            btree_test(initRatio);
             // artTree_test(initRatio);
         }
-        CoreConstruct(initRatio);
+        // CoreConstruct(initRatio);
 
         cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
         logData.GenerateDataset(dataset, insertDataset);
         initDatasetSize = dataset.size();
         if (r == 0)
         {
-            // btree_test(initRatio);
+            btree_test(initRatio);
             // artTree_test(initRatio);
         }
-        CoreConstruct(initRatio);
+        // CoreConstruct(initRatio);
 
         outRes << endl;
     }
