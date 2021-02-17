@@ -15,10 +15,10 @@ extern vector<BaseNode> entireChild;
 class HisType
 {
 public:
-    HisType()
-    {
-        flagNumber = (2 << 24);
-    };
+    HisType() = default;
+    // {
+    //     flagNumber = (2 << 24);
+    // };
     HisType(int c)
     {
         flagNumber = (2 << 24) + c;

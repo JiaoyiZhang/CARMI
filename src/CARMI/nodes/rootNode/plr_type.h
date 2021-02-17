@@ -15,10 +15,10 @@ extern vector<BaseNode> entireChild;
 class PLRType
 {
 public:
-    PLRType()
-    {
-        flagNumber = (1 << 24);
-    }
+    PLRType() = default;
+    // {
+    //     flagNumber = (1 << 24);
+    // }
     PLRType(int c)
     {
         flagNumber = (1 << 24) + c;

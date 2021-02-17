@@ -17,10 +17,10 @@ extern vector<BaseNode> entireChild;
 class LRType
 {
 public:
-    LRType()
-    {
-        flagNumber = (0 << 24);
-    };
+    LRType() = default;
+    // {
+    //     flagNumber = (0 << 24);
+    // };
     LRType(int c)
     {
         flagNumber = (0 << 24) + c;
