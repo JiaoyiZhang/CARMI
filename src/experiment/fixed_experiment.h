@@ -1,25 +1,40 @@
-#ifndef TEST_SYNTHETIC_H
-#define TEST_SYNTHETIC_H
+#ifndef FIXED_EXPERIMENT_H
+#define FIXED_EXPERIMENT_H
+#include "static.h"
 
 #include "dataset/lognormal_distribution.h"
 #include "dataset/uniform_distribution.h"
 #include "dataset/normal_distribution.h"
 #include "dataset/exponential_distribution.h"
 
-#include "../baseline/art_tree_baseline.h"
-#include "../baseline/btree_baseline.h"
+void fixedSynthetic(int datasetSize, double initRatio, vector<int> &length);
 
-#include "static.h"
+void fixedExperiment(int datasetSize)
+{
+    kMaxKeyNum = 2;
+    // for range scan
+    vector<int> length;
+    cout << "kLeafNodeID:" << kLeafNodeID << endl;
+    // static structure
+    for (int i = 0; i < 2; i++)
+    {
+        kLeafNodeID = i;
+        cout << "kleafnode:" << kLeafNodeID << endl;
+        fixedSynthetic(datasetSize, 1, length);
+        fixedSynthetic(datasetSize, 0.5, length);
+    }
+    fixedSynthetic(datasetSize, 0.95, length);
+    fixedSynthetic(datasetSize, 0, length);
 
-extern int datasetSize;
-extern int initDatasetSize;
-extern int childNum;
+    srand(time(0));
+    for (int i = 0; i < datasetSize; i++)
+    {
+        length.push_back(min(i + rand() % 100 + 1, datasetSize) - i);
+    }
+    fixedSynthetic(datasetSize, 2, length);
+}
 
-extern vector<pair<double, double>> dataset;
-extern vector<pair<double, double>> insertDataset;
-extern ofstream outRes;
-
-void testSynthetic(double initRatio)
+void fixedSynthetic(int datasetSize, double initRatio, vector<int> &length)
 {
     cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
     cout << "initRatio is: " << initRatio << endl;
@@ -31,54 +46,39 @@ void testSynthetic(double initRatio)
     UniformDataset uniData = UniformDataset(datasetSize, init);
     NormalDataset norData = NormalDataset(datasetSize, init);
     ExponentialDataset expData = ExponentialDataset(datasetSize, init);
+    vector<pair<double, double>> initData;
+    vector<pair<double, double>> trainFind;
+    vector<pair<double, double>> trainInsert;
+    vector<pair<double, double>> testInsert;
 
-    vector<int> childNum_synthetic = {65536, 131072, 262144, 524288, 1048576};
-    // for (int i = 0; i < childNum_synthetic.size(); i++)
     for (int i = 0; i < 1; i++)
     {
-        // childNum = childNum_synthetic[i];
         childNum = 131072;
         cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
-        uniData.GenerateDataset(dataset, insertDataset);
-        initDatasetSize = dataset.size();
+        uniData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-        // btree_test(initRatio);
-        // artTree_test(initRatio);
-        RunStatic(initRatio);
-        // TestStatic();
+        RunStatic(initRatio, initData, testInsert, length);
         break;
 
         cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
-        expData.GenerateDataset(dataset, insertDataset);
-        initDatasetSize = dataset.size();
+        expData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
-        RunStatic(initRatio);
-        // btree_test(initRatio);
-        // artTree_test(initRatio);
-        // TestStatic();
+        RunStatic(initRatio, initData, testInsert, length);
 
         cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
-        norData.GenerateDataset(dataset, insertDataset);
-        initDatasetSize = dataset.size();
+        norData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
-        RunStatic(initRatio);
-        // btree_test(initRatio);
-        // artTree_test(initRatio);
-        // TestStatic();
+        RunStatic(initRatio, initData, testInsert, length);
 
         cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
-        logData.GenerateDataset(dataset, insertDataset);
-        initDatasetSize = dataset.size();
+        logData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
-        // btree_test(initRatio);
-        // artTree_test(initRatio);
-        // TestStatic();
-        RunStatic(initRatio);
+        RunStatic(initRatio, initData, testInsert, length);
     }
 }
 
-#endif // !TEST_SYNTHETIC_H
+#endif // !FIXED_EXPERIMENT_H

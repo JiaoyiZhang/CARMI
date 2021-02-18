@@ -8,11 +8,7 @@ bool kIsYCSB = false;
 
 extern int kLeafNodeID;  // for static structure
 extern int kInnerNodeID; // for static structure
-int childNum = 3907;     // for static structure
-
-extern const int kMaxEpoch = 20;               // used in nn
-extern const double kLearningRate = 0.0000001; // used in nn
-int kNeuronNumber = 8;                         // used in nn
+int childNum;     // for static structure
 
 int kThreshold = 2;  // used to initialize a leaf node
 int kMaxKeyNum = 16; // used in construction
