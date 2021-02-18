@@ -14,22 +14,19 @@
 using namespace std;
 
 extern ofstream outRes;
-extern vector<pair<double, double>> dataset;
-extern vector<pair<double, double>> insertDataset;
-extern vector<int> length;
 
-void artTree_test(double initRatio)
+void artTree_test(double initRatio, vector<pair<double, double>> &initData, vector<pair<double, double>> &insertData, vector<int> &length)
 {
     outRes << "artTree,";
     cout << "artTree,";
     art_tree t;
     art_tree_init(&t);
     cout << "start" << endl;
-    for (int i = 0; i < dataset.size(); i++)
+    for (int i = 0; i < initData.size(); i++)
     {
         char key[64] = {0};
-        sprintf(key, "%f", dataset[i].first);
-        art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, dataset[i].second);
+        sprintf(key, "%f", initData[i].first);
+        art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, initData[i].second);
     }
     cout << "init over" << endl;
 
@@ -39,17 +36,17 @@ void artTree_test(double initRatio)
     {
         unsigned seed = chrono::system_clock::now().time_since_epoch().count();
         engine = default_random_engine(seed);
-        shuffle(dataset.begin(), dataset.end(), engine);
+        shuffle(initData.begin(), initData.end(), engine);
 
         unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
         engine = default_random_engine(seed1);
-        shuffle(insertDataset.begin(), insertDataset.end(), engine);
+        shuffle(insertData.begin(), insertData.end(), engine);
     }
 
     Zipfian zipFind;
-    zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
+    zipFind.InitZipfian(PARAM_ZIPFIAN, initData.size());
     vector<int> index;
-    for (int i = 0; i < dataset.size(); i++)
+    for (int i = 0; i < initData.size(); i++)
     {
         int idx = zipFind.GenerateNextIndex();
         index.push_back(idx);
@@ -68,20 +65,20 @@ void artTree_test(double initRatio)
         {
             vector<double> rets;
             char key[64] = {0};
-            sprintf(key, "%f", dataset[index[i]].first);
+            sprintf(key, "%f", initData[index[i]].first);
             art_search(&t, (const unsigned char *)key, strlen((const char *)key) + 1, rets);
-            sprintf(key, "%f", insertDataset[i].first);
-            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertDataset[i].second);
+            sprintf(key, "%f", insertData[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertData[i].second);
         }
 #else
         for (int i = 0; i < end; i++)
         {
             vector<double> rets;
             char key[64] = {0};
-            sprintf(key, "%f", dataset[i].first);
+            sprintf(key, "%f", initData[i].first);
             art_search(&t, (const unsigned char *)key, strlen((const char *)key) + 1, rets);
-            sprintf(key, "%f", insertDataset[i].first);
-            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertDataset[i].second);
+            sprintf(key, "%f", insertData[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertData[i].second);
         }
 #endif
         e = chrono::system_clock::now();
@@ -93,16 +90,16 @@ void artTree_test(double initRatio)
         {
             vector<double> rets;
             char key[64] = {0};
-            sprintf(key, "%f", dataset[index[i]].first);
-            sprintf(key, "%f", insertDataset[i].first);
+            sprintf(key, "%f", initData[index[i]].first);
+            sprintf(key, "%f", insertData[i].first);
         }
 #else
         for (int i = 0; i < end; i++)
         {
             vector<double> rets;
             char key[64] = {0};
-            sprintf(key, "%f", dataset[i].first);
-            sprintf(key, "%f", insertDataset[i].first);
+            sprintf(key, "%f", initData[i].first);
+            sprintf(key, "%f", insertData[i].first);
         }
 #endif
         e = chrono::system_clock::now();
@@ -123,32 +120,32 @@ void artTree_test(double initRatio)
 #if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 19 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[index[findCnt]].first);
+                sprintf(key, "%f", initData[index[findCnt]].first);
                 art_search(&t, (const unsigned char *)key, strlen((const char *)key) + 1, rets);
                 findCnt++;
             }
             char key[64] = {0};
-            sprintf(key, "%f", insertDataset[i].first);
-            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertDataset[i].second);
+            sprintf(key, "%f", insertData[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertData[i].second);
         }
 #else
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 19 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[findCnt].first);
+                sprintf(key, "%f", initData[findCnt].first);
                 art_search(&t, (const unsigned char *)key, strlen((const char *)key) + 1, rets);
                 findCnt++;
             }
             char key[64] = {0};
-            sprintf(key, "%f", insertDataset[i].first);
-            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertDataset[i].second);
+            sprintf(key, "%f", insertData[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertData[i].second);
         }
 #endif
         e = chrono::system_clock::now();
@@ -159,28 +156,28 @@ void artTree_test(double initRatio)
 #if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 19 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[index[findCnt]].first);
+                sprintf(key, "%f", initData[index[findCnt]].first);
                 findCnt++;
             }
             char key[64] = {0};
-            sprintf(key, "%f", insertDataset[i].first);
+            sprintf(key, "%f", insertData[i].first);
         }
 #else
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 19 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[findCnt].first);
+                sprintf(key, "%f", initData[findCnt].first);
                 findCnt++;
             }
             char key[64] = {0};
-            sprintf(key, "%f", insertDataset[i].first);
+            sprintf(key, "%f", insertData[i].first);
         }
 #endif
         e = chrono::system_clock::now();
@@ -202,7 +199,7 @@ void artTree_test(double initRatio)
         {
             vector<double> rets;
             char key[64] = {0};
-            sprintf(key, "%f", dataset[index[i]].first);
+            sprintf(key, "%f", initData[index[i]].first);
             art_search(&t, (const unsigned char *)key, strlen((const char *)key) + 1, rets);
         }
 #else
@@ -210,7 +207,7 @@ void artTree_test(double initRatio)
         {
             vector<double> rets;
             char key[64] = {0};
-            sprintf(key, "%f", dataset[i].first);
+            sprintf(key, "%f", initData[i].first);
             art_search(&t, (const unsigned char *)key, strlen((const char *)key) + 1, rets);
         }
 #endif
@@ -223,14 +220,14 @@ void artTree_test(double initRatio)
         {
             vector<double> rets;
             char key[64] = {0};
-            sprintf(key, "%f", dataset[index[i]].first);
+            sprintf(key, "%f", initData[index[i]].first);
         }
 #else
         for (int i = 0; i < end; i++)
         {
             vector<double> rets;
             char key[64] = {0};
-            sprintf(key, "%f", dataset[i].first);
+            sprintf(key, "%f", initData[i].first);
         }
 #endif
         e = chrono::system_clock::now();
@@ -252,38 +249,38 @@ void artTree_test(double initRatio)
 #if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 17 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[index[findCnt]].first);
+                sprintf(key, "%f", initData[index[findCnt]].first);
                 art_search(&t, (const unsigned char *)key, strlen((const char *)key) + 1, rets);
                 findCnt++;
             }
-            for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+            for (int j = 0; j < 3 && insertCnt < insertData.size(); j++)
             {
                 char key[64] = {0};
-                sprintf(key, "%f", insertDataset[insertCnt].first);
-                art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertDataset[insertCnt].second);
+                sprintf(key, "%f", insertData[insertCnt].first);
+                art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertData[insertCnt].second);
                 insertCnt++;
             }
         }
 #else
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 17 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[findCnt].first);
+                sprintf(key, "%f", initData[findCnt].first);
                 art_search(&t, (const unsigned char *)key, strlen((const char *)key) + 1, rets);
                 findCnt++;
             }
-            for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+            for (int j = 0; j < 3 && insertCnt < insertData.size(); j++)
             {
                 char key[64] = {0};
-                sprintf(key, "%f", insertDataset[insertCnt].first);
-                art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertDataset[insertCnt].second);
+                sprintf(key, "%f", insertData[insertCnt].first);
+                art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertData[insertCnt].second);
                 insertCnt++;
             }
         }
@@ -297,34 +294,34 @@ void artTree_test(double initRatio)
 #if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 17 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[index[findCnt]].first);
+                sprintf(key, "%f", initData[index[findCnt]].first);
                 findCnt++;
             }
-            for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+            for (int j = 0; j < 3 && insertCnt < insertData.size(); j++)
             {
                 char key[64] = {0};
-                sprintf(key, "%f", insertDataset[insertCnt].first);
+                sprintf(key, "%f", insertData[insertCnt].first);
                 insertCnt++;
             }
         }
 #else
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 17 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 17 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[findCnt].first);
+                sprintf(key, "%f", initData[findCnt].first);
                 findCnt++;
             }
-            for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+            for (int j = 0; j < 3 && insertCnt < insertData.size(); j++)
             {
                 char key[64] = {0};
-                sprintf(key, "%f", insertDataset[insertCnt].first);
+                sprintf(key, "%f", insertData[insertCnt].first);
                 insertCnt++;
             }
         }
@@ -341,18 +338,18 @@ void artTree_test(double initRatio)
         int end = 5000;
         int findCnt = 0;
 
-        for (int i = 0; i < dataset.size(); i++)
+        for (int i = 0; i < initData.size(); i++)
         {
-            int len = min(i + length[i], dataset.size() - 1);
-            dataset[i].second = dataset[len].first;
+            int len = min(i + length[i], initData.size() - 1);
+            initData[i].second = initData[len].first;
         }
         unsigned seed = chrono::system_clock::now().time_since_epoch().count();
         engine = default_random_engine(seed);
-        shuffle(dataset.begin(), dataset.end(), engine);
+        shuffle(initData.begin(), initData.end(), engine);
 
         unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
         engine = default_random_engine(seed1);
-        shuffle(insertDataset.begin(), insertDataset.end(), engine);
+        shuffle(insertData.begin(), insertData.end(), engine);
 
         chrono::_V2::system_clock::time_point s, e;
         double tmp;
@@ -360,38 +357,38 @@ void artTree_test(double initRatio)
 #if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 19 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[index[findCnt]].first);
+                sprintf(key, "%f", initData[index[findCnt]].first);
                 char rightKey[64] = {0};
-                sprintf(rightKey, "%f", dataset[index[findCnt]].second);
+                sprintf(rightKey, "%f", initData[index[findCnt]].second);
 
                 art_range_scan(&t, (const unsigned char *)key, strlen((const char *)key) + 1, (const unsigned char *)rightKey, strlen((const char *)rightKey) + 1, rets, length[index[findCnt]]);
                 findCnt++;
             }
             char key[64] = {0};
-            sprintf(key, "%f", insertDataset[i].first);
-            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertDataset[i].second);
+            sprintf(key, "%f", insertData[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertData[i].second);
         }
 #else
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 19 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[findCnt].first);
+                sprintf(key, "%f", initData[findCnt].first);
                 char rightKey[64] = {0};
-                sprintf(rightKey, "%f", dataset[findCnt].second);
+                sprintf(rightKey, "%f", initData[findCnt].second);
 
                 art_range_scan(&t, (const unsigned char *)key, strlen((const char *)key) + 1, (const unsigned char *)rightKey, strlen((const char *)rightKey) + 1, rets, length[findCnt]);
                 findCnt++;
             }
             char key[64] = {0};
-            sprintf(key, "%f", insertDataset[i].first);
-            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertDataset[i].second);
+            sprintf(key, "%f", insertData[i].first);
+            art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1, insertData[i].second);
         }
 #endif
         e = chrono::system_clock::now();
@@ -402,32 +399,32 @@ void artTree_test(double initRatio)
 #if ZIPFIAN
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 19 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[index[findCnt]].first);
+                sprintf(key, "%f", initData[index[findCnt]].first);
                 char rightKey[64] = {0};
-                sprintf(rightKey, "%f", dataset[index[findCnt]].second);
+                sprintf(rightKey, "%f", initData[index[findCnt]].second);
                 findCnt++;
             }
             char key[64] = {0};
-            sprintf(key, "%f", insertDataset[i].first);
+            sprintf(key, "%f", insertData[i].first);
         }
 #else
         for (int i = 0; i < end; i++)
         {
-            for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+            for (int j = 0; j < 19 && findCnt < initData.size(); j++)
             {
                 vector<double> rets;
                 char key[64] = {0};
-                sprintf(key, "%f", dataset[findCnt].first);
+                sprintf(key, "%f", initData[findCnt].first);
                 char rightKey[64] = {0};
-                sprintf(rightKey, "%f", dataset[findCnt].second);
+                sprintf(rightKey, "%f", initData[findCnt].second);
                 findCnt++;
             }
             char key[64] = {0};
-            sprintf(key, "%f", insertDataset[i].first);
+            sprintf(key, "%f", insertData[i].first);
         }
 #endif
         e = chrono::system_clock::now();
@@ -439,12 +436,6 @@ void artTree_test(double initRatio)
     }
 
     outRes << endl;
-    // std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-    //     return p1.first < p2.first;
-    // });
-    // std::sort(insertDataset.begin(), insertDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-    //     return p1.first < p2.first;
-    // });
 }
 
 #endif // !ART_TREE_BASELINE_H
