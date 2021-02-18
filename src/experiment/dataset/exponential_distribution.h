@@ -5,6 +5,7 @@
 #include <random>
 #include <iostream>
 #include <vector>
+#include <chrono>
 using namespace std;
 
 class ExponentialDataset
@@ -14,37 +15,36 @@ public:
     {
         num = 2;
         totalSize = total / initRatio;
+        insertNumber = 100000 * (1 - initRatio);
         if (initRatio == 0)
         { // several leaf nodes are inserted
-            insertSize = 0;
             initSize = 0;
             totalSize = total / 0.85 + 1;
+            insertNumber = 15000;
         }
         else if (initRatio == 1)
         {
             num = -1;
             initSize = total;
-            insertSize = 0;
         }
         else
         {
             initSize = total;
-            insertSize = totalSize - initSize;
             num = round(initRatio / (1 - initRatio));
         }
     }
 
-    void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset);
+    void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery);
 
 private:
     int totalSize;
-    int insertSize;
     int initSize;
 
     int num;
+    int insertNumber;
 };
 
-void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
+void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery)
 {
     float maxValue = totalSize;
 
@@ -54,7 +54,11 @@ void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDatas
     vector<double> ds;
 
     vector<pair<double, double>>().swap(initDataset);
-    vector<pair<double, double>>().swap(insertDataset);
+    vector<pair<double, double>>().swap(trainFindQuery);
+    vector<pair<double, double>>().swap(trainInsertQuery);
+    vector<pair<double, double>>().swap(testInsertQuery);
+
+    vector<pair<double, double>> insertDataset;
 
     for (int i = 0; i < totalSize; i++)
     {
@@ -99,7 +103,28 @@ void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDatas
             }
         }
     }
-    cout << "exponential: Read size:" << initDataset.size() << "\tWrite size:" << insertDataset.size() << endl;
+    default_random_engine engine;
+
+    auto find = initDataset;
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    engine = default_random_engine(seed);
+    shuffle(find.begin(), find.end(), engine);
+
+    int end = 100000 - insertNumber;
+    for (int i = 0; i < end; i++)
+        trainFindQuery.push_back(initDataset[i]);
+
+    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+    engine = default_random_engine(seed1);
+    shuffle(insertDataset.begin(), insertDataset.end(), engine);
+    end = insertNumber * 2;
+    for (int i = 0; i < end; i += 2)
+    {
+        trainInsertQuery.push_back(insertDataset[i]);
+        testInsertQuery.push_back(insertDataset[i + 1]);
+    }
+
+    cout << "exponential: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
 }
 
 #endif
