@@ -17,12 +17,12 @@ using namespace std;
 // insertDatapoint: the dataset to be inserted into the index
 // readCnt: the number of READ corresponding to each key
 // writeCnt: the number of WRITE corresponding to each key
-int CARMI::Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
+inline int CARMI::Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
 {
     cout << endl;
     cout << "-------------------------------" << endl;
     cout << "Start construction!" << endl;
-
+    querySize = findData.size() + insertData.size();
     time_t timep;
     time(&timep);
     char tmpTime[64];
@@ -104,9 +104,9 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
         for (int i = 0; i < initDataset.size(); i++)
         {
             int p = root.lrRoot.model.Predict(initDataset[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
+            if (subInitData[p].first == -1)
+                subInitData[p].first = i;
+            subInitData[p].second++;
         }
         for (int i = 0; i < findQuery.size(); i++)
         {
@@ -142,7 +142,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
                 resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             }
             int type;
-            pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
+            pair<bool, pair<int, int>> key = {resChild.second, {subInitData[i].first, subInitData[i].second}};
             auto it = structMap.find(key);
             if (it == structMap.end())
             {
@@ -153,7 +153,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
             }
             else
                 type = it->second.type;
-            storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
+            storeOptimalNode(type, key, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
@@ -171,9 +171,9 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
         for (int i = 0; i < initDataset.size(); i++)
         {
             int p = root.lrRoot.model.Predict(initDataset[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
+            if (subInitData[p].first == -1)
+                subInitData[p].first = i;
+            subInitData[p].second++;
         }
         for (int i = 0; i < findQuery.size(); i++)
         {
@@ -209,7 +209,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
                 resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             }
             int type;
-            pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
+            pair<bool, pair<int, int>> key = {resChild.second, {subInitData[i].first, subInitData[i].second}};
             auto it = structMap.find(key);
             if (it == structMap.end())
             {
@@ -220,7 +220,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
             }
             else
                 type = it->second.type;
-            storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
+            storeOptimalNode(type, key, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
@@ -238,9 +238,9 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
         for (int i = 0; i < initDataset.size(); i++)
         {
             int p = root.lrRoot.model.Predict(initDataset[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
+            if (subInitData[p].first == -1)
+                subInitData[p].first = i;
+            subInitData[p].second++;
         }
         for (int i = 0; i < findQuery.size(); i++)
         {
@@ -276,7 +276,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
                 resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             }
             int type;
-            pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
+            pair<bool, pair<int, int>> key = {resChild.second, {subInitData[i].first, subInitData[i].second}};
             auto it = structMap.find(key);
             if (it == structMap.end())
             {
@@ -287,7 +287,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
             }
             else
                 type = it->second.type;
-            storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
+            storeOptimalNode(type, key, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
@@ -305,9 +305,9 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
         for (int i = 0; i < initDataset.size(); i++)
         {
             int p = root.lrRoot.model.Predict(initDataset[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
+            if (subInitData[p].first == -1)
+                subInitData[p].first = i;
+            subInitData[p].second++;
         }
         for (int i = 0; i < findQuery.size(); i++)
         {
@@ -343,7 +343,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
                 resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
             }
             int type;
-            pair<bool, pair<int, int>> key = {resChild.second, {subFindData[i].first, subFindData[i].second}};
+            pair<bool, pair<int, int>> key = {resChild.second, {subInitData[i].first, subInitData[i].second}};
             auto it = structMap.find(key);
             if (it == structMap.end())
             {
@@ -354,7 +354,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
             }
             else
                 type = it->second.type;
-            storeOptimalNode(type, key, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second, i);
+            storeOptimalNode(type, key, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, i);
 
             totalCost += resChild.first.first + resChild.first.second;
             totalTime += resChild.first.first;
@@ -377,11 +377,11 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
     cout << "finish time: " << tmpTime1 << endl;
 
     double entropy = 0.0;
-    int size = findData.size();
+    int size = initData.size();
     float p = 0;
     for (int i = 0; i < childNum; i++)
     {
-        p = float(subFindData[i].second) / size;
+        p = float(subInitData[i].second) / size;
         if (p != 0)
             entropy -= p * log(p) / log(2);
     }
