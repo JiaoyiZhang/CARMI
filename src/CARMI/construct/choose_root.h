@@ -5,8 +5,8 @@
 #include "../nodes/rootNode/his_type.h"
 #include "../nodes/rootNode/lr_type.h"
 #include "../nodes/rootNode/plr_type.h"
-#include "../func/function.h"
 #include <vector>
+#include <float.h>
 using namespace std;
 
 extern double kRate;

@@ -2,6 +2,7 @@
 #define FIND_FUNCTION_H
 
 #include "../carmi.h"
+#include <float.h>
 using namespace std;
 
 pair<double, double> CARMI::Find(double key)

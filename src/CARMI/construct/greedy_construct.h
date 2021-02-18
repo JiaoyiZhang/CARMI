@@ -2,9 +2,8 @@
 #define GREEDY_CHILD_H
 
 #include "../../params.h"
-#include "../func/function.h"
-#include "../func/inlineFunction.h"
 #include "params_struct.h"
+#include "../carmi.h"
 #include <float.h>
 #include <algorithm>
 #include <vector>

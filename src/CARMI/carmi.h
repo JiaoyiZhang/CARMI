@@ -80,6 +80,8 @@ private:
     int UpdateError(YCSBLeaf *ycsb, const int start_idx, const int size);
     void Train(YCSBLeaf *ycsb, const int start_idx, const int size);
 
+    long double calculateSpace();
+    void UpdateLeaf();
     bool scan(const int left, const int end, vector<pair<double, double>> &ret, int &firstIdx, int &length);
     int ArrayBinarySearch(double key, int start, int end);
     int GABinarySearch(double key, int start_idx, int end_idx);

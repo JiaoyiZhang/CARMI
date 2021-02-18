@@ -3,15 +3,8 @@
 
 #include "../carmi.h"
 #include <map>
+#include <float.h>
 using namespace std;
-
-extern vector<BaseNode> entireChild;
-extern map<double, int> scanLeaf;
-
-extern LRType lrRoot;
-extern PLRType plrRoot;
-extern HisType hisRoot;
-extern BSType bsRoot;
 
 bool CARMI::Insert(pair<double, double> data)
 {

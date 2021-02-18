@@ -3,12 +3,10 @@
 
 #include <map>
 #include "../baseNode.h"
+#include "../carmi.h"
 using namespace std;
 
-extern vector<BaseNode> entireChild;
-extern map<double, int> scanLeaf;
-
-void UpdateLeaf()
+void CARMI::UpdateLeaf()
 {
     if (kIsYCSB)
         return;

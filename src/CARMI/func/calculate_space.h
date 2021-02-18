@@ -2,25 +2,10 @@
 #define CALCULATE_SPACE_H
 
 #include <vector>
-#include "../nodes/rootNode/bin_type.h"
-#include "../nodes/rootNode/his_type.h"
-#include "../nodes/rootNode/lr_type.h"
-#include "../nodes/rootNode/plr_type.h"
-
-#include "../nodes/innerNode/bs_model.h"
-#include "../nodes/innerNode/lr_model.h"
-#include "../nodes/innerNode/plr_model.h"
-#include "../nodes/innerNode/his_model.h"
-
-#include "../nodes/leafNode/ga_type.h"
-#include "../nodes/leafNode/array_type.h"
-#include "../nodes/leafNode/ycsb_leaf.h"
+#include "../carmi.h"
 using namespace std;
 
-extern vector<pair<double, double>> dataset;
-extern vector<pair<double, double>> insertDataset;
-
-long double calculateSpace()
+long double CARMI::calculateSpace()
 {
     cout << "Space of different classes (sizeof):" << endl;
     cout << "LRType:" << sizeof(LRType) << "\tlr model:" << sizeof(LinearRegression) << endl;

@@ -9,12 +9,6 @@
 #include <set>
 using namespace std;
 
-extern map<pair<bool, pair<int, int>>, ParamStruct> structMap;
-
-extern vector<pair<double, double>> findActualDataset;
-extern vector<pair<double, double>> insertActualDataset;
-extern map<double, int> scanLeaf;
-
 // store the optimal node into the index structure
 // tmpIdx: key in the corresponding struct
 void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx)
@@ -61,7 +55,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         int end = left + size;
         for (int i = left; i < end; i++)
         {
-            int p = node.Predict(findActualDataset[i].first);
+            int p = node.Predict(initDataset[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
                 subLeft[p] = i;
@@ -69,7 +63,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         int insertEnd = insertLeft + insertSize;
         for (int i = insertLeft; i < insertEnd; i++)
         {
-            int p = node.Predict(insertActualDataset[i].first);
+            int p = node.Predict(insertQuery[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
                 subInsertLeft[p] = i;
@@ -108,7 +102,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         int end = left + size;
         for (int i = left; i < end; i++)
         {
-            int p = node.Predict(findActualDataset[i].first);
+            int p = node.Predict(initDataset[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
                 subLeft[p] = i;
@@ -116,7 +110,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         int insertEnd = insertLeft + insertSize;
         for (int i = insertLeft; i < insertEnd; i++)
         {
-            int p = node.Predict(insertActualDataset[i].first);
+            int p = node.Predict(insertQuery[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
                 subInsertLeft[p] = i;
@@ -155,7 +149,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         int end = left + size;
         for (int i = left; i < end; i++)
         {
-            int p = node.Predict(findActualDataset[i].first);
+            int p = node.Predict(initDataset[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
                 subLeft[p] = i;
@@ -163,7 +157,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         int insertEnd = insertLeft + insertSize;
         for (int i = insertLeft; i < insertEnd; i++)
         {
-            int p = node.Predict(insertActualDataset[i].first);
+            int p = node.Predict(insertQuery[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
                 subInsertLeft[p] = i;
@@ -202,7 +196,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         int end = left + size;
         for (int i = left; i < end; i++)
         {
-            int p = node.Predict(findActualDataset[i].first);
+            int p = node.Predict(initDataset[i].first);
             subFindData[p]++;
             if (subLeft[p] == -1)
                 subLeft[p] = i;
@@ -210,7 +204,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         int insertEnd = insertLeft + insertSize;
         for (int i = insertLeft; i < insertEnd; i++)
         {
-            int p = node.Predict(insertActualDataset[i].first);
+            int p = node.Predict(insertQuery[i].first);
             subInsertData[p]++;
             if (subInsertLeft[p] == -1)
                 subInsertLeft[p] = i;
@@ -236,7 +230,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         initArray(&node, left, size);
         entireChild[storeIdx].array = node;
         if (size > 0)
-            scanLeaf.insert({findActualDataset[left].first, storeIdx});
+            scanLeaf.insert({initDataset[left].first, storeIdx});
         break;
     }
     case 5:
@@ -250,7 +244,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         initGA(&node, left, size);
         entireChild[storeIdx].ga = node;
         if (size > 0)
-            scanLeaf.insert({findActualDataset[left].first, storeIdx});
+            scanLeaf.insert({initDataset[left].first, storeIdx});
         break;
     }
     case 6:
