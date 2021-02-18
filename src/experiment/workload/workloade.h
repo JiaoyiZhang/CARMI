@@ -2,13 +2,16 @@
 #define WORKLOAD_E_H
 #include <vector>
 #include "zipfian.h"
+#include "../../CARMI/func/find_function.h"
+#include "../../CARMI/func/insert_function.h"
+#include "../../CARMI/func/rangescan_function.h"
 using namespace std;
 
 extern ofstream outRes;
 
 // read mostly workload (range scan)
 // a mix of 95/5 reads and writes
-void WorkloadE(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset, vector<int> length)
+void WorkloadE(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset, vector<int> length)
 {
     auto init = initDataset;
     auto insert = insertDataset;
@@ -43,10 +46,10 @@ void WorkloadE(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pa
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
             vector<pair<double, double>> ret(length[findCnt], {-1, -1});
-            carmi.RangeScan(init[index[findCnt]].first, length[findCnt], ret);
+            carmi->RangeScan(init[index[findCnt]].first, length[findCnt], ret);
             findCnt++;
         }
-        carmi.Insert(insert[i]);
+        carmi->Insert(insert[i]);
     }
 #else
     for (int i = 0; i < end; i++)
@@ -54,10 +57,10 @@ void WorkloadE(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pa
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
             vector<pair<double, double>> ret(length[findCnt], {-1, -1});
-            carmi.RangeScan(init[findCnt].first, length[findCnt], ret);
+            carmi->RangeScan(init[findCnt].first, length[findCnt], ret);
             findCnt++;
         }
-        carmi.Insert(insert[i]);
+        carmi->Insert(insert[i]);
     }
 #endif
     e = chrono::system_clock::now();

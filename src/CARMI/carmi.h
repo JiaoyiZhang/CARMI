@@ -28,6 +28,8 @@ public:
     }
 
     int Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData);
+    long double calculateSpace();
+    void printStructure(vector<int> &levelVec, vector<int> &nodeVec, int level, int type, int idx);
 
     pair<double, double> Find(double key);
     bool Insert(pair<double, double> data);
@@ -39,7 +41,6 @@ private:
     pair<pair<double, double>, bool> dp(bool isLeaf, const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
     pair<pair<double, double>, bool> GreedyAlgorithm(bool isLeaf, const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
     void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx);
-    void printStructure(vector<int> &levelVec, vector<int> &nodeVec, int level, int type, int idx);
     bool allocateEmptyBlock(int left, int len);
     int getIndex(int size);
     void initEntireData(int left, int size, bool reinit);
@@ -80,7 +81,6 @@ private:
     int UpdateError(YCSBLeaf *ycsb, const int start_idx, const int size);
     void Train(YCSBLeaf *ycsb, const int start_idx, const int size);
 
-    long double calculateSpace();
     void UpdateLeaf();
     bool scan(const int left, const int end, vector<pair<double, double>> &ret, int &firstIdx, int &length);
     int ArrayBinarySearch(double key, int start, int end);
@@ -132,6 +132,8 @@ public:
 CARMI::CARMI(const vector<pair<double, double>> &dataset, int childNum)
 {
     int left = allocateChildMemory(childNum);
+    initEntireData(0, dataset.size() * 1.1, false);
+    initEntireChild(dataset.size() * 1.1);
 
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;

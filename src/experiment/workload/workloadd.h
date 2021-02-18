@@ -3,12 +3,14 @@
 #include <vector>
 #include "zipfian.h"
 #include "../../CARMI/carmi.h"
+#include "../../CARMI/func/find_function.h"
+#include "../../CARMI/func/insert_function.h"
 using namespace std;
 extern ofstream outRes;
 
 // write partially workload
 // a mix of 85/15 reads and writes
-void WorkloadD(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
+void WorkloadD(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
     auto init = initDataset;
     auto insert = insertDataset;
@@ -45,12 +47,12 @@ void WorkloadD(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pa
     {
         for (int j = 0; j < 17 && findCnt < init.size(); j++)
         {
-            carmi.Find(init[index[findCnt]].first);
+            carmi->Find(init[index[findCnt]].first);
             findCnt++;
         }
         for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
         {
-            carmi.Insert(insert[insertCnt]);
+            carmi->Insert(insert[insertCnt]);
             insertCnt++;
         }
     }
@@ -59,12 +61,12 @@ void WorkloadD(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pa
     {
         for (int j = 0; j < 17 && findCnt < init.size(); j++)
         {
-            carmi.Find(init[findCnt].first);
+            carmi->Find(init[findCnt].first);
             findCnt++;
         }
         for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
         {
-            carmi.Insert(insert[insertCnt]);
+            carmi->Insert(insert[insertCnt]);
             insertCnt++;
         }
     }

@@ -90,10 +90,10 @@ void YCSBDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vec
     engine = default_random_engine(seed);
     shuffle(find.begin(), find.end(), engine);
 
-    int end = 100000 - insertNumber;
+    end = 100000 - insertNumber;
     for (int i = 0; i < end; i++)
         trainFindQuery.push_back(initDataset[i]);
-        
+
     cout << "YCSB: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
 }
 

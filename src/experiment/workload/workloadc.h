@@ -3,12 +3,14 @@
 #include <vector>
 #include "zipfian.h"
 #include "../../CARMI/carmi.h"
+#include "../../CARMI/func/find_function.h"
+#include "../../CARMI/func/insert_function.h"
 using namespace std;
 extern ofstream outRes;
 
 // read only workload
 // 100% read
-void WorkloadC(CARMI carmi, vector<pair<double, double>> &initDataset)
+void WorkloadC(CARMI *carmi, vector<pair<double, double>> &initDataset)
 {
     auto init = initDataset;
 
@@ -34,12 +36,12 @@ void WorkloadC(CARMI carmi, vector<pair<double, double>> &initDataset)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        carmi.Find(init[index[i]].first);
+        carmi->Find(init[index[i]].first);
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        carmi.Find(init[i].first);
+        carmi->Find(init[i].first);
     }
 #endif
     e = chrono::system_clock::now();

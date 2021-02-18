@@ -3,6 +3,15 @@
 
 #include "../../params.h"
 #include "../carmi.h"
+#include "../nodes/leafNode/ycsb_leaf_type.h"
+#include "../nodes/leafNode/array_type.h"
+#include "../nodes/leafNode/ga_type.h"
+#include "../dataManager/child_array.h"
+#include "../dataManager/datapoint.h"
+#include "../nodes/innerNode/bs_model.h"
+#include "../nodes/innerNode/lr_model.h"
+#include "../nodes/innerNode/plr_model.h"
+#include "../nodes/innerNode/his_model.h"
 #include <float.h>
 #include <vector>
 #include <map>

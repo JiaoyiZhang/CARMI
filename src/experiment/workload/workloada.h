@@ -2,6 +2,8 @@
 #define WORKLOAD_A_H
 #include <vector>
 #include "../../CARMI/carmi.h"
+#include "../../CARMI/func/find_function.h"
+#include "../../CARMI/func/insert_function.h"
 #include "zipfian.h"
 using namespace std;
 
@@ -9,7 +11,7 @@ extern ofstream outRes;
 
 // update heavy workload
 // a mix of 50/50 reads and writes
-void WorkloadA(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
+void WorkloadA(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
     auto init = initDataset;
     auto insert = insertDataset;
@@ -40,14 +42,14 @@ void WorkloadA(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pa
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        carmi.Find(init[index[i]].first);
-        carmi.Insert(insert[i]);
+        carmi->Find(init[index[i]].first);
+        carmi->Insert(insert[i]);
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        carmi.Find(init[i].first);
-        carmi.Insert(insert[i]);
+        carmi->Find(init[i].first);
+        carmi->Insert(insert[i]);
     }
 #endif
     e = chrono::system_clock::now();

@@ -2,6 +2,8 @@
 #define DP_H
 
 #include "../../params.h"
+#include "../func/inlineFunction.h"
+#include "greedy_construct.h"
 #include <float.h>
 #include <algorithm>
 #include <vector>
