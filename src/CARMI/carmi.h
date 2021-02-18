@@ -15,10 +15,14 @@ public:
     CARMI(const vector<pair<double, double>> &dataset, int childNum); // RMI
     CARMI(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
     {
+        initDataset = initData;
+        findQuery = findData;
+        insertQuery = insertData;
         rootType = Construction(initData, findData, insertData);
     }
     CARMI(const vector<pair<double, double>> &initData)
     {
+        initDataset = initData;
         vector<pair<double, double>> tmp;
         rootType = Construction(initData, tmp, tmp);
     }
@@ -101,6 +105,7 @@ private:
     vector<pair<double, double>> initDataset;
     vector<pair<double, double>> findQuery;
     vector<pair<double, double>> insertQuery;
+
     map<pair<int, int>, pair<double, double>> COST; // int:left; double:time, space
     map<pair<bool, pair<int, int>>, ParamStruct> structMap;
     int querySize;

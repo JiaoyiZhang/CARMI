@@ -42,7 +42,7 @@ int CARMI::Construction(const vector<pair<double, double>> &initData, const vect
     scanLeaf.clear();
 
     int childNum = res.second;
-    int rootType = res.first;
+    rootType = res.first;
     kInnerNodeID = rootType;
     cout << "Construction of the root node has been completed!" << endl;
     cout << "The optimal value of root is: " << res.first << ",\tthe optimal child number is: " << res.second << endl;
