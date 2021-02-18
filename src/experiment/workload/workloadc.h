@@ -1,45 +1,26 @@
 #ifndef WORKLOAD_C_H
 #define WORKLOAD_C_H
 #include <vector>
-#include "../../CARMI/func/function.h"
 #include "zipfian.h"
+#include "../../CARMI/carmi.h"
 using namespace std;
-
-extern vector<pair<double, double>> findActualDataset;
-extern vector<pair<double, double>> insertActualDataset;
-
-extern vector<pair<double, double>> dataset;
-extern vector<pair<double, double>> insertDataset;
-
 extern ofstream outRes;
 
 // read only workload
 // 100% read
-void WorkloadC(int rootType)
+void WorkloadC(CARMI carmi, vector<pair<double, double>> &initDataset)
 {
-    dataset = findActualDataset;
-
-    // if (kRate == 1)
-    // {
-    // for (int i = 0; i < dataset.size(); i++)
-    // {
-    //     auto res = Find(rootType, dataset[i].first);
-    //     if (res.first != dataset[i].first)
-    //         cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
-    // }
-    // cout << "check FIND over!" << endl;
-    // }
+    auto init = initDataset;
 
     default_random_engine engine;
 
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed);
-    shuffle(dataset.begin(), dataset.end(), engine);
+    shuffle(init.begin(), init.end(), engine);
 
-    // int end = dataset.size();
     int end = 100000;
     Zipfian zipFind;
-    zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
+    zipFind.InitZipfian(PARAM_ZIPFIAN, init.size());
     vector<int> index;
     for (int i = 0; i < end; i++)
     {
@@ -53,12 +34,12 @@ void WorkloadC(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        Find(rootType, dataset[index[i]].first);
+        carmi.Find(init[index[i]].first);
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        Find(rootType, dataset[i].first);
+        carmi.Find(init[i].first);
     }
 #endif
     e = chrono::system_clock::now();
@@ -69,12 +50,12 @@ void WorkloadC(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        TestFind(rootType, dataset[index[i]].first);
+        init[index[i]].first;
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        TestFind(rootType, dataset[i].first);
+        init[i].first;
     }
 #endif
     e = chrono::system_clock::now();
@@ -84,13 +65,6 @@ void WorkloadC(int rootType)
     cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
 
     outRes << tmp / 100000.0 * 1000000000 << ",";
-
-    std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
-    std::sort(insertDataset.begin(), insertDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
 }
 
 #endif // !WORKLOAD_C_H

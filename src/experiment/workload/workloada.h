@@ -1,51 +1,34 @@
 #ifndef WORKLOAD_A_H
 #define WORKLOAD_A_H
 #include <vector>
-#include "../../CARMI/func/function.h"
+#include "../../CARMI/carmi.h"
 #include "zipfian.h"
 using namespace std;
-
-extern vector<pair<double, double>> findActualDataset;
-extern vector<pair<double, double>> insertActualDataset;
-
-extern vector<pair<double, double>> dataset;
-extern vector<pair<double, double>> insertDataset;
 
 extern ofstream outRes;
 
 // update heavy workload
 // a mix of 50/50 reads and writes
-void WorkloadA(int rootType)
+void WorkloadA(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
-    dataset = findActualDataset;
-    insertDataset = insertActualDataset;
+    auto init = initDataset;
+    auto insert = insertDataset;
 
-    // if (kRate == 1)
-    // {
-    // for (int i = 0; i < dataset.size(); i++)
-    // {
-    //     auto res = Find(rootType, dataset[i].first);
-    //     if (res.first != dataset[i].first)
-    //         cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
-    // }
-    // cout << "check FIND over!" << endl;
-    // }
     default_random_engine engine;
 
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed);
-    shuffle(dataset.begin(), dataset.end(), engine);
+    shuffle(init.begin(), init.end(), engine);
 
     unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed1);
-    shuffle(insertDataset.begin(), insertDataset.end(), engine);
+    shuffle(insert.begin(), insert.end(), engine);
 
-    // int end = min(dataset.size(), insertDataset.size());
     int end = 50000;
     Zipfian zip;
-    zip.InitZipfian(PARAM_ZIPFIAN, end);
+    zip.InitZipfian(PARAM_ZIPFIAN, init.size());
     vector<int> index;
-    for (int i = 0; i < end; i++)
+    for (int i = 0; i < init.size(); i++)
     {
         int idx = zip.GenerateNextIndex();
         index.push_back(idx);
@@ -57,14 +40,14 @@ void WorkloadA(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        Find(rootType, dataset[index[i]].first);
-        Insert(rootType, insertDataset[i]);
+        carmi.Find(init[index[i]].first);
+        carmi.Insert(insert[i]);
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        Find(rootType, dataset[i].first);
-        Insert(rootType, insertDataset[i]);
+        carmi.Find(init[i].first);
+        carmi.Insert(insert[i]);
     }
 #endif
     e = chrono::system_clock::now();
@@ -74,14 +57,14 @@ void WorkloadA(int rootType)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        TestFind(rootType, dataset[index[i]].first);
-        TestFind(rootType, insertDataset[i].first);
+        init[index[i]].first;
+        insert[i];
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        TestFind(rootType, dataset[i].first);
-        TestFind(rootType, insertDataset[i].first);
+        init[i].first;
+        insert[i];
     }
 #endif
     e = chrono::system_clock::now();
@@ -91,13 +74,6 @@ void WorkloadA(int rootType)
     cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
 
     outRes << tmp / 100000.0 * 1000000000 << ",";
-
-    std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
-    std::sort(insertDataset.begin(), insertDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
 }
 
 #endif // !WORKLOAD_A_H

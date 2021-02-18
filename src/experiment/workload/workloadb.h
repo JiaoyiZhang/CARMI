@@ -1,52 +1,35 @@
 #ifndef WORKLOAD_B_H
 #define WORKLOAD_B_H
 #include <vector>
-#include "../../CARMI/func/function.h"
+#include "../../CARMI/carmi.h"
 #include "zipfian.h"
 using namespace std;
-
-extern vector<pair<double, double>> findActualDataset;
-extern vector<pair<double, double>> insertActualDataset;
-
-extern vector<pair<double, double>> dataset;
-extern vector<pair<double, double>> insertDataset;
 
 extern ofstream outRes;
 
 // read mostly workload
 // a mix of 95/5 reads and writes
-void WorkloadB(int rootType)
+void WorkloadB(CARMI carmi, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &insertDataset)
 {
-    dataset = findActualDataset;
-    insertDataset = insertActualDataset;
+    auto init = initDataset;
+    auto insert = insertDataset;
 
-    // if (kRate == 1)
-    // {
-    // for (int i = 0; i < dataset.size(); i++)
-    // {
-    //     auto res = Find(rootType, dataset[i].first);
-    //     if (res.first != dataset[i].first)
-    //         cout << "Find failed:\ti:" << i << "\tdata:" << dataset[i].first << "\t" << dataset[i].second << "\tres: " << res.first << "\t" << res.second << endl;
-    // }
-    // cout << "check FIND over!" << endl;
-    // }
     default_random_engine engine;
 
     unsigned seed = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed);
-    shuffle(dataset.begin(), dataset.end(), engine);
+    shuffle(init.begin(), init.end(), engine);
 
     unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
     engine = default_random_engine(seed1);
-    shuffle(insertDataset.begin(), insertDataset.end(), engine);
+    shuffle(insert.begin(), insert.end(), engine);
 
-    // int end = insertDataset.size();
     int end = 5000;
     int findCnt = 0;
     Zipfian zipFind;
-    zipFind.InitZipfian(PARAM_ZIPFIAN, dataset.size());
+    zipFind.InitZipfian(PARAM_ZIPFIAN, init.size());
     vector<int> index;
-    for (int i = 0; i < dataset.size(); i++)
+    for (int i = 0; i < init.size(); i++)
     {
         int idx = zipFind.GenerateNextIndex();
         index.push_back(idx);
@@ -60,20 +43,20 @@ void WorkloadB(int rootType)
     {
         for (int j = 0; j < 19; j++)
         {
-            Find(rootType, dataset[index[findCnt]].first);
+            carmi.Find(init[index[findCnt]].first);
             findCnt++;
         }
-        Insert(rootType, insertDataset[i]);
+        carmi.Insert(insert[i]);
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+        for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
-            Find(rootType, dataset[findCnt].first);
+            carmi.Find(init[findCnt].first);
             findCnt++;
         }
-        Insert(rootType, insertDataset[i]);
+        carmi.Insert(insert[i]);
     }
 #endif
     e = chrono::system_clock::now();
@@ -86,20 +69,20 @@ void WorkloadB(int rootType)
     {
         for (int j = 0; j < 19; j++)
         {
-            TestFind(rootType, dataset[index[findCnt]].first);
+            init[index[findCnt]].first;
             findCnt++;
         }
-        TestFind(rootType, insertDataset[i].first);
+        insert[i];
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        for (int j = 0; j < 19 && findCnt < dataset.size(); j++)
+        for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
-            TestFind(rootType, dataset[findCnt].first);
+            init[findCnt].first;
             findCnt++;
         }
-        TestFind(rootType, insertDataset[i].first);
+        insert[i];
     }
 #endif
     e = chrono::system_clock::now();
@@ -108,13 +91,6 @@ void WorkloadB(int rootType)
 
     cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
     outRes << tmp / 100000.0 * 1000000000 << ",";
-
-    std::sort(dataset.begin(), dataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
-    std::sort(insertDataset.begin(), insertDataset.end(), [](pair<double, double> p1, pair<double, double> p2) {
-        return p1.first < p2.first;
-    });
 }
 
 #endif // !WORKLOAD_B_H
