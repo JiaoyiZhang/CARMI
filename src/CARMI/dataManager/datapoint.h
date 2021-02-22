@@ -55,11 +55,9 @@ void CARMI::initEntireData(int left, int size, bool reinit)
     entireDataSize = len;
     cout << "dataset size:" << size << endl;
     cout << "the size of entireData is:" << len << endl;
-    delete[] entireData;
     vector<EmptyBlock>().swap(emptyBlocks);
-    entireData = new pair<double, double>[len];
-    for (int i = 0; i < len; i++)
-        entireData[i] = {DBL_MIN, DBL_MIN};
+    vector<pair<double, double>>().swap(entireData);
+    entireData = vector<pair<double, double>>(len, {DBL_MIN, DBL_MIN});
     for (int i = 0, j = 1; i < 13; i++, j *= 2)
         emptyBlocks.push_back(EmptyBlock(j));
     if (reinit)
@@ -95,12 +93,8 @@ int CARMI::allocateMemory(int size)
         // need to expand the reorganize entireData
         cout << "need expand the entire!" << endl;
         auto tmpSize = entireDataSize;
-        vector<pair<double, double>> tmpData;
-        vector<EmptyBlock> tmpBlocks;
-        for (int i = 0; i < tmpSize; i++)
-            tmpData.push_back(entireData[i]);
-        for (int i = 0; i < 13; i++)
-            tmpBlocks.push_back(emptyBlocks[i]);
+        vector<pair<double, double>> tmpData = entireData;
+        vector<EmptyBlock> tmpBlocks = emptyBlocks;
 
         initEntireData(tmpSize, tmpSize, true);
         for (int i = 0; i < tmpSize; i++)
@@ -134,7 +128,6 @@ void CARMI::releaseMemory(int left, int size)
         if (!emptyBlocks[i].find(left + emptyBlocks[i].m_width))
         {
             emptyBlocks[i].m_block.insert(left);
-            // cout << "release i:" << i << ",\tleft:" << left << ",\tsize:" << size << ",\twidth:" << emptyBlocks[i].m_width << endl;
             break;
         }
     }
