@@ -12,11 +12,43 @@
 #include "../nodes/innerNode/lr_model.h"
 #include "../nodes/innerNode/plr_model.h"
 #include "../nodes/innerNode/his_model.h"
+#include "dp_inner.h"
 #include <float.h>
 #include <vector>
 #include <map>
 #include <set>
 using namespace std;
+template <typename TYPE>
+TYPE CARMI::storeInnerNode(pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx)
+{
+    auto it = structMap.find(key);
+    if (it == structMap.end())
+        cout << "WRONG!" << endl;
+    TYPE node = TYPE();
+    node.SetChildNumber(it->second.childNum);
+    int optimalChildNumber = it->second.childNum;
+    node.childLeft = allocateChildMemory(optimalChildNumber);
+    Train(&node, left, size);
+
+    // divide the key and query
+    vector<pair<int, int>> subInitData(optimalChildNumber, {-1, 0});
+    vector<pair<int, int>> subFindData(optimalChildNumber, {-1, 0});
+    vector<pair<int, int>> subInsertData(optimalChildNumber, {-1, 0});
+    InnerDivide<TYPE>(&node, optimalChildNumber, left, size, left, size, insertLeft, insertSize, subInitData, subFindData, subInsertData, true);
+
+    for (int i = 0; i < optimalChildNumber; i++)
+    {
+        auto nowKey = it->second.child[i];
+        int type;
+        auto iter = structMap.find(nowKey);
+        if (iter == structMap.end())
+            type = 4;
+        else
+            type = iter->second.type;
+        storeOptimalNode(type, nowKey, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, node.childLeft + i);
+    }
+    return node;
+}
 
 // store the optimal node into the index structure
 // tmpIdx: key in the corresponding struct
@@ -25,7 +57,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
     if (size == 0)
     {
         // choose an array node as the leaf node
-        if (kIsYCSB)
+        if (kPrimaryIndex)
         {
             auto node = YCSBLeaf();
             initYCSB(&node, left, size);
@@ -36,8 +68,11 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
             auto node = ArrayType(max(size + insertSize, kThreshold));
             initArray(&node, left, size);
             entireChild[storeIdx].array = node;
+
+#ifdef DEBUG
             if (optimalType < 4)
                 cout << "WRONG! size==0, type is:" << optimalType << endl;
+#endif // DEBUG
         }
         return;
     }
@@ -46,195 +81,30 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
     {
     case 0:
     {
-        auto it = structMap.find(key);
-        if (it == structMap.end())
-            cout << "WRONG!" << endl;
-        auto node = LRModel();
-        node.SetChildNumber(it->second.childNum);
-        int optimalChildNumber = it->second.childNum;
-        node.childLeft = allocateChildMemory(optimalChildNumber);
-        Train(&node, left, size);
+        auto node = storeInnerNode<LRModel>(key, left, size, insertLeft, insertSize, storeIdx);
         entireChild[storeIdx].lr = node;
-        // divide the key and query
-        vector<int> subFindData(optimalChildNumber, 0);
-        vector<int> subInsertData(optimalChildNumber, 0);
-        vector<int> subLeft(optimalChildNumber, -1);       // {left, size}
-        vector<int> subInsertLeft(optimalChildNumber, -1); // {left, size}
-
-        int end = left + size;
-        for (int i = left; i < end; i++)
-        {
-            int p = node.Predict(initDataset[i].first);
-            subFindData[p]++;
-            if (subLeft[p] == -1)
-                subLeft[p] = i;
-        }
-        int insertEnd = insertLeft + insertSize;
-        for (int i = insertLeft; i < insertEnd; i++)
-        {
-            int p = node.Predict(insertQuery[i].first);
-            subInsertData[p]++;
-            if (subInsertLeft[p] == -1)
-                subInsertLeft[p] = i;
-        }
-
-        for (int i = 0; i < optimalChildNumber; i++)
-        {
-            auto nowKey = it->second.child[i];
-            int type;
-            auto iter = structMap.find(nowKey);
-            if (iter == structMap.end())
-                type = 4;
-            else
-                type = iter->second.type;
-            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
-        }
         break;
     }
     case 1:
     {
-        auto it = structMap.find(key);
-        if (it == structMap.end())
-            cout << "WRONG!" << endl;
-        auto node = PLRModel();
-        node.SetChildNumber(it->second.childNum);
-        int optimalChildNumber = it->second.childNum;
-        node.childLeft = allocateChildMemory(optimalChildNumber);
-        Train(&node, left, size);
+        auto node = storeInnerNode<PLRModel>(key, left, size, insertLeft, insertSize, storeIdx);
         entireChild[storeIdx].plr = node;
-        // divide the key and query
-        vector<int> subFindData(optimalChildNumber, 0);
-        vector<int> subInsertData(optimalChildNumber, 0);
-        vector<int> subLeft(optimalChildNumber, -1);       // {left, size}
-        vector<int> subInsertLeft(optimalChildNumber, -1); // {left, size}
-
-        int end = left + size;
-        for (int i = left; i < end; i++)
-        {
-            int p = node.Predict(initDataset[i].first);
-            subFindData[p]++;
-            if (subLeft[p] == -1)
-                subLeft[p] = i;
-        }
-        int insertEnd = insertLeft + insertSize;
-        for (int i = insertLeft; i < insertEnd; i++)
-        {
-            int p = node.Predict(insertQuery[i].first);
-            subInsertData[p]++;
-            if (subInsertLeft[p] == -1)
-                subInsertLeft[p] = i;
-        }
-
-        for (int i = 0; i < optimalChildNumber; i++)
-        {
-            auto nowKey = it->second.child[i];
-            int type;
-            auto iter = structMap.find(nowKey);
-            if (iter == structMap.end())
-                type = 4;
-            else
-                type = iter->second.type;
-            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
-        }
         break;
     }
     case 2:
     {
-        auto it = structMap.find(key);
-        if (it == structMap.end())
-            cout << "WRONG!" << endl;
-        auto node = HisModel();
-        node.SetChildNumber(it->second.childNum);
-        int optimalChildNumber = it->second.childNum;
-        node.childLeft = allocateChildMemory(optimalChildNumber);
-        Train(&node, left, size);
+        auto node = storeInnerNode<HisModel>(key, left, size, insertLeft, insertSize, storeIdx);
         entireChild[storeIdx].his = node;
-        // divide the key and query
-        vector<int> subFindData(optimalChildNumber, 0);
-        vector<int> subInsertData(optimalChildNumber, 0);
-        vector<int> subLeft(optimalChildNumber, -1);       // {left, size}
-        vector<int> subInsertLeft(optimalChildNumber, -1); // {left, size}
-
-        int end = left + size;
-        for (int i = left; i < end; i++)
-        {
-            int p = node.Predict(initDataset[i].first);
-            subFindData[p]++;
-            if (subLeft[p] == -1)
-                subLeft[p] = i;
-        }
-        int insertEnd = insertLeft + insertSize;
-        for (int i = insertLeft; i < insertEnd; i++)
-        {
-            int p = node.Predict(insertQuery[i].first);
-            subInsertData[p]++;
-            if (subInsertLeft[p] == -1)
-                subInsertLeft[p] = i;
-        }
-
-        for (int i = 0; i < optimalChildNumber; i++)
-        {
-            auto nowKey = it->second.child[i];
-            int type;
-            auto iter = structMap.find(nowKey);
-            if (iter == structMap.end())
-                type = 4;
-            else
-                type = iter->second.type;
-            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
-        }
         break;
     }
     case 3:
     {
-        auto it = structMap.find(key);
-        if (it == structMap.end())
-            cout << "WRONG!" << endl;
-        auto node = BSModel();
-        node.SetChildNumber(it->second.childNum);
-        int optimalChildNumber = it->second.childNum;
-        node.childLeft = allocateChildMemory(optimalChildNumber);
-        Train(&node, left, size);
+        auto node = storeInnerNode<BSModel>(key, left, size, insertLeft, insertSize, storeIdx);
         entireChild[storeIdx].bs = node;
-        // divide the key and query
-        vector<int> subFindData(optimalChildNumber, 0);
-        vector<int> subInsertData(optimalChildNumber, 0);
-        vector<int> subLeft(optimalChildNumber, -1);       // {left, size}
-        vector<int> subInsertLeft(optimalChildNumber, -1); // {left, size}
-
-        int end = left + size;
-        for (int i = left; i < end; i++)
-        {
-            int p = node.Predict(initDataset[i].first);
-            subFindData[p]++;
-            if (subLeft[p] == -1)
-                subLeft[p] = i;
-        }
-        int insertEnd = insertLeft + insertSize;
-        for (int i = insertLeft; i < insertEnd; i++)
-        {
-            int p = node.Predict(insertQuery[i].first);
-            subInsertData[p]++;
-            if (subInsertLeft[p] == -1)
-                subInsertLeft[p] = i;
-        }
-
-        for (int i = 0; i < optimalChildNumber; i++)
-        {
-            auto nowKey = it->second.child[i];
-            int type;
-            auto iter = structMap.find(nowKey);
-            if (iter == structMap.end())
-                type = 4;
-            else
-                type = iter->second.type;
-            storeOptimalNode(type, nowKey, subLeft[i], subFindData[i], subInsertLeft[i], subInsertData[i], node.childLeft + i);
-        }
         break;
     }
     case 4:
     {
-        // choose an array node as the leaf node
         auto node = ArrayType(max(size + insertSize, kThreshold));
         initArray(&node, left, size);
         entireChild[storeIdx].array = node;
