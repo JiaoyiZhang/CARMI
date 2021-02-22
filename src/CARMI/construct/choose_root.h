@@ -5,83 +5,62 @@
 #include "../nodes/rootNode/his_type.h"
 #include "../nodes/rootNode/lr_type.h"
 #include "../nodes/rootNode/plr_type.h"
+#include "../carmi.h"
+#include "root_struct.h"
 #include <vector>
 #include <float.h>
 using namespace std;
 
-extern double kRate;
+template <typename TYPE>
+void CARMI::RootAllocSize(vector<int> &perSize, const int c)
+{
+    TYPE root = TYPE(c);
+    root.model.Train(initDataset, c);
+    for (int i = 0; i < initDataset.size(); i++)
+    {
+        int p = root.model.Predict(initDataset[i].first);
+        perSize[p]++;
+    }
+}
 
-pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
+RootStruct CARMI::ChooseRoot()
 {
     double OptimalValue = DBL_MAX;
     double time, space;
-    int c;
     int optimalChildNumber, optimalType;
-    vector<pair<double, double>> tmp;
-    for (int c = 1024; c <= dataset.size() * 10; c *= 2)
+    for (int c = 1024; c <= initDataset.size() * 10; c *= 2)
     {
-        if (512 * c < dataset.size())
+        if (512 * c < initDataset.size())
             continue;
         for (int type = 0; type < 4; type++)
         {
-            if (type == 1)
-                continue;
             vector<int> perSize(c, 0);
-            for (int i = 0; i < c; i++)
-                perSize.push_back(0);
+            space = 64.0 * c / 1024 / 1024;
 
             switch (type)
             {
             case 0:
             {
                 time = 12.7013;
-                space = 64.0 * c / 1024 / 1024;
-                auto root = LRType(c);
-                root.model.Train(dataset, c);
-                for (int i = 0; i < dataset.size(); i++)
-                {
-                    int p = root.model.Predict(dataset[i].first);
-                    perSize[p]++;
-                }
+                RootAllocSize<LRType>(perSize, c);
                 break;
             }
             case 1:
             {
                 time = 39.6429;
-                space = 64.0 * c / 1024 / 1024;
-                auto root = PLRType(c);
-                root.model.Train(dataset, c);
-                for (int i = 0; i < dataset.size(); i++)
-                {
-                    int p = root.model.Predict(dataset[i].first);
-                    perSize[p]++;
-                }
+                RootAllocSize<PLRType>(perSize, c);
                 break;
             }
             case 2:
             {
                 time = 44.2824;
-                space = 64.0 * c / 1024 / 1024;
-                auto root = HisType(c);
-                root.model.Train(dataset, c);
-                for (int i = 0; i < dataset.size(); i++)
-                {
-                    int p = root.model.Predict(dataset[i].first);
-                    perSize[p]++;
-                }
+                RootAllocSize<HisType>(perSize, c);
                 break;
             }
             case 3:
             {
                 time = 10.9438 * log(c) / log(2);
-                space = 64.0 * c / 1024 / 1024;
-                auto root = BSType(c);
-                root.model.Train(dataset, c);
-                for (int i = 0; i < dataset.size(); i++)
-                {
-                    int p = root.model.Predict(dataset[i].first);
-                    perSize[p]++;
-                }
+                RootAllocSize<BSType>(perSize, c);
                 break;
             }
             }
@@ -89,11 +68,10 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             long double entropy = 0.0;
             for (int i = 0; i < c; i++)
             {
-                auto p = float(perSize[i]) / dataset.size();
+                auto p = float(perSize[i]) / initDataset.size();
                 if (p != 0)
                     entropy += p * (-log(p) / log(2));
             }
-            // entropy /= (log(c) / log(2));
 
             double cost = (time + float(kRate * space)) / entropy;
             if (cost <= OptimalValue)
@@ -104,7 +82,9 @@ pair<int, int> ChooseRoot(const vector<pair<double, double>> &dataset)
             }
         }
     }
+#ifdef DEBUG
     cout << "Best type is: " << optimalType << "\tbest childNumber: " << optimalChildNumber << "\tOptimal Value: " << OptimalValue << endl;
+#endif
     return {optimalType, optimalChildNumber};
 }
 

@@ -1,10 +1,10 @@
 #ifndef CONSTRUCTION_H
 #define CONSTRUCTION_H
 
-#include "choose_root.h"
-#include "store_node.h"
-#include "dp.h"
+#include "root_struct.h"
 #include "params_struct.h"
+#include "choose_root.h"
+#include "construct_root.h"
 #include "update_leaf.h"
 #include "../carmi.h"
 #include <vector>
@@ -19,6 +19,7 @@ using namespace std;
 // writeCnt: the number of WRITE corresponding to each key
 inline int CARMI::Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
 {
+#ifdef DEBUG
     cout << endl;
     cout << "-------------------------------" << endl;
     cout << "Start construction!" << endl;
@@ -28,66 +29,44 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
     char tmpTime[64];
     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     cout << "\nTEST time: " << tmpTime << endl;
+#endif
 
-    if (!kIsYCSB)
-        initEntireData(0, initData.size() * 1.1, false);
-    initEntireChild(initData.size() * 1.1);
-    initDataset = initData;
-    findQuery = findData;
-    insertQuery = insertData;
-    auto res = ChooseRoot(findData);
+    if (initDataset.size() != initData.size())
+    {
+        initDataset = initData;
+        findQuery = findData;
+        insertQuery = insertData;
+    }
+
+    if (!kPrimaryIndex)
+        initEntireData(0, initDataset.size() * 1.1, false);
+    initEntireChild(initDataset.size() * 1.1);
+
+    auto res = ChooseRoot();
 
     COST.clear();
     structMap.clear();
     scanLeaf.clear();
 
-    int childNum = res.second;
-    rootType = res.first;
+    int childNum = res.rootChildNum;
+    rootType = res.rootType;
     kInnerNodeID = rootType;
+
+#ifdef DEBUG
     cout << "Construction of the root node has been completed!" << endl;
     cout << "The optimal value of root is: " << res.first << ",\tthe optimal child number is: " << res.second << endl;
-    switch (rootType)
-    {
-    case 0:
-    {
-        root.lrRoot = LRType(childNum);
-        root.lrRoot.childLeft = allocateChildMemory(childNum);
-        root.lrRoot.model.Train(findData, childNum);
-        break;
-    }
-    case 1:
-    {
-        root.plrRoot = PLRType(childNum);
-        root.plrRoot.childLeft = allocateChildMemory(childNum);
-        root.plrRoot.model.Train(findData, childNum);
-        break;
-    }
-    case 2:
-    {
-        root.hisRoot = HisType(childNum);
-        root.hisRoot.childLeft = allocateChildMemory(childNum);
-        root.hisRoot.model.Train(findData, childNum);
-        break;
-    }
-    case 3:
-    {
-        root.bsRoot = BSType(childNum);
-        root.bsRoot.childLeft = allocateChildMemory(childNum);
-        root.bsRoot.model.Train(findData, childNum);
-        break;
-    }
-    }
+#endif
+
     double totalCost = 0.0;
     double totalTime = 0.0;
     double totalSpace = 0.0;
-    vector<pair<int, int>> subInitData(childNum, {-1, 0});   // {left, size}
-    vector<pair<int, int>> subFindData(childNum, {-1, 0});   // {left, size}
-    vector<pair<int, int>> subInsertData(childNum, {-1, 0}); // {left, size}
 
+#ifdef DEBUG
     time(&timep);
     char tmpTime2[64];
     strftime(tmpTime2, sizeof(tmpTime2), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     cout << "Root time: " << tmpTime2 << endl;
+#endif
 
     COST.insert({{-1, 0}, {0, 0}});
     ParamStruct leafP;
@@ -99,274 +78,48 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
     {
     case 0:
     {
+        root.lrRoot = LRType(childNum);
+        root.lrRoot.childLeft = allocateChildMemory(childNum);
+        root.lrRoot.model.Train(initDataset, childNum);
         totalTime = 12.7013;
         totalSpace += sizeof(LRType);
-        for (int i = 0; i < initDataset.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(initDataset[i].first);
-            if (subInitData[p].first == -1)
-                subInitData[p].first = i;
-            subInitData[p].second++;
-        }
-        for (int i = 0; i < findQuery.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(findQuery[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
-        }
-        for (int i = 0; i < insertQuery.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(insertQuery[i].first);
-            if (subInsertData[p].first == -1)
-                subInsertData[p].first = i;
-            subInsertData[p].second++;
-        }
-
-        for (int i = 0; i < childNum; i++)
-        {
-            pair<pair<double, double>, bool> resChild;
-            if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-            else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
-            {
-                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
-                    resChild = res1;
-                else
-                    resChild = res0;
-            }
-            else
-            {
-                resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-            }
-            int type;
-            pair<bool, pair<int, int>> key = {resChild.second, {subInitData[i].first, subInitData[i].second}};
-            auto it = structMap.find(key);
-            if (it == structMap.end())
-            {
-                if (kIsYCSB)
-                    type = 6;
-                else
-                    type = 4;
-            }
-            else
-                type = it->second.type;
-            storeOptimalNode(type, key, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, i);
-
-            totalCost += resChild.first.first + resChild.first.second;
-            totalTime += resChild.first.first;
-            totalSpace += resChild.first.second;
-
-            COST.clear();
-            structMap.clear();
-        }
+        ConstructRoot<LRType>(&root.lrRoot, childNum, totalCost, totalTime, totalSpace);
         break;
     }
     case 1:
     {
+        root.plrRoot = PLRType(childNum);
+        root.plrRoot.childLeft = allocateChildMemory(childNum);
+        root.plrRoot.model.Train(initDataset, childNum);
         totalTime = 39.6429;
         totalSpace += sizeof(PLRType);
-        for (int i = 0; i < initDataset.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(initDataset[i].first);
-            if (subInitData[p].first == -1)
-                subInitData[p].first = i;
-            subInitData[p].second++;
-        }
-        for (int i = 0; i < findQuery.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(findQuery[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
-        }
-        for (int i = 0; i < insertQuery.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(insertQuery[i].first);
-            if (subInsertData[p].first == -1)
-                subInsertData[p].first = i;
-            subInsertData[p].second++;
-        }
-
-        for (int i = 0; i < childNum; i++)
-        {
-            pair<pair<double, double>, bool> resChild;
-            if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-            else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
-            {
-                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
-                    resChild = res1;
-                else
-                    resChild = res0;
-            }
-            else
-            {
-                resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-            }
-            int type;
-            pair<bool, pair<int, int>> key = {resChild.second, {subInitData[i].first, subInitData[i].second}};
-            auto it = structMap.find(key);
-            if (it == structMap.end())
-            {
-                if (kIsYCSB)
-                    type = 6;
-                else
-                    type = 4;
-            }
-            else
-                type = it->second.type;
-            storeOptimalNode(type, key, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, i);
-
-            totalCost += resChild.first.first + resChild.first.second;
-            totalTime += resChild.first.first;
-            totalSpace += resChild.first.second;
-
-            COST.clear();
-            structMap.clear();
-        }
+        ConstructRoot<PLRType>(&root.plrRoot, childNum, totalCost, totalTime, totalSpace);
+        break;
     }
-    break;
     case 2:
     {
+        root.hisRoot = HisType(childNum);
+        root.hisRoot.childLeft = allocateChildMemory(childNum);
+        root.hisRoot.model.Train(initDataset, childNum);
         totalTime = 44.2824;
         totalSpace += sizeof(HisType);
-        for (int i = 0; i < initDataset.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(initDataset[i].first);
-            if (subInitData[p].first == -1)
-                subInitData[p].first = i;
-            subInitData[p].second++;
-        }
-        for (int i = 0; i < findQuery.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(findQuery[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
-        }
-        for (int i = 0; i < insertQuery.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(insertQuery[i].first);
-            if (subInsertData[p].first == -1)
-                subInsertData[p].first = i;
-            subInsertData[p].second++;
-        }
-
-        for (int i = 0; i < childNum; i++)
-        {
-            pair<pair<double, double>, bool> resChild;
-            if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-            else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
-            {
-                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
-                    resChild = res1;
-                else
-                    resChild = res0;
-            }
-            else
-            {
-                resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-            }
-            int type;
-            pair<bool, pair<int, int>> key = {resChild.second, {subInitData[i].first, subInitData[i].second}};
-            auto it = structMap.find(key);
-            if (it == structMap.end())
-            {
-                if (kIsYCSB)
-                    type = 6;
-                else
-                    type = 4;
-            }
-            else
-                type = it->second.type;
-            storeOptimalNode(type, key, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, i);
-
-            totalCost += resChild.first.first + resChild.first.second;
-            totalTime += resChild.first.first;
-            totalSpace += resChild.first.second;
-
-            COST.clear();
-            structMap.clear();
-        }
+        ConstructRoot<HisType>(&root.hisRoot, childNum, totalCost, totalTime, totalSpace);
+        break;
     }
-    break;
     case 3:
     {
+        root.bsRoot = BSType(childNum);
+        root.bsRoot.childLeft = allocateChildMemory(childNum);
+        root.bsRoot.model.Train(initDataset, childNum);
         totalTime = 10.9438 * log(childNum) / log(2);
         totalSpace += sizeof(BSType);
-        for (int i = 0; i < initDataset.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(initDataset[i].first);
-            if (subInitData[p].first == -1)
-                subInitData[p].first = i;
-            subInitData[p].second++;
-        }
-        for (int i = 0; i < findQuery.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(findQuery[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
-        }
-        for (int i = 0; i < insertQuery.size(); i++)
-        {
-            int p = root.lrRoot.model.Predict(insertQuery[i].first);
-            if (subInsertData[p].first == -1)
-                subInsertData[p].first = i;
-            subInsertData[p].second++;
-        }
-
-        for (int i = 0; i < childNum; i++)
-        {
-            pair<pair<double, double>, bool> resChild;
-            if (subFindData[i].second + subInsertData[i].second > 4096)
-                resChild = GreedyAlgorithm(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-            else if (subFindData[i].second + subInsertData[i].second > kMaxKeyNum)
-            {
-                auto res0 = dp(false, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
-                auto res1 = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);  // construct a leaf node
-                if (res0.first.first + res0.first.second > res1.first.first + res1.first.second)
-                    resChild = res1;
-                else
-                    resChild = res0;
-            }
-            else
-            {
-                resChild = dp(true, subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
-            }
-            int type;
-            pair<bool, pair<int, int>> key = {resChild.second, {subInitData[i].first, subInitData[i].second}};
-            auto it = structMap.find(key);
-            if (it == structMap.end())
-            {
-                if (kIsYCSB)
-                    type = 6;
-                else
-                    type = 4;
-            }
-            else
-                type = it->second.type;
-            storeOptimalNode(type, key, subInitData[i].first, subInitData[i].second, subInsertData[i].first, subInsertData[i].second, i);
-
-            totalCost += resChild.first.first + resChild.first.second;
-            totalTime += resChild.first.first;
-            totalSpace += resChild.first.second;
-
-            COST.clear();
-            structMap.clear();
-        }
+        ConstructRoot<BSType>(&root.bsRoot, childNum, totalCost, totalTime, totalSpace);
+        break;
     }
-    break;
     }
     UpdateLeaf();
+
+#ifdef DEBUG
     cout << "total cost: " << totalCost << endl;
     cout << "total time: " << totalTime << endl;
     cout << "total space: " << totalSpace << endl;
@@ -386,7 +139,11 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
             entropy -= p * log(p) / log(2);
     }
     cout << "entropy: " << entropy;
+#endif
 
+    vector<pair<double, double>>().swap(initDataset);
+    vector<pair<double, double>>().swap(findQuery);
+    vector<pair<double, double>>().swap(insertQuery);
     return rootType;
 }
 
