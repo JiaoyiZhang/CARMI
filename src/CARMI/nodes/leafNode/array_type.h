@@ -8,7 +8,7 @@
 #include "array.h"
 using namespace std;
 
-inline int ArrayType::Predict(double key)
+inline int ArrayType::Predict(double key) const
 {
     // return the predicted idx in the leaf node
     int size = (flagNumber & 0x00FFFFFF);

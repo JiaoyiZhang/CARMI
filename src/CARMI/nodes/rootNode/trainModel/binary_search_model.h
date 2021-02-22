@@ -18,7 +18,7 @@ public:
             index.push_back(0);
     }
     void Train(const vector<pair<double, double>> &dataset, int len);
-    int Predict(double key)
+    int Predict(double key) const
     {
 
         int start_idx = 0;

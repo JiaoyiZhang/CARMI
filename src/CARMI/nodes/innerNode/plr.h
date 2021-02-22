@@ -13,10 +13,8 @@ public:
     {
         flagNumber = (5 << 24) + c;
     }
-    // void Initialize(const vector<pair<double, double>> &dataset);
     void Train(const vector<pair<double, double>> &dataset);
-    // void Train(const int left, const int size);
-    int Predict(double key);
+    int Predict(double key) const;
 
     int flagNumber; // 4 Byte (flag + childNumber)
 

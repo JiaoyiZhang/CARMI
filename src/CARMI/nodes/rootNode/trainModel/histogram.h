@@ -16,11 +16,9 @@ public:
         childNumber = childNum * 2; // means the max idx of table
         value = 1;
         minValue = 0;
-        // for (int i = 0; i <= childNumber; i++)
-        //     table.push_back(0);
     }
     void Train(const vector<pair<double, double>> &dataset, int len);
-    int Predict(double key)
+    int Predict(double key) const
     {
         // return the idx in children
         int idx = float(key - minValue) / value;
@@ -58,7 +56,6 @@ public:
 
 private:
     float value; // 4B
-    // vector<double> table; //2c*8 Byte
     vector<unsigned int> table0; // 2c/32*8 = c/2 Byte
     vector<unsigned int> table1; // c/2 Byte
     int childNumber;             // 4B

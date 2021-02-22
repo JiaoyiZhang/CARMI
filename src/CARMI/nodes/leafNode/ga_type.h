@@ -7,7 +7,7 @@
 #include "ga.h"
 using namespace std;
 
-inline int GappedArrayType::Predict(double key)
+inline int GappedArrayType::Predict(double key) const
 {
     // return the predicted idx in the leaf node
     int size = (flagNumber & 0x00FFFFFF);

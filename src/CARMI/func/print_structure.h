@@ -4,7 +4,7 @@
 #include "../carmi.h"
 using namespace std;
 
-void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec, int level, int type, int idx)
+void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec, int level, int type, int idx) const
 {
     levelVec[level]++;
     vector<int> tree;

@@ -21,7 +21,7 @@ public:
         previousLeaf = -1;
         nextLeaf = -1;
     }
-    int Predict(double key);
+    int Predict(double key) const;
 
     int flagNumber; // 4 Byte (flag + 0)
     int previousLeaf;

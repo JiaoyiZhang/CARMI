@@ -251,7 +251,7 @@ inline void PLRModel::Train(const vector<pair<double, double>> &dataset)
     }
 }
 
-inline int PLRModel::Predict(double key)
+inline int PLRModel::Predict(double key) const
 {
     int s = 0;
     int e = 5;

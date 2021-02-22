@@ -243,7 +243,7 @@ inline void HisModel::Train(const vector<pair<double, double>> &dataset)
     }
 }
 
-inline int HisModel::Predict(double key)
+inline int HisModel::Predict(double key) const
 {
     // return the idx in children
     int childNumber = flagNumber & 0x00FFFFFF;

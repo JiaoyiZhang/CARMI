@@ -5,7 +5,7 @@
 #include <float.h>
 using namespace std;
 
-pair<double, double> CARMI::Find(double key)
+pair<double, double> CARMI::Find(double key) const
 {
     int idx = 0; // idx in the INDEX
     int type = rootType;

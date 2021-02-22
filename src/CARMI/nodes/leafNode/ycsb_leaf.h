@@ -15,7 +15,7 @@ public:
         error = 0;
         m_left = -1;
     }
-    inline int Predict(double key)
+    inline int Predict(double key) const
     {
         // return the predicted idx in the leaf node
         int size = (flagNumber & 0x00FFFFFF);

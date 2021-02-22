@@ -13,16 +13,13 @@ public:
     {
         flagNumber = (4 << 24) + c;
     }
-    // void Initialize(const vector<pair<double, double>> &dataset);
     void Train(const vector<pair<double, double>> &dataset);
-    // void Train(const int left, const int size);
-    int Predict(double key);
+    int Predict(double key) const;
 
     int flagNumber; // 4 Byte (flag + childNumber)
 
     int childLeft; // 4 Byte
     float divisor; // 4 Byte
-    // float bound;                 // 4 Byte bound = c / 5;
     float minValue;              // 4 Byte
     pair<float, float> theta[6]; // 48 Byte
 };

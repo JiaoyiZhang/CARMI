@@ -105,7 +105,7 @@ inline void BSModel::Train(const vector<pair<double, double>> &dataset)
     }
 }
 
-inline int BSModel::Predict(double key)
+inline int BSModel::Predict(double key) const
 {
     int start_idx = 0;
     int end_idx = (flagNumber & 0x00FFFFFF) - 1;

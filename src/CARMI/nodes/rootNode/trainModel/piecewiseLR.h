@@ -19,7 +19,7 @@ public:
     }
 
     void Train(const vector<pair<double, double>> &dataset, int len);
-    int Predict(double key)
+    int Predict(double key) const
     {
         int s = 0;
         int e = 7;

@@ -5,7 +5,7 @@
 #include "../carmi.h"
 using namespace std;
 
-long double CARMI::calculateSpace()
+long double CARMI::calculateSpace() const
 {
     cout << "Space of different classes (sizeof):" << endl;
     cout << "LRType:" << sizeof(LRType) << "\tlr model:" << sizeof(LinearRegression) << endl;
@@ -39,7 +39,7 @@ long double CARMI::calculateSpace()
     }
 
     space += 64 * nowChildNumber;
-    if (!kIsYCSB)
+    if (!kPrimaryIndex)
     {
         for (int i = 0; i < nowChildNumber; i++)
         {

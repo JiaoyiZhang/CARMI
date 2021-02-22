@@ -197,7 +197,7 @@ inline void LRModel::Train(const vector<pair<double, double>> &dataset)
     }
 }
 
-inline int LRModel::Predict(double key)
+inline int LRModel::Predict(double key) const
 {
     int idx = float(key - minValue) / divisor;
     if (idx < 0)

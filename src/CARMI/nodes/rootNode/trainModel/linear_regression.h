@@ -17,7 +17,7 @@ public:
         theta2 = 0.666;
     }
     void Train(const vector<pair<double, double>> &dataset, int len);
-    int Predict(double key)
+    int Predict(double key) const
     {
         // return the predicted idx in the children
         int p = theta1 * key + theta2;
@@ -25,16 +25,6 @@ public:
             p = 0;
         else if (p > length)
             p = length;
-        return p;
-    }
-    int PredictPrecision(double key, int size)
-    {
-        // return the predicted idx in the leaf node
-        int p = (theta1 * key + theta2) / (length + 1) * size;
-        if (p < 0)
-            p = 0;
-        else if (p >= size)
-            p = size - 1;
         return p;
     }
 

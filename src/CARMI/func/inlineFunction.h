@@ -7,7 +7,7 @@
 #include "../carmi.h"
 using namespace std;
 
-inline bool CARMI::scan(const int left, const int end, vector<pair<double, double>> &ret, int &firstIdx, int &length)
+inline bool CARMI::scan(const int left, const int end, vector<pair<double, double>> &ret, int &firstIdx, int &length) const
 {
     for (int i = left; i < end; i++)
     {
@@ -28,7 +28,7 @@ inline bool CARMI::scan(const int left, const int end, vector<pair<double, doubl
 
 // search a key-value through binary search in
 // the array leaf node
-inline int CARMI::ArrayBinarySearch(double key, int start, int end)
+inline int CARMI::ArrayBinarySearch(double key, int start, int end) const
 {
     while (start < end)
     {
@@ -44,7 +44,7 @@ inline int CARMI::ArrayBinarySearch(double key, int start, int end)
 // search a key-value through binary search
 // in the gapped array
 // return the idx of the first element >= key
-inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx)
+inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx) const
 {
     while (end_idx - start_idx >= 2)
     {
@@ -72,7 +72,7 @@ inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx)
 
 // search a key-value through binary search in
 // the YCSB leaf node
-inline int CARMI::YCSBBinarySearch(double key, int start, int end)
+inline int CARMI::YCSBBinarySearch(double key, int start, int end) const
 {
     while (start < end)
     {
@@ -86,7 +86,7 @@ inline int CARMI::YCSBBinarySearch(double key, int start, int end)
 }
 
 // designed for construction
-inline int CARMI::TestArrayBinarySearch(double key, int start, int end)
+inline int CARMI::TestArrayBinarySearch(double key, int start, int end) const
 {
     while (start < end)
     {
@@ -99,7 +99,7 @@ inline int CARMI::TestArrayBinarySearch(double key, int start, int end)
     return start;
 }
 
-inline int CARMI::TestGABinarySearch(double key, int start_idx, int end_idx)
+inline int CARMI::TestGABinarySearch(double key, int start_idx, int end_idx) const
 {
     while (end_idx - start_idx >= 2)
     {

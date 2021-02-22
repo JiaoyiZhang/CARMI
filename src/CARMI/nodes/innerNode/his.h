@@ -15,10 +15,8 @@ public:
         minValue = 0;
         divisor = 1;
     }
-    // void Initialize(const vector<pair<double, double>> &dataset);
     void Train(const vector<pair<double, double>> &dataset);
-    // void Train(const int left, const int size);
-    int Predict(double key);
+    int Predict(double key) const;
 
     int flagNumber; // 4 Byte (flag + childNumber)
 
