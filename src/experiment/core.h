@@ -17,8 +17,6 @@ extern ofstream outRes;
 
 void Core(double initRatio, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery, vector<int> &length)
 {
-    cout << "kMaxKeyNum:" << kMaxKeyNum << "\tkRate:" << kRate << endl;
-
     for (int i = 0; i < trainFindQuery.size(); i++)
         trainFindQuery[i].second = 1;
     for (int i = 0; i < trainInsertQuery.size(); i++)

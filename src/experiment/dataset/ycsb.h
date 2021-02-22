@@ -12,7 +12,7 @@
 #include "../../params.h"
 #include <iomanip>
 using namespace std;
-extern bool kIsYCSB;
+extern bool kPrimaryIndex;
 
 class YCSBDataset
 {

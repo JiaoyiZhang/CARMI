@@ -8,7 +8,7 @@ using namespace std;
 
 void CARMI::UpdateLeaf()
 {
-    if (kIsYCSB)
+    if (kPrimaryIndex)
         return;
     auto it = scanLeaf.begin();
     int pre = it->second;

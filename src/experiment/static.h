@@ -12,16 +12,15 @@ using namespace std;
 extern int childNum;
 extern ofstream outRes;
 
-void RunStatic(double initRatio, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &testInsertQuery, vector<int> &length)
+void RunStatic(double initRatio, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &testInsertQuery, vector<int> &length, int kLeafID)
 {
     for (int j = 0; j < 1; j++)
     {
-        kInnerNodeID = j;
         cout << "childNum is: " << childNum << endl;
-        cout << "root type:" << kInnerNodeID << endl;
-        CARMI carmi(initDataset, childNum);
+        cout << "root type:" << j << endl;
+        CARMI carmi(initDataset, childNum, j, kLeafID);
         cout << "index init over!" << endl;
-        switch (kInnerNodeID)
+        switch (j)
         {
         case 0:
             outRes << "lr,";

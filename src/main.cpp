@@ -9,9 +9,6 @@
 #include "./experiment/main_experiment.h"
 using namespace std;
 
-int kLeafNodeID = 0;
-int kInnerNodeID = 0;
-
 ofstream outRes;
 
 int main()
