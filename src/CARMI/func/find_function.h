@@ -5,7 +5,8 @@
 #include <float.h>
 using namespace std;
 
-pair<double, double> CARMI::Find(double key) const
+CARMI::iterator CARMI::Find(double key)
+// pair<double, double> CARMI::Find(double key) const
 {
     int idx = 0; // idx in the INDEX
     int type = rootType;
@@ -67,7 +68,10 @@ pair<double, double> CARMI::Find(double key) const
             int preIdx = entireChild[idx].array.Predict(key);
             auto left = entireChild[idx].array.m_left;
             if (entireData[left + preIdx].first == key)
-                return entireData[left + preIdx];
+            {
+                CARMI::iterator it(this, &entireChild[idx], preIdx);
+                return it;
+            }
             else
             {
                 int start = max(0, preIdx - entireChild[idx].array.error) + left;
@@ -85,7 +89,10 @@ pair<double, double> CARMI::Find(double key) const
                         return {};
                 }
                 if (entireData[res].first == key)
-                    return entireData[res];
+                {
+                    CARMI::iterator it(this, &entireChild[idx], res - left);
+                    return it;
+                }
                 return {};
             }
         }
@@ -95,7 +102,10 @@ pair<double, double> CARMI::Find(double key) const
             auto left = entireChild[idx].ga.m_left;
             int preIdx = entireChild[idx].ga.Predict(key);
             if (entireData[left + preIdx].first == key)
-                return entireData[left + preIdx];
+            {
+                CARMI::iterator it(this, &entireChild[idx], preIdx);
+                return it;
+            }
             else
             {
                 int start = max(0, preIdx - entireChild[idx].ga.error) + left;
@@ -115,12 +125,19 @@ pair<double, double> CARMI::Find(double key) const
                 {
                     res = GABinarySearch(key, end, left + entireChild[idx].ga.maxIndex);
                     if (res > left + entireChild[idx].ga.maxIndex)
-                        return {DBL_MIN, DBL_MIN};
+                    {
+                        CARMI::iterator it;
+                        return it.end();
+                    }
                 }
 
                 if (entireData[res].first == key)
-                    return entireData[res];
-                return {DBL_MIN, DBL_MIN};
+                {
+                    CARMI::iterator it(this, &entireChild[idx], res - left);
+                    return it;
+                }
+                CARMI::iterator it;
+                return it.end();
             }
         }
         break;
@@ -130,7 +147,11 @@ pair<double, double> CARMI::Find(double key) const
             int preIdx = entireChild[idx].ycsbLeaf.Predict(key);
             auto left = entireChild[idx].ycsbLeaf.m_left;
             if (initDataset[left + preIdx].first == key)
-                return initDataset[left + preIdx];
+            {
+                CARMI::iterator it(this, &entireChild[idx], preIdx);
+                return it;
+                // return initDataset[left + preIdx];
+            }
             else
             {
                 int start = max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
@@ -148,7 +169,11 @@ pair<double, double> CARMI::Find(double key) const
                         return {};
                 }
                 if (initDataset[res].first == key)
-                    return initDataset[res];
+                {
+                    CARMI::iterator it(this, &entireChild[idx], res - left);
+                    return it;
+                    // return initDataset[res];
+                }
                 return {};
             }
         }
