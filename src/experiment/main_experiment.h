@@ -15,7 +15,6 @@
 #include "../baseline/btree_baseline.h"
 
 #include "core.h"
-extern double kRate;
 extern ofstream outRes;
 
 void mainSynthetic(int datasetSize, double initRatio, vector<int> &length);
@@ -24,7 +23,6 @@ void mainMap(double initRatio, vector<int> &length);
 
 void mainExperiment(int datasetSize)
 {
-    kMaxKeyNum = 1024;
     // for range scan
     vector<int> length;
 
@@ -48,12 +46,12 @@ void mainExperiment(int datasetSize)
     mainYCSB(0, length);
     mainMap(0, length);
 
+    // range scan
     srand(time(0));
     for (int i = 0; i < datasetSize; i++)
     {
         length.push_back(min(i + rand() % 100 + 1, datasetSize) - i);
     }
-    // range scan
     mainSynthetic(datasetSize, 2, length);
     mainYCSB(2, length);
     mainMap(2, length);
@@ -80,8 +78,10 @@ void mainSynthetic(int datasetSize, double initRatio, vector<int> &length)
     vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
     vector<double> rate1 = {0.4, 0.3, 0.25, 0.2, 0.1}; // 0.5
 
-    for (int r = 0; r < rate.size(); r++)
+    // for (int r = 0; r < rate.size(); r++)
+    for (int r = 0; r < 1; r++)
     {
+        double kRate;
         if (initRatio == 0.5)
             kRate = rate1[r];
         else
@@ -91,37 +91,37 @@ void mainSynthetic(int datasetSize, double initRatio, vector<int> &length)
         uniData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 0)
         {
-            btree_test(initRatio, initData, testInsert, length);
-            artTree_test(initRatio, initData, testInsert, length);
+            // btree_test(initRatio, initData, testInsert, length);
+            // artTree_test(initRatio, initData, testInsert, length);
         }
-        Core(initRatio, initData, trainFind, trainInsert, testInsert, length);
+        Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate);
 
         cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
         expData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 0)
         {
-            btree_test(initRatio, initData, testInsert, length);
-            artTree_test(initRatio, initData, testInsert, length);
+            // btree_test(initRatio, initData, testInsert, length);
+            // artTree_test(initRatio, initData, testInsert, length);
         }
-        Core(initRatio, initData, trainFind, trainInsert, testInsert, length);
+        Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate);
 
         cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
         norData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 0)
         {
-            btree_test(initRatio, initData, testInsert, length);
-            artTree_test(initRatio, initData, testInsert, length);
+            // btree_test(initRatio, initData, testInsert, length);
+            // artTree_test(initRatio, initData, testInsert, length);
         }
-        Core(initRatio, initData, trainFind, trainInsert, testInsert, length);
+        Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate);
 
         cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
         logData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 0)
         {
-            btree_test(initRatio, initData, testInsert, length);
-            artTree_test(initRatio, initData, testInsert, length);
+            // btree_test(initRatio, initData, testInsert, length);
+            // artTree_test(initRatio, initData, testInsert, length);
         }
-        Core(initRatio, initData, trainFind, trainInsert, testInsert, length);
+        Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate);
 
         outRes << endl;
     }
@@ -148,8 +148,10 @@ void mainMap(double initRatio, vector<int> &length)
     vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
     vector<double> rate1 = {0.4, 0.3, 0.25, 0.2, 0.1}; // 0.5
 
-    for (int r = 0; r < rate.size(); r++)
+    // for (int r = 0; r < rate.size(); r++)
+    for (int r = 0; r < 1; r++)
     {
+        double kRate;
         if (initRatio == 0.5)
             kRate = rate1[r];
         else
@@ -159,19 +161,19 @@ void mainMap(double initRatio, vector<int> &length)
         latData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 0)
         {
-            btree_test(initRatio, initData, testInsert, length);
-            artTree_test(initRatio, initData, testInsert, length);
+            // btree_test(initRatio, initData, testInsert, length);
+            // artTree_test(initRatio, initData, testInsert, length);
         }
-        Core(initRatio, initData, trainFind, trainInsert, testInsert, length);
+        Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate);
 
         cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
         longData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 0)
         {
-            btree_test(initRatio, initData, testInsert, length);
-            artTree_test(initRatio, initData, testInsert, length);
+            // btree_test(initRatio, initData, testInsert, length);
+            // artTree_test(initRatio, initData, testInsert, length);
         }
-        Core(initRatio, initData, trainFind, trainInsert, testInsert, length);
+        Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate);
 
         outRes << endl;
     }
@@ -179,6 +181,7 @@ void mainMap(double initRatio, vector<int> &length)
 
 void mainYCSB(double initRatio, vector<int> &length)
 {
+    kPrimaryIndex = true;
     cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
     cout << "initRatio is: " << initRatio << endl;
     outRes << "initRatio," << initRatio << endl;
@@ -196,25 +199,27 @@ void mainYCSB(double initRatio, vector<int> &length)
 
     vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
     vector<double> rate1 = {0.4, 0.3, 0.25, 0.2, 0.1}; // 0.5
-
-    for (int r = 0; r < rate.size(); r++)
+    // for (int r = 0; r < rate.size(); r++)
+    for (int r = 0; r < 1; r++)
     {
+        double kRate;
         if (initRatio == 0.5)
             kRate = rate1[r];
         else
             kRate = rate[r];
         outRes << "kRate:" << kRate << endl;
-        cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+        cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
         ycsbData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 0)
         {
-            btree_test(initRatio, initData, testInsert, length);
-            artTree_test(initRatio, initData, testInsert, length);
+            // btree_test(initRatio, initData, testInsert, length);
+            // artTree_test(initRatio, initData, testInsert, length);
         }
-        Core(initRatio, initData, trainFind, trainInsert, testInsert, length);
+        Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate);
 
         outRes << endl;
     }
+    kPrimaryIndex = false;
 }
 
 #endif // !MAIN_EXPERIMENT_H

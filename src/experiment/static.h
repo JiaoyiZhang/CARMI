@@ -16,9 +16,8 @@ void RunStatic(double initRatio, vector<pair<double, double>> &initDataset, vect
 {
     for (int j = 0; j < 1; j++)
     {
-        cout << "childNum is: " << childNum << endl;
         cout << "root type:" << j << endl;
-        CARMI carmi(initDataset, childNum, j, kLeafID);
+        CARMI carmi(initDataset, 131072, j, kLeafID);
         cout << "index init over!" << endl;
         switch (j)
         {

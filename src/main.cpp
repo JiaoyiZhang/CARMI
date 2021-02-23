@@ -20,6 +20,7 @@ int main()
     char tmpTime[64];
     strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     cout << "\nTest time: " << tmpTime << endl;
+    outRes << "\nTest time: " << tmpTime << endl;
 
     int datasetSize = 67108864;
 
