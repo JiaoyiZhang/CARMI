@@ -8,6 +8,7 @@
 #include "construct/node_cost_struct.h"
 #include "construct/root_struct.h"
 #include <vector>
+#include <float.h>
 #include <map>
 using namespace std;
 
@@ -15,8 +16,9 @@ class CARMI
 {
 public:
     CARMI(const vector<pair<double, double>> &dataset, int childNum, int kLeafID, int kInnerID); // RMI
-    CARMI(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
+    CARMI(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData, double rate)
     {
+        kRate = rate;
         kThreshold = 2;
         kMaxKeyNum = 1024;
         initDataset = initData;
@@ -32,17 +34,70 @@ public:
         vector<pair<double, double>> tmp;
         rootType = Construction(initData, tmp, tmp);
     }
+    class iterator
+    {
+    public:
+        inline iterator() : currnode(NULL), currslot(0){};
+        inline iterator(CARMI *t, BaseNode *l, int s) : tree(t), currnode(l), currslot(s){};
+        inline const double &key() const
+        {
+            int left = currnode->array.m_left;
+            return tree->entireData[left + currslot].first;
+        }
+        inline const double &data() const
+        {
+            int left = currnode->array.m_left;
+            return tree->entireData[left + currslot].second;
+        }
+        inline iterator &end() const
+        {
+            static iterator it;
+            it.currnode = NULL;
+            it.currslot = -1;
+            return it;
+        }
+        inline bool operator==(const iterator &x) const
+        {
+            return (x.currnode == currnode) && (x.currslot == currslot);
+        }
+        inline bool operator!=(const iterator &x) const
+        {
+            return (x.currnode != currnode) || (x.currslot != currslot);
+        }
+
+        inline iterator &operator++()
+        {
+            int left = currnode->array.m_left;
+            while (currslot < (currnode->array.flagNumber & 0x00FFFFFF) || currnode->array.nextLeaf != -1)
+            {
+                currslot++;
+                if (tree->entireData[left + currslot].first != DBL_MIN)
+                    return *this;
+                if (currslot == (currnode->array.flagNumber & 0x00FFFFFF))
+                {
+                    currnode = &(tree->entireChild[currnode->array.nextLeaf]);
+                }
+            }
+            return end();
+        }
+
+    private:
+        CARMI *tree;
+        BaseNode *currnode;
+        int currslot;
+    };
+
     void setKRate(double rate) { kRate = rate; }
 
     int Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData);
     long double calculateSpace() const;
     void printStructure(vector<int> &levelVec, vector<int> &nodeVec, int level, int type, int idx) const;
 
-    pair<double, double> Find(double key) const;
+    // pair<double, double> Find(double key) const;
+    iterator Find(double key);
     bool Insert(pair<double, double> data);
     bool Update(pair<double, double> data);
     bool Delete(double key);
-    void RangeScan(double key, int length, vector<pair<double, double>> &ret);
 
 private:
     NodeCost dp(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
@@ -60,7 +115,7 @@ private:
     NodeCost dpInner(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
 
     template <typename TYPE>
-    void CalLeafTime(double &time, const int left, const int size, const int insertLeft, const int insertSize, const int querySize, const int actualSize, const int error, bool isFind, bool isArray, TYPE *node, vector<std::pair<double, double>> &query, const double density) const;
+    void CalLeafTime(double &time, const int left, const int size, const int querySize, const int actualSize, const int error, bool isFind, bool isArray, TYPE *node, vector<std::pair<double, double>> &query, const double density) const;
     NodeCost dpLeaf(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
 
     NodeCost GreedyAlgorithm(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
@@ -78,8 +133,6 @@ private:
 
     void initEntireChild(int size);
     int allocateChildMemory(int size);
-
-    void GetValues(int idx, int &firstIdx, int &length, vector<pair<double, double>> &ret);
 
     void initLR(LRModel *lr, const vector<pair<double, double>> &dataset);
     void initPLR(PLRModel *plr, const vector<pair<double, double>> &dataset);
@@ -124,13 +177,15 @@ public:
     double kRate;
     int kMaxKeyNum;
     int kThreshold; // used to initialize a leaf node
+    vector<BaseNode> entireChild;
+    vector<pair<double, double>> entireData;
+
+    int curr; // for YCSB
 
 private:
-    vector<BaseNode> entireChild;
     unsigned int entireChildNumber;
     unsigned int nowChildNumber;
 
-    vector<pair<double, double>> entireData;
     unsigned int entireDataSize;
     vector<EmptyBlock> emptyBlocks;
 
@@ -169,8 +224,8 @@ CARMI::CARMI(const vector<pair<double, double>> &dataset, int childNum, int kLea
     kLeafNodeID = kLeafID;
     kInnerNodeID = kInnerID;
     int left = allocateChildMemory(childNum);
-    initEntireData(0, dataset.size() * 1.1, false);
-    initEntireChild(dataset.size() * 1.1);
+    initEntireData(0, dataset.size(), false);
+    initEntireChild(dataset.size());
     kMaxKeyNum = 16;
     kThreshold = 2;
 
