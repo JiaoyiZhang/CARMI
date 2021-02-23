@@ -56,7 +56,6 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
 {
     if (size == 0)
     {
-        // choose an array node as the leaf node
         if (kPrimaryIndex)
         {
             auto node = YCSBLeaf();
@@ -65,9 +64,9 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         }
         else
         {
-            auto node = ArrayType(max(size + insertSize, kThreshold));
-            initArray(&node, left, size);
-            entireChild[storeIdx].array = node;
+            auto node = GappedArrayType(max(size, kThreshold));
+            initGA(&node, left, size);
+            entireChild[storeIdx].ga = node;
 
 #ifdef DEBUG
             if (optimalType < 4)
@@ -105,7 +104,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
     }
     case 4:
     {
-        auto node = ArrayType(max(size + insertSize, kThreshold));
+        auto node = ArrayType(max(size, kThreshold));
         initArray(&node, left, size);
         entireChild[storeIdx].array = node;
         if (size > 0)
@@ -118,7 +117,7 @@ void CARMI::storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, co
         if (it == structMap.end())
             cout << "WRONG!" << endl;
 
-        auto node = GappedArrayType(max(size + insertSize, kThreshold));
+        auto node = GappedArrayType(max(size, kThreshold));
         node.density = it->second.density;
         initGA(&node, left, size);
         entireChild[storeIdx].ga = node;

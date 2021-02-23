@@ -39,8 +39,8 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
     }
 
     if (!kPrimaryIndex)
-        initEntireData(0, initDataset.size() * 1.1, false);
-    initEntireChild(initDataset.size() * 1.1);
+        initEntireData(0, initDataset.size(), false);
+    initEntireChild(initDataset.size());
 
     auto res = ChooseRoot();
 
@@ -54,7 +54,7 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
 
 #ifdef DEBUG
     cout << "Construction of the root node has been completed!" << endl;
-    cout << "The optimal value of root is: " << res.first << ",\tthe optimal child number is: " << res.second << endl;
+    cout << "The optimal type of root is: " << res.rootType << ",\tthe optimal child number is: " << res.rootChildNum << endl;
 #endif
 
     double totalCost = 0.0;
@@ -70,7 +70,7 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
 
     COST.insert({{-1, 0}, {0, 0}});
     ParamStruct leafP;
-    leafP.type = 4;
+    leafP.type = 5;
     leafP.density = 0.5;
     structMap.insert({{false, {-1, 0}}, leafP});
 
@@ -128,20 +128,12 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
     char tmpTime1[64];
     strftime(tmpTime1, sizeof(tmpTime1), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     cout << "finish time: " << tmpTime1 << endl;
-
-    double entropy = 0.0;
-    int size = initData.size();
-    float p = 0;
-    for (int i = 0; i < childNum; i++)
-    {
-        p = float(subInitData[i].second) / size;
-        if (p != 0)
-            entropy -= p * log(p) / log(2);
-    }
-    cout << "entropy: " << entropy;
 #endif
-
-    vector<pair<double, double>>().swap(initDataset);
+    curr = initDataset.size();
+    vector<pair<double, double>> tmp(100000, {-1, -1});
+    initDataset.insert(initDataset.end(), tmp.begin(), tmp.end());
+    if (!kPrimaryIndex)
+        vector<pair<double, double>>().swap(initDataset);
     vector<pair<double, double>>().swap(findQuery);
     vector<pair<double, double>>().swap(insertQuery);
     return rootType;

@@ -42,22 +42,24 @@ NodeCost CARMI::GreedyAlgorithm(const int initLeft, const int initSize, const in
     double OptimalTime = DBL_MAX;
     double OptimalSpace = DBL_MAX;
     double time, space;
-    double pi = float(findSize + insertSize) / querySize;
+    double pi = float(initSize + insertSize) / querySize;
     ParamStruct optimalStruct = {0, 32, 2, vector<pair<bool, pair<int, int>>>()};
     int frequency = 0;
     for (int l = findLeft; l < findLeft + findSize; l++)
         frequency += findQuery[l].second;
     for (int l = insertLeft; l < insertLeft + insertSize; l++)
         frequency += insertQuery[l].second;
-    int tmpEnd = findSize / 2;
+    int tmpEnd = initSize / 2;
     for (int c = 16; c < tmpEnd; c *= 2)
     {
-        if (512 * c < findSize)
+        if (512 * c < initSize)
             continue;
         for (int type = 0; type < 4; type++)
         {
             space = 64.0 * c / 1024 / 1024;
 
+            if (type == 1)
+                continue;
             vector<int> perSize(c, 0);
 
             switch (type)
@@ -95,7 +97,7 @@ NodeCost CARMI::GreedyAlgorithm(const int initLeft, const int initSize, const in
             long double entropy = 0.0;
             for (int i = 0; i < c; i++)
             {
-                auto p = float(perSize[i]) / findSize;
+                auto p = float(perSize[i]) / initSize;
                 if (p != 0)
                     entropy += p * (-log(p) / log(2));
             }
@@ -170,7 +172,7 @@ NodeCost CARMI::GreedyAlgorithm(const int initLeft, const int initSize, const in
 
     optimalStruct.child = tmpChild;
     if (OptimalTime < DBL_MAX)
-        structMap.insert({{true, {findLeft, findSize}}, optimalStruct});
+        structMap.insert({{true, {initLeft, initSize}}, optimalStruct});
     nodeCost.time = OptimalTime;
     nodeCost.space = OptimalSpace;
     nodeCost.isInnerNode = true;

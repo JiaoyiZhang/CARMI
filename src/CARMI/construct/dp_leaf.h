@@ -11,7 +11,7 @@
 using namespace std;
 
 template <typename TYPE>
-void CARMI::CalLeafTime(double &time, const int left, const int size, const int insertLeft, const int insertSize, const int querySize, const int actualSize, const int error, bool isFind, bool isArray, TYPE *node, vector<std::pair<double, double>> &query, const double para) const
+void CARMI::CalLeafTime(double &time, const int left, const int size, const int querySize, const int actualSize, const int error, bool isFind, bool isArray, TYPE *node, vector<std::pair<double, double>> &query, const double para) const
 {
     for (int i = left; i < left + size; i++)
     {
@@ -24,7 +24,7 @@ void CARMI::CalLeafTime(double &time, const int left, const int size, const int 
             if (isArray)
             {
                 actual = TestArrayBinarySearch(query[i].first, left, left + size);
-                time += ((6.25 * (size + left + insertSize - actual + 1)) * query[i].second) / querySize;
+                time += ((6.25 * (size + left + size - actual + 1)) * query[i].second) / querySize;
             }
             else
             {
@@ -124,8 +124,8 @@ NodeCost CARMI::dpLeaf(const int initLeft, const int initSize, const int findLef
     auto tmp = ArrayType(actualSize);
     Train(&tmp, initLeft, initSize);
     auto error = UpdateError(&tmp, initLeft, initSize);
-    CalLeafTime<ArrayType>(time, findLeft, findSize, insertLeft, insertSize, querySize, actualSize, error, true, true, &tmp, findQuery, 1);
-    CalLeafTime<ArrayType>(time, findLeft, findSize, insertLeft, insertSize, querySize, actualSize, error, false, true, &tmp, insertQuery, 1);
+    CalLeafTime<ArrayType>(time, initLeft, initSize, querySize, actualSize, error, true, true, &tmp, findQuery, 1);
+    CalLeafTime<ArrayType>(time, insertLeft, insertSize, querySize, actualSize, error, false, true, &tmp, insertQuery, 1);
 
     cost = time + space * kRate; // ns + MB * kRate
     if (cost <= OptimalValue)
@@ -156,8 +156,8 @@ NodeCost CARMI::dpLeaf(const int initLeft, const int initSize, const int findLef
 
         Train(&tmpNode, initLeft, initSize);
         auto errorGA = UpdateError(&tmpNode, initLeft, initSize);
-        CalLeafTime<GappedArrayType>(time, findLeft, findSize, insertLeft, insertSize, querySize, actualSize, errorGA, true, false, &tmpNode, findQuery, 2 - Density[i]);
-        CalLeafTime<GappedArrayType>(time, findLeft, findSize, insertLeft, insertSize, querySize, actualSize, errorGA, false, false, &tmpNode, insertQuery, 2 - Density[i]);
+        CalLeafTime<GappedArrayType>(time, initLeft, initSize, querySize, actualSize, errorGA, true, false, &tmpNode, findQuery, 2 - Density[i]);
+        CalLeafTime<GappedArrayType>(time, insertLeft, insertSize, querySize, actualSize, errorGA, false, false, &tmpNode, insertQuery, 2 - Density[i]);
         cost = time + space * kRate; // ns + MB * kRate
         if (cost < OptimalValue)
         {

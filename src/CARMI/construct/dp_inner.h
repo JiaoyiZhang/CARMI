@@ -10,21 +10,22 @@ void CARMI::InnerDivide(TYPE *node, const int c, const int initLeft, const int i
     for (int i = initLeft; i < initEnd; i++)
     {
         int p = node->Predict(initDataset[i].first);
-        if (initDataset[p].first == -1)
-            initDataset[p].first = i;
-        initDataset[p].second++;
+        if (subInitData[p].first == -1)
+            subInitData[p].first = i;
+        subInitData[p].second++;
     }
-    if (isNeedFind)
-    {
-        int findEnd = findLeft + findSize;
-        for (int i = findLeft; i < findEnd; i++)
-        {
-            int p = node->Predict(findQuery[i].first);
-            if (subFindData[p].first == -1)
-                subFindData[p].first = i;
-            subFindData[p].second++;
-        }
-    }
+    // if (isNeedFind)
+    // {
+    //     int findEnd = findLeft + findSize;
+    //     for (int i = findLeft; i < findEnd; i++)
+    //     {
+    //         int p = node->Predict(findQuery[i].first);
+    //         if (subFindData[p].first == -1)
+    //             subFindData[p].first = i;
+    //         subFindData[p].second++;
+    //     }
+    // }
+    subFindData = subInitData;
     int insertEnd = insertLeft + insertSize;
     for (int i = insertLeft; i < insertEnd; i++)
     {
@@ -93,25 +94,27 @@ NodeCost CARMI::dpInner(const int initLeft, const int initSize, const int findLe
         frequency += findQuery[l].second;
     for (int l = insertLeft; l < insertLeft + insertSize; l++)
         frequency += insertQuery[l].second;
-    int tmpEnd = findSize / 2;
+    int tmpEnd = initSize / 2;
     for (int c = 16; c < tmpEnd; c *= 2)
     {
-        if (512 * c < findSize)
+        if (512 * c < initSize)
             continue;
         for (int type = 0; type < 4; type++)
         {
+            if (type == 1)
+                continue;
             switch (type)
             {
             case 0:
             {
                 double time = 92.4801; // ns
-                CalInner<LRModel>(OptimalValue, OptimalTime, OptimalSpace, optimalStruct, space, time, frequency, c, 0, initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
+                CalInner<LRModel>(OptimalValue, OptimalTime, OptimalSpace, optimalStruct, space, time, frequency, c, 0, initLeft, initSize, initLeft, initSize, insertLeft, insertSize);
                 break;
             }
             case 1:
             {
                 double time = 97.1858; // ns
-                CalInner<PLRModel>(OptimalValue, OptimalTime, OptimalSpace, optimalStruct, space, time, frequency, c, 1, initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
+                CalInner<PLRModel>(OptimalValue, OptimalTime, OptimalSpace, optimalStruct, space, time, frequency, c, 1, initLeft, initSize, initLeft, initSize, insertLeft, insertSize);
                 break;
             }
             case 2:
@@ -119,7 +122,7 @@ NodeCost CARMI::dpInner(const int initLeft, const int initSize, const int findLe
                 if (c > 160)
                     break;
                 double time = 109.8874;
-                CalInner<HisModel>(OptimalValue, OptimalTime, OptimalSpace, optimalStruct, space, time, frequency, c, 2, initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
+                CalInner<HisModel>(OptimalValue, OptimalTime, OptimalSpace, optimalStruct, space, time, frequency, c, 2, initLeft, initSize, initLeft, initSize, insertLeft, insertSize);
                 break;
             }
             case 3:
@@ -127,7 +130,7 @@ NodeCost CARMI::dpInner(const int initLeft, const int initSize, const int findLe
                 if (c > 20)
                     break;
                 double time = 114.371;
-                CalInner<HisModel>(OptimalValue, OptimalTime, OptimalSpace, optimalStruct, space, time, frequency, c, 3, initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
+                CalInner<HisModel>(OptimalValue, OptimalTime, OptimalSpace, optimalStruct, space, time, frequency, c, 3, initLeft, initSize, initLeft, initSize, insertLeft, insertSize);
                 break;
             }
             }
