@@ -19,7 +19,7 @@ public:
         if (initRatio == 0)
         { // several leaf nodes are inserted
             initSize = 0;
-            totalSize = total / 0.85 + 1;
+            totalSize = round(total / 0.85);
             insertNumber = 15000;
         }
         else if (initRatio == 1)
@@ -51,19 +51,24 @@ void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
     vector<pair<double, double>>().swap(trainInsertQuery);
     vector<pair<double, double>>().swap(testInsertQuery);
 
-    vector<pair<double, double>> insertDataset;
+    if (initSize != 0 && num != -1)
+        totalSize *= 1.5;
     int cnt = 0;
     if (initSize == 0)
     {
         int i = 0;
-        for (; i <= 0.6 * totalSize; i++)
+        for (; i < 0.6 * 67108864; i++)
             initDataset.push_back({double(i), double(i) * 10});
-        for (; i < 0.9 * totalSize; i += 2)
+        for (; i < 0.9 * 67108864 * 3; i++)
         {
             initDataset.push_back({double(i), double(i) * 10});
-            insertDataset.push_back({double(i + 1), double(i + 1) * 10});
+            i++;
+            trainInsertQuery.push_back({double(i + 1), double(i + 1) * 10});
+            i++;
+            if (testInsertQuery.size() < insertNumber)
+                testInsertQuery.push_back({double(i + 1.5), double(i + 1.5) * 10});
         }
-        for (; i < totalSize; i++)
+        for (; i < 67108864; i++)
             initDataset.push_back({double(i), double(i) * 10});
     }
     else if (num == -1)
@@ -78,37 +83,23 @@ void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
             cnt++;
             if (cnt <= num)
             {
+                if (initDataset.size() == 67108864)
+                    break;
                 initDataset.push_back({double(i), double(i) * 10});
             }
             else
             {
-                insertDataset.push_back({double(i), double(i) * 10});
+                trainInsertQuery.push_back({double(i), double(i) * 10});
+                i++;
+                if (testInsertQuery.size() < insertNumber)
+                    testInsertQuery.push_back({double(i), double(i) * 10});
                 cnt = 0;
             }
         }
     }
-    default_random_engine engine;
+    trainFindQuery = initDataset;
 
-    auto find = initDataset;
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed);
-    shuffle(find.begin(), find.end(), engine);
-
-    int end = 100000 - insertNumber;
-    for (int i = 0; i < end; i++)
-        trainFindQuery.push_back(initDataset[i]);
-
-    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed1);
-    shuffle(insertDataset.begin(), insertDataset.end(), engine);
-    end = insertNumber * 2;
-    for (int i = 0; i < end; i += 2)
-    {
-        trainInsertQuery.push_back(insertDataset[i]);
-        testInsertQuery.push_back(insertDataset[i + 1]);
-    }
-
-    cout << "uniform: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
+    cout << "uniform: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\ttrain insert size:" << trainInsertQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
 }
 
 #endif

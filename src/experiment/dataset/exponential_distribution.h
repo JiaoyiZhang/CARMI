@@ -46,6 +46,8 @@ private:
 
 void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery)
 {
+    if (initSize != 0 && num != -1)
+        totalSize *= 1.5;
     float maxValue = totalSize;
 
     // create dataset randomly
@@ -57,8 +59,6 @@ void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDatas
     vector<pair<double, double>>().swap(trainFindQuery);
     vector<pair<double, double>>().swap(trainInsertQuery);
     vector<pair<double, double>>().swap(testInsertQuery);
-
-    vector<pair<double, double>> insertDataset;
 
     for (int i = 0; i < totalSize; i++)
     {
@@ -76,7 +76,9 @@ void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDatas
         for (; i < 0.9 * totalSize; i += 2)
         {
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-            insertDataset.push_back({double(ds[i + 1] * factor), double(ds[i + 1] * factor) * 10});
+            trainInsertQuery.push_back({double(ds[i + 1] * factor), double(ds[i + 1] * factor) * 10});
+            if (testInsertQuery.size() < insertNumber)
+                testInsertQuery.push_back({double((ds[i + 1] + 0.0001) * factor), double((ds[i + 1] + 0.0001) * factor) * 10});
         }
         for (; i < totalSize; i++)
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
@@ -94,37 +96,23 @@ void ExponentialDataset::GenerateDataset(vector<pair<double, double>> &initDatas
             cnt++;
             if (cnt <= num)
             {
+                if (initDataset.size() == 67108864)
+                    break;
                 initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
             }
             else
             {
-                insertDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+                trainInsertQuery.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
+                i++;
+                if (testInsertQuery.size() < insertNumber)
+                    testInsertQuery.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
                 cnt = 0;
             }
         }
     }
-    default_random_engine engine;
+    trainFindQuery = initDataset;
 
-    auto find = initDataset;
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed);
-    shuffle(find.begin(), find.end(), engine);
-
-    int end = 100000 - insertNumber;
-    for (int i = 0; i < end; i++)
-        trainFindQuery.push_back(initDataset[i]);
-
-    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed1);
-    shuffle(insertDataset.begin(), insertDataset.end(), engine);
-    end = insertNumber * 2;
-    for (int i = 0; i < end; i += 2)
-    {
-        trainInsertQuery.push_back(insertDataset[i]);
-        testInsertQuery.push_back(insertDataset[i + 1]);
-    }
-
-    cout << "exponential: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
+    cout << "exponential: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\ttrain insert size:" << trainInsertQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
 }
 
 #endif

@@ -49,7 +49,7 @@ void YCSBDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vec
     vector<pair<double, double>>().swap(testInsertQuery);
 
     vector<pair<double, double>> ds;
-    ifstream inFile("../src/dataset/newycsbdata.csv", ios::in);
+    ifstream inFile("..//src//experiment//dataset//newycsbdata.csv", ios::in);
     if (!inFile)
     {
         cout << "打开文件失败！" << endl;
@@ -77,24 +77,25 @@ void YCSBDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vec
     std::sort(ds.begin(), ds.end());
     for (int i = 0; i < ds.size(); i++)
         initDataset.push_back(ds[i]);
-    int end = round(100000 * (1 - init));
+    int end = round(67108864 / init * (1 - init));
     auto maxValue = ds[ds.size() - 1];
+    // for (int i = 1; i <= end; i++)
+    //     trainInsertQuery.push_back({maxValue.first + i, maxValue.second + i});
+    end = round(100000 * (1 - init));
     for (int i = 1; i <= end; i++)
-        trainInsertQuery.push_back({maxValue.first + i, maxValue.second + i});
-    testInsertQuery = trainInsertQuery;
+        testInsertQuery.push_back({maxValue.first + i, maxValue.second + i});
 
     default_random_engine engine;
 
-    auto find = initDataset;
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed);
-    shuffle(find.begin(), find.end(), engine);
+    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+    engine = default_random_engine(seed1);
+    trainFindQuery = initDataset;
+    for (int i = 0; i < trainFindQuery.size(); i++)
+        trainFindQuery[i].second = 1;
+    // for (int i = 0; i < trainInsertQuery.size(); i++)
+    //     trainInsertQuery[i].second = 1;
 
-    end = 100000 - insertNumber;
-    for (int i = 0; i < end; i++)
-        trainFindQuery.push_back(initDataset[i]);
-
-    cout << "YCSB: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
+    cout << "YCSB: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\ttrain insert size:" << trainInsertQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
 }
 
 #endif
