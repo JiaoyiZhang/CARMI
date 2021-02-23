@@ -41,13 +41,14 @@ long double CARMI::calculateSpace() const
     space += 64 * nowChildNumber;
     if (!kPrimaryIndex)
     {
-        for (int i = 0; i < nowChildNumber; i++)
-        {
-            if ((entireChild[i].lr.flagNumber >> 24) == 8)
-                space += entireChild[i].array.m_capacity * 16;
-            else if ((entireChild[i].lr.flagNumber >> 24) == 9)
-                space += entireChild[i].ga.capacity * 16;
-        }
+        space += entireData.size() * 16;
+        // for (int i = 0; i < nowChildNumber; i++)
+        // {
+        //     if ((entireChild[i].lr.flagNumber >> 24) == 8)
+        //         space += entireChild[i].array.m_capacity * 16;
+        //     else if ((entireChild[i].lr.flagNumber >> 24) == 9)
+        //         space += entireChild[i].ga.capacity * 16;
+        // }
     }
     space = space / 1024 / 1024;
     cout << "\tStructure SPACE: " << space << "MB" << endl;
