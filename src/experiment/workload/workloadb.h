@@ -22,19 +22,22 @@ void WorkloadB(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     engine = default_random_engine(seed);
     shuffle(init.begin(), init.end(), engine);
 
-    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed1);
-    shuffle(insert.begin(), insert.end(), engine);
+    if (!kPrimaryIndex)
+    {
+        unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+        engine = default_random_engine(seed1);
+        shuffle(insert.begin(), insert.end(), engine);
+    }
 
     int end = 5000;
     int findCnt = 0;
-    Zipfian zipFind;
-    zipFind.InitZipfian(PARAM_ZIPFIAN, init.size());
-    vector<int> index;
-    for (int i = 0; i < init.size(); i++)
+    Zipfian zip;
+    zip.InitZipfian(PARAM_ZIPFIAN, init.size());
+    vector<int> index(95000, 0);
+    for (int i = 0; i < 95000; i++)
     {
-        int idx = zipFind.GenerateNextIndex();
-        index.push_back(idx);
+        int idx = zip.GenerateNextIndex();
+        index[i] = idx;
     }
 
     chrono::_V2::system_clock::time_point s, e;
@@ -71,20 +74,20 @@ void WorkloadB(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     {
         for (int j = 0; j < 19; j++)
         {
-            init[index[findCnt]].first;
+            // init[index[findCnt]].first;
             findCnt++;
         }
-        insert[i];
+        // insert[i];
     }
 #else
     for (int i = 0; i < end; i++)
     {
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
-            init[findCnt].first;
+            // init[findCnt].first;
             findCnt++;
         }
-        insert[i];
+        // insert[i];
     }
 #endif
     e = chrono::system_clock::now();

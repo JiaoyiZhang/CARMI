@@ -21,13 +21,13 @@ void WorkloadC(CARMI *carmi, vector<pair<double, double>> &initDataset)
     shuffle(init.begin(), init.end(), engine);
 
     int end = 100000;
-    Zipfian zipFind;
-    zipFind.InitZipfian(PARAM_ZIPFIAN, init.size());
-    vector<int> index;
+    Zipfian zip;
+    zip.InitZipfian(PARAM_ZIPFIAN, init.size());
+    vector<int> index(end, 0);
     for (int i = 0; i < end; i++)
     {
-        int idx = zipFind.GenerateNextIndex();
-        index.push_back(idx);
+        int idx = zip.GenerateNextIndex();
+        index[i] = idx;
     }
 
     chrono::_V2::system_clock::time_point s, e;
@@ -52,12 +52,12 @@ void WorkloadC(CARMI *carmi, vector<pair<double, double>> &initDataset)
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
-        init[index[i]].first;
+        // init[index[i]].first;
     }
 #else
     for (int i = 0; i < end; i++)
     {
-        init[i].first;
+        // init[i].first;
     }
 #endif
     e = chrono::system_clock::now();

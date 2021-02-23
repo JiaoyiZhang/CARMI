@@ -21,22 +21,23 @@ void WorkloadD(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     engine = default_random_engine(seed);
     shuffle(init.begin(), init.end(), engine);
 
-    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed1);
-    shuffle(insert.begin(), insert.end(), engine);
+    if (!kPrimaryIndex)
+    {
+        unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+        engine = default_random_engine(seed1);
+        shuffle(insert.begin(), insert.end(), engine);
+    }
 
     int end = 15000;
     int findCnt = 0;
     int insertCnt = 0;
-    Zipfian zipFind;
-    zipFind.InitZipfian(PARAM_ZIPFIAN, init.size());
-    vector<int> index;
-    for (int i = 0; i < init.size(); i++)
+    Zipfian zip;
+    zip.InitZipfian(PARAM_ZIPFIAN, init.size());
+    vector<int> index(85000, 0);
+    for (int i = 0; i < 85000; i++)
     {
-        int idx = zipFind.GenerateNextIndex();
-        while (idx >= init.size())
-            idx = zipFind.GenerateNextIndex();
-        index.push_back(idx);
+        int idx = zip.GenerateNextIndex();
+        index[i] = idx;
     }
 
     chrono::_V2::system_clock::time_point s, e;
@@ -82,12 +83,12 @@ void WorkloadD(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     {
         for (int j = 0; j < 17 && findCnt < init.size(); j++)
         {
-            init[index[findCnt]].first;
+            // init[index[findCnt]].first;
             findCnt++;
         }
         for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
         {
-            insert[insertCnt];
+            // insert[insertCnt];
             insertCnt++;
         }
     }
@@ -96,12 +97,12 @@ void WorkloadD(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     {
         for (int j = 0; j < 17 && findCnt < init.size(); j++)
         {
-            init[findCnt].first;
+            // init[findCnt].first;
             findCnt++;
         }
         for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
         {
-            insert[insertCnt];
+            // insert[insertCnt];
             insertCnt++;
         }
     }

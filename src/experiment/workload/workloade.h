@@ -4,7 +4,6 @@
 #include "zipfian.h"
 #include "../../CARMI/func/find_function.h"
 #include "../../CARMI/func/insert_function.h"
-#include "../../CARMI/func/rangescan_function.h"
 using namespace std;
 
 extern ofstream outRes;
@@ -22,31 +21,39 @@ void WorkloadE(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     engine = default_random_engine(seed);
     shuffle(init.begin(), init.end(), engine);
 
-    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed1);
-    shuffle(insert.begin(), insert.end(), engine);
+    if (!kPrimaryIndex)
+    {
+        unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
+        engine = default_random_engine(seed1);
+        shuffle(insert.begin(), insert.end(), engine);
+    }
 
     int end = 5000;
     int findCnt = 0;
-    Zipfian zipFind;
-    zipFind.InitZipfian(PARAM_ZIPFIAN, init.size());
-    vector<int> index;
-    for (int i = 0; i < init.size(); i++)
+    Zipfian zip;
+    zip.InitZipfian(PARAM_ZIPFIAN, init.size());
+    vector<int> index(95000, 0);
+    for (int i = 0; i < 95000; i++)
     {
-        int idx = zipFind.GenerateNextIndex();
-        index.push_back(idx);
+        int idx = zip.GenerateNextIndex();
+        index[i] = idx;
     }
 
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
     s = chrono::system_clock::now();
+    vector<pair<double, double>> ret(100, {-1, -1});
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
-            vector<pair<double, double>> ret(length[findCnt], {-1, -1});
-            carmi->RangeScan(init[index[findCnt]].first, length[findCnt], ret);
+            auto it = carmi->Find(init[index[findCnt]].first);
+            for (int l = 0; l < length[index[findCnt]]; l++)
+            {
+                ret[l] = {it.key(), it.data()};
+                ++it;
+            }
             findCnt++;
         }
         carmi->Insert(insert[i]);
@@ -56,8 +63,12 @@ void WorkloadE(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     {
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
-            vector<pair<double, double>> ret(length[findCnt], {-1, -1});
-            carmi->RangeScan(init[findCnt].first, length[findCnt], ret);
+            auto it = carmi->Find(init[findCnt].first);
+            for (int l = 0; l < length[findCnt]; l++)
+            {
+                ret[l] = {it.key(), it.data()};
+                ++it;
+            }
             findCnt++;
         }
         carmi->Insert(insert[i]);
@@ -74,22 +85,24 @@ void WorkloadE(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     {
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
-            vector<pair<double, double>> ret(length[findCnt], {-1, -1});
-            init[index[findCnt]].first;
+            CARMI::iterator it;
+            for (int l = 0; l < length[index[findCnt]]; l++)
+            {
+            }
             findCnt++;
         }
-        insert[i];
     }
 #else
     for (int i = 0; i < end; i++)
     {
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
-            vector<pair<double, double>> ret(length[findCnt], {-1, -1});
-            init[findCnt].first;
+            CARMI::iterator it;
+            for (int l = 0; l < length[findCnt]; l++)
+            {
+            }
             findCnt++;
         }
-        insert[i];
     }
 #endif
     e = chrono::system_clock::now();
