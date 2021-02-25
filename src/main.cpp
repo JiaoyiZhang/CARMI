@@ -13,7 +13,7 @@ ofstream outRes;
 
 int main()
 {
-    outRes.open("res_0217.csv", ios::app);
+    outRes.open("res_0225.csv", ios::app);
 
     time_t timep;
     time(&timep);
@@ -23,8 +23,7 @@ int main()
     outRes << "\nTest time: " << tmpTime << endl;
 
     int datasetSize = 67108864;
-
-    mainExperiment(datasetSize);
+    mainExperiment(datasetSize, 4096);
     fixedExperiment(datasetSize);
 
     outRes << "----------------------------------------------" << endl;

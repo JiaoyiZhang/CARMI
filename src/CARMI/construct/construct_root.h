@@ -36,7 +36,7 @@ inline void CARMI::ConstructRoot(TYPE *root, const int childNum, double &totalCo
     for (int i = 0; i < childNum; i++)
     {
         NodeCost resChild;
-        if (subInitData[i].second + subInsertData[i].second > 4096)
+        if (subInitData[i].second + subInsertData[i].second > kAlgorithmThreshold)
             resChild = GreedyAlgorithm(subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);
         else
             resChild = dp(subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);

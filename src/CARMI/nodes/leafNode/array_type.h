@@ -38,7 +38,7 @@ inline void CARMI::initArray(ArrayType *arr, const vector<pair<double, double>> 
         return;
 
     if (size > 4096)
-        cout << "Array setDataset WRONG! datasetSize > 4096, size is:" << size << endl;
+        cout << "init Array setDataset WRONG! datasetSize > 4096, size is:" << size << endl;
 
     for (int i = arr->m_left, j = 0; j < size; i++, j++)
         entireData[i] = dataset[j];

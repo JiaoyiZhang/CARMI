@@ -160,7 +160,7 @@ NodeCost CARMI::GreedyAlgorithm(const int initLeft, const int initSize, const in
     for (int i = 0; i < childNum; i++)
     {
         NodeCost res;
-        if (subInitData[i].second + subInsertData[i].second > 4096)
+        if (subInitData[i].second + subInsertData[i].second > kAlgorithmThreshold)
             res = GreedyAlgorithm(subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second); // construct an inner node
         else
             res = dp(subInitData[i].first, subInitData[i].second, subFindData[i].first, subFindData[i].second, subInsertData[i].first, subInsertData[i].second);

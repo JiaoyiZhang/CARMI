@@ -14,8 +14,7 @@ public:
     BinarySearchModel(int childNum)
     {
         childNumber = childNum;
-        for (int i = 0; i < childNum; i++)
-            index.push_back(0);
+        index = vector<double>(childNum, 0);
     }
     void Train(const vector<pair<double, double>> &dataset, int len);
     int Predict(double key) const
@@ -44,22 +43,26 @@ public:
     int GetChildNum() { return childNumber; }
 
 private:
-    vector<double> index;  // 8c
-    int childNumber;  // 4
+    vector<double> index; // 8c
+    // double index[131072]; // 8c
+    int childNumber;      // 4
 };
 
 void BinarySearchModel::Train(const vector<pair<double, double>> &dataset, int len)
 {
     if (dataset.size() == 0)
         return;
-    index.clear();
+    // index.clear();
+    int tmp = 0;
+    childNumber = len;
     float value = float(dataset.size()) / childNumber;
     int cnt = 1;
     for (int i = value * cnt - 1; i < dataset.size(); i = value * (++cnt) - 1)
     {
         if (dataset[i].first != -1)
         {
-            index.push_back(dataset[i].first);
+            index[tmp++] = dataset[i].first;
+            // index.push_back(dataset[i].first);
         }
         else
         {
@@ -67,7 +70,8 @@ void BinarySearchModel::Train(const vector<pair<double, double>> &dataset, int l
             {
                 if (dataset[j].first != -1)
                 {
-                    index.push_back(dataset[j].first);
+                    // index.push_back(dataset[j].first);
+                    index[tmp++] = dataset[j].first;
                     break;
                 }
             }

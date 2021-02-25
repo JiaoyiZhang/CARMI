@@ -84,7 +84,6 @@ inline void CARMI::initGA(GappedArrayType *ga, const int left, const int size)
         releaseMemory(ga->m_left, ga->capacity);
     while ((float(size) / float(ga->capacity) > ga->density))
         ga->capacity = float(ga->capacity) / ga->density + 1;
-    ga->capacity *= 2; // test
     if (ga->capacity > 4096)
         ga->capacity = 4096;
     ga->m_left = allocateMemory(ga->capacity);

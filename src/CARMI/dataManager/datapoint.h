@@ -116,6 +116,8 @@ int CARMI::allocateMemory(int size)
     auto res = allocateEmptyBlock(newLeft + size, emptyBlocks[idx].m_width - size);
     if (!res)
         cout << "after allocate, allocateEmptyBlock WRONG!" << endl;
+    if (newLeft + size > nowDataSize)
+        nowDataSize = newLeft + size;
     return newLeft;
 }
 

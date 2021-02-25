@@ -28,7 +28,7 @@ void WorkloadD(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
         shuffle(insert.begin(), insert.end(), engine);
     }
 
-    int end = 15000;
+    int end = 5000;
     int findCnt = 0;
     int insertCnt = 0;
     Zipfian zip;
@@ -60,12 +60,12 @@ void WorkloadD(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
 #else
     for (int i = 0; i < end; i++)
     {
-        for (int j = 0; j < 17 && findCnt < init.size(); j++)
+        for (int j = 0; j < 17 && findCnt < 85000; j++)
         {
             carmi->Find(init[findCnt].first);
             findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+        for (int j = 0; j < 3 && insertCnt < 15000; j++)
         {
             carmi->Insert(insert[insertCnt]);
             insertCnt++;
@@ -95,12 +95,12 @@ void WorkloadD(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
 #else
     for (int i = 0; i < end; i++)
     {
-        for (int j = 0; j < 17 && findCnt < init.size(); j++)
+        for (int j = 0; j < 17 && findCnt < 85000; j++)
         {
             // init[findCnt].first;
             findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertDataset.size(); j++)
+        for (int j = 0; j < 3 && insertCnt < 15000; j++)
         {
             // insert[insertCnt];
             insertCnt++;
@@ -110,9 +110,8 @@ void WorkloadD(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
     e = chrono::system_clock::now();
     double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
     tmp -= tmp0;
-
-    cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
+    cout << "total time:" << tmp / 85000.0 * 1000000000 << endl;
+    outRes << tmp / 85000.0 * 1000000000 << ",";
 }
 
 #endif // !WORKLOAD_D_H

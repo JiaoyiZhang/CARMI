@@ -239,7 +239,7 @@ void artTree_test(double initRatio, vector<pair<double, double>> &initData, vect
     }
     else if (initRatio == 0)
     {
-        int end = 15000;
+        int end = 5000;
         int findCnt = 0;
         int insertCnt = 0;
 
@@ -435,6 +435,12 @@ void artTree_test(double initRatio, vector<pair<double, double>> &initData, vect
         outRes << tmp / 100000.0 * 1000000000 << ",";
     }
 
+    std::sort(initData.begin(), initData.end(), [](pair<double, double> p1, pair<double, double> p2) {
+        return p1.first < p2.first;
+    });
+    std::sort(insertData.begin(), insertData.end(), [](pair<double, double> p1, pair<double, double> p2) {
+        return p1.first < p2.first;
+    });
     outRes << endl;
 }
 

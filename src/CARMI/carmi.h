@@ -15,12 +15,14 @@ using namespace std;
 class CARMI
 {
 public:
-    CARMI(const vector<pair<double, double>> &dataset, int childNum, int kLeafID, int kInnerID); // RMI
-    CARMI(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData, double rate)
+    CARMI(const vector<pair<double, double>> &dataset, int childNum, int kInnerID, int kLeafID); // RMI
+    CARMI(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData, double rate, int thre)
     {
+        kAlgorithmThreshold = thre;
         kRate = rate;
         kThreshold = 2;
         kMaxKeyNum = 1024;
+        nowDataSize = 0;
         initDataset = initData;
         findQuery = findData;
         insertQuery = insertData;
@@ -29,6 +31,7 @@ public:
     CARMI(const vector<pair<double, double>> &initData)
     {
         kThreshold = 2;
+        nowDataSize = 0;
         kMaxKeyNum = 1024;
         initDataset = initData;
         vector<pair<double, double>> tmp;
@@ -41,13 +44,29 @@ public:
         inline iterator(CARMI *t, BaseNode *l, int s) : tree(t), currnode(l), currslot(s){};
         inline const double &key() const
         {
-            int left = currnode->array.m_left;
-            return tree->entireData[left + currslot].first;
+            if (kPrimaryIndex)
+            {
+                int left = currnode->ycsbLeaf.m_left;
+                return tree->initDataset[left + currslot].first;
+            }
+            else
+            {
+                int left = currnode->array.m_left;
+                return tree->entireData[left + currslot].first;
+            }
         }
         inline const double &data() const
         {
-            int left = currnode->array.m_left;
-            return tree->entireData[left + currslot].second;
+            if (kPrimaryIndex)
+            {
+                int left = currnode->ycsbLeaf.m_left;
+                return tree->initDataset[left + currslot].second;
+            }
+            else
+            {
+                int left = currnode->array.m_left;
+                return tree->entireData[left + currslot].second;
+            }
         }
         inline iterator &end() const
         {
@@ -67,18 +86,32 @@ public:
 
         inline iterator &operator++()
         {
-            int left = currnode->array.m_left;
-            while (currslot < (currnode->array.flagNumber & 0x00FFFFFF) || currnode->array.nextLeaf != -1)
+            if (!kPrimaryIndex)
             {
-                currslot++;
-                if (tree->entireData[left + currslot].first != DBL_MIN)
-                    return *this;
-                if (currslot == (currnode->array.flagNumber & 0x00FFFFFF))
+                int left = currnode->array.m_left;
+                while (currslot < (currnode->array.flagNumber & 0x00FFFFFF) || currnode->array.nextLeaf != -1)
                 {
-                    currnode = &(tree->entireChild[currnode->array.nextLeaf]);
+                    currslot++;
+                    if (tree->entireData[left + currslot].first != DBL_MIN)
+                        return *this;
+                    if (currslot == (currnode->array.flagNumber & 0x00FFFFFF))
+                    {
+                        currnode = &(tree->entireChild[currnode->array.nextLeaf]);
+                    }
                 }
+                return end();
             }
-            return end();
+            else
+            {
+                int left = currnode->ycsbLeaf.m_left;
+                if (tree->initDataset[left + currslot].first != DBL_MIN)
+                {
+                    currslot++;
+                    return *this;
+                }
+                else
+                    return end();
+            }
         }
 
     private:
@@ -175,6 +208,7 @@ public:
     CARMIRoot root;
     int rootType;
     double kRate;
+    int kAlgorithmThreshold;
     int kMaxKeyNum;
     int kThreshold; // used to initialize a leaf node
     vector<BaseNode> entireChild;
@@ -186,6 +220,7 @@ private:
     unsigned int entireChildNumber;
     unsigned int nowChildNumber;
 
+    unsigned int nowDataSize;
     unsigned int entireDataSize;
     vector<EmptyBlock> emptyBlocks;
 
@@ -219,13 +254,14 @@ public:
 };
 
 // RMI
-CARMI::CARMI(const vector<pair<double, double>> &dataset, int childNum, int kLeafID, int kInnerID)
+CARMI::CARMI(const vector<pair<double, double>> &dataset, int childNum, int kInnerID, int kLeafID)
 {
+    nowDataSize = 0;
     kLeafNodeID = kLeafID;
     kInnerNodeID = kInnerID;
-    int left = allocateChildMemory(childNum);
     initEntireData(0, dataset.size(), false);
     initEntireChild(dataset.size());
+    int left = allocateChildMemory(childNum);
     kMaxKeyNum = 16;
     kThreshold = 2;
 
@@ -233,6 +269,7 @@ CARMI::CARMI(const vector<pair<double, double>> &dataset, int childNum, int kLea
     vector<pair<double, double>> tmp;
     for (int i = 0; i < childNum; i++)
         perSubDataset.push_back(tmp);
+    rootType = kInnerID;
 
     switch (kInnerNodeID)
     {
@@ -280,7 +317,7 @@ CARMI::CARMI(const vector<pair<double, double>> &dataset, int childNum, int kLea
         }
     }
     break;
-    case 2:
+    case 3:
     {
         root.bsRoot = BSType(childNum);
         root.bsRoot.childLeft = left;
@@ -302,7 +339,7 @@ CARMI::CARMI(const vector<pair<double, double>> &dataset, int childNum, int kLea
         }
     }
     break;
-    case 3:
+    case 2:
     {
         root.hisRoot = HisType(childNum);
         root.hisRoot.childLeft = left;

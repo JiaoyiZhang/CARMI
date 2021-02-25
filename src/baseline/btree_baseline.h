@@ -182,7 +182,7 @@ void btree_test(double initRatio, vector<pair<double, double>> &initData, vector
     }
     else if (initRatio == 0)
     {
-        int end = 15000;
+        int end = 5000;
         int findCnt = 0;
         int insertCnt = 0;
 

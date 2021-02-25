@@ -129,13 +129,13 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
     strftime(tmpTime1, sizeof(tmpTime1), "%Y-%m-%d %H:%M:%S", localtime(&timep));
     cout << "finish time: " << tmpTime1 << endl;
 #endif
-    curr = initDataset.size();
-    vector<pair<double, double>> tmp(100000, {-1, -1});
+    vector<pair<double, double>> tmp(100000, {DBL_MIN, DBL_MIN});
     initDataset.insert(initDataset.end(), tmp.begin(), tmp.end());
     if (!kPrimaryIndex)
         vector<pair<double, double>>().swap(initDataset);
     vector<pair<double, double>>().swap(findQuery);
     vector<pair<double, double>>().swap(insertQuery);
+    entireData.erase(entireData.begin() + nowDataSize + 1024 * 1024, entireData.end());
     return rootType;
 }
 

@@ -27,6 +27,8 @@ NodeCost CARMI::dp(const int initLeft, const int initSize, const int findLeft, c
     // construct a leaf node
     if (initSize <= kMaxKeyNum)
         return dpLeaf(initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
+    else if (initSize > 4096)
+        return dpInner(initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
     else
     {
         auto res0 = dpLeaf(initLeft, initSize, findLeft, findSize, insertLeft, insertSize);

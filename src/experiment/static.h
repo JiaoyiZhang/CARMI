@@ -14,7 +14,7 @@ extern ofstream outRes;
 
 void RunStatic(double initRatio, vector<pair<double, double>> &initDataset, vector<pair<double, double>> &testInsertQuery, vector<int> &length, int kLeafID)
 {
-    for (int j = 0; j < 1; j++)
+    for (int j = 2; j < 3; j++)
     {
         cout << "root type:" << j << endl;
         CARMI carmi(initDataset, 131072, j, kLeafID);
@@ -27,10 +27,10 @@ void RunStatic(double initRatio, vector<pair<double, double>> &initDataset, vect
         case 1:
             outRes << "plr,";
             break;
-        case 2:
+        case 3:
             outRes << "his,";
             break;
-        case 3:
+        case 2:
             outRes << "bin,";
             break;
         }

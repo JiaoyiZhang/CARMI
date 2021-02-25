@@ -39,17 +39,17 @@ void WorkloadE(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
         index[i] = idx;
     }
 
+    vector<pair<double, double>> ret(100, {-1, -1});
     chrono::_V2::system_clock::time_point s, e;
     double tmp;
     s = chrono::system_clock::now();
-    vector<pair<double, double>> ret(100, {-1, -1});
 #if ZIPFIAN
     for (int i = 0; i < end; i++)
     {
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
             auto it = carmi->Find(init[index[findCnt]].first);
-            for (int l = 0; l < length[index[findCnt]]; l++)
+            for (int l = 0; l < length[index[findCnt]] && it != it.end(); l++)
             {
                 ret[l] = {it.key(), it.data()};
                 ++it;
@@ -64,7 +64,7 @@ void WorkloadE(CARMI *carmi, vector<pair<double, double>> &initDataset, vector<p
         for (int j = 0; j < 19 && findCnt < init.size(); j++)
         {
             auto it = carmi->Find(init[findCnt].first);
-            for (int l = 0; l < length[findCnt]; l++)
+            for (int l = 0; l < length[findCnt] && it != it.end(); l++)
             {
                 ret[l] = {it.key(), it.data()};
                 ++it;
