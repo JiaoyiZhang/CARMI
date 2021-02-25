@@ -57,18 +57,16 @@ void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, 
     if (initSize == 0)
     {
         int i = 0;
-        for (; i < 0.6 * 67108864; i++)
+        for (; i <= 0.6 * totalSize; i++)
             initDataset.push_back({double(i), double(i) * 10});
-        for (; i < 0.9 * 67108864 * 3; i++)
+        for (; i < 0.9 * totalSize; i += 2)
         {
             initDataset.push_back({double(i), double(i) * 10});
-            i++;
             trainInsertQuery.push_back({double(i + 1), double(i + 1) * 10});
-            i++;
             if (testInsertQuery.size() < insertNumber)
-                testInsertQuery.push_back({double(i + 1.5), double(i + 1.5) * 10});
+                testInsertQuery.push_back({double(i + 1.0001), double(i + 1.0001) * 10});
         }
-        for (; i < 67108864; i++)
+        for (; i < totalSize; i++)
             initDataset.push_back({double(i), double(i) * 10});
     }
     else if (num == -1)

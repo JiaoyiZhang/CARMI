@@ -76,18 +76,18 @@ void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDatase
 	std::sort(ds.begin(), ds.end());
 	if (num == 0)
 	{
+		int totalSize = round(67108864 / 0.85);
 		int i = 0;
-		for (; i < 0.6 * 67108864; i++)
+		for (; i <= 0.6 * totalSize; i++)
 			initDataset.push_back(ds[i]);
-		for (; i < 0.9 * 67108864 * 3; i++)
+		for (; i < 0.9 * totalSize; i += 2)
 		{
-			initDataset.push_back(ds[i++]);
-			insertDataset.push_back(ds[i++]);
+			initDataset.push_back(ds[i]);
+			trainInsertQuery.push_back(ds[i + 1]);
 			if (testInsertQuery.size() < insertNumber)
-				testInsertQuery.push_back(ds[i]);
-			i++;
+				testInsertQuery.push_back(ds[i + 1]);
 		}
-		for (; i < 67108864; i++)
+        for (; i < totalSize; i++)
 			initDataset.push_back(ds[i]);
 	}
 	else if (num == -1)

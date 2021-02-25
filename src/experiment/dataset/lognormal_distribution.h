@@ -14,21 +14,22 @@ public:
     LognormalDataset(int total, double initRatio)
     {
         num = 2;
-        totalSize = total / initRatio;
         insertNumber = 100000 * (1 - initRatio);
         if (initRatio == 0)
         { // several leaf nodes are inserted
-            initSize = 0;
-            totalSize = total / 0.85 + 1;
             insertNumber = 15000;
+            totalSize = round(total / 0.85);
+            initSize = 0;
         }
         else if (initRatio == 1)
         {
+            totalSize = round(total / initRatio);
             num = -1;
             initSize = total;
         }
         else
         {
+            totalSize = round(total / initRatio);
             initSize = total;
             num = round(initRatio / (1 - initRatio));
         }
@@ -48,7 +49,7 @@ void LognormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset
 {
     if (initSize != 0 && num != -1)
         totalSize *= 1.5;
-    float maxValue = totalSize;
+    float maxValue = 100000000;
 
     // create dataset randomly
     std::default_random_engine generator;
