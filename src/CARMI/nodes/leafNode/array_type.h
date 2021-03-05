@@ -68,7 +68,7 @@ inline void CARMI::initArray(ArrayType *arr, const int left, const int size)
 
     if (arr->m_capacity > 4096)
         arr->m_capacity = 4096;
-
+    // cout<<"size:"<<size<<",\tcap:"<<arr->m_capacity<<endl;
     arr->m_left = allocateMemory(arr->m_capacity);
     if (size == 0)
         return;

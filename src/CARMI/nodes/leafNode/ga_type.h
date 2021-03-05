@@ -25,7 +25,7 @@ inline void CARMI::initGA(GappedArrayType *ga, const vector<pair<double, double>
         releaseMemory(ga->m_left, ga->capacity);
     ga->capacity = cap;
     while ((float(subDataset.size()) / float(ga->capacity) > ga->density))
-        ga->capacity = float(ga->capacity) / ga->density + 1;
+        ga->capacity = float(ga->capacity) / ga->density;
     // ga->capacity *= 2; // test
     if (ga->capacity > 4096)
         ga->capacity = 4096;
@@ -83,7 +83,7 @@ inline void CARMI::initGA(GappedArrayType *ga, const int left, const int size)
     if (ga->m_left != -1)
         releaseMemory(ga->m_left, ga->capacity);
     while ((float(size) / float(ga->capacity) > ga->density))
-        ga->capacity = float(ga->capacity) / ga->density + 1;
+        ga->capacity = float(ga->capacity) / ga->density;
     if (ga->capacity > 4096)
         ga->capacity = 4096;
     ga->m_left = allocateMemory(ga->capacity);
