@@ -2,7 +2,7 @@
 #define DP_LEAF_H
 
 #include "../../params.h"
-#include "node_cost_struct.h"
+#include "structures.h"
 #include "../func/inlineFunction.h"
 #include <float.h>
 #include <algorithm>
@@ -11,130 +11,129 @@
 using namespace std;
 
 template <typename TYPE>
-void CARMI::CalLeafTime(double &time, const int left, const int size, const int querySize, const int actualSize, const int error, bool isFind, bool isArray, TYPE *node, vector<std::pair<double, double>> &query, const double para) const
+double CARMI::CalLeafFindTime(TYPE *node, SingleDataRange *range, const int actualSize, const double density) const
 {
-    for (int i = left; i < left + size; i++)
+    double time = 0;
+    for (int i = range->left; i < range->left + range->size; i++)
     {
-        auto predict = node->Predict(query[i].first) + left;
+        auto predict = node->Predict(findQuery[i].first) + range->left;
         auto d = abs(i - predict);
-        time += (161.241 * query[i].second) / querySize;
-        if (isFind == false)
+        time += (CostBaseTime * findQuery[i].second) / querySize;
+        if (d <= node->error)
         {
-            int actual;
-            if (isArray)
-            {
-                actual = TestArrayBinarySearch(query[i].first, left, left + size);
-                time += ((6.25 * (size + left + size - actual + 1)) * query[i].second) / querySize;
-            }
-            else
-            {
-                actual = TestGABinarySearch(query[i].first, left, left + size);
-                time += (6.25 * (2 - para) / (para - 1) - 1) * query[i].second / querySize;
-            }
-            d = abs(actual - predict);
-        }
-        if (d <= error)
-        {
-            if (d > 0 && error > 0)
-                time += (log(error) / log(2) * query[i].second * 10.9438) * para / querySize;
-            else
-                time += 2.4132 / querySize;
+            time += (log(node->error + 1) / log(2) * findQuery[i].second * CostBSTime) * (2 - density) / querySize;
         }
         else
-            time += (log(actualSize) / log(2) * query[i].second * 10.9438 * para) / querySize;
+            time += (log(actualSize) / log(2) * findQuery[i].second * CostBSTime * (2 - density)) / querySize;
     }
+    return time;
 }
 
-NodeCost CARMI::dpLeaf(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
+template <typename TYPE>
+double CARMI::CalLeafInsertTime(TYPE *node, SingleDataRange *range, SingleDataRange *findRange, const int actualSize, const double density) const
+{
+    double time = 0;
+    for (int i = range->left; i < range->left + range->size; i++)
+    {
+        int predict = node->Predict(insertQuery[i].first) + findRange->left;
+        int d = abs(i - predict);
+        time += (CostBaseTime * insertQuery[i].second) / querySize;
+        int actual;
+        if (density == 1)
+        {
+            actual = TestArrayBinarySearch(insertQuery[i].first, findRange->left, findRange->left + findRange->size);
+            time += CostMoveTime * findRange->size / 2 * insertQuery[i].second / querySize;
+        }
+        else
+        {
+            actual = TestGABinarySearch(insertQuery[i].first, findRange->left, findRange->left + findRange->size);
+            time += CostMoveTime * density / (1 - density) * insertQuery[i].second / querySize;
+        }
+        d = abs(actual - predict);
+
+        if (d <= node->error)
+        {
+            time += (log(node->error + 1) / log(2) * insertQuery[i].second * CostBSTime) * (2 - density) / querySize;
+        }
+        else
+            time += (log(actualSize) / log(2) * insertQuery[i].second * CostBSTime * (2 - density)) / querySize;
+    }
+    return time;
+}
+
+NodeCost CARMI::dpLeaf(DataRange *dataRange)
 {
     NodeCost nodeCost;
-    auto it = COST.find({initLeft, initSize});
+    auto it = COST.find(dataRange->initRange);
     if (it != COST.end())
     {
-        nodeCost.time = it->second.first;
-        nodeCost.space = it->second.second;
+        nodeCost = it->second;
         nodeCost.isInnerNode = false;
         return nodeCost;
     }
 
-    double OptimalValue = DBL_MAX;
-    double OptimalTime = DBL_MAX;
-    double OptimalSpace = DBL_MAX;
+    NodeCost *optimalCost = new NodeCost(DBL_MAX, DBL_MAX, DBL_MAX, false);
     ParamStruct optimalStruct;
-    double space, time, cost;
 
     if (kPrimaryIndex)
     {
-        time = 0.0;
-        space = 0.0;
+        nodeCost.time = 0.0;
+        nodeCost.space = 0.0;
 
         auto tmp = YCSBLeaf();
-        Train(&tmp, initLeft, initSize);
-        auto error = UpdateError(&tmp, initLeft, initSize);
-        for (int i = findLeft; i < findLeft + findSize; i++)
+        Train(&tmp, dataRange->initRange.left, dataRange->initRange.size);
+        auto error = UpdateError(&tmp, dataRange->initRange.left, dataRange->initRange.size);
+        int findEnd = dataRange->findRange.left + dataRange->findRange.size;
+        for (int i = dataRange->findRange.left; i < findEnd; i++)
         {
-            auto predict = tmp.Predict(findQuery[i].first) + findLeft;
+            auto predict = tmp.Predict(findQuery[i].first) + dataRange->findRange.left;
             auto d = abs(i - predict);
-            time += (161.241 * findQuery[i].second) / querySize;
+            nodeCost.time += (CostBaseTime * findQuery[i].second) / querySize;
             if (d <= error)
             {
-                if (d > 0 && error > 0)
-                    time += (log(error) / log(2) * findQuery[i].second * 10.9438) / querySize;
-                else
-                    time += 2.4132 / querySize;
+                nodeCost.time += (log(error + 1) / log(2) * findQuery[i].second * CostBSTime) / querySize;
             }
             else
-                time += (log(initSize) / log(2) * findQuery[i].second * 10.9438) / querySize;
+                nodeCost.time += (log(dataRange->initRange.size) / log(2) * findQuery[i].second * CostBSTime) / querySize;
         }
 
-        for (int i = insertLeft; i < insertLeft + insertSize; i++)
+        int insertEnd = dataRange->insertRange.left + dataRange->insertRange.size;
+        for (int i = dataRange->insertRange.left; i < insertEnd; i++)
         {
-            auto predict = tmp.Predict(insertQuery[i].first) + insertLeft;
-            auto actual = TestArrayBinarySearch(insertQuery[i].first, findLeft, findLeft + findSize);
-            auto d = abs(actual - predict);
-            time += ((161.241 + 6.25) * insertQuery[i].second) / querySize; // due to shuffle
+            nodeCost.time += ((CostBaseTime + CostMoveTime) * insertQuery[i].second) / querySize;
         }
 
-        cost = time + space * kRate; // ns + MB * kRate
-        OptimalValue = cost;
-        optimalStruct.type = 6;
-        optimalStruct.density = 2;
-        OptimalSpace = space * kRate;
-        OptimalTime = time;
+        nodeCost.cost = nodeCost.time + nodeCost.space * kRate; // ns + MB * kRate
+        optimalCost = new NodeCost(nodeCost.time, nodeCost.space * kRate, nodeCost.cost, false);
+        optimalStruct = ParamStruct(6, 0, 2, vector<MapKey>());
 
-        nodeCost.time = time;
-        nodeCost.space = space * kRate;
+        nodeCost.space *= kRate;
         nodeCost.isInnerNode = false;
         return nodeCost;
     }
 
-    // calculate the actual space
     int actualSize = kThreshold;
-    while (initSize >= actualSize)
+    while (dataRange->initRange.size >= actualSize)
         actualSize *= kExpansionScale;
 
-    // actualSize *= 2; // test
     if (actualSize > 4096)
         actualSize = 4096;
 
     // choose an array node as the leaf node
-    time = 0.0;
-    space = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
+    double time = 0.0;
+    double space = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
 
     auto tmp = ArrayType(actualSize);
-    Train(&tmp, initLeft, initSize);
-    auto error = UpdateError(&tmp, initLeft, initSize);
-    CalLeafTime<ArrayType>(time, initLeft, initSize, querySize, actualSize, error, true, true, &tmp, findQuery, 1);
-    CalLeafTime<ArrayType>(time, insertLeft, insertSize, querySize, actualSize, error, false, true, &tmp, insertQuery, 1);
+    Train(&tmp, dataRange->initRange.left, dataRange->initRange.size);
+    auto error = UpdateError(&tmp, dataRange->initRange.left, dataRange->initRange.size);
+    CalLeafFindTime<ArrayType>(&tmp, &(dataRange->findRange), actualSize, 1);
+    CalLeafInsertTime<ArrayType>(&tmp, &(dataRange->insertRange), &(dataRange->findRange), actualSize, 1);
 
-    cost = time + space * kRate; // ns + MB * kRate
-    if (cost <= OptimalValue)
+    double cost = time + space * kRate; // ns + MB * kRate
+    if (cost <= optimalCost->cost)
     {
-        OptimalValue = cost;
-        optimalStruct.type = 4;
-        optimalStruct.density = 2;
-        OptimalSpace = space * kRate;
-        OptimalTime = time;
+        optimalCost = new NodeCost(time, space * kRate, cost, false);
+        optimalStruct = ParamStruct(4, 0, 1, vector<MapKey>());
     }
 
     // choose a gapped array node as the leaf node
@@ -143,8 +142,8 @@ NodeCost CARMI::dpLeaf(const int initLeft, const int initSize, const int findLef
     {
         // calculate the actual space
         int actualSize = kThreshold;
-        while ((float(initSize) / float(actualSize) >= Density[i]))
-            actualSize = float(actualSize) / Density[i] + 1;
+        while ((float(dataRange->initRange.size) / float(actualSize) >= Density[i]))
+            actualSize = float(actualSize) / Density[i];
         if (actualSize > 4096)
             actualSize = 4096;
 
@@ -154,27 +153,23 @@ NodeCost CARMI::dpLeaf(const int initLeft, const int initSize, const int findLef
         time = 0.0;
         space = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
 
-        Train(&tmpNode, initLeft, initSize);
-        auto errorGA = UpdateError(&tmpNode, initLeft, initSize);
-        CalLeafTime<GappedArrayType>(time, initLeft, initSize, querySize, actualSize, errorGA, true, false, &tmpNode, findQuery, 2 - Density[i]);
-        CalLeafTime<GappedArrayType>(time, insertLeft, insertSize, querySize, actualSize, errorGA, false, false, &tmpNode, insertQuery, 2 - Density[i]);
+        Train(&tmpNode, dataRange->initRange.left, dataRange->initRange.size);
+        auto errorGA = UpdateError(&tmpNode, dataRange->initRange.left, dataRange->initRange.size);
+        CalLeafFindTime<GappedArrayType>(&tmpNode, &(dataRange->findRange), actualSize, Density[i]);
+        CalLeafInsertTime<GappedArrayType>(&tmpNode, &(dataRange->insertRange), &(dataRange->findRange), actualSize, Density[i]);
         cost = time + space * kRate; // ns + MB * kRate
-        if (cost < OptimalValue)
+        if (cost <= optimalCost->cost)
         {
-            OptimalValue = cost;
-            optimalStruct.type = 5;
-            optimalStruct.density = Density[i];
-            OptimalSpace = space * kRate;
-            OptimalTime = time;
+            optimalCost = new NodeCost(time, space * kRate, cost, false);
+            optimalStruct = ParamStruct(5, 0, Density[i], vector<MapKey>());
         }
     }
-    COST.insert({{initLeft, initSize}, {OptimalTime, OptimalSpace}});
-    structMap.insert({{false, {initLeft, initSize}}, optimalStruct});
 
-    nodeCost.time = OptimalTime;
-    nodeCost.space = OptimalSpace;
-    nodeCost.isInnerNode = false;
-    return nodeCost;
+    MapKey key = {false, {dataRange->initRange.left, dataRange->initRange.size}};
+    COST.insert({dataRange->initRange, *optimalCost});
+    structMap.insert({key, optimalStruct});
+
+    return *optimalCost;
 }
 
 #endif // !DP_LEAF_H
