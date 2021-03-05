@@ -99,7 +99,6 @@ bool CARMI::Insert(pair<double, double> data)
                     initArray(&tmpLeaf, subFindData[i], kMaxKeyNum);
                     entireChild[node.childLeft + i].array = tmpLeaf;
                 }
-                // cout << ">4096" << endl;
                 auto previousIdx = entireChild[idx].array.previousLeaf;
                 entireChild[previousIdx].array.nextLeaf = node.childLeft;
                 entireChild[node.childLeft].array.previousLeaf = previousIdx;
@@ -115,7 +114,6 @@ bool CARMI::Insert(pair<double, double> data)
             auto left = entireChild[idx].array.m_left;
             if (size == 0)
             {
-                // cout << "size == 0" << endl;
                 entireData[left] = data;
                 entireChild[idx].array.flagNumber++;
                 initArray(&entireChild[idx].array, left, 1, entireChild[idx].array.m_capacity);
@@ -152,14 +150,14 @@ bool CARMI::Insert(pair<double, double> data)
             else
                 preIdx = ArrayBinarySearch(data.first, end, left + size - 1);
 
-            // expand
-            if ((size >= entireChild[idx].array.m_capacity) && entireChild[idx].array.m_capacity < 4096)
-            {
-                auto diff = preIdx - left;
-                initArray(&entireChild[idx].array, left, 1, entireChild[idx].array.m_capacity);
-                left = entireChild[idx].array.m_left;
-                preIdx = left + diff;
-            }
+            // // expand
+            // if ((size >= entireChild[idx].array.m_capacity) && entireChild[idx].array.m_capacity < 4096)
+            // {
+            //     auto diff = preIdx - left;
+            //     initArray(&entireChild[idx].array, left, 1, entireChild[idx].array.m_capacity);
+            //     left = entireChild[idx].array.m_left;
+            //     preIdx = left + diff;
+            // }
 
             // Insert data
             if ((preIdx == left + size - 1) && (entireData[preIdx].first < data.first))
@@ -224,13 +222,13 @@ bool CARMI::Insert(pair<double, double> data)
 
                 idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(data.first);
             }
-            if (entireChild[idx].ga.capacity < 4096 && (float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
-            {
-                // If an additional Insertion results in crossing the density
-                // then we expand the gapped array
-                initGA(&entireChild[idx].ga, left, size, entireChild[idx].ga.capacity);
-                left = entireChild[idx].ga.m_left;
-            }
+            // if (entireChild[idx].ga.capacity < 4096 && (float(size) / entireChild[idx].ga.capacity > entireChild[idx].ga.density))
+            // {
+            //     // If an additional Insertion results in crossing the density
+            //     // then we expand the gapped array
+            //     initGA(&entireChild[idx].ga, left, size, entireChild[idx].ga.capacity);
+            //     left = entireChild[idx].ga.m_left;
+            // }
 
             if (size == 0)
             {

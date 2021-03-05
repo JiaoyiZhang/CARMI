@@ -22,7 +22,7 @@ long double CARMI::calculateSpace() const
 
     long double space = 0;
 
-    switch (kInnerNodeID)
+    switch (rootType)
     {
     case 0:
         space += sizeof(LRType);
