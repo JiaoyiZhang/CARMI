@@ -3,7 +3,7 @@
 
 #include "../../params.h"
 #include "../func/inlineFunction.h"
-#include "node_cost_struct.h"
+#include "structures.h"
 #include "greedy.h"
 #include "dp_inner.h"
 #include "dp_leaf.h"
@@ -13,26 +13,23 @@
 #include <map>
 using namespace std;
 
-NodeCost CARMI::dp(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize)
+NodeCost CARMI::dp(DataRange *range)
 {
     NodeCost nodeCost;
-    if (initSize == 0 && findSize == 0)
+    if (range->initRange.size == 0 && range->findRange.size == 0)
     {
-        nodeCost.space = 0;
-        nodeCost.time = 0;
-        nodeCost.isInnerNode = false;
+        nodeCost = NodeCost(0, 0, 0, false);
         return nodeCost;
     }
 
-    // construct a leaf node
-    if (initSize <= kMaxKeyNum)
-        return dpLeaf(initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
-    else if (initSize > 4096)
-        return dpInner(initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
+    if (range->initRange.size <= kMaxKeyNum)
+        return dpLeaf(range);
+    else if (range->initRange.size > 4096)
+        return dpInner(range);
     else
     {
-        auto res0 = dpLeaf(initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
-        auto res1 = dpInner(initLeft, initSize, findLeft, findSize, insertLeft, insertSize);
+        auto res0 = dpLeaf(range);
+        auto res1 = dpInner(range);
         if (res0.space + res0.time > res1.space + res1.time)
             return res1;
         else
