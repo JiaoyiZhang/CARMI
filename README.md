@@ -1,6 +1,6 @@
-# A simple implementation of Learned Index
+# A simple implementation of CARMI
 
-This is the framework of our cache-aware RMI (**CARMI**): **An Optimization-based Index Construction Strategy for Learned Index**.
+This is a simple implementation of our paper: **CARMI: A Cache-Aware Learned Index with a Cost-based Construction Algorithm**.
 
 ## Building
 
