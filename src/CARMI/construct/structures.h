@@ -45,12 +45,27 @@ struct SingleDataRange
         left = l;
         size = s;
     }
+
+    bool operator<(const SingleDataRange &a) const
+    {
+        if (left == a.left)
+            return size < a.size;
+        else
+            return left < a.left;
+    }
 };
 
 struct MapKey
 {
     bool isInnerNode;
     SingleDataRange initRange;
+    bool operator<(const MapKey &a) const
+    {
+        if (initRange.left == a.initRange.left)
+            return initRange.size < a.initRange.size;
+        else
+            return initRange.left < a.initRange.left;
+    }
 };
 
 struct ParamStruct

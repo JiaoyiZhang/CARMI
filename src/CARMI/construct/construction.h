@@ -72,6 +72,12 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
     structMap.clear();
     scanLeaf.clear();
 
+#ifdef DEBUG
+    cout << "Construction over!" << endl;
+    cout << "total cost: " << nodeCost.cost << endl;
+    cout << "total time: " << nodeCost.time << endl;
+    cout << "total space: " << nodeCost.space << endl;
+#endif
     return rootType;
 }
 

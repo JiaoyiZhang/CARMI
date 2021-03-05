@@ -4,9 +4,7 @@
 #include "dataManager/empty_block.h"
 #include "baseNode.h"
 #include "../params.h"
-#include "construct/params_struct.h"
-#include "construct/node_cost_struct.h"
-#include "construct/root_struct.h"
+#include "construct/structures.h"
 #include <vector>
 #include <float.h>
 #include <map>
@@ -20,21 +18,27 @@ public:
     {
         kAlgorithmThreshold = thre;
         kRate = rate;
-        kThreshold = 2;
-        kMaxKeyNum = 1024;
         nowDataSize = 0;
         initDataset = initData;
         findQuery = findData;
         insertQuery = insertData;
+        querySize = findData.size() + insertData.size();
+
+        if (!kPrimaryIndex)
+            initEntireData(0, initDataset.size(), false);
+        initEntireChild(initDataset.size());
         rootType = Construction(initData, findData, insertData);
     }
     CARMI(const vector<pair<double, double>> &initData)
     {
-        kThreshold = 2;
         nowDataSize = 0;
-        kMaxKeyNum = 1024;
         initDataset = initData;
         vector<pair<double, double>> tmp;
+        querySize = initData.size();
+
+        if (!kPrimaryIndex)
+            initEntireData(0, initDataset.size(), false);
+        initEntireChild(initDataset.size());
         rootType = Construction(initData, tmp, tmp);
     }
     class iterator
@@ -133,31 +137,42 @@ public:
     bool Delete(double key);
 
 private:
-    NodeCost dp(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
+    template <typename TYPE, typename ModelType>
+    void CheckRoot(int c, int type, double &optimalCost, double time, RootStruct *rootStruct);
+    RootStruct *ChooseRoot();
+    template <typename TYPE, typename ModelType>
+    TYPE *ConstructRoot(RootStruct *rootStruct, SubDataset *subDataset, DataRange *range, int &childLeft);
+    SubDataset *StoreRoot(RootStruct *rootStruct, NodeCost *nodeCost);
+
+    void ConstructSubTree(RootStruct *rootStruct, SubDataset *subDataset, NodeCost *nodeCost);
+
+private:
+    NodeCost dp(DataRange *range);
+    double CalculateEntropy(const vector<int> &perSize, int size, int childNum) const;
+    template <typename TYPE>
+    void NodePartition(TYPE *node, SubSingleDataset *subData, SingleDataRange *range, const vector<pair<double, double>> &dataset) const;
 
     template <typename TYPE>
-    void RootAllocSize(vector<int> &perSize, const int c);
+    void InnerDivideSingle(int c, SingleDataRange *range, SubSingleDataset *subDataset);
     template <typename TYPE>
-    void InnerAllocSize(vector<int> &perSize, const int c, const int initLeft, const int initSize);
-    RootStruct ChooseRoot();
+    TYPE *InnerDivideAll(int c, DataRange *range, SubDataset *subDataset);
+    template <typename TYPE>
+    void CalInner(NodeCost *optimalCost, ParamStruct *optimalStruct, double time, const int frequency, const int c, const int type, DataRange *dataRange);
+    NodeCost dpInner(DataRange *dataRange);
 
     template <typename TYPE>
-    void InnerDivide(TYPE *node, const int c, const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize, vector<pair<int, int>> &subInitData, vector<pair<int, int>> &subFindData, vector<pair<int, int>> &subInsertData, bool isNeedFind);
+    double CalLeafFindTime(TYPE *node, SingleDataRange *range, const int actualSize, const double density) const;
     template <typename TYPE>
-    void CalInner(double &OptimalValue, double &OptimalTime, double &OptimalSpace, ParamStruct &optimalStruct, double &space, double &time, const int frequency, const int c, const int type, const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
-    NodeCost dpInner(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
+    double CalLeafInsertTime(TYPE *node, SingleDataRange *range, SingleDataRange *findRange, const int actualSize, const double density) const;
+    NodeCost dpLeaf(DataRange *dataRange);
 
     template <typename TYPE>
-    void CalLeafTime(double &time, const int left, const int size, const int querySize, const int actualSize, const int error, bool isFind, bool isArray, TYPE *node, vector<std::pair<double, double>> &query, const double density) const;
-    NodeCost dpLeaf(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
-
-    NodeCost GreedyAlgorithm(const int initLeft, const int initSize, const int findLeft, const int findSize, const int insertLeft, const int insertSize);
+    void CheckGreedy(int c, int type, NodeCost *optimalCost, double time, ParamStruct *optimalStruct, SingleDataRange *range, double pi, int frequency);
+    NodeCost GreedyAlgorithm(DataRange *range);
 
     template <typename TYPE>
-    void ConstructRoot(TYPE *root, const int childNum, double &totalCost, double &totalTime, double &totalSpace);
-    template <typename TYPE>
-    TYPE storeInnerNode(pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx);
-    void storeOptimalNode(int optimalType, pair<bool, pair<int, int>> key, const int left, const int size, const int insertLeft, const int insertSize, int storeIdx);
+    TYPE *storeInnerNode(MapKey *key, DataRange *range, int storeIdx);
+    void storeOptimalNode(int optimalType, MapKey *key, DataRange *range, int storeIdx);
     bool allocateEmptyBlock(int left, int len);
     int getIndex(int size);
     void initEntireData(int left, int size, bool reinit);
@@ -209,8 +224,8 @@ public:
     int rootType;
     double kRate;
     int kAlgorithmThreshold;
-    int kMaxKeyNum;
-    int kThreshold; // used to initialize a leaf node
+    const int kMaxKeyNum = 1024;
+    const int kThreshold = 2; // used to initialize a leaf node
     vector<BaseNode> entireChild;
     vector<pair<double, double>> entireData;
 
@@ -230,12 +245,28 @@ private:
     vector<pair<double, double>> findQuery;
     vector<pair<double, double>> insertQuery;
 
-    map<pair<int, int>, pair<double, double>> COST; // int:left; double:time, space
-    map<pair<bool, pair<int, int>>, ParamStruct> structMap;
+    map<SingleDataRange, NodeCost> COST;
+    map<MapKey, ParamStruct> structMap;
     int querySize;
 
     int kLeafNodeID;  // for static structure
     int kInnerNodeID; // for static structure
+
+private:
+    const double LRRootTime = 12.7013;
+    const double PLRRootTime = 39.6429;
+    const double HisRootTime = 44.2824;
+
+    const double LRInnerTime = 92.4801;
+    const double PLRInnerTime = 97.1858;
+    const double HisInnerTime = 109.8874;
+    const double BSInnerTime = 114.371;
+
+    const double CostMoveTime = 6.25;
+    const double CostBaseTime = 161.241;
+    const double CostBSTime = 10.9438;
+
+    const int reservedSpace = 1024 * 512;
 
 public:
     friend class LRType;
@@ -262,8 +293,6 @@ CARMI::CARMI(const vector<pair<double, double>> &dataset, int childNum, int kInn
     initEntireData(0, dataset.size(), false);
     initEntireChild(dataset.size());
     int left = allocateChildMemory(childNum);
-    kMaxKeyNum = 16;
-    kThreshold = 2;
 
     vector<vector<pair<double, double>>> perSubDataset;
     vector<pair<double, double>> tmp;

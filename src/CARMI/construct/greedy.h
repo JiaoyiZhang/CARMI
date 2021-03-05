@@ -5,6 +5,7 @@
 #include "structures.h"
 #include "dp_inner.h"
 #include "../carmi.h"
+#include "minor_function.h"
 
 #include <float.h>
 #include <algorithm>
@@ -55,7 +56,7 @@ NodeCost CARMI::GreedyAlgorithm(DataRange *range)
         frequency += insertQuery[l].second;
     int tmpEnd = range->initRange.size / 2;
     SingleDataRange singleRange(range->initRange.left, range->initRange.size);
-    for (int c = 16; c < tmpEnd; c *= 2)
+    for (int c = 2; c < tmpEnd; c *= 2)
     {
         CheckGreedy<LRModel>(c, 0, optimalCost, LRInnerTime, &optimalStruct, &(range->initRange), pi, frequency);
         CheckGreedy<PLRModel>(c, 1, optimalCost, PLRInnerTime, &optimalStruct, &(range->initRange), pi, frequency);

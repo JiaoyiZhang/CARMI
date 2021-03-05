@@ -54,7 +54,7 @@ NodeCost CARMI::dpInner(DataRange *dataRange)
     for (int l = dataRange->insertRange.left; l < insertEnd; l++)
         frequency += insertQuery[l].second;
     int tmpEnd = dataRange->initRange.size / 2;
-    for (int c = 16; c < tmpEnd; c *= 2)
+    for (int c = 2; c < tmpEnd; c *= 2)
     {
         CalInner<LRModel>(optimalCost, &optimalStruct, LRInnerTime, frequency, c, 0, dataRange);
         CalInner<PLRModel>(optimalCost, &optimalStruct, PLRInnerTime, frequency, c, 1, dataRange);
