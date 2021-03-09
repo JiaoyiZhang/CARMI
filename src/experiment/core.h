@@ -22,11 +22,25 @@ void Core(double initRatio, vector<pair<double, double>> &initDataset, vector<pa
     for (int i = 0; i < trainInsertQuery.size(); i++)
         trainInsertQuery[i].second = 1;
 
-    cout << "kAlgThreshold:" << thre << endl;
-    CARMI carmi(initDataset, trainFindQuery, trainInsertQuery, rate, thre);
-    cout << "Construction over!" << endl;
+#ifdef DEBUG
     cout << endl;
+    cout << "kAlgThreshold:" << thre << endl;
+    cout << "-------------------------------" << endl;
+    cout << "Start construction!" << endl;
+    time_t timep;
+    time(&timep);
+    char tmpTime[64];
+    strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+    cout << "\nTEST time: " << tmpTime << endl;
+#endif
+    CARMI carmi(initDataset, trainFindQuery, trainInsertQuery, rate, thre);
 
+#ifdef DEBUG
+    time(&timep);
+    char tmpTime1[64];
+    strftime(tmpTime1, sizeof(tmpTime1), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+    cout << "finish time: " << tmpTime1 << endl;
+#endif
     cout << "\nprint the space:" << endl;
     auto space = carmi.calculateSpace();
     outRes << space << ",";

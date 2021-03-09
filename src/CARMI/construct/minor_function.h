@@ -45,9 +45,10 @@ TYPE *CARMI::InnerDivideAll(int c, DataRange *range, SubDataset *subDataset)
     node->SetChildNumber(c);
     Train(node, range->initRange.left, range->initRange.size);
 
-    NodePartition<TYPE>(node, &subDataset->subInit, &range->initRange, initDataset);
-    subDataset->subFind = subDataset->subInit;
-    NodePartition<TYPE>(node, &subDataset->subInsert, &range->insertRange, insertQuery);
+    NodePartition<TYPE>(node, subDataset->subInit, &range->initRange, initDataset);
+    subDataset->subFind->subLeft = subDataset->subInit->subLeft;
+    subDataset->subFind->subSize = subDataset->subInit->subSize;
+    NodePartition<TYPE>(node, subDataset->subInsert, &range->insertRange, insertQuery);
     return node;
 }
 

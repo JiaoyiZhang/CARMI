@@ -133,9 +133,9 @@ bool CARMI::Update(pair<double, double> data)
             auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
             int preIdx = entireChild[idx].ycsbLeaf.Predict(data.first);
             auto left = entireChild[idx].ycsbLeaf.m_left;
-            if (initDataset[left + preIdx].first == data.first)
+            if (entireData[left + preIdx].first == data.first)
             {
-                initDataset[left + preIdx].second = data.second;
+                entireData[left + preIdx].second = data.second;
                 return true;
             }
             else
@@ -144,9 +144,9 @@ bool CARMI::Update(pair<double, double> data)
                 int end = min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
                 start = min(start, end);
                 int res;
-                if (data.first <= initDataset[start].first)
+                if (data.first <= entireData[start].first)
                     res = YCSBBinarySearch(data.first, left, start);
-                else if (data.first <= initDataset[end].first)
+                else if (data.first <= entireData[end].first)
                     res = YCSBBinarySearch(data.first, start, end);
                 else
                 {
@@ -154,8 +154,8 @@ bool CARMI::Update(pair<double, double> data)
                     if (res >= left + size)
                         return false;
                 }
-                if (initDataset[res].first == data.first)
-                    initDataset[res].second = data.second;
+                if (entireData[res].first == data.first)
+                    entireData[res].second = data.second;
                 return true;
                 return false;
             }

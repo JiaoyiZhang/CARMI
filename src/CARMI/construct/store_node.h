@@ -39,7 +39,7 @@ TYPE *CARMI::storeInnerNode(MapKey *key, DataRange *range, int storeIdx)
             type = 4;
         else
             type = iter->second.type;
-        DataRange *subRange = new DataRange(subDataset->subInit.subLeft[i], subDataset->subInit.subSize[i], subDataset->subFind.subLeft[i], subDataset->subFind.subSize[i], subDataset->subInsert.subLeft[i], subDataset->subInsert.subSize[i]);
+        DataRange *subRange = new DataRange(subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i], subDataset->subFind->subLeft[i], subDataset->subFind->subSize[i], subDataset->subInsert->subLeft[i], subDataset->subInsert->subSize[i]);
         storeOptimalNode(type, &nowKey, subRange, node->childLeft + i);
     }
     return node;
@@ -63,12 +63,11 @@ void CARMI::storeOptimalNode(int optimalType, MapKey *key, DataRange *range, int
             auto node = GappedArrayType(kThreshold);
             initGA(&node, range->initRange.left, range->initRange.size);
             entireChild[storeIdx].ga = node;
-
-#ifdef DEBUG
-            if (optimalType < 4)
-                cout << "WRONG! size==0, type is:" << optimalType << endl;
-#endif // DEBUG
         }
+#ifdef DEBUG
+        if (optimalType < 4)
+            cout << "WRONG! size==0, type is:" << optimalType << endl;
+#endif // DEBUG
         return;
     }
 

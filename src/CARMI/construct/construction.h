@@ -12,14 +12,22 @@ inline void CARMI::ConstructSubTree(RootStruct *rootStruct, SubDataset *subDatas
 {
     for (int i = 0; i < rootStruct->rootChildNum; i++)
     {
+        NodeCost emptyCost = {0, 0, 0, false};
+        SingleDataRange emptyRange = {-1, 0};
+        COST.insert({emptyRange, emptyCost});
+        ParamStruct leafP;
+        leafP.type = 5;
+        leafP.density = 0.5;
+        structMap.insert({{false, {-1, 0}}, leafP});
+
         NodeCost resChild;
-        DataRange *range = new DataRange(subDataset->subInit.subLeft[i], subDataset->subInit.subSize[i], subDataset->subFind.subLeft[i], subDataset->subFind.subSize[i], subDataset->subInsert.subLeft[i], subDataset->subInsert.subSize[i]);
-        if (subDataset->subInit.subSize[i] + subDataset->subInsert.subSize[i] > kAlgorithmThreshold)
+        DataRange *range = new DataRange(subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i], subDataset->subFind->subLeft[i], subDataset->subFind->subSize[i], subDataset->subInsert->subLeft[i], subDataset->subInsert->subSize[i]);
+        if (subDataset->subInit->subSize[i] + subDataset->subInsert->subSize[i] > kAlgorithmThreshold)
             resChild = GreedyAlgorithm(range);
         else
             resChild = dp(range);
         int type;
-        MapKey key = {resChild.isInnerNode, {subDataset->subInit.subLeft[i], subDataset->subInit.subSize[i]}};
+        MapKey key = {resChild.isInnerNode, {subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i]}};
         auto it = structMap.find(key);
         type = it->second.type;
 
@@ -29,6 +37,7 @@ inline void CARMI::ConstructSubTree(RootStruct *rootStruct, SubDataset *subDatas
         nodeCost->time += resChild.time;
         nodeCost->space += resChild.space;
 
+        delete range;
         COST.clear();
         structMap.clear();
     }
@@ -43,27 +52,22 @@ inline void CARMI::ConstructSubTree(RootStruct *rootStruct, SubDataset *subDatas
  */
 inline int CARMI::Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
 {
-    NodeCost nodeCost(0, 0, 0, true);
-    RootStruct *res = ChooseRoot();
+    NodeCost nodeCost = {0, 0, 0, true};
+    // RootStruct *res = ChooseRoot();
+    RootStruct *res = new RootStruct(0, 131072);
     rootType = res->rootType;
     SubDataset *subDataset = StoreRoot(res, &nodeCost);
 
-    // COST.insert({{-1, 0}, {0, 0}});
-    // ParamStruct leafP;
-    // leafP.type = 5;
-    // leafP.density = 0.5;
-    // structMap.insert({{false, {-1, 0}}, leafP});
     ConstructSubTree(res, subDataset, &nodeCost);
     UpdateLeaf();
 
-    // TODO
     if (kPrimaryIndex)
     {
         vector<pair<double, double>> tmp(100000, {DBL_MIN, DBL_MIN});
-        initDataset.insert(initDataset.end(), tmp.begin(), tmp.end());
+        entireData.insert(entireData.end(), tmp.begin(), tmp.end());
+        nowDataSize += 100000;
     }
-    else
-        vector<pair<double, double>>().swap(initDataset);
+    vector<pair<double, double>>().swap(initDataset);
     vector<pair<double, double>>().swap(findQuery);
     vector<pair<double, double>>().swap(insertQuery);
     entireData.erase(entireData.begin() + nowDataSize + reservedSpace, entireData.end());

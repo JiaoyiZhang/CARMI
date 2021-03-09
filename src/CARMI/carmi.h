@@ -26,6 +26,8 @@ public:
 
         if (!kPrimaryIndex)
             initEntireData(0, initDataset.size(), false);
+        else
+            entireData = initDataset;
         initEntireChild(initDataset.size());
         rootType = Construction(initData, findData, insertData);
     }
@@ -38,6 +40,8 @@ public:
 
         if (!kPrimaryIndex)
             initEntireData(0, initDataset.size(), false);
+        else
+            entireData = initDataset;
         initEntireChild(initDataset.size());
         rootType = Construction(initData, tmp, tmp);
     }
@@ -48,29 +52,21 @@ public:
         inline iterator(CARMI *t, BaseNode *l, int s) : tree(t), currnode(l), currslot(s){};
         inline const double &key() const
         {
+            int left;
             if (kPrimaryIndex)
-            {
-                int left = currnode->ycsbLeaf.m_left;
-                return tree->initDataset[left + currslot].first;
-            }
+                left = currnode->ycsbLeaf.m_left;
             else
-            {
-                int left = currnode->array.m_left;
-                return tree->entireData[left + currslot].first;
-            }
+                left = currnode->array.m_left;
+            return tree->entireData[left + currslot].first;
         }
         inline const double &data() const
         {
+            int left;
             if (kPrimaryIndex)
-            {
-                int left = currnode->ycsbLeaf.m_left;
-                return tree->initDataset[left + currslot].second;
-            }
+                left = currnode->ycsbLeaf.m_left;
             else
-            {
-                int left = currnode->array.m_left;
-                return tree->entireData[left + currslot].second;
-            }
+                left = currnode->array.m_left;
+            return tree->entireData[left + currslot].second;
         }
         inline iterator &end() const
         {
@@ -99,16 +95,14 @@ public:
                     if (tree->entireData[left + currslot].first != DBL_MIN)
                         return *this;
                     if (currslot == (currnode->array.flagNumber & 0x00FFFFFF))
-                    {
                         currnode = &(tree->entireChild[currnode->array.nextLeaf]);
-                    }
                 }
                 return end();
             }
             else
             {
                 int left = currnode->ycsbLeaf.m_left;
-                if (tree->initDataset[left + currslot].first != DBL_MIN)
+                if (tree->entireData[left + currslot].first != DBL_MIN)
                 {
                     currslot++;
                     return *this;
@@ -212,12 +206,10 @@ private:
     void Train(YCSBLeaf *ycsb, const int start_idx, const int size);
 
     void UpdateLeaf();
-    bool scan(const int left, const int end, vector<pair<double, double>> &ret, int &firstIdx, int &length) const;
     int ArrayBinarySearch(double key, int start, int end) const;
     int GABinarySearch(double key, int start_idx, int end_idx) const;
     int YCSBBinarySearch(double key, int start, int end) const;
-    int TestArrayBinarySearch(double key, int start, int end) const;
-    int TestGABinarySearch(double key, int start_idx, int end_idx) const;
+    int TestBinarySearch(double key, int start, int end) const;
 
 public:
     CARMIRoot root;

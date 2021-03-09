@@ -6,6 +6,7 @@
  */
 
 #include <vector>
+#include <iostream>
 using namespace std;
 
 struct RootStruct
@@ -25,21 +26,13 @@ struct NodeCost
     double space;
     double cost;
     bool isInnerNode;
-    NodeCost(){};
-    NodeCost(double t, double s, double c, bool i)
-    {
-        time = t;
-        space = s;
-        cost = c;
-        isInnerNode = i;
-    }
 };
 
-struct SingleDataRange
+class SingleDataRange
 {
+public:
     int left;
     int size;
-    SingleDataRange(){};
     SingleDataRange(int l, int s)
     {
         left = l;
@@ -76,7 +69,7 @@ struct ParamStruct
     // true: inner, false: leaf
     vector<MapKey> child; // the key in the corresponding map
     ParamStruct(){};
-    ParamStruct(int t, int c, int d, vector<MapKey> tmpChild)
+    ParamStruct(int t, int c, double d, vector<MapKey> tmpChild)
     {
         type = t;
         childNum = c;
@@ -85,43 +78,33 @@ struct ParamStruct
     }
 };
 
-struct DataRange
+class DataRange
 {
+public:
     SingleDataRange initRange;
     SingleDataRange findRange;
     SingleDataRange insertRange;
-    DataRange(){};
-    DataRange(int initL, int initS, int findL, int findS, int insertL, int insertS)
-    {
-        initRange = SingleDataRange(initL, initS);
-        initRange = SingleDataRange(findL, findS);
-        initRange = SingleDataRange(insertL, insertS);
-    }
+    DataRange(int initL, int initS, int findL, int findS, int insertL, int insertS) : initRange(initL, initS), findRange(findL, findS), insertRange(insertL, insertS){};
 };
 
-struct SubSingleDataset
+class SubSingleDataset
 {
+public:
     vector<int> subLeft;
     vector<int> subSize;
-    SubSingleDataset(){};
-    SubSingleDataset(int c)
-    {
-        subLeft = vector<int>(c, -1);
-        subSize = vector<int>(c, 0);
-    }
+
+    SubSingleDataset(int c) : subLeft(c, -1), subSize(c, 0){};
+    ~SubSingleDataset(){};
 };
 
-struct SubDataset
+class SubDataset
 {
-    SubSingleDataset subInit;
-    SubSingleDataset subFind;
-    SubSingleDataset subInsert;
+public:
+    SubSingleDataset *subInit;
+    SubSingleDataset *subFind;
+    SubSingleDataset *subInsert;
 
-    SubDataset(int c)
-    {
-        subInit = SubSingleDataset(c);
-        subFind = SubSingleDataset(c);
-        subInsert = SubSingleDataset(c);
-    }
+    SubDataset(int c) : subInit(new SubSingleDataset(c)), subFind(new SubSingleDataset(c)), subInsert(new SubSingleDataset(c)){};
+    ~SubDataset(){};
 };
 #endif // !STRUCTURES_H

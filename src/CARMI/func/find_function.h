@@ -146,7 +146,7 @@ CARMI::iterator CARMI::Find(double key)
             auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
             int preIdx = entireChild[idx].ycsbLeaf.Predict(key);
             auto left = entireChild[idx].ycsbLeaf.m_left;
-            if (initDataset[left + preIdx].first == key)
+            if (entireData[left + preIdx].first == key)
             {
                 return CARMI::iterator(this, &entireChild[idx], preIdx);
             }
@@ -156,9 +156,9 @@ CARMI::iterator CARMI::Find(double key)
                 int end = min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
                 start = min(start, end);
                 int res;
-                if (key <= initDataset[start].first)
+                if (key <= entireData[start].first)
                     res = YCSBBinarySearch(key, left, start);
-                else if (key <= initDataset[end].first)
+                else if (key <= entireData[end].first)
                     res = YCSBBinarySearch(key, start, end);
                 else
                 {
@@ -169,7 +169,7 @@ CARMI::iterator CARMI::Find(double key)
                         return it.end();
                     }
                 }
-                if (initDataset[res].first == key)
+                if (entireData[res].first == key)
                 {
                     return CARMI::iterator(this, &entireChild[idx], res - left);
                 }

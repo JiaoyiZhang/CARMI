@@ -7,19 +7,6 @@ using namespace std;
 
 long double CARMI::calculateSpace() const
 {
-    cout << "Space of different classes (sizeof):" << endl;
-    cout << "LRType:" << sizeof(LRType) << "\tlr model:" << sizeof(LinearRegression) << endl;
-    cout << "PLRType:" << sizeof(PLRType) << "\tnn model:" << sizeof(PiecewiseLR) << endl;
-    cout << "HisType:" << sizeof(HisType) << "\this model:" << sizeof(HistogramModel) << endl;
-    cout << "BSType:" << sizeof(BSType) << "\tbs model:" << sizeof(BinarySearchModel) << endl;
-    cout << "LRModel:" << sizeof(LRModel) << endl;
-    cout << "PLRModel:" << sizeof(PLRModel) << endl;
-    cout << "HisModel:" << sizeof(HisModel) << endl;
-    cout << "BSModel:" << sizeof(BSModel) << endl;
-    cout << "ArrayType:" << sizeof(ArrayType) << endl;
-    cout << "GappedArrayType:" << sizeof(GappedArrayType) << endl;
-    cout << "YCSBLeaf:" << sizeof(YCSBLeaf) << endl;
-
     long double space = 0;
 
     switch (rootType)
@@ -40,19 +27,28 @@ long double CARMI::calculateSpace() const
 
     space += 64 * nowChildNumber;
     if (!kPrimaryIndex)
-    {
         space += entireData.size() * 16;
-        // for (int i = 0; i < nowChildNumber; i++)
-        // {
-        //     if ((entireChild[i].lr.flagNumber >> 24) == 8)
-        //         space += entireChild[i].array.m_capacity * 16;
-        //     else if ((entireChild[i].lr.flagNumber >> 24) == 9)
-        //         space += entireChild[i].ga.capacity * 16;
-        // }
-    }
+
     space = space / 1024 / 1024;
+
+#ifdef DEBUG
+    cout << "Space of different classes (sizeof):" << endl;
+    cout << "LRType:" << sizeof(LRType) << "\tlr model:" << sizeof(LinearRegression) << endl;
+    cout << "PLRType:" << sizeof(PLRType) << "\tnn model:" << sizeof(PiecewiseLR) << endl;
+    cout << "HisType:" << sizeof(HisType) << "\this model:" << sizeof(HistogramModel) << endl;
+    cout << "BSType:" << sizeof(BSType) << "\tbs model:" << sizeof(BinarySearchModel) << endl;
+    cout << "LRModel:" << sizeof(LRModel) << endl;
+    cout << "PLRModel:" << sizeof(PLRModel) << endl;
+    cout << "HisModel:" << sizeof(HisModel) << endl;
+    cout << "BSModel:" << sizeof(BSModel) << endl;
+    cout << "ArrayType:" << sizeof(ArrayType) << endl;
+    cout << "GappedArrayType:" << sizeof(GappedArrayType) << endl;
+    cout << "YCSBLeaf:" << sizeof(YCSBLeaf) << endl;
+
     cout << "\tStructure SPACE: " << space << "MB" << endl;
     cout << "\nTOTAL SPACE (include data): " << space << "MB" << endl;
+#endif // DEBUG
+
     return space;
 }
 

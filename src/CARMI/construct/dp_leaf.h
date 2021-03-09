@@ -41,12 +41,12 @@ double CARMI::CalLeafInsertTime(TYPE *node, SingleDataRange *range, SingleDataRa
         int actual;
         if (density == 1)
         {
-            actual = TestArrayBinarySearch(insertQuery[i].first, findRange->left, findRange->left + findRange->size);
+            actual = TestBinarySearch(insertQuery[i].first, findRange->left, findRange->left + findRange->size);
             time += CostMoveTime * findRange->size / 2 * insertQuery[i].second / querySize;
         }
         else
         {
-            actual = TestGABinarySearch(insertQuery[i].first, findRange->left, findRange->left + findRange->size);
+            actual = TestBinarySearch(insertQuery[i].first, findRange->left, findRange->left + findRange->size);
             time += CostMoveTime * density / (1 - density) * insertQuery[i].second / querySize;
         }
         d = abs(actual - predict);
@@ -72,7 +72,7 @@ NodeCost CARMI::dpLeaf(DataRange *dataRange)
         return nodeCost;
     }
 
-    NodeCost *optimalCost = new NodeCost(DBL_MAX, DBL_MAX, DBL_MAX, false);
+    NodeCost *optimalCost = new NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, false};
     ParamStruct optimalStruct;
 
     if (kPrimaryIndex)
@@ -104,7 +104,7 @@ NodeCost CARMI::dpLeaf(DataRange *dataRange)
         }
 
         nodeCost.cost = nodeCost.time + nodeCost.space * kRate; // ns + MB * kRate
-        optimalCost = new NodeCost(nodeCost.time, nodeCost.space * kRate, nodeCost.cost, false);
+        *optimalCost = {nodeCost.time, nodeCost.space * kRate, nodeCost.cost, false};
         optimalStruct = ParamStruct(6, 0, 2, vector<MapKey>());
 
         nodeCost.space *= kRate;
@@ -132,7 +132,7 @@ NodeCost CARMI::dpLeaf(DataRange *dataRange)
     double cost = time + space * kRate; // ns + MB * kRate
     if (cost <= optimalCost->cost)
     {
-        optimalCost = new NodeCost(time, space * kRate, cost, false);
+        optimalCost = new NodeCost{time, space * kRate, cost, false};
         optimalStruct = ParamStruct(4, 0, 1, vector<MapKey>());
     }
 
@@ -143,7 +143,7 @@ NodeCost CARMI::dpLeaf(DataRange *dataRange)
         // calculate the actual space
         int actualSize = kThreshold;
         while ((float(dataRange->initRange.size) / float(actualSize) >= Density[i]))
-            actualSize = float(actualSize) / Density[i];
+            actualSize = float(actualSize) / Density[i] + 1;
         if (actualSize > 4096)
             actualSize = 4096;
 
@@ -160,7 +160,7 @@ NodeCost CARMI::dpLeaf(DataRange *dataRange)
         cost = time + space * kRate; // ns + MB * kRate
         if (cost <= optimalCost->cost)
         {
-            optimalCost = new NodeCost(time, space * kRate, cost, false);
+            optimalCost = new NodeCost{time, space * kRate, cost, false};
             optimalStruct = ParamStruct(5, 0, Density[i], vector<MapKey>());
         }
     }

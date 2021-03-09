@@ -72,14 +72,16 @@ void LognormalDataset::GenerateDataset(vector<pair<double, double>> &initDataset
     if (initSize == 0)
     {
         int i = 0;
+        totalSize = 67108864;
         for (; i <= 0.6 * totalSize; i++)
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-        for (; i < 0.9 * totalSize; i += 2)
+        for (; i < 0.9 * totalSize; i++)
         {
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});
-            trainInsertQuery.push_back({double(ds[i + 1] * factor), double(ds[i + 1] * factor) * 10});
+            if (trainInsertQuery.size() < 11842741)
+                trainInsertQuery.push_back({double((ds[i] + 0.0001) * factor), double((ds[i] + 0.0001) * factor) * 10});
             if (testInsertQuery.size() < insertNumber)
-                testInsertQuery.push_back({double((ds[i + 1] + 0.0001) * factor), double((ds[i + 1] + 0.0001) * factor) * 10});
+                testInsertQuery.push_back({double((ds[i] + 0.0001) * factor), double((ds[i] + 0.0001) * factor) * 10});
         }
         for (; i < totalSize; i++)
             initDataset.push_back({double(ds[i] * factor), double(ds[i] * factor) * 10});

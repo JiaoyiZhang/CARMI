@@ -15,9 +15,7 @@ void CARMI::CheckRoot(int c, int type, double &optimalCost, double time, RootStr
 
     TYPE root = TYPE(c);
     root.model.Train(initDataset, c);
-    SingleDataRange range;
-    range.left = 0;
-    range.size = initDataset.size();
+    SingleDataRange range(0, initDataset.size());
     NodePartition<ModelType>(&root.model, &perSize, &range, initDataset);
     double entropy = CalculateEntropy(perSize.subSize, initDataset.size(), c);
     double cost = (time + float(kRate * space)) / entropy;
@@ -25,14 +23,15 @@ void CARMI::CheckRoot(int c, int type, double &optimalCost, double time, RootStr
     if (cost <= optimalCost)
     {
         optimalCost = cost;
-        rootStruct = new RootStruct(type, c);
+        rootStruct->rootChildNum = c;
+        rootStruct->rootType = type;
     }
 }
 
 RootStruct *CARMI::ChooseRoot()
 {
     double OptimalValue = DBL_MAX;
-    RootStruct *rootStruct;
+    RootStruct *rootStruct = new RootStruct(0, 0);
     for (int c = 2; c <= initDataset.size() * 10; c *= 2)
     {
         CheckRoot<LRType, LinearRegression>(c, 0, OptimalValue, LRRootTime, rootStruct);
@@ -53,15 +52,16 @@ TYPE *CARMI::ConstructRoot(RootStruct *rootStruct, SubDataset *subDataset, DataR
     childLeft = allocateChildMemory(rootStruct->rootChildNum);
     root->model.Train(initDataset, rootStruct->rootChildNum);
 
-    NodePartition<ModelType>(&root->model, &(subDataset->subInit), &(range->initRange), initDataset);
-    subDataset->subFind = subDataset->subInit;
-    NodePartition<ModelType>(&root->model, &(subDataset->subInsert), &(range->insertRange), insertQuery);
+    NodePartition<ModelType>(&root->model, (subDataset->subInit), &(range->initRange), initDataset);
+    subDataset->subFind->subLeft = subDataset->subInit->subLeft;
+    subDataset->subFind->subSize = subDataset->subInit->subSize;
+    NodePartition<ModelType>(&root->model, (subDataset->subInsert), &(range->insertRange), insertQuery);
     return root;
 }
 
 SubDataset *CARMI::StoreRoot(RootStruct *rootStruct, NodeCost *nodeCost)
 {
-    DataRange dataRange;
+    DataRange dataRange(0, initDataset.size(), 0, findQuery.size(), 0, insertQuery.size());
     SubDataset *subDataset = new SubDataset(rootStruct->rootChildNum);
     int childLeft;
     switch (rootStruct->rootType)

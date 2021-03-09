@@ -18,7 +18,7 @@ NodeCost CARMI::dp(DataRange *range)
     NodeCost nodeCost;
     if (range->initRange.size == 0 && range->findRange.size == 0)
     {
-        nodeCost = NodeCost(0, 0, 0, false);
+        nodeCost = {0, 0, 0, false};
         return nodeCost;
     }
 

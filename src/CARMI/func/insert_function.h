@@ -333,7 +333,7 @@ bool CARMI::Insert(pair<double, double> data)
         break;
         case 10:
         {
-            initDataset[curr] = data;
+            entireData[curr] = data;
             curr++;
             return true;
         }

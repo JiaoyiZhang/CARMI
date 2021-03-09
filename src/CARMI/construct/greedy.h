@@ -32,36 +32,39 @@ void CARMI::CheckGreedy(int c, int type, NodeCost *optimalCost, double time, Par
     {
         optimalStruct->type = type;
         optimalStruct->childNum = c;
-        optimalCost = new NodeCost(time * frequency / querySize, kRate * space, cost, true);
+        *optimalCost = {time * frequency / querySize, kRate * space, cost, true};
     }
 }
-NodeCost CARMI::GreedyAlgorithm(DataRange *range)
+NodeCost CARMI::GreedyAlgorithm(DataRange *dataRange)
 {
-    NodeCost nodeCost;
-    if (range->initRange.size == 0 && range->findRange.size == 0)
+    NodeCost nodeCost = {0, 0, 0, false};
+    if (dataRange->initRange.size == 0 && dataRange->findRange.size == 0)
     {
-        nodeCost = NodeCost(0, 0, 0, false);
         return nodeCost;
     }
 
-    NodeCost *optimalCost = new NodeCost(DBL_MAX, DBL_MAX, DBL_MAX, true);
-    double pi = float(range->findRange.size + range->insertRange.size) / querySize;
+    NodeCost *optimalCost = new NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
+    double pi = float(dataRange->findRange.size + dataRange->insertRange.size) / querySize;
     ParamStruct optimalStruct = {0, 32, 2, vector<MapKey>()};
     int frequency = 0;
-    int findEnd = range->findRange.left + range->findRange.size;
-    for (int l = range->findRange.left; l < findEnd; l++)
+    int findEnd = dataRange->findRange.left + dataRange->findRange.size;
+    for (int l = dataRange->findRange.left; l < findEnd; l++)
         frequency += findQuery[l].second;
-    int insertEnd = range->insertRange.left + range->insertRange.size;
-    for (int l = range->insertRange.left; l < insertEnd; l++)
+    int insertEnd = dataRange->insertRange.left + dataRange->insertRange.size;
+    for (int l = dataRange->insertRange.left; l < insertEnd; l++)
         frequency += insertQuery[l].second;
-    int tmpEnd = range->initRange.size / 2;
-    SingleDataRange singleRange(range->initRange.left, range->initRange.size);
+    int tmpEnd = dataRange->initRange.size / 2;
+    SingleDataRange singleRange(dataRange->initRange.left, dataRange->initRange.size);
     for (int c = 2; c < tmpEnd; c *= 2)
     {
-        CheckGreedy<LRModel>(c, 0, optimalCost, LRInnerTime, &optimalStruct, &(range->initRange), pi, frequency);
-        CheckGreedy<PLRModel>(c, 1, optimalCost, PLRInnerTime, &optimalStruct, &(range->initRange), pi, frequency);
-        CheckGreedy<HisModel>(c, 2, optimalCost, HisInnerTime, &optimalStruct, &(range->initRange), pi, frequency);
-        CheckGreedy<BSModel>(c, 3, optimalCost, BSInnerTime, &optimalStruct, &(range->initRange), pi, frequency);
+#ifdef DEBUG
+        if (c * 512 < dataRange->initRange.size)
+            continue;
+#endif // DEBUG
+        CheckGreedy<LRModel>(c, 0, optimalCost, LRInnerTime, &optimalStruct, &(dataRange->initRange), pi, frequency);
+        CheckGreedy<PLRModel>(c, 1, optimalCost, PLRInnerTime, &optimalStruct, &(dataRange->initRange), pi, frequency);
+        CheckGreedy<HisModel>(c, 2, optimalCost, HisInnerTime, &optimalStruct, &(dataRange->initRange), pi, frequency);
+        CheckGreedy<BSModel>(c, 3, optimalCost, BSInnerTime, &optimalStruct, &(dataRange->initRange), pi, frequency);
     }
 
     // construct child
@@ -70,22 +73,22 @@ NodeCost CARMI::GreedyAlgorithm(DataRange *range)
     {
     case 0:
     {
-        InnerDivideAll<LRModel>(optimalStruct.childNum, range, subDataset);
+        InnerDivideAll<LRModel>(optimalStruct.childNum, dataRange, subDataset);
         break;
     }
     case 1:
     {
-        InnerDivideAll<PLRModel>(optimalStruct.childNum, range, subDataset);
+        InnerDivideAll<PLRModel>(optimalStruct.childNum, dataRange, subDataset);
         break;
     }
     case 2:
     {
-        InnerDivideAll<HisModel>(optimalStruct.childNum, range, subDataset);
+        InnerDivideAll<HisModel>(optimalStruct.childNum, dataRange, subDataset);
         break;
     }
     case 3:
     {
-        InnerDivideAll<BSModel>(optimalStruct.childNum, range, subDataset);
+        InnerDivideAll<BSModel>(optimalStruct.childNum, dataRange, subDataset);
         break;
     }
     }
@@ -93,22 +96,22 @@ NodeCost CARMI::GreedyAlgorithm(DataRange *range)
     vector<MapKey> tmpChild;
     for (int i = 0; i < optimalStruct.childNum; i++)
     {
-        NodeCost res;
-        DataRange *range = new DataRange(subDataset->subInit.subLeft[i], subDataset->subInit.subSize[i], subDataset->subFind.subLeft[i], subDataset->subFind.subSize[i], subDataset->subInsert.subLeft[i], subDataset->subInsert.subSize[i]);
-        if (subDataset->subInit.subSize[i] + subDataset->subInsert.subSize[i] > kAlgorithmThreshold)
+        NodeCost res = {0, 0, 0, true};
+        DataRange *range = new DataRange(subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i], subDataset->subFind->subLeft[i], subDataset->subFind->subSize[i], subDataset->subInsert->subLeft[i], subDataset->subInsert->subSize[i]);
+        if (subDataset->subInit->subSize[i] + subDataset->subInsert->subSize[i] > kAlgorithmThreshold)
             res = GreedyAlgorithm(range);
         else
             res = dp(range);
 
-        MapKey key = {res.isInnerNode, {subDataset->subInit.subLeft[i], subDataset->subInit.subSize[i]}};
+        MapKey key = {res.isInnerNode, {subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i]}};
         tmpChild.push_back(key);
     }
 
-    MapKey nodeKey = {true, {range->initRange.left, range->initRange.size}};
+    MapKey nodeKey = {true, {dataRange->initRange.left, dataRange->initRange.size}};
     optimalStruct.child = tmpChild;
     if (optimalCost->time < DBL_MAX)
         structMap.insert({nodeKey, optimalStruct});
-    nodeCost = NodeCost(optimalCost->time, optimalCost->space, optimalCost->cost, true);
+    nodeCost = {optimalCost->time, optimalCost->space, optimalCost->cost, true};
     return nodeCost;
 }
 #endif // !GREEDY_H

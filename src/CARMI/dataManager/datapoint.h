@@ -34,8 +34,10 @@ inline bool CARMI::allocateEmptyBlock(int left, int len)
 // return idx
 inline int CARMI::getIndex(int size)
 {
+#ifdef DEBUG
     if (size > 4096 || size < 1)
         cout << "size: " << size << ",\tsize > 4096 || size < 1, getIndex WRONG!" << endl;
+#endif // DEBUG
     int j = 4096;
     for (int i = 12; i >= 0; i--, j /= 2)
     {
@@ -53,8 +55,10 @@ void CARMI::initEntireData(int left, int size, bool reinit)
         len *= 2;
     len *= 2;
     entireDataSize = len;
+#ifdef DEBUG
     cout << "dataset size:" << size << endl;
     cout << "the size of entireData is:" << len << endl;
+#endif // DEBUG
     vector<EmptyBlock>().swap(emptyBlocks);
     vector<pair<double, double>>().swap(entireData);
     entireData = vector<pair<double, double>>(len, {DBL_MIN, DBL_MIN});
@@ -63,8 +67,10 @@ void CARMI::initEntireData(int left, int size, bool reinit)
     if (reinit)
         len = size;
     auto res = allocateEmptyBlock(left, len);
+#ifdef DEBUG
     if (!res)
         cout << "init allocateEmptyBlock WRONG!" << endl;
+#endif // DEBUG
 }
 
 // allocate a block to the current leaf node
@@ -75,8 +81,10 @@ int CARMI::allocateMemory(int size)
 {
     int idx = getIndex(size); // idx in emptyBlocks[]
     size = emptyBlocks[idx].m_width;
+#ifdef DEBUG
     if (idx == -1)
         cout << "getIndex in emptyBlocks WRONG!\tsize:" << size << endl;
+#endif // DEBUG
     auto newLeft = -1;
     for (int i = idx; i < 13; i++)
     {
@@ -87,12 +95,14 @@ int CARMI::allocateMemory(int size)
             break;
         }
     }
+    // allocation fails
+    // need to expand the reorganize entireData
     if (newLeft == -1)
     {
-        // allocation fails
-        // need to expand the reorganize entireData
+#ifdef DEBUG
         cout << "need expand the entire!" << endl;
-        auto tmpSize = entireDataSize;
+#endif // DEBUG
+        unsigned int tmpSize = entireDataSize;
         vector<pair<double, double>> tmpData = entireData;
         vector<EmptyBlock> tmpBlocks = emptyBlocks;
 
@@ -114,8 +124,10 @@ int CARMI::allocateMemory(int size)
 
     // add the left blocks into the corresponding blocks
     auto res = allocateEmptyBlock(newLeft + size, emptyBlocks[idx].m_width - size);
+#ifdef DEBUG
     if (!res)
         cout << "after allocate, allocateEmptyBlock WRONG!" << endl;
+#endif // DEBUG
     if (newLeft + size > nowDataSize)
         nowDataSize = newLeft + size;
     return newLeft;

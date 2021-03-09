@@ -6,6 +6,7 @@
 #include "dataset/uniform_distribution.h"
 #include "dataset/normal_distribution.h"
 #include "dataset/exponential_distribution.h"
+#include "dataset/longitudes.h"
 
 void fixedSynthetic(int datasetSize, double initRatio, vector<int> &length, int kLeafID);
 
@@ -18,17 +19,18 @@ void fixedExperiment(int datasetSize)
     {
         cout << "kleafnode:" << i << endl;
         fixedSynthetic(datasetSize, 1, length, i);
-        fixedSynthetic(datasetSize, 0.5, length, i);
+        if (i == 1)
+            fixedSynthetic(datasetSize, 0.5, length, i);
     }
-    fixedSynthetic(datasetSize, 0.95, length, 0);
-    fixedSynthetic(datasetSize, 0, length, 0);
+    // fixedSynthetic(datasetSize, 0.95, length, 0);
+    // fixedSynthetic(datasetSize, 0, length, 0);
 
-    srand(time(0));
-    for (int i = 0; i < datasetSize; i++)
-    {
-        length.push_back(min(i + rand() % 100 + 1, datasetSize) - i);
-    }
-    fixedSynthetic(datasetSize, 2, length, 0);
+    // srand(time(0));
+    // for (int i = 0; i < datasetSize; i++)
+    // {
+    //     length.push_back(min(i + rand() % 100 + 1, datasetSize) - i);
+    // }
+    // fixedSynthetic(datasetSize, 2, length, 0);
 }
 
 void fixedSynthetic(int datasetSize, double initRatio, vector<int> &length, int kLeafID)
@@ -39,7 +41,7 @@ void fixedSynthetic(int datasetSize, double initRatio, vector<int> &length, int 
     double init = initRatio;
     if (init == 2)
         init = 0.95;
-    LognormalDataset logData = LognormalDataset(datasetSize, init);
+    LongitudesDataset longData = LongitudesDataset(init);
     UniformDataset uniData = UniformDataset(datasetSize, init);
     NormalDataset norData = NormalDataset(datasetSize, init);
     ExponentialDataset expData = ExponentialDataset(datasetSize, init);
@@ -51,12 +53,11 @@ void fixedSynthetic(int datasetSize, double initRatio, vector<int> &length, int 
     for (int i = 0; i < 1; i++)
     {
         int childNum = 131072;
-        cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-        outRes << "+++++++++++ childNum: " << childNum << endl;
-        uniData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
-        outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-        RunStatic(initRatio, initData, testInsert, length, kLeafID);
-        break;
+        // cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+        // outRes << "+++++++++++ childNum: " << childNum << endl;
+        // uniData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
+        // outRes << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
+        // RunStatic(initRatio, initData, testInsert, length, kLeafID);
 
         cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
@@ -70,11 +71,13 @@ void fixedSynthetic(int datasetSize, double initRatio, vector<int> &length, int 
         outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
         RunStatic(initRatio, initData, testInsert, length, kLeafID);
 
-        cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+
+        cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
         outRes << "+++++++++++ childNum: " << childNum << endl;
-        logData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
-        outRes << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+        longData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
+        outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
         RunStatic(initRatio, initData, testInsert, length, kLeafID);
+
     }
 }
 

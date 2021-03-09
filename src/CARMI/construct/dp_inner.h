@@ -21,13 +21,13 @@ void CARMI::CalInner(NodeCost *optimalCost, ParamStruct *optimalStruct, double t
     for (int i = 0; i < c; i++)
     {
         NodeCost res;
-        DataRange *range = new DataRange(subDataset.subInit.subLeft[i], subDataset.subInit.subSize[i], subDataset.subFind.subLeft[i], subDataset.subFind.subSize[i], subDataset.subInsert.subLeft[i], subDataset.subInsert.subSize[i]);
-        if (subDataset.subInit.subSize[i] + subDataset.subInsert.subSize[i] > kAlgorithmThreshold)
-            res = GreedyAlgorithm(range);
+        DataRange range(subDataset.subInit->subLeft[i], subDataset.subInit->subSize[i], subDataset.subFind->subLeft[i], subDataset.subFind->subSize[i], subDataset.subInsert->subLeft[i], subDataset.subInsert->subSize[i]);
+        if (subDataset.subInit->subSize[i] + subDataset.subInsert->subSize[i] > kAlgorithmThreshold)
+            res = GreedyAlgorithm(&range);
         else
-            res = dp(range);
+            res = dp(&range);
 
-        MapKey key = {res.isInnerNode, {subDataset.subInit.subLeft[i], subDataset.subInit.subSize[i]}};
+        MapKey key = {res.isInnerNode, {subDataset.subInit->subLeft[i], subDataset.subInit->subSize[i]}};
         tmpChild.push_back(key);
         space += res.space;
         time += res.time;
@@ -35,15 +35,15 @@ void CARMI::CalInner(NodeCost *optimalCost, ParamStruct *optimalStruct, double t
     }
     if (RootCost <= optimalCost->cost)
     {
-        optimalCost = new NodeCost(time, space, RootCost, true);
-        optimalStruct = new ParamStruct(type, c, kDensity, tmpChild);
+        *optimalCost = {time, space, RootCost, true};
+        *optimalStruct = ParamStruct(type, c, kDensity, tmpChild);
     }
 }
 
 NodeCost CARMI::dpInner(DataRange *dataRange)
 {
     NodeCost nodeCost;
-    NodeCost *optimalCost = new NodeCost(DBL_MAX, DBL_MAX, DBL_MAX, true);
+    NodeCost *optimalCost = new NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
     double space;
     ParamStruct optimalStruct = {0, 32, 2, vector<MapKey>()};
     int frequency = 0;
@@ -56,6 +56,10 @@ NodeCost CARMI::dpInner(DataRange *dataRange)
     int tmpEnd = dataRange->initRange.size / 2;
     for (int c = 2; c < tmpEnd; c *= 2)
     {
+#ifdef DEBUG
+        if (c * 512 < dataRange->initRange.size)
+            continue;
+#endif // DEBUG
         CalInner<LRModel>(optimalCost, &optimalStruct, LRInnerTime, frequency, c, 0, dataRange);
         CalInner<PLRModel>(optimalCost, &optimalStruct, PLRInnerTime, frequency, c, 1, dataRange);
         if (c <= 160)
@@ -66,7 +70,7 @@ NodeCost CARMI::dpInner(DataRange *dataRange)
     MapKey key = {true, {dataRange->initRange.left, dataRange->initRange.size}};
     if (optimalCost->time < DBL_MAX)
         structMap.insert({key, optimalStruct});
-    nodeCost = NodeCost(optimalCost->time, optimalCost->space, optimalCost->cost, true);
+    nodeCost = {optimalCost->time, optimalCost->space, optimalCost->cost, true};
     return nodeCost;
 }
 
