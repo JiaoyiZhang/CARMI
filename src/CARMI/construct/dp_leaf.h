@@ -109,6 +109,9 @@ NodeCost CARMI::dpLeaf(DataRange *dataRange)
 
         nodeCost.space *= kRate;
         nodeCost.isInnerNode = false;
+        MapKey key = {false, {dataRange->initRange.left, dataRange->initRange.size}};
+        COST.insert({dataRange->initRange, *optimalCost});
+        structMap.insert({key, optimalStruct});
         return nodeCost;
     }
 

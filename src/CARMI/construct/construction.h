@@ -53,8 +53,8 @@ inline void CARMI::ConstructSubTree(RootStruct *rootStruct, SubDataset *subDatas
 inline int CARMI::Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
 {
     NodeCost nodeCost = {0, 0, 0, true};
-    // RootStruct *res = ChooseRoot();
-    RootStruct *res = new RootStruct(0, 131072);
+    RootStruct *res = ChooseRoot();
+    // RootStruct *res = new RootStruct(0, 131072);
     rootType = res->rootType;
     SubDataset *subDataset = StoreRoot(res, &nodeCost);
 
@@ -72,6 +72,7 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
     vector<pair<double, double>>().swap(insertQuery);
     entireData.erase(entireData.begin() + nowDataSize + reservedSpace, entireData.end());
 
+    delete subDataset;
     COST.clear();
     structMap.clear();
     scanLeaf.clear();

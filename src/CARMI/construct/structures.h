@@ -66,7 +66,6 @@ struct ParamStruct
     int type;       // 0-4
     int childNum;   // for inner nodes
     double density; // for leaf nodes
-    // true: inner, false: leaf
     vector<MapKey> child; // the key in the corresponding map
     ParamStruct(){};
     ParamStruct(int t, int c, double d, vector<MapKey> tmpChild)

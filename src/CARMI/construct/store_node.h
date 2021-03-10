@@ -41,15 +41,14 @@ TYPE *CARMI::storeInnerNode(MapKey *key, DataRange *range, int storeIdx)
             type = iter->second.type;
         DataRange *subRange = new DataRange(subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i], subDataset->subFind->subLeft[i], subDataset->subFind->subSize[i], subDataset->subInsert->subLeft[i], subDataset->subInsert->subSize[i]);
         storeOptimalNode(type, &nowKey, subRange, node->childLeft + i);
+        delete subRange;
     }
+    delete subDataset;
     return node;
 }
 
-// store the optimal node into the index structure
-// tmpIdx: key in the corresponding struct
 void CARMI::storeOptimalNode(int optimalType, MapKey *key, DataRange *range, int storeIdx)
 {
-    // cout<<"construct size:"<<size<<",\ttype:"<<optimalType<<endl;
     if (range->initRange.size == 0)
     {
         if (kPrimaryIndex)
@@ -109,9 +108,6 @@ void CARMI::storeOptimalNode(int optimalType, MapKey *key, DataRange *range, int
     case 5:
     {
         auto it = structMap.find(*key);
-        if (it == structMap.end())
-            cout << "WRONG!" << endl;
-
         auto node = GappedArrayType(kThreshold);
         node.density = it->second.density;
         initGA(&node, range->initRange.left, range->initRange.size);

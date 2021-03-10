@@ -71,6 +71,7 @@ NodeCost CARMI::dpInner(DataRange *dataRange)
     if (optimalCost->time < DBL_MAX)
         structMap.insert({key, optimalStruct});
     nodeCost = {optimalCost->time, optimalCost->space, optimalCost->cost, true};
+    delete optimalCost;
     return nodeCost;
 }
 

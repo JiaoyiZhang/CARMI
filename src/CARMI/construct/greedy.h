@@ -39,9 +39,7 @@ NodeCost CARMI::GreedyAlgorithm(DataRange *dataRange)
 {
     NodeCost nodeCost = {0, 0, 0, false};
     if (dataRange->initRange.size == 0 && dataRange->findRange.size == 0)
-    {
         return nodeCost;
-    }
 
     NodeCost *optimalCost = new NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
     double pi = float(dataRange->findRange.size + dataRange->insertRange.size) / querySize;
@@ -105,6 +103,7 @@ NodeCost CARMI::GreedyAlgorithm(DataRange *dataRange)
 
         MapKey key = {res.isInnerNode, {subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i]}};
         tmpChild.push_back(key);
+        delete range;
     }
 
     MapKey nodeKey = {true, {dataRange->initRange.left, dataRange->initRange.size}};
@@ -112,6 +111,8 @@ NodeCost CARMI::GreedyAlgorithm(DataRange *dataRange)
     if (optimalCost->time < DBL_MAX)
         structMap.insert({nodeKey, optimalStruct});
     nodeCost = {optimalCost->time, optimalCost->space, optimalCost->cost, true};
+    delete optimalCost;
+    delete subDataset;
     return nodeCost;
 }
 #endif // !GREEDY_H
