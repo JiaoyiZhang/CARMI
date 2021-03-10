@@ -283,6 +283,8 @@ inline int PLRModel::Predict(double key) const
         int b = point[s].second - a * point[s].first;
         p = a * key + b;
     }
+    if (p >= (flagNumber & 0x00FFFFFF))
+        p = (flagNumber & 0x00FFFFFF) - 1;
 
     return p;
 }

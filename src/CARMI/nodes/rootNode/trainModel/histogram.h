@@ -28,38 +28,24 @@ public:
             idx = childNumber - 1;
 
         int base;
-        int tmpIdx = idx / 32;
-        if ((idx / 16) % 2 == 0)
+        int tmpIdx = idx / 16;
+        base = Base[tmpIdx];
+        int j = idx % 16;
+        int tmp = Offset[tmpIdx] >> (15 - j);
+        for (; j >= 0; j--)
         {
-            base = table1[tmpIdx] >> 16;
-            int j = idx % 16;
-            int tmp = table0[tmpIdx] >> (31 - j);
-            for (; j >= 0; j--)
-            {
-                base += tmp & 1;
-                tmp = tmp >> 1;
-            }
-        }
-        else
-        {
-            base = table1[tmpIdx] & 0x0000FFFF;
-            int j = idx % 16;
-            int tmp = table0[tmpIdx] >> (15 - j);
-            for (; j >= 0; j--)
-            {
-                base += tmp & 1;
-                tmp = tmp >> 1;
-            }
+            base += tmp & 1;
+            tmp = tmp >> 1;
         }
         return base;
     }
 
 private:
-    float value; // 4B
-    vector<unsigned int> table0; // 2c/32*8 = c/2 Byte
-    vector<unsigned int> table1; // c/2 Byte
-    int childNumber;             // 4B
-    double minValue;             // 8B
+    float value;                   // 4B
+    vector<unsigned short> Offset; // 2c/32*8 = c/2 Byte
+    vector<unsigned short> Base;   // c/2 Byte
+    int childNumber;               // 4B
+    float minValue;                // 8B
 };
 
 void HistogramModel::Train(const vector<pair<double, double>> &dataset, int len)
@@ -84,65 +70,69 @@ void HistogramModel::Train(const vector<pair<double, double>> &dataset, int len)
         }
     }
     value = float(maxValue - minValue) / childNumber;
-    vector<int> table;
-    for (int i = 0; i < childNumber; i++)
-        table.push_back(0);
-    for (int i = 0; i < dataset.size(); i++)
+    vector<float> table(childNumber, 0);
+    int cnt = 0;
+    while (cnt <= 1)
     {
-        if (dataset[i].first != -1)
+        if (cnt == 1)
+            value /= 10;
+        cnt = 0;
+        table = vector<float>(childNumber, 0);
+        for (int i = 0; i < dataset.size(); i++)
         {
-            int idx = float(dataset[i].first - minValue) / value;
-            idx = min(idx, int(table.size()) - 1);
-            table[idx]++;
+            if (dataset[i].first != -1)
+            {
+                int idx = float(dataset[i].first - minValue) / value;
+                idx = min(idx, int(table.size()) - 1);
+                table[idx]++;
+            }
+        }
+        if (table[0] > 0)
+            cnt++;
+        table[0] = table[0] / dataset.size() * childNumber;
+        for (int i = 1; i < table.size(); i++)
+        {
+            if (table[i] > 0)
+                cnt++;
+            table[i] = table[i] / dataset.size() * childNumber + table[i - 1];
         }
     }
-    int cnt = 0;
-    int nowSize = 0;
-    int avg = dataset.size() / len;
-    for (int i = 0; i < table.size(); i++)
+    table[0] = round(table[0]);
+    for (int i = 1; i < childNumber; i++)
     {
-        nowSize += table[i];
-        if (table[i] >= avg || nowSize >= avg)
-        {
-            cnt++;
-            nowSize = 0;
-        }
-        if (cnt >= childNumber / 2)
-            cnt = childNumber / 2 - 1;
-        table[i] = cnt;
+        table[i] = round(table[i]);
+        if (table[i] - table[i - 1] > 1)
+            table[i] = table[i - 1] + 1;
     }
 
-    int i = 0;
-    for (; i < childNumber; i += 32)
+    for (int i = 0; i < childNumber; i += 16)
     {
-        //  & 0x0FFFFFFF;
-        unsigned int start_idx = table[i];
-        int tmp = 0;
-        for (int j = i; j < i + 32; j++)
+        unsigned short start_idx = int(table[i]);
+        unsigned short tmp = 0;
+        for (int j = i; j < i + 16; j++)
         {
-            if (j - i == 16)
-                start_idx = table[i + 16];
             if (j >= childNumber)
             {
-                while (j < i + 32)
+                while (j < i + 16)
                 {
                     tmp = tmp << 1;
                     j++;
                 }
-                table1.push_back(int(table[i]) << 16);
-                if (i + 16 < childNumber)
-                    table1[table1.size() - 1] = (int(table[i]) << 16) + int(table[i + 16]);
-                table0.push_back(tmp);
+                Base.push_back(table[i]);
+                Offset.push_back(tmp);
                 return;
             }
-            int diff = int(table[j]) - start_idx;
+            unsigned short diff = int(table[j]) - start_idx;
             tmp = (tmp << 1) + diff;
+#ifdef DEBUG
+            if (diff > 1)
+                cout << "diff wrong, diff:" << diff << endl;
+#endif // DEBUG
             if (diff > 0)
                 start_idx += diff;
         }
-        start_idx = (int(table[i]) << 16) + int(table[i + 16]);
-        table1.push_back(start_idx);
-        table0.push_back(tmp);
+        Base.push_back(table[i]);
+        Offset.push_back(tmp);
     }
 }
 

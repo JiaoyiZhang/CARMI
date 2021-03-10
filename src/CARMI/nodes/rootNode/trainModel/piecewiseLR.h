@@ -48,6 +48,8 @@ public:
             else if (p > point[e].second)
                 p = point[e].second;
         }
+        if (p > length)
+            p = length;
         return p;
     }
 
@@ -70,7 +72,7 @@ void PiecewiseLR::Train(const vector<pair<double, double>> &dataset, int len)
     }
     if (actualSize == 0)
         return;
-        
+
     int seg = dataset.size() / 8;
     int i = 0;
     for (int k = 1; k <= 8; k++)

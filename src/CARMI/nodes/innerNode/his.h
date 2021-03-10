@@ -20,11 +20,11 @@ public:
 
     int flagNumber; // 4 Byte (flag + childNumber)
 
-    int childLeft;          // 4 Byte
-    float divisor;          // 4->8 Byte
-    double minValue;        // 8 Byte
-    unsigned int table0[5]; // 20 Byte
-    unsigned int table1[5]; // 20 Byte
+    int childLeft;             // 4 Byte
+    double divisor;            // 4 Byte (TODO: float)
+    double minValue;           // 4 Byte (TODO: float)
+    unsigned short Offset[10]; // 20 Byte (TODO:Offset[11])
+    unsigned short Base[10];   // 20 Byte
 };
 
 #endif
