@@ -15,6 +15,12 @@
 #define PARAM_ZIPFIAN 0.99
 #define DEBUG
 
+#include <utility>
+#include <vector>
+
+typedef std::pair<double, double> DataType;
+typedef std::vector<DataType> DataVectorType;
+
 // const bool kPrimaryIndex = false;
 bool kPrimaryIndex = false;
 

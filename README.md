@@ -13,6 +13,11 @@ make
 ./learned_index
 ```
 
+### Tips
+
+We are optimizing our code style. If you need to run the project, you need to wait for us to complete the optimization or run the version when the paper was submiited.
+
+
 ## Instructions
 
 **Method of constructing an index:**
