@@ -13,18 +13,18 @@
 #include <map>
 using namespace std;
 
-NodeCost CARMI::dp(DataRange *range)
+NodeCost CARMI::dp(const IndexPair &range)
 {
     NodeCost nodeCost;
-    if (range->initRange.size == 0 && range->findRange.size == 0)
+    if (range.initRange.size == 0 && range.findRange.size == 0)
     {
         nodeCost = {0, 0, 0, false};
         return nodeCost;
     }
 
-    if (range->initRange.size <= kMaxKeyNum)
+    if (range.initRange.size <= kMaxKeyNum)
         return dpLeaf(range);
-    else if (range->initRange.size > 4096)
+    else if (range.initRange.size > 4096)
         return dpInner(range);
     else
     {

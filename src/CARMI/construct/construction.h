@@ -8,36 +8,36 @@
 #include <map>
 using namespace std;
 
-inline void CARMI::ConstructSubTree(RootStruct *rootStruct, SubDataset *subDataset, NodeCost *nodeCost)
+/**
+ * @brief construct each subtree using dp/greedy
+ * @param rootStruct the type and childNumber of root
+ * @param subDataset the left and size of data points in each child node
+ * @param nodeCost the space, time, cost of the index
+ */
+inline void CARMI::ConstructSubTree(const RootStruct &rootStruct, const SubDataset &subDataset, NodeCost *nodeCost)
 {
-    for (int i = 0; i < rootStruct->rootChildNum; i++)
+    for (int i = 0; i < rootStruct.rootChildNum; i++)
     {
-        NodeCost emptyCost = {0, 0, 0, false};
-        SingleDataRange emptyRange = {-1, 0};
         COST.insert({emptyRange, emptyCost});
-        ParamStruct leafP;
-        leafP.type = 5;
-        leafP.density = 0.5;
-        structMap.insert({{false, {-1, 0}}, leafP});
+        structMap.insert({(MapKey){false, emptyRange}, leafP});
 
         NodeCost resChild;
-        DataRange *range = new DataRange(subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i], subDataset->subFind->subLeft[i], subDataset->subFind->subSize[i], subDataset->subInsert->subLeft[i], subDataset->subInsert->subSize[i]);
-        if (subDataset->subInit->subSize[i] + subDataset->subInsert->subSize[i] > kAlgorithmThreshold)
+        IndexPair range(subDataset.subInit[i], subDataset.subFind[i], subDataset.subInsert[i]);
+        if (subDataset.subInit[i].size + subDataset.subInsert[i].size > kAlgorithmThreshold)
             resChild = GreedyAlgorithm(range);
         else
             resChild = dp(range);
         int type;
-        MapKey key = {resChild.isInnerNode, {subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i]}};
+        MapKey key = {resChild.isInnerNode, {subDataset.subInit[i].size, subDataset.subInsert[i].size}};
         auto it = structMap.find(key);
         type = it->second.type;
 
-        storeOptimalNode(type, &key, range, i);
+        storeOptimalNode(i, type, key, range);
 
         nodeCost->cost += resChild.space + resChild.time;
         nodeCost->time += resChild.time;
         nodeCost->space += resChild.space;
 
-        delete range;
         COST.clear();
         structMap.clear();
     }
@@ -53,10 +53,10 @@ inline void CARMI::ConstructSubTree(RootStruct *rootStruct, SubDataset *subDatas
 inline int CARMI::Construction(const vector<pair<double, double>> &initData, const vector<pair<double, double>> &findData, const vector<pair<double, double>> &insertData)
 {
     NodeCost nodeCost = {0, 0, 0, true};
-    RootStruct *res = ChooseRoot();
-    // RootStruct *res = new RootStruct(0, 131072);
-    rootType = res->rootType;
-    SubDataset *subDataset = StoreRoot(res, &nodeCost);
+    RootStruct res = ChooseRoot();
+    // RootStruct res = RootStruct(0, 131072);
+    rootType = res.rootType;
+    SubDataset subDataset = StoreRoot(res, &nodeCost);
 
     ConstructSubTree(res, subDataset, &nodeCost);
     UpdateLeaf();
@@ -72,7 +72,6 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData, con
     vector<pair<double, double>>().swap(insertQuery);
     entireData.erase(entireData.begin() + nowDataSize + reservedSpace, entireData.end());
 
-    delete subDataset;
     COST.clear();
     structMap.clear();
     scanLeaf.clear();

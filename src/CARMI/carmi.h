@@ -132,41 +132,41 @@ public:
 
 private:
     template <typename TYPE, typename ModelType>
-    void CheckRoot(int c, int type, double &optimalCost, double time, RootStruct *rootStruct);
-    RootStruct *ChooseRoot();
+    void CheckRoot(int c, int type, double time, double *optimalCost, RootStruct *rootStruct);
+    RootStruct ChooseRoot();
     template <typename TYPE, typename ModelType>
-    TYPE *ConstructRoot(RootStruct *rootStruct, SubDataset *subDataset, DataRange *range, int &childLeft);
-    SubDataset *StoreRoot(RootStruct *rootStruct, NodeCost *nodeCost);
+    TYPE ConstructRoot(const RootStruct &rootStruct, const IndexPair &range, SubDataset *subDataset, int *childLeft);
+    SubDataset StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost);
 
-    void ConstructSubTree(RootStruct *rootStruct, SubDataset *subDataset, NodeCost *nodeCost);
+    void ConstructSubTree(const RootStruct &rootStruct, const SubDataset &subDataset, NodeCost *nodeCost);
 
 private:
-    NodeCost dp(DataRange *range);
-    double CalculateEntropy(const vector<int> &perSize, int size, int childNum) const;
+    NodeCost dp(const IndexPair &range);
+    double CalculateEntropy(int size, int childNum, const vector<DataRange> &perSize) const;
     template <typename TYPE>
-    void NodePartition(TYPE *node, SubSingleDataset *subData, SingleDataRange *range, const vector<pair<double, double>> &dataset) const;
+    void NodePartition(const TYPE &node, const DataRange &range, const vector<pair<double, double>> &dataset, vector<DataRange> *subData) const;
 
     template <typename TYPE>
-    void InnerDivideSingle(int c, SingleDataRange *range, SubSingleDataset *subDataset);
+    void InnerDivideSingle(int c, const DataRange &range, vector<DataRange> &subDataset);
     template <typename TYPE>
-    TYPE *InnerDivideAll(int c, DataRange *range, SubDataset *subDataset);
+    TYPE InnerDivideAll(int c, const IndexPair &range, SubDataset *subDataset);
     template <typename TYPE>
-    void CalInner(NodeCost *optimalCost, ParamStruct *optimalStruct, double time, const int frequency, const int c, const int type, DataRange *dataRange);
-    NodeCost dpInner(DataRange *dataRange);
+    void CalInner(int c, int type, int frequency, double time, const IndexPair &dataRange, NodeCost *optimalCost, ParamStruct *optimalStruct);
+    NodeCost dpInner(const IndexPair &dataRange);
 
     template <typename TYPE>
-    double CalLeafFindTime(TYPE *node, SingleDataRange *range, const int actualSize, const double density) const;
+    double CalLeafFindTime(int actualSize, double density, const TYPE &node, const DataRange &range) const;
     template <typename TYPE>
-    double CalLeafInsertTime(TYPE *node, SingleDataRange *range, SingleDataRange *findRange, const int actualSize, const double density) const;
-    NodeCost dpLeaf(DataRange *dataRange);
+    double CalLeafInsertTime(int actualSize, double density, const TYPE &node, const DataRange &range, const DataRange &findRange) const;
+    NodeCost dpLeaf(const IndexPair &dataRange);
 
     template <typename TYPE>
-    void CheckGreedy(int c, int type, NodeCost *optimalCost, double time, ParamStruct *optimalStruct, SingleDataRange *range, double pi, int frequency);
-    NodeCost GreedyAlgorithm(DataRange *range);
+    void CheckGreedy(int c, int type, double pi, int frequency, double time, const DataRange &range, ParamStruct *optimalStruct, NodeCost *optimalCost);
+    NodeCost GreedyAlgorithm(const IndexPair &range);
 
     template <typename TYPE>
-    TYPE *storeInnerNode(MapKey *key, DataRange *range, int storeIdx);
-    void storeOptimalNode(int optimalType, MapKey *key, DataRange *range, int storeIdx);
+    TYPE storeInnerNode(int storeIdx, const MapKey &key, const IndexPair &range);
+    void storeOptimalNode(int storeIdx, int optimalType, const MapKey key, const IndexPair &range);
     bool allocateEmptyBlock(int left, int len);
     int getIndex(int size);
     void initEntireData(int left, int size, bool reinit);
@@ -237,7 +237,7 @@ private:
     vector<pair<double, double>> findQuery;
     vector<pair<double, double>> insertQuery;
 
-    map<SingleDataRange, NodeCost> COST;
+    map<DataRange, NodeCost> COST;
     map<MapKey, ParamStruct> structMap;
     int querySize;
 
@@ -245,20 +245,9 @@ private:
     int kInnerNodeID; // for static structure
 
 private:
-    const double LRRootTime = 12.7013;
-    const double PLRRootTime = 39.6429;
-    const double HisRootTime = 44.2824;
-
-    const double LRInnerTime = 92.4801;
-    const double PLRInnerTime = 97.1858;
-    const double HisInnerTime = 109.8874;
-    const double BSInnerTime = 114.371;
-
-    const double CostMoveTime = 6.25;
-    const double CostBaseTime = 161.241;
-    const double CostBSTime = 10.9438;
-
-    const int reservedSpace = 1024 * 512;
+    const NodeCost emptyCost = {0, 0, 0, false};
+    const DataRange emptyRange = {-1, 0};
+    const ParamStruct leafP = {5, 2, 0.5, vector<MapKey>()};
 
 public:
     friend class LRType;

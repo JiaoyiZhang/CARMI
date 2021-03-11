@@ -14,18 +14,17 @@
 using namespace std;
 
 template <typename TYPE>
-void CARMI::CheckGreedy(int c, int type, NodeCost *optimalCost, double time, ParamStruct *optimalStruct, SingleDataRange *range, double pi, int frequency)
+void CARMI::CheckGreedy(int c, int type, double pi, int frequency, double time, const DataRange &range, ParamStruct *optimalStruct, NodeCost *optimalCost)
 {
-    SubSingleDataset perSize(c);
+    vector<DataRange> perSize(c, emptyRange);
     double space = 64.0 * c / 1024 / 1024;
 
     TYPE node = TYPE();
     node.SetChildNumber(c);
-    Train(&node, range->left, range->size);
+    Train(&node, range.left, range.size);
 
-    NodePartition<TYPE>(&node, &perSize, range, initDataset);
-
-    double entropy = CalculateEntropy(perSize.subSize, range->size, c);
+    NodePartition<TYPE>(node, range, initDataset, &perSize);
+    double entropy = CalculateEntropy(range.size, c, perSize);
     double cost = (time + float(kRate * space) / pi) / entropy;
 
     if (cost <= optimalCost->cost)
@@ -35,58 +34,58 @@ void CARMI::CheckGreedy(int c, int type, NodeCost *optimalCost, double time, Par
         *optimalCost = {time * frequency / querySize, kRate * space, cost, true};
     }
 }
-NodeCost CARMI::GreedyAlgorithm(DataRange *dataRange)
+NodeCost CARMI::GreedyAlgorithm(const IndexPair &dataRange)
 {
     NodeCost nodeCost = {0, 0, 0, false};
-    if (dataRange->initRange.size == 0 && dataRange->findRange.size == 0)
+    if (dataRange.initRange.size == 0 && dataRange.findRange.size == 0)
         return nodeCost;
 
-    NodeCost *optimalCost = new NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
-    double pi = float(dataRange->findRange.size + dataRange->insertRange.size) / querySize;
+    NodeCost optimalCost = NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
+    double pi = float(dataRange.findRange.size + dataRange.insertRange.size) / querySize;
     ParamStruct optimalStruct = {0, 32, 2, vector<MapKey>()};
     int frequency = 0;
-    int findEnd = dataRange->findRange.left + dataRange->findRange.size;
-    for (int l = dataRange->findRange.left; l < findEnd; l++)
+    int findEnd = dataRange.findRange.left + dataRange.findRange.size;
+    for (int l = dataRange.findRange.left; l < findEnd; l++)
         frequency += findQuery[l].second;
-    int insertEnd = dataRange->insertRange.left + dataRange->insertRange.size;
-    for (int l = dataRange->insertRange.left; l < insertEnd; l++)
+    int insertEnd = dataRange.insertRange.left + dataRange.insertRange.size;
+    for (int l = dataRange.insertRange.left; l < insertEnd; l++)
         frequency += insertQuery[l].second;
-    int tmpEnd = dataRange->initRange.size / 2;
-    SingleDataRange singleRange(dataRange->initRange.left, dataRange->initRange.size);
+    int tmpEnd = dataRange.initRange.size / 2;
+    DataRange singleRange(dataRange.initRange.left, dataRange.initRange.size);
     for (int c = 2; c < tmpEnd; c *= 2)
     {
 #ifdef DEBUG
-        if (c * 512 < dataRange->initRange.size)
+        if (c * 512 < dataRange.initRange.size)
             continue;
 #endif // DEBUG
-        CheckGreedy<LRModel>(c, 0, optimalCost, LRInnerTime, &optimalStruct, &(dataRange->initRange), pi, frequency);
-        CheckGreedy<PLRModel>(c, 1, optimalCost, PLRInnerTime, &optimalStruct, &(dataRange->initRange), pi, frequency);
-        CheckGreedy<HisModel>(c, 2, optimalCost, HisInnerTime, &optimalStruct, &(dataRange->initRange), pi, frequency);
-        CheckGreedy<BSModel>(c, 3, optimalCost, BSInnerTime, &optimalStruct, &(dataRange->initRange), pi, frequency);
+        CheckGreedy<LRModel>(c, 0, pi, frequency, LRInnerTime, dataRange.initRange, &optimalStruct, &optimalCost);
+        CheckGreedy<LRModel>(c, 1, pi, frequency, PLRInnerTime, dataRange.initRange, &optimalStruct, &optimalCost);
+        CheckGreedy<HisModel>(c, 2, pi, frequency, HisInnerTime, dataRange.initRange, &optimalStruct, &optimalCost);
+        CheckGreedy<BSModel>(c, 3, pi, frequency, BSInnerTime, dataRange.initRange, &optimalStruct, &optimalCost);
     }
 
     // construct child
-    SubDataset *subDataset = new SubDataset(optimalStruct.childNum);
+    SubDataset subDataset = SubDataset(optimalStruct.childNum);
     switch (optimalStruct.type)
     {
     case 0:
     {
-        InnerDivideAll<LRModel>(optimalStruct.childNum, dataRange, subDataset);
+        InnerDivideAll<LRModel>(optimalStruct.childNum, dataRange, &subDataset);
         break;
     }
     case 1:
     {
-        InnerDivideAll<PLRModel>(optimalStruct.childNum, dataRange, subDataset);
+        InnerDivideAll<PLRModel>(optimalStruct.childNum, dataRange, &subDataset);
         break;
     }
     case 2:
     {
-        InnerDivideAll<HisModel>(optimalStruct.childNum, dataRange, subDataset);
+        InnerDivideAll<HisModel>(optimalStruct.childNum, dataRange, &subDataset);
         break;
     }
     case 3:
     {
-        InnerDivideAll<BSModel>(optimalStruct.childNum, dataRange, subDataset);
+        InnerDivideAll<BSModel>(optimalStruct.childNum, dataRange, &subDataset);
         break;
     }
     }
@@ -95,24 +94,21 @@ NodeCost CARMI::GreedyAlgorithm(DataRange *dataRange)
     for (int i = 0; i < optimalStruct.childNum; i++)
     {
         NodeCost res = {0, 0, 0, true};
-        DataRange *range = new DataRange(subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i], subDataset->subFind->subLeft[i], subDataset->subFind->subSize[i], subDataset->subInsert->subLeft[i], subDataset->subInsert->subSize[i]);
-        if (subDataset->subInit->subSize[i] + subDataset->subInsert->subSize[i] > kAlgorithmThreshold)
+        IndexPair range(subDataset.subInit[i], subDataset.subFind[i], subDataset.subInsert[i]);
+        if (subDataset.subInit[i].size + subDataset.subInsert[i].size > kAlgorithmThreshold)
             res = GreedyAlgorithm(range);
         else
             res = dp(range);
 
-        MapKey key = {res.isInnerNode, {subDataset->subInit->subLeft[i], subDataset->subInit->subSize[i]}};
+        MapKey key = {res.isInnerNode, {subDataset.subInit[i].size, subDataset.subInsert[i].size}};
         tmpChild.push_back(key);
-        delete range;
     }
 
-    MapKey nodeKey = {true, {dataRange->initRange.left, dataRange->initRange.size}};
+    MapKey nodeKey = {true, {dataRange.initRange.left, dataRange.initRange.size}};
     optimalStruct.child = tmpChild;
-    if (optimalCost->time < DBL_MAX)
+    if (optimalCost.time < DBL_MAX)
         structMap.insert({nodeKey, optimalStruct});
-    nodeCost = {optimalCost->time, optimalCost->space, optimalCost->cost, true};
-    delete optimalCost;
-    delete subDataset;
+    nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost, true};
     return nodeCost;
 }
 #endif // !GREEDY_H
