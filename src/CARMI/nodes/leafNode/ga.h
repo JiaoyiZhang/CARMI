@@ -16,12 +16,13 @@
 #include <vector>
 
 #include "../../../params.h"
+#include "../../construct/structures.h"
 
 class GappedArrayType {
  public:
   GappedArrayType() = default;
   explicit GappedArrayType(int cap) {
-    flagNumber = (9 << 24) + 0;
+    flagNumber = (GAPPED_ARRAY_LEAF_NODE << 24) + 0;
     error = 0;
     density = kDensity;
     capacity = cap;

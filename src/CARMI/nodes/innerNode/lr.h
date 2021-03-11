@@ -15,11 +15,14 @@
 #include <utility>
 #include <vector>
 
+#include "../../../params.h"
+#include "../../construct/structures.h"
+
 class LRModel {
  public:
   LRModel() = default;
-  void SetChildNumber(int c) { flagNumber = (4 << 24) + c; }
-  void Train(const std::vector<std::pair<double, double>> &dataset);
+  void SetChildNumber(int c) { flagNumber = (LR_INNER_NODE << 24) + c; }
+  void Train(const DataVectorType &dataset);
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + childNumber)

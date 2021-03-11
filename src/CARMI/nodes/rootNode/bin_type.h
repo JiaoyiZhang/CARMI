@@ -14,13 +14,14 @@
 #include <vector>
 
 #include "../../../params.h"
+#include "../../construct/structures.h"
 #include "trainModel/binary_search_model.h"
 
 class BSType {
  public:
   BSType() = default;
   explicit BSType(int c) {
-    flagNumber = (3 << 24) + c;
+    flagNumber = (BS_ROOT_NODE << 24) + c;
     model = BinarySearchModel(c);
   }
 

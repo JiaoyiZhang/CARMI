@@ -20,7 +20,7 @@ class HisType {
  public:
   HisType() = default;
   explicit HisType(int c) {
-    flagNumber = (2 << 24) + c;
+    flagNumber = (HIS_ROOT_NODE << 24) + c;
     model = HistogramModel(c);
   }
 

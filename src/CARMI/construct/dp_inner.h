@@ -21,29 +21,29 @@
  *        better than the previous optimal setting
  * @param optimalCost the optimal cost of the previous setting
  * @param optimalStruct the optimal setting
- * @param time the time cost of this inner node
- * @param frequency the frequency of these data points
+ * @param time_cost the time cost of this inner node
+ * @param frequency the frequency of data points
  * @param c the child number of this inner node
  * @param type the type of this inne node
  * @param dataRange the range of data points in this node
  */
 template <typename TYPE>
-void CARMI::CalInner(int c, int type, int frequency, double time,
-                     const IndexPair &dataRange, NodeCost *optimalCost,
+void CARMI::CalInner(int c, NodeType type, int frequency, double time_cost,
+                     const DataRange &dataRange, NodeCost *optimalCost,
                      ParamStruct *optimalStruct) {
-  double space = 64.0 * c / 1024 / 1024;  // MB
-  time = time * frequency / querySize;
-  double RootCost = time + kRate * space;
-  space *= kRate;
+  double space_cost = BaseNodeSpace * c;  // MB
+  time_cost = time_cost * frequency / querySize;
+  double RootCost = time_cost + kRate * space_cost;
+  space_cost *= kRate;
   if (RootCost > optimalCost->cost) return;
 
   SubDataset subDataset(c);
   InnerDivideAll<TYPE>(c, dataRange, &subDataset);
 
-  vector<MapKey> tmpChild;
+  std::vector<MapKey> tmpChild;
   for (int i = 0; i < c; i++) {
     NodeCost res;
-    IndexPair range(subDataset.subInit[i], subDataset.subFind[i],
+    DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
     if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
         kAlgorithmThreshold)
@@ -54,12 +54,12 @@ void CARMI::CalInner(int c, int type, int frequency, double time,
     MapKey key = {res.isInnerNode,
                   {subDataset.subInit[i].size, subDataset.subInsert[i].size}};
     tmpChild.push_back(key);
-    space += res.space;
-    time += res.time;
+    space_cost += res.space;
+    time_cost += res.time;
     RootCost += res.space + res.time;
   }
   if (RootCost <= optimalCost->cost) {
-    *optimalCost = {time, space, RootCost, true};
+    *optimalCost = {time_cost, space_cost, RootCost, true};
     *optimalStruct = ParamStruct(type, c, kDensity, tmpChild);
   }
 }
@@ -69,11 +69,10 @@ void CARMI::CalInner(int c, int type, int frequency, double time,
  * @param dataRange the range of data points in this node
  * @return the optimal cost of this subtree
  */
-NodeCost CARMI::dpInner(const IndexPair &dataRange) {
+NodeCost CARMI::dpInner(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
-  double space;
-  ParamStruct optimalStruct = {0, 32, 2, vector<MapKey>()};
+  ParamStruct optimalStruct = {0, 32, 2, std::vector<MapKey>()};
   int frequency = 0;
   int findEnd = dataRange.findRange.left + dataRange.findRange.size;
   for (int l = dataRange.findRange.left; l < findEnd; l++)

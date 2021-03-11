@@ -17,7 +17,7 @@
 #include "../carmi.h"
 #include "inlineFunction.h"
 
-bool CARMI::Update(pair<double, double> data) {
+bool CARMI::Update(DataType data) {
   int idx = 0;  // idx in the INDEX
   int content;
   int type = rootType;
@@ -66,9 +66,10 @@ bool CARMI::Update(pair<double, double> data) {
         if (entireData[left + preIdx].first == data.first) {
           entireData[left + preIdx].second = data.second;
         } else {
-          int start = max(0, preIdx - entireChild[idx].array.error) + left;
-          int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
-          start = min(start, end);
+          int start = std::max(0, preIdx - entireChild[idx].array.error) + left;
+          int end =
+              std::min(size - 1, preIdx + entireChild[idx].array.error) + left;
+          start = std::min(start, end);
           if (data.first <= entireData[start].first) {
             preIdx = ArrayBinarySearch(data.first, left, start);
           } else if (data.first <= entireData[end].first) {
@@ -89,11 +90,11 @@ bool CARMI::Update(pair<double, double> data) {
           entireData[left + preIdx].second = data.second;
           return true;
         } else {
-          int start = max(0, preIdx - entireChild[idx].ga.error) + left;
-          int end = min(entireChild[idx].ga.maxIndex,
-                        preIdx + entireChild[idx].ga.error) +
+          int start = std::max(0, preIdx - entireChild[idx].ga.error) + left;
+          int end = std::min(entireChild[idx].ga.maxIndex,
+                             preIdx + entireChild[idx].ga.error) +
                     left;
-          start = min(start, end);
+          start = std::min(start, end);
           if (entireData[start].first == -1) start--;
           if (entireData[end].first == -1) end--;
 
@@ -120,10 +121,12 @@ bool CARMI::Update(pair<double, double> data) {
           entireData[left + preIdx].second = data.second;
           return true;
         } else {
-          int start = max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
+          int start =
+              std::max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
           int end =
-              min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
-          start = min(start, end);
+              std::min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) +
+              left;
+          start = std::min(start, end);
           int res;
           if (data.first <= entireData[start].first) {
             res = YCSBBinarySearch(data.first, left, start);

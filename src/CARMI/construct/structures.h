@@ -34,20 +34,20 @@ struct NodeCost {
   bool isInnerNode;
 };
 
-class DataRange {
+class IndexPair {
  public:
   int left;
   int size;
-  DataRange(int l, int s) {
+  IndexPair(int l, int s) {
     left = l;
     size = s;
   }
-  DataRange(const DataRange &data) {
+  IndexPair(const IndexPair &data) {
     left = data.left;
     size = data.size;
   }
 
-  bool operator<(const DataRange &a) const {
+  bool operator<(const IndexPair &a) const {
     if (left == a.left)
       return size < a.size;
     else
@@ -56,8 +56,8 @@ class DataRange {
 };
 
 struct MapKey {
-  bool isInnerNode;
-  DataRange initRange;
+  bool isInnerNode;  // ->delete
+  IndexPair initRange;
   bool operator<(const MapKey &a) const {
     if (initRange.left == a.initRange.left)
       return initRange.size < a.initRange.size;
@@ -81,39 +81,39 @@ struct ParamStruct {
 };
 
 // change the name
-class IndexPair {
+class DataRange {
  public:
-  DataRange initRange;
-  DataRange findRange;
-  DataRange insertRange;
-  IndexPair(DataRange init, DataRange find, DataRange insert)
+  IndexPair initRange;
+  IndexPair findRange;
+  IndexPair insertRange;
+  DataRange(IndexPair init, IndexPair find, IndexPair insert)
       : initRange(init), findRange(find), insertRange(insert) {}
 };
 
 class SubDataset {
  public:
-  std::vector<DataRange> subInit;
-  std::vector<DataRange> subFind;
-  std::vector<DataRange> subInsert;
+  std::vector<IndexPair> subInit;
+  std::vector<IndexPair> subFind;
+  std::vector<IndexPair> subInsert;
 
   explicit SubDataset(int c)
-      : subInit(std::vector<DataRange>(c, {-1, 0})),
-        subFind(std::vector<DataRange>(c, {-1, 0})),
-        subInsert(std::vector<DataRange>(c, {-1, 0})) {}
+      : subInit(std::vector<IndexPair>(c, {-1, 0})),
+        subFind(std::vector<IndexPair>(c, {-1, 0})),
+        subInsert(std::vector<IndexPair>(c, {-1, 0})) {}
   ~SubDataset() {}
 };
 
-enum NodeTypeID {
-  LR_ROOT_NODE = 0,
-  PLR_ROOT_NODE = 1,
-  HIS_ROOT_NODE = 2,
-  BS_ROOT_NODE = 3,
-  LR_INNER_NODE = 4,
-  PLR_INNER_NODE = 5,
-  HIS_INNER_NODE = 6,
-  BS_INNER_NODE = 7,
-  ARRAY_LEAF_NODE = 8,
-  GAPPED_ARRAY_LEAF_NODE = 9,
-  EXTERNAL_ARRAY_LEAF_NODE = 10
+enum NodeType {
+  LR_ROOT_NODE,
+  PLR_ROOT_NODE,
+  HIS_ROOT_NODE,
+  BS_ROOT_NODE,
+  LR_INNER_NODE,
+  PLR_INNER_NODE,
+  HIS_INNER_NODE,
+  BS_INNER_NODE,
+  ARRAY_LEAF_NODE,
+  GAPPED_ARRAY_LEAF_NODE,
+  EXTERNAL_ARRAY_LEAF_NODE
 };
 #endif  // SRC_CARMI_CONSTRUCT_STRUCTURES_H_

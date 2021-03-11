@@ -27,17 +27,17 @@
  * @param rootStruct used to record the optimal setting
  */
 template <typename TYPE, typename ModelType>
-void CARMI::CheckRoot(int c, int type, double time, double *optimalCost,
-                      RootStruct *rootStruct) {
-  vector<DataRange> perSize(c, emptyRange);
-  double space = BaseNodeSpace * c;
+void CARMI::isBetterRoot(int c, NodeType type, double time_cost,
+                         double *optimalCost, RootStruct *rootStruct) {
+  std::vector<IndexPair> perSize(c, emptyRange);
+  double space_cost = BaseNodeSpace * c;
 
   TYPE root = TYPE(c);
   root.model.Train(initDataset, c);
-  DataRange range(0, initDataset.size());
+  IndexPair range(0, initDataset.size());
   NodePartition<ModelType>(root.model, range, initDataset, &perSize);
   double entropy = CalculateEntropy(initDataset.size(), c, perSize);
-  double cost = (time + static_cast<float>(kRate * space)) / entropy;
+  double cost = (time_cost + static_cast<float>(kRate * space_cost)) / entropy;
 
   if (cost <= *optimalCost) {
     *optimalCost = cost;
@@ -52,22 +52,22 @@ void CARMI::CheckRoot(int c, int type, double time, double *optimalCost,
  */
 RootStruct CARMI::ChooseRoot() {
   double OptimalValue = DBL_MAX;
-  RootStruct rootStruct = RootStruct(0, 0);
+  RootStruct rootStruct(0, 0);
   for (int c = 2; c <= initDataset.size() * 10; c *= 2) {
-    CheckRoot<LRType, LinearRegression>(c, LR_ROOT_NODE, LRRootTime,
-                                        &OptimalValue, &rootStruct);
-    CheckRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE, PLRRootTime,
-                                    &OptimalValue, &rootStruct);
-    CheckRoot<HisType, HistogramModel>(c, HIS_ROOT_NODE, HisRootTime,
+    isBetterRoot<LRType, LinearRegression>(c, LR_ROOT_NODE, LRRootTime,
+                                           &OptimalValue, &rootStruct);
+    isBetterRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE, PLRRootTime,
                                        &OptimalValue, &rootStruct);
-    CheckRoot<BSType, BinarySearchModel>(c, BS_ROOT_NODE,
-                                         CostBSTime * log(c) / log(2),
-                                         &OptimalValue, &rootStruct);
+    isBetterRoot<HisType, HistogramModel>(c, HIS_ROOT_NODE, HisRootTime,
+                                          &OptimalValue, &rootStruct);
+    isBetterRoot<BSType, BinarySearchModel>(c, BS_ROOT_NODE,
+                                            CostBSTime * log(c) / log(2),
+                                            &OptimalValue, &rootStruct);
   }
 #ifdef DEBUG
-  cout << "Best type is: " << rootStruct.rootType
-       << "\tbest childNumber: " << rootStruct.rootChildNum
-       << "\tOptimal Value: " << OptimalValue << endl;
+  std::cout << "Best type is: " << rootStruct.rootType
+            << "\tbest childNumber: " << rootStruct.rootChildNum
+            << "\tOptimal Value: " << OptimalValue << std::endl;
 #endif
   return rootStruct;
 }
@@ -81,9 +81,9 @@ RootStruct CARMI::ChooseRoot() {
  */
 
 template <typename TYPE, typename ModelType>
-TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const IndexPair &range,
+TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const DataRange &range,
                           SubDataset *subDataset, int *childLeft) {
-  TYPE root = TYPE(rootStruct.rootChildNum);
+  TYPE root(rootStruct.rootChildNum);
   *childLeft = allocateChildMemory(rootStruct.rootChildNum);
   root.model.Train(initDataset, rootStruct.rootChildNum);
 
@@ -101,10 +101,10 @@ TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const IndexPair &range,
  * @return the range of data points in all child node of the root node
  */
 SubDataset CARMI::StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost) {
-  IndexPair dataRange({0, static_cast<int>(initDataset.size())},
+  DataRange dataRange({0, static_cast<int>(initDataset.size())},
                       {0, static_cast<int>(findQuery.size())},
                       {0, static_cast<int>(insertQuery.size())});
-  SubDataset subDataset = SubDataset(rootStruct.rootChildNum);
+  SubDataset subDataset(rootStruct.rootChildNum);
   int childLeft;
   switch (rootStruct.rootType) {
     case LR_ROOT_NODE: {

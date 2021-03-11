@@ -13,14 +13,15 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
+
+#include "../../construct/structures.h"
 class BSModel {
  public:
   BSModel() = default;
   void SetChildNumber(int c) {
-    flagNumber = (7 << 24) + std::min(c, 15);
+    flagNumber = (BS_INNER_NODE << 24) + std::min(c, 15);
     for (int i = 0; i < 14; i++) index[i] = 0;
   }
-  void Train(const std::vector<std::pair<double, double>> &dataset);
   int Predict(double key) const;
 
   int flagNumber;   // 4 Byte (flag + childNumber)

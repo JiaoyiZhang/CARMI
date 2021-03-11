@@ -17,13 +17,15 @@
 #include <utility>
 #include <vector>
 
+#include "../../../../params.h"
+
 class LinearRegression {
  public:
   LinearRegression() {
     theta1 = 0.0001;
     theta2 = 0.666;
   }
-  void Train(const std::vector<std::pair<double, double>> &dataset, int len);
+  void Train(const DataVectorType &dataset, int len);
   int Predict(double key) const {
     // return the predicted idx in the children
     int p = theta1 * key + theta2;
@@ -40,8 +42,7 @@ class LinearRegression {
   double theta2;
 };
 
-void LinearRegression::Train(
-    const std::vector<std::pair<double, double>> &dataset, int len) {
+void LinearRegression::Train(const DataVectorType &dataset, int len) {
   length = len - 1;
   int actualSize = 0;
   std::vector<double> index;

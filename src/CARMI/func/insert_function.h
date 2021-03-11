@@ -20,7 +20,7 @@
 
 #include "../carmi.h"
 
-bool CARMI::Insert(std::pair<double, double> data) {
+bool CARMI::Insert(DataType data) {
   int idx = 0;  // idx in the INDEX
   int content;
   int type = rootType;
@@ -66,7 +66,7 @@ bool CARMI::Insert(std::pair<double, double> data) {
       case ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         if (size >= 4096) {
-          std::vector<std::pair<double, double>> tmpDataset;
+          DataVectorType tmpDataset;
           auto left = entireChild[idx].array.m_left;
           auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
           for (int i = left; i < left + size; i++)
@@ -76,11 +76,11 @@ bool CARMI::Insert(std::pair<double, double> data) {
           int childNum = 128;
           node.SetChildNumber(128);
           node.childLeft = allocateChildMemory(childNum);
-          node.Train(tmpDataset);
+          Train(0, tmpDataset.size(), tmpDataset, &node);
           entireChild[idx].lr = node;
 
-          std::vector<std::vector<std::pair<double, double>>> subFindData;
-          std::vector<std::pair<double, double>> tmp;
+          std::vector<DataVectorType> subFindData;
+          DataVectorType tmp;
           for (int i = 0; i < childNum; i++) subFindData.push_back(tmp);
 
           for (int i = 0; i < size; i++) {
@@ -90,7 +90,7 @@ bool CARMI::Insert(std::pair<double, double> data) {
 
           for (int i = 0; i < childNum; i++) {
             ArrayType tmpLeaf(kThreshold);
-            initArray(&tmpLeaf, subFindData[i], kMaxKeyNum);
+            initArray(kMaxKeyNum, left, 1, subFindData[i], &tmpLeaf);
             entireChild[node.childLeft + i].array = tmpLeaf;
           }
           auto previousIdx = entireChild[idx].array.previousLeaf;
@@ -111,8 +111,8 @@ bool CARMI::Insert(std::pair<double, double> data) {
         if (size == 0) {
           entireData[left] = data;
           entireChild[idx].array.flagNumber++;
-          initArray(&entireChild[idx].array, left, 1,
-                    entireChild[idx].array.m_capacity);
+          initArray(entireChild[idx].array.m_capacity, left, 1, entireData,
+                    &entireChild[idx].array);
           if (entireChild[idx].array.nextLeaf == -1) {
             scanLeaf.insert({data.first, idx});
             auto it = scanLeaf.find(data.first);
@@ -148,8 +148,8 @@ bool CARMI::Insert(std::pair<double, double> data) {
         if ((size >= entireChild[idx].array.m_capacity) &&
             entireChild[idx].array.m_capacity < 4096) {
           auto diff = preIdx - left;
-          initArray(&entireChild[idx].array, left, 1,
-                    entireChild[idx].array.m_capacity);
+          initArray(entireChild[idx].array.m_capacity, left, 1, entireData,
+                    &entireChild[idx].array);
           left = entireChild[idx].array.m_left;
           preIdx = left + diff;
         }
@@ -171,7 +171,7 @@ bool CARMI::Insert(std::pair<double, double> data) {
         auto left = entireChild[idx].ga.m_left;
         int size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
         if (size >= 4096) {
-          std::vector<std::pair<double, double>> tmpDataset;
+          DataVectorType tmpDataset;
           auto left = entireChild[idx].ga.m_left;
           auto size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
           for (int i = left; i < left + size; i++)
@@ -181,11 +181,11 @@ bool CARMI::Insert(std::pair<double, double> data) {
           node.SetChildNumber(128);
           int childNum = 128;
           node.childLeft = allocateChildMemory(childNum);
-          node.Train(tmpDataset);
+          Train(0, tmpDataset.size(), tmpDataset, &node);
           entireChild[idx].lr = node;
 
-          std::vector<std::vector<std::pair<double, double>>> subFindData;
-          std::vector<std::pair<double, double>> tmp;
+          std::vector<DataVectorType> subFindData;
+          DataVectorType tmp;
           for (int i = 0; i < childNum; i++) subFindData.push_back(tmp);
 
           for (int i = 0; i < size; i++) {
@@ -195,7 +195,8 @@ bool CARMI::Insert(std::pair<double, double> data) {
 
           for (int i = 0; i < childNum; i++) {
             GappedArrayType tmpLeaf(kThreshold);
-            initGA(&tmpLeaf, subFindData[i], kMaxKeyNum);
+            initGA(kMaxKeyNum, 0, subFindData[i].size(), subFindData[i],
+                   &tmpLeaf);
             entireChild[node.childLeft + i].ga = tmpLeaf;
           }
 
@@ -218,16 +219,20 @@ bool CARMI::Insert(std::pair<double, double> data) {
              entireChild[idx].ga.density)) {
           // If an additional Insertion results in crossing the density
           // then we expand the gapped array
-          initGA(&entireChild[idx].ga, left, size,
-                 entireChild[idx].ga.capacity);
-          left = entireChild[idx].ga.m_left;
+          DataVectorType newDataset;
+          int right = left + (&entireChild[idx].ga)->maxIndex + 1;
+          for (int i = left; i < right; i++) {
+            newDataset.push_back(entireData[i]);
+          }
+          initGA(entireChild[idx].ga.capacity, left, size, newDataset,
+                 &entireChild[idx].ga);
         }
-
         if (size == 0) {
           entireData[left] = data;
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex = 0;
-          initGA(&entireChild[idx].ga, left, 1, entireChild[idx].ga.capacity);
+          initGA(entireChild[idx].ga.capacity, left, 1, entireData,
+                 &entireChild[idx].ga);
           if (entireChild[idx].ga.nextLeaf == -1) {
             scanLeaf.insert({data.first, idx});
             auto it = scanLeaf.find(data.first);

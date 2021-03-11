@@ -56,7 +56,7 @@ inline int CARMI::UpdateError(YCSBLeaf *ycsb, const int start_idx,
 
 inline void CARMI::Train(YCSBLeaf *ycsb, const int start_idx, const int size) {
   if ((ycsb->flagNumber & 0x00FFFFFF) != size) ycsb->flagNumber += size;
-  vector<double> index;
+  std::vector<double> index;
   int end = start_idx + size;
   for (int i = start_idx; i < end; i++)
     index.push_back(static_cast<double>(i - start_idx) /

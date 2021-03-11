@@ -63,9 +63,10 @@ bool CARMI::Delete(double key) {
         if (entireData[left + preIdx].first == key) {
           preIdx += left;
         } else {
-          int start = max(0, preIdx - entireChild[idx].array.error) + left;
-          int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
-          start = min(start, end);
+          int start = std::max(0, preIdx - entireChild[idx].array.error) + left;
+          int end =
+              std::min(size - 1, preIdx + entireChild[idx].array.error) + left;
+          start = std::min(start, end);
           int res;
           if (key <= entireData[start].first) {
             res = ArrayBinarySearch(key, left, start);
@@ -98,11 +99,11 @@ bool CARMI::Delete(double key) {
             entireChild[idx].ga.maxIndex--;
           return true;
         } else {
-          int start = max(0, preIdx - entireChild[idx].ga.error) + left;
-          int end = min(entireChild[idx].ga.maxIndex,
-                        preIdx + entireChild[idx].ga.error) +
+          int start = std::max(0, preIdx - entireChild[idx].ga.error) + left;
+          int end = std::min(entireChild[idx].ga.maxIndex,
+                             preIdx + entireChild[idx].ga.error) +
                     left;
-          start = min(start, end);
+          start = std::min(start, end);
 
           int res;
           if (entireData[start].first == -1) start--;
@@ -132,10 +133,12 @@ bool CARMI::Delete(double key) {
           entireData.erase(entireData.begin() + left + preIdx);
           return true;
         } else {
-          int start = max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
+          int start =
+              std::max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
           int end =
-              min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
-          start = min(start, end);
+              std::min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) +
+              left;
+          start = std::min(start, end);
           int res;
           if (key <= entireData[start].first) {
             res = YCSBBinarySearch(key, left, start);

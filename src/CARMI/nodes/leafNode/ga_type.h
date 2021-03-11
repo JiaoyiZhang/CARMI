@@ -30,28 +30,32 @@ inline int GappedArrayType::Predict(double key) const {
   return p;
 }
 
-inline void CARMI::initGA(GappedArrayType *ga,
-                          const vector<pair<double, double>> &subDataset,
-                          int cap) {
-  if (ga->m_left != -1) releaseMemory(ga->m_left, ga->capacity);
+inline void CARMI::initGA(int cap, const int left, const int size,
+                          const DataVectorType &subDataset, GappedArrayType *ga) {
+  if (ga->m_left != -1) {
+    releaseMemory(ga->m_left, ga->capacity);
+  }
   ga->capacity = cap;
   while ((static_cast<float>(subDataset.size()) /
               static_cast<float>(ga->capacity) >
           ga->density))
     ga->capacity = static_cast<float>(ga->capacity) / ga->density;
-  // ga->capacity *= 2; // test
-  if (ga->capacity > 4096) ga->capacity = 4096;
-  int size = 0;
+  if (ga->capacity > 4096) {
+    ga->capacity = 4096;
+  }
   ga->m_left = allocateMemory(ga->capacity);
 
   int k = ga->density / (1 - ga->density);
   float rate = static_cast<float>(subDataset.size()) / ga->capacity;
-  if (rate > ga->density) k = rate / (1 - rate);
+  if (rate > ga->density) {
+    k = rate / (1 - rate);
+  }
   int cnt = 0;
-  vector<pair<double, double>> newDataset(
-      ga->capacity, pair<double, double>{DBL_MIN, DBL_MIN});
-  int j = 0;
-  for (int i = 0; i < subDataset.size(); i++) {
+  DataVectorType newDataset(ga->capacity,
+                      DataType{DBL_MIN, DBL_MIN});
+  int j = ga->m_left;
+  int end = left + size;
+  for (int i = left; i < end; i++) {
     if (subDataset[i].second != DBL_MIN) {
       if (cnt >= k) {
         j++;
@@ -59,64 +63,22 @@ inline void CARMI::initGA(GappedArrayType *ga,
         if (j > 2048) k += 2;
       }
       cnt++;
-      newDataset[j++] = subDataset[i];
-      ga->maxIndex = j - 1;
-      size++;
+      //   newDataset[j++] = subDataset[i];
+      entireData[j++] = subDataset[i];
+      ga->maxIndex = j - 1 - ga->m_left;
     }
   }
 
+#ifdef DEBUG
   if (size > 4096)
-    cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:"
-         << size << endl;
+    std::cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:"
+              << size << std::endl;
+#endif  // DEBUG
 
-  for (int i = ga->m_left, j = 0; j <= ga->maxIndex; i++, j++)
-    entireData[i] = newDataset[j];
   ga->flagNumber += size;
 
   Train(ga);
 
-  UpdateError(ga);
-}
-
-inline void CARMI::initGA(GappedArrayType *ga, const int left, const int size,
-                          int cap) {
-  vector<pair<double, double>> newDataset;
-  int right = left + ga->maxIndex + 1;
-  for (int i = left; i < right; i++) newDataset.push_back(entireData[i]);
-  initGA(ga, newDataset, cap);
-}
-
-inline void CARMI::initGA(GappedArrayType *ga, const int left, const int size) {
-  if (ga->m_left != -1) releaseMemory(ga->m_left, ga->capacity);
-  while ((static_cast<float>(size) / static_cast<float>(ga->capacity) >
-          ga->density))
-    ga->capacity = static_cast<float>(ga->capacity) / ga->density;
-  if (ga->capacity > 4096) ga->capacity = 4096;
-  ga->m_left = allocateMemory(ga->capacity);
-
-  if (size > 4096)
-    cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:"
-         << size << endl;
-
-  int k = ga->density / (1 - ga->density);
-  float rate = static_cast<float>(size) / ga->capacity;
-  if (rate > ga->density) k = rate / (1 - rate);
-  int cnt = 0;
-  int j = ga->m_left;
-  int end = left + size;
-  for (int i = left; i < end; i++) {
-    if (cnt >= k) {
-      j++;
-      cnt = 0;
-    }
-    cnt++;
-    entireData[j++] = initDataset[i];
-    ga->maxIndex = j - 1 - ga->m_left;
-  }
-
-  ga->flagNumber += size;
-
-  Train(ga);
   UpdateError(ga);
 }
 
@@ -201,7 +163,7 @@ inline int CARMI::UpdateError(GappedArrayType *ga, const int start_idx,
 
 inline void CARMI::Train(GappedArrayType *ga) {
   int actualSize = 0;
-  vector<double> index;
+  std::vector<double> index;
   int end = ga->m_left + ga->capacity;
   int size = ga->flagNumber & 0x00FFFFFF;
   for (int i = ga->m_left; i < end; i++) {
@@ -226,7 +188,7 @@ inline void CARMI::Train(GappedArrayType *ga) {
 inline void CARMI::Train(GappedArrayType *ga, const int start_idx,
                          const int size) {
   if ((ga->flagNumber & 0x00FFFFFF) != size) ga->flagNumber += size;
-  vector<double> index;
+  std::vector<double> index;
   for (int i = start_idx; i < start_idx + size; i++)
     index.push_back(static_cast<float>(i - start_idx) / size);
 

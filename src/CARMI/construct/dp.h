@@ -24,7 +24,7 @@
 #include "./greedy.h"
 #include "./structures.h"
 
-NodeCost CARMI::dp(const IndexPair &range) {
+NodeCost CARMI::dp(const DataRange &range) {
   NodeCost nodeCost;
   if (range.initRange.size == 0 && range.findRange.size == 0) {
     nodeCost = {0, 0, 0, false};

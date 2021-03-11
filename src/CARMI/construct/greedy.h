@@ -24,27 +24,29 @@
 #include "./structures.h"
 
 template <typename TYPE>
-void CARMI::CheckGreedy(int c, int type, double pi, int frequency, double time,
-                        const DataRange &range, ParamStruct *optimalStruct,
-                        NodeCost *optimalCost) {
-  vector<DataRange> perSize(c, emptyRange);
-  double space = 64.0 * c / 1024 / 1024;
+void CARMI::CheckGreedy(int c, NodeType type, double pi, int frequency,
+                        double time_cost, const IndexPair &range,
+                        ParamStruct *optimalStruct, NodeCost *optimalCost) {
+  std::vector<IndexPair> perSize(c, emptyRange);
+  double space_cost = 64.0 * c / 1024 / 1024;
 
   TYPE node = TYPE();
   node.SetChildNumber(c);
-  Train(&node, range.left, range.size);
+  Train(range.left, range.size, initDataset, &node);
 
   NodePartition<TYPE>(node, range, initDataset, &perSize);
   double entropy = CalculateEntropy(range.size, c, perSize);
-  double cost = (time + static_cast<float>(kRate * space) / pi) / entropy;
+  double cost =
+      (time_cost + static_cast<float>(kRate * space_cost) / pi) / entropy;
 
   if (cost <= optimalCost->cost) {
     optimalStruct->type = type;
     optimalStruct->childNum = c;
-    *optimalCost = {time * frequency / querySize, kRate * space, cost, true};
+    *optimalCost = {time_cost * frequency / querySize, kRate * space_cost, cost,
+                    true};
   }
 }
-NodeCost CARMI::GreedyAlgorithm(const IndexPair &dataRange) {
+NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   NodeCost nodeCost = {0, 0, 0, false};
   if (dataRange.initRange.size == 0 && dataRange.findRange.size == 0)
     return nodeCost;
@@ -53,7 +55,7 @@ NodeCost CARMI::GreedyAlgorithm(const IndexPair &dataRange) {
   double pi = static_cast<float>(dataRange.findRange.size +
                                  dataRange.insertRange.size) /
               querySize;
-  ParamStruct optimalStruct = {LR_INNER_NODE, 32, 2, vector<MapKey>()};
+  ParamStruct optimalStruct = {LR_INNER_NODE, 32, 2, std::vector<MapKey>()};
   int frequency = 0;
   int findEnd = dataRange.findRange.left + dataRange.findRange.size;
   for (int l = dataRange.findRange.left; l < findEnd; l++)
@@ -62,7 +64,7 @@ NodeCost CARMI::GreedyAlgorithm(const IndexPair &dataRange) {
   for (int l = dataRange.insertRange.left; l < insertEnd; l++)
     frequency += insertQuery[l].second;
   int tmpEnd = dataRange.initRange.size / 2;
-  DataRange singleRange(dataRange.initRange.left, dataRange.initRange.size);
+  IndexPair singleRange(dataRange.initRange.left, dataRange.initRange.size);
   for (int c = 2; c < tmpEnd; c *= 2) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
@@ -98,10 +100,10 @@ NodeCost CARMI::GreedyAlgorithm(const IndexPair &dataRange) {
     }
   }
 
-  vector<MapKey> tmpChild;
+  std::vector<MapKey> tmpChild;
   for (int i = 0; i < optimalStruct.childNum; i++) {
     NodeCost res = {0, 0, 0, true};
-    IndexPair range(subDataset.subInit[i], subDataset.subFind[i],
+    DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
     if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
         kAlgorithmThreshold)

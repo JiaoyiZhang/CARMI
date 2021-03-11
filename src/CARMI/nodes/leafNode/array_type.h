@@ -31,61 +31,34 @@ inline int ArrayType::Predict(double key) const {
   return p;
 }
 
-inline void CARMI::initArray(ArrayType *arr,
-                             const vector<pair<double, double>> &dataset,
-                             int cap) {
-  if (arr->m_left != -1) releaseMemory(arr->m_left, arr->m_capacity);
+inline void CARMI::initArray(int cap, const int left, const int size,
+                             const DataVectorType &dataset, ArrayType *arr) {
+  if (arr->m_left != -1) {
+    releaseMemory(arr->m_left, arr->m_capacity);
+  }
   arr->m_capacity = cap;
-  int size = dataset.size();
   arr->flagNumber += size;
-  while (size > arr->m_capacity) arr->m_capacity *= kExpansionScale;
+  while (size > arr->m_capacity) {
+    arr->m_capacity *= kExpansionScale;
+  }
 
-  if (arr->m_capacity > 4096) arr->m_capacity = 4096;
+  if (arr->m_capacity > 4096) {
+    arr->m_capacity = 4096;
+  }
 
   arr->m_left = allocateMemory(arr->m_capacity);
   if (size == 0) return;
 
   if (size > 4096)
-    cout << "init Array setDataset WRONG! datasetSize > 4096, size is:" << size
-         << endl;
+    std::cout << "init Array setDataset WRONG! datasetSize > 4096, size is:"
+              << size << std::endl;
 
-  for (int i = arr->m_left, j = 0; j < size; i++, j++)
+  int end = left + size;
+  for (int i = arr->m_left, j = left; j < end; i++, j++)
     entireData[i] = dataset[j];
 
   Train(arr);
   UpdateError(arr);
-}
-
-inline void CARMI::initArray(ArrayType *arr, const int left, const int size,
-                             int cap) {
-  arr->flagNumber += size;
-  int right = left + size;
-  vector<pair<double, double>> tmp;
-  for (int j = left; j < right; j++) tmp.push_back(entireData[j]);
-
-  initArray(arr, tmp, cap);
-}
-
-inline void CARMI::initArray(ArrayType *arr, const int left, const int size) {
-  if (arr->m_left != -1) releaseMemory(arr->m_left, arr->m_capacity);
-  arr->flagNumber += size;
-  while (size > arr->m_capacity) arr->m_capacity *= kExpansionScale;
-
-  if (arr->m_capacity > 4096) arr->m_capacity = 4096;
-  // cout<<"size:"<<size<<",\tcap:"<<arr->m_capacity<<endl;
-  arr->m_left = allocateMemory(arr->m_capacity);
-  if (size == 0) return;
-
-  if (size > 4096)
-    cout << "Array setDataset WRONG! datasetSize > 4096, size is:" << size
-         << endl;
-
-  int end = left + size;
-  for (int i = arr->m_left, j = left; j < end; i++, j++)
-    entireData[i] = initDataset[j];
-
-  Train(arr, left, size);
-  UpdateError(arr, left, size);
 }
 
 inline int CARMI::UpdateError(ArrayType *arr) {
@@ -165,7 +138,7 @@ inline int CARMI::UpdateError(ArrayType *arr, const int start_idx,
 
 inline void CARMI::Train(ArrayType *arr) {
   int actualSize = 0;
-  vector<double> index;
+  std::vector<double> index;
   int size = arr->flagNumber & 0x00FFFFFF;
   int end = arr->m_left + size;
   for (int i = arr->m_left; i < end; i++) {
@@ -189,7 +162,7 @@ inline void CARMI::Train(ArrayType *arr) {
 
 inline void CARMI::Train(ArrayType *arr, const int start_idx, const int size) {
   if ((arr->flagNumber & 0x00FFFFFF) != size) arr->flagNumber += size;
-  vector<double> index;
+  std::vector<double> index;
   int end = start_idx + size;
   for (int i = start_idx; i < end; i++)
     index.push_back(static_cast<double>(i - start_idx) / size);

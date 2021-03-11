@@ -23,7 +23,7 @@
  * @brief construct each subtree using dp/greedy
  * @param rootStruct the type and childNumber of root
  * @param subDataset the left and size of data points in each child node
- * @param nodeCost the space, time, cost of the index
+ * @param nodeCost the space, time, cost of the index (is added ...)
  */
 inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
                                     const SubDataset &subDataset,
@@ -33,18 +33,17 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
     structMap.insert({(MapKey){false, emptyRange}, leafP});
 
     NodeCost resChild;
-    IndexPair range(subDataset.subInit[i], subDataset.subFind[i],
+    DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
-    if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
-        kAlgorithmThreshold)
+    if (subDataset.subInit[i].size > kAlgorithmThreshold)
       resChild = GreedyAlgorithm(range);
     else
       resChild = dp(range);
-    int type;
+
     MapKey key = {resChild.isInnerNode,
                   {subDataset.subInit[i].size, subDataset.subInsert[i].size}};
     auto it = structMap.find(key);
-    type = it->second.type;
+    int type = it->second.type;
 
     storeOptimalNode(i, type, key, range);
 
@@ -64,9 +63,9 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
  * @param insertData the insert queries used to training CARMI
  * @return the type of root
  */
-inline int CARMI::Construction(const vector<pair<double, double>> &initData,
-                               const vector<pair<double, double>> &findData,
-                               const vector<pair<double, double>> &insertData) {
+inline void CARMI::Construction(const DataVectorType &initData,
+                               const DataVectorType &findData,
+                               const DataVectorType &insertData) {
   NodeCost nodeCost = {0, 0, 0, true};
   RootStruct res = ChooseRoot();
   // RootStruct res = RootStruct(0, 131072);
@@ -77,27 +76,22 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData,
   UpdateLeaf();
 
   if (kPrimaryIndex) {
-    vector<pair<double, double>> tmp(100000, {DBL_MIN, DBL_MIN});
+    DataVectorType tmp(100000, {DBL_MIN, DBL_MIN});
     entireData.insert(entireData.end(), tmp.begin(), tmp.end());
     nowDataSize += 100000;
   }
-  vector<pair<double, double>>().swap(initDataset);
-  vector<pair<double, double>>().swap(findQuery);
-  vector<pair<double, double>>().swap(insertQuery);
+  DataVectorType().swap(initDataset);
+  DataVectorType().swap(findQuery);
+  DataVectorType().swap(insertQuery);
   entireData.erase(entireData.begin() + nowDataSize + reservedSpace,
                    entireData.end());
 
-  COST.clear();
-  structMap.clear();
-  scanLeaf.clear();
-
 #ifdef DEBUG
-  cout << "Construction over!" << endl;
-  cout << "total cost: " << nodeCost.cost << endl;
-  cout << "total time: " << nodeCost.time << endl;
-  cout << "total space: " << nodeCost.space << endl;
+  std::cout << "Construction over!" << std::endl;
+  std::cout << "total cost: " << nodeCost.cost << std::endl;
+  std::cout << "total time: " << nodeCost.time << std::endl;
+  std::cout << "total space: " << nodeCost.space << std::endl;
 #endif
-  return rootType;
 }
 
 #endif  // SRC_CARMI_CONSTRUCT_CONSTRUCTION_H_

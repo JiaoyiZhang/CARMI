@@ -24,13 +24,10 @@
 
 class CARMI {
  public:
-  CARMI(const std::vector<std::pair<double, double>> &dataset, int childNum,
-        int kInnerID,
+  CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
         int kLeafID);  // RMI
-  CARMI(const std::vector<std::pair<double, double>> &initData,
-        const std::vector<std::pair<double, double>> &findData,
-        const std::vector<std::pair<double, double>> &insertData, double rate,
-        int thre) {
+  CARMI(const DataVectorType &initData, const DataVectorType &findData,
+        const DataVectorType &insertData, double rate, int thre) {
     kAlgorithmThreshold = thre;
     kRate = rate;
     nowDataSize = 0;
@@ -44,12 +41,12 @@ class CARMI {
     else
       entireData = initDataset;
     initEntireChild(initDataset.size());
-    rootType = Construction(initData, findData, insertData);
+    Construction(initData, findData, insertData);
   }
-  explicit CARMI(const std::vector<std::pair<double, double>> &initData) {
+  explicit CARMI(const DataVectorType &initData) {
     nowDataSize = 0;
     initDataset = initData;
-    std::vector<std::pair<double, double>> tmp;
+    DataVectorType tmp;
     querySize = initData.size();
 
     if (!kPrimaryIndex)
@@ -57,7 +54,7 @@ class CARMI {
     else
       entireData = initDataset;
     initEntireChild(initDataset.size());
-    rootType = Construction(initData, tmp, tmp);
+    Construction(initData, tmp, tmp);
   }
   class iterator {
    public:
@@ -123,26 +120,27 @@ class CARMI {
 
   void setKRate(double rate) { kRate = rate; }
 
-  int Construction(const std::vector<std::pair<double, double>> &initData,
-                   const std::vector<std::pair<double, double>> &findData,
-                   const std::vector<std::pair<double, double>> &insertData);
+  void Construction(const DataVectorType &initData,
+                    const DataVectorType &findData,
+                    const DataVectorType &insertData);
   long double calculateSpace() const;
-  void printStructure(std::vector<int> &levelVec, std::vector<int> &nodeVec,
-                      int level, int type, int idx) const;
+  void PrintStructure(int level, NodeType type, int idx,
+                      std::vector<int> *levelVec,
+                      std::vector<int> *nodeVec) const;
 
   // pair<double, double> Find(double key) const;
   iterator Find(double key);
-  bool Insert(std::pair<double, double> data);
-  bool Update(std::pair<double, double> data);
+  bool Insert(DataType data);
+  bool Update(DataType data);
   bool Delete(double key);
 
  private:
   template <typename TYPE, typename ModelType>
-  void CheckRoot(int c, int type, double time, double *optimalCost,
-                 RootStruct *rootStruct);
+  void isBetterRoot(int c, NodeType type, double time_cost, double *optimalCost,
+                    RootStruct *rootStruct);
   RootStruct ChooseRoot();
   template <typename TYPE, typename ModelType>
-  TYPE ConstructRoot(const RootStruct &rootStruct, const IndexPair &range,
+  TYPE ConstructRoot(const RootStruct &rootStruct, const DataRange &range,
                      SubDataset *subDataset, int *childLeft);
   SubDataset StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost);
 
@@ -150,44 +148,41 @@ class CARMI {
                         const SubDataset &subDataset, NodeCost *nodeCost);
 
  private:
-  NodeCost dp(const IndexPair &range);
+  NodeCost dp(const DataRange &range);
   double CalculateEntropy(int size, int childNum,
-                          const std::vector<DataRange> &perSize) const;
+                          const std::vector<IndexPair> &perSize) const;
   template <typename TYPE>
-  void NodePartition(const TYPE &node, const DataRange &range,
-                     const std::vector<std::pair<double, double>> &dataset,
-                     std::vector<DataRange> *subData) const;
+  void NodePartition(const TYPE &node, const IndexPair &range,
+                     const DataVectorType &dataset,
+                     std::vector<IndexPair> *subData) const;
 
   template <typename TYPE>
-  void InnerDivideSingle(int c, const DataRange &range,
-                         std::vector<DataRange> &subDataset);
+  TYPE InnerDivideAll(int c, const DataRange &range, SubDataset *subDataset);
   template <typename TYPE>
-  TYPE InnerDivideAll(int c, const IndexPair &range, SubDataset *subDataset);
-  template <typename TYPE>
-  void CalInner(int c, int type, int frequency, double time,
-                const IndexPair &dataRange, NodeCost *optimalCost,
+  void CalInner(int c, NodeType type, int frequency, double time_cost,
+                const DataRange &dataRange, NodeCost *optimalCost,
                 ParamStruct *optimalStruct);
-  NodeCost dpInner(const IndexPair &dataRange);
+  NodeCost dpInner(const DataRange &dataRange);
 
   template <typename TYPE>
   double CalLeafFindTime(int actualSize, double density, const TYPE &node,
-                         const DataRange &range) const;
+                         const IndexPair &range) const;
   template <typename TYPE>
   double CalLeafInsertTime(int actualSize, double density, const TYPE &node,
-                           const DataRange &range,
-                           const DataRange &findRange) const;
-  NodeCost dpLeaf(const IndexPair &dataRange);
+                           const IndexPair &range,
+                           const IndexPair &findRange) const;
+  NodeCost dpLeaf(const DataRange &dataRange);
 
   template <typename TYPE>
-  void CheckGreedy(int c, int type, double pi, int frequency, double time,
-                   const DataRange &range, ParamStruct *optimalStruct,
+  void CheckGreedy(int c, NodeType type, double pi, int frequency, double time_cost,
+                   const IndexPair &range, ParamStruct *optimalStruct,
                    NodeCost *optimalCost);
-  NodeCost GreedyAlgorithm(const IndexPair &range);
+  NodeCost GreedyAlgorithm(const DataRange &range);
 
   template <typename TYPE>
-  TYPE storeInnerNode(int storeIdx, const MapKey &key, const IndexPair &range);
+  TYPE storeInnerNode(int storeIdx, const MapKey &key, const DataRange &range);
   void storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
-                        const IndexPair &range);
+                        const DataRange &range);
   bool allocateEmptyBlock(int left, int len);
   int getIndex(int size);
   void initEntireData(int left, int size, bool reinit);
@@ -197,38 +192,29 @@ class CARMI {
   void initEntireChild(int size);
   int allocateChildMemory(int size);
 
-  void initLR(LRModel *lr,
-              const std::vector<std::pair<double, double>> &dataset);
-  void initPLR(PLRModel *plr,
-               const std::vector<std::pair<double, double>> &dataset);
-  void initHis(HisModel *his,
-               const std::vector<std::pair<double, double>> &dataset);
-  void initBS(BSModel *bs,
-              const std::vector<std::pair<double, double>> &dataset);
-  void Train(LRModel *lr, const int left, const int size);
-  void Train(PLRModel *plr, const int left, const int size);
-  void Train(HisModel *his, const int left, const int size);
-  void Train(BSModel *bs, const int left, const int size);
+  void initLR(const DataVectorType &dataset, LRModel *lr);
+  void initPLR(const DataVectorType &dataset, PLRModel *plr);
+  void initHis(const DataVectorType &dataset, HisModel *his);
+  void initBS(const DataVectorType &dataset, BSModel *bs);
+  void Train(const int left, const int size, const DataVectorType &dataset,
+             LRModel *lr);
+  void Train(const int left, const int size, const DataVectorType &dataset,
+             PLRModel *plr);
+  void Train(const int left, const int size, const DataVectorType &dataset,
+             HisModel *his);
+  void Train(const int left, const int size, const DataVectorType &dataset,
+             BSModel *bs);
 
-  void initArray(ArrayType *arr,
-                 const std::vector<std::pair<double, double>> &dataset,
-                 int cap);  // for RMI
-  void initArray(ArrayType *arr, const int left, const int size,
-                 int cap);                                         // for expand
-  void initArray(ArrayType *arr, const int left, const int size);  // for CARMI
-  int UpdateError(ArrayType *arr);                                 // for CARMI
+  void initArray(int cap, const int left, const int size,
+                 const DataVectorType &dataset, ArrayType *arr);
+  int UpdateError(ArrayType *arr);  // for CARMI
   int UpdateError(ArrayType *arr, const int start_idx,
                   const int size);  // for dp
   void Train(ArrayType *arr);
   void Train(ArrayType *arr, const int start_idx, const int size);
 
-  void initGA(GappedArrayType *ga,
-              const std::vector<std::pair<double, double>> &dataset,
-              int cap);  // for RMI
-  void initGA(GappedArrayType *ga, const int left, const int size,
-              int cap);  // for expand
-  void initGA(GappedArrayType *ga, const int left,
-              const int size);           // for CARMI
+  void initGA(int cap, const int left, const int size,
+              const DataVectorType &subDataset, GappedArrayType *ga);
   int UpdateError(GappedArrayType *ga);  // for CARMI
   int UpdateError(GappedArrayType *ga, const int start_idx,
                   const int size);  // for dp
@@ -253,7 +239,7 @@ class CARMI {
   const int kMaxKeyNum = 1024;
   const int kThreshold = 2;  // used to initialize a leaf node
   std::vector<BaseNode> entireChild;
-  std::vector<std::pair<double, double>> entireData;
+  DataVectorType entireData;
 
   int curr;  // for YCSB
 
@@ -267,11 +253,11 @@ class CARMI {
 
   std::map<double, int> scanLeaf;
 
-  std::vector<std::pair<double, double>> initDataset;
-  std::vector<std::pair<double, double>> findQuery;
-  std::vector<std::pair<double, double>> insertQuery;
+  DataVectorType initDataset;
+  DataVectorType findQuery;
+  DataVectorType insertQuery;
 
-  std::map<DataRange, NodeCost> COST;
+  std::map<IndexPair, NodeCost> COST;
   std::map<MapKey, ParamStruct> structMap;
   int querySize;
 
@@ -280,7 +266,7 @@ class CARMI {
 
  private:
   const NodeCost emptyCost = {0, 0, 0, false};
-  const DataRange emptyRange = {-1, 0};
+  const IndexPair emptyRange = {-1, 0};
   const ParamStruct leafP = {5, 2, 0.5, std::vector<MapKey>()};
 
  public:
@@ -300,8 +286,8 @@ class CARMI {
 };
 
 // RMI
-CARMI::CARMI(const std::vector<std::pair<double, double>> &dataset,
-             int childNum, int kInnerID, int kLeafID) {
+CARMI::CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
+             int kLeafID) {
   nowDataSize = 0;
   kLeafNodeID = kLeafID;
   kInnerNodeID = kInnerID;
@@ -309,8 +295,8 @@ CARMI::CARMI(const std::vector<std::pair<double, double>> &dataset,
   initEntireChild(dataset.size());
   int left = allocateChildMemory(childNum);
 
-  std::vector<std::vector<std::pair<double, double>>> perSubDataset;
-  std::vector<std::pair<double, double>> tmp;
+  std::vector<DataVectorType> perSubDataset;
+  DataVectorType tmp;
   for (int i = 0; i < childNum; i++) perSubDataset.push_back(tmp);
   rootType = kInnerID;
 
@@ -329,7 +315,7 @@ CARMI::CARMI(const std::vector<std::pair<double, double>> &dataset,
       for (int i = 0; i < childNum; i++) {
         LRModel innerLR;
         innerLR.SetChildNumber(32);
-        initLR(&innerLR, perSubDataset[i]);
+        initLR(perSubDataset[i], &innerLR);
         entireChild[left + i].lr = innerLR;
       }
     } break;
@@ -347,7 +333,7 @@ CARMI::CARMI(const std::vector<std::pair<double, double>> &dataset,
       for (int i = 0; i < childNum; i++) {
         PLRModel innerPLR;
         innerPLR.SetChildNumber(32);
-        initPLR(&innerPLR, perSubDataset[i]);
+        initPLR(perSubDataset[i], &innerPLR);
         entireChild[left + i].plr = innerPLR;
       }
     } break;
@@ -365,7 +351,7 @@ CARMI::CARMI(const std::vector<std::pair<double, double>> &dataset,
       for (int i = 0; i < childNum; i++) {
         HisModel innerHis;
         innerHis.SetChildNumber(32);
-        initHis(&innerHis, perSubDataset[i]);
+        initHis(perSubDataset[i], &innerHis);
         entireChild[left + i].his = innerHis;
       }
     } break;
@@ -383,7 +369,7 @@ CARMI::CARMI(const std::vector<std::pair<double, double>> &dataset,
       for (int i = 0; i < childNum; i++) {
         BSModel innerBS;
         innerBS.SetChildNumber(32);
-        initBS(&innerBS, perSubDataset[i]);
+        initBS(perSubDataset[i], &innerBS);
         entireChild[left + i].bs = innerBS;
       }
     } break;

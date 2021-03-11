@@ -15,11 +15,13 @@
 #include <utility>
 #include <vector>
 
+#include "../../../params.h"
+#include "../../construct/structures.h"
 class ArrayType {
  public:
   ArrayType() = default;
   explicit ArrayType(int cap) {
-    flagNumber = (8 << 24) + 0;
+    flagNumber = (ARRAY_LEAF_NODE << 24) + 0;
     error = 0;
     m_left = -1;
     m_capacity = cap;

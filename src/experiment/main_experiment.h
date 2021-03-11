@@ -59,8 +59,8 @@ void mainExperiment(int datasetSize, int thre)
 
 void mainSynthetic(int datasetSize, double initRatio, vector<int> &length, int thre)
 {
-    cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
-    cout << "initRatio is: " << initRatio << endl;
+   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+   std::cout << "initRatio is: " << initRatio << endl;
     outRes << "initRatio," << initRatio << endl;
     double init = initRatio;
     if (init == 2)
@@ -96,7 +96,7 @@ void mainSynthetic(int datasetSize, double initRatio, vector<int> &length, int t
         // }
         // Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate, thre);
 
-        cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
+       std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++" << endl;
         expData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 3)
         {
@@ -105,7 +105,7 @@ void mainSynthetic(int datasetSize, double initRatio, vector<int> &length, int t
         }
         Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate, thre);
 
-        cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+       std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
         norData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 3)
         {
@@ -114,7 +114,7 @@ void mainSynthetic(int datasetSize, double initRatio, vector<int> &length, int t
         }
         Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate, thre);
 
-        cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
+       std::cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++" << endl;
         logData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 3)
         {
@@ -129,12 +129,12 @@ void mainSynthetic(int datasetSize, double initRatio, vector<int> &length, int t
 
 void mainMap(double initRatio, vector<int> &length, int thre)
 {
-    cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
-    cout << "initRatio is: " << initRatio << endl;
+   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+   std::cout << "initRatio is: " << initRatio << endl;
     outRes << "initRatio," << initRatio << endl;
-    cout << "construct map" << endl;
+   std::cout << "construct map" << endl;
     outRes << "construct map" << endl;
-    cout << "kAlgThre:" << thre << endl;
+   std::cout << "kAlgThre:" << thre << endl;
     double init = initRatio;
     if (init == 2)
         init = 0.95;
@@ -158,7 +158,7 @@ void mainMap(double initRatio, vector<int> &length, int thre)
         else
             kRate = rate[r];
         outRes << "kRate:" << kRate << endl;
-        cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
+       std::cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++" << endl;
         latData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 3)
         {
@@ -167,7 +167,7 @@ void mainMap(double initRatio, vector<int> &length, int thre)
         }
         Core(initRatio, initData, trainFind, trainInsert, testInsert, length, kRate, thre);
 
-        cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
+       std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++" << endl;
         longData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 3)
         {
@@ -183,10 +183,10 @@ void mainMap(double initRatio, vector<int> &length, int thre)
 void mainYCSB(double initRatio, vector<int> &length, int thre)
 {
     kPrimaryIndex = true;
-    cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
-    cout << "initRatio is: " << initRatio << endl;
+   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+   std::cout << "initRatio is: " << initRatio << endl;
     outRes << "initRatio," << initRatio << endl;
-    cout << "construct ycsb" << endl;
+   std::cout << "construct ycsb" << endl;
     outRes << "construct ycsb" << endl;
     double init = initRatio;
     if (init == 2)
@@ -209,7 +209,7 @@ void mainYCSB(double initRatio, vector<int> &length, int thre)
         else
             kRate = rate[r];
         outRes << "kRate:" << kRate << endl;
-        cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
+       std::cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
         ycsbData.GenerateDataset(initData, trainFind, trainInsert, testInsert);
         if (r == 3)
         {

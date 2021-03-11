@@ -18,16 +18,15 @@
 
 #include "../../carmi.h"
 
-inline void CARMI::initPLR(
-    PLRModel *plr, const std::vector<std::pair<double, double>> &dataset) {
+inline void CARMI::initPLR(const DataVectorType &dataset, PLRModel *plr) {
   int childNumber = plr->flagNumber & 0x00FFFFFF;
   plr->childLeft = allocateChildMemory(childNumber);
   if (dataset.size() == 0) return;
 
-  plr->Train(dataset);
+  Train(0, dataset.size(), dataset, plr);
 
-  std::vector<std::vector<std::pair<double, double>>> perSubDataset;
-  std::vector<std::pair<double, double>> tmp;
+  std::vector<DataVectorType> perSubDataset;
+  DataVectorType tmp;
   for (int i = 0; i < childNumber; i++) perSubDataset.push_back(tmp);
   for (int i = 0; i < dataset.size(); i++) {
     int p = plr->Predict(dataset[i].first);
@@ -38,21 +37,23 @@ inline void CARMI::initPLR(
     case ARRAY_LEAF_NODE:
       for (int i = 0; i < childNumber; i++) {
         ArrayType tmp(kThreshold);
-        initArray(&tmp, perSubDataset[i], kMaxKeyNum);
+        initArray(kMaxKeyNum, 0, perSubDataset[i].size(), perSubDataset[i],
+                  &tmp);
         entireChild[plr->childLeft + i].array = tmp;
       }
       break;
     case GAPPED_ARRAY_LEAF_NODE:
       for (int i = 0; i < childNumber; i++) {
         GappedArrayType tmp(kThreshold);
-        initGA(&tmp, perSubDataset[i], kMaxKeyNum);
+        initGA(kMaxKeyNum, 0, perSubDataset[i].size(), perSubDataset[i], &tmp);
         entireChild[plr->childLeft + i].ga = tmp;
       }
       break;
   }
 }
 
-inline void CARMI::Train(PLRModel *plr, const int left, const int size) {
+inline void CARMI::Train(const int left, const int size,
+                         const DataVectorType &dataset, PLRModel *plr) {
   int childNumber = plr->flagNumber & 0x00FFFFFF;
   int actualSize = 0;
   std::vector<double> xx(7, 0.0);
@@ -62,24 +63,23 @@ inline void CARMI::Train(PLRModel *plr, const int left, const int size) {
   if (size == 0) return;
   int width = size / 7;
   for (int i = 0; i < 7; i++) {
-    plr->point[i] = {initDataset[(i + 1) * width].first,
-                     childNumber * (i + 1) / 7};
+    plr->point[i] = {dataset[(i + 1) * width].first, childNumber * (i + 1) / 7};
   }
   if (childNumber <= 32) return;
   for (int k = 0; k < 7; k++) {
     int start = k * width;
     int end = (k + 1) * width;
     for (int i = start; i < end; i++) {
-      xx[k] += initDataset[i].first * initDataset[i].first;
-      x[k] += initDataset[i].first;
-      px[k] += static_cast<float>(i) / size * initDataset[i].first;
+      xx[k] += dataset[i].first * dataset[i].first;
+      x[k] += dataset[i].first;
+      px[k] += static_cast<float>(i) / size * dataset[i].first;
       pp[k] += static_cast<float>(i * i) / size / size;
     }
     px[k] *= childNumber;
     pp[k] *= childNumber * childNumber;
   }
   double opt = DBL_MAX;
-  std::vector<std::pair<double, double>> theta(6, {1, 1});
+  DataVectorType theta(6, {1, 1});
   int bound = childNumber / 7;
   int a, b;
   for (int t1 = -2; t1 < 2; t1++) {
@@ -130,104 +130,6 @@ inline void CARMI::Train(PLRModel *plr, const int left, const int size) {
                 plr->point[3].second = 4 * bound + t4;
                 plr->point[4].second = 5 * bound + t5;
                 plr->point[5].second = 6 * bound + t6;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-inline void PLRModel::Train(
-    const std::vector<std::pair<double, double>> &dataset) {
-  int childNumber = flagNumber & 0x00FFFFFF;
-  int actualSize = 0;
-  std::vector<double> xx(7, 0.0);
-  std::vector<double> x(7, 0.0);
-  std::vector<double> px(7, 0.0);
-  std::vector<double> pp(7, 0.0);
-  for (int i = 0; i < dataset.size(); i++) {
-    if (dataset[i].first != DBL_MIN) actualSize++;
-  }
-  if (actualSize == 0) return;
-  for (int i = dataset.size() - 1; i >= 0; i--) {
-    if (dataset[i].first != DBL_MIN) {
-      maxX = dataset[i].first;
-      break;
-    }
-  }
-  int width = actualSize / 7;
-  for (int i = 0; i < 7; i++) {
-    point[i] = {dataset[(i + 1) * width].first, childNumber * (i + 1) / 7};
-  }
-  if (childNumber <= 32) return;
-  for (int k = 0; k < 7; k++) {
-    int start = k * width;
-    int end = (k + 1) * width;
-    for (int i = start; i < end; i++) {
-      if (dataset[i].first != DBL_MIN) {
-        xx[k] += dataset[i].first * dataset[i].first;
-        x[k] += dataset[i].first;
-        px[k] += static_cast<float>(i) / dataset.size() * dataset[i].first;
-        pp[k] += static_cast<float>(i * i) / dataset.size() / dataset.size();
-      }
-    }
-    px[k] *= childNumber;
-    pp[k] *= childNumber * childNumber;
-  }
-  double opt = DBL_MAX;
-  std::vector<std::pair<double, double>> theta(7, {1, 1});
-  int bound = childNumber / 7;
-  int a, b;
-  for (int t1 = -2; t1 < 2; t1++) {
-    theta[0] = {static_cast<float>(bound + t1) / point[0].first, 0};
-    for (int t2 = -2; t2 < 2; t2++) {
-      a = static_cast<float>(bound + t2 - t1) /
-          (point[1].first - point[0].first);
-      b = bound * 2 + t2 - a * point[1].first;
-      theta[1] = {a, b};
-      for (int t3 = -2; t3 < 2; t3++) {
-        a = static_cast<float>(bound + t3 - t2) /
-            (point[2].first - point[1].first);
-        b = bound * 3 + t3 - a * point[2].first;
-        theta[2] = {a, b};
-        for (int t4 = -2; t4 < 2; t4++) {
-          a = static_cast<float>(bound + t4 - t3) /
-              (point[3].first - point[2].first);
-          b = bound * 4 + t4 - a * point[3].first;
-          theta[3] = {a, b};
-          for (int t5 = -2; t5 < 2; t5++) {
-            a = static_cast<float>(bound + t5 - t4) /
-                (point[4].first - point[3].first);
-            b = bound * 5 + t5 - a * point[4].first;
-            theta[4] = {a, b};
-            for (int t6 = -2; t6 < 2; t6++) {
-              a = static_cast<float>(bound + t6 - t5) /
-                  (point[5].first - point[4].first);
-              b = bound * 6 + t6 - a * point[5].first;
-              theta[5] = {a, b};
-              a = static_cast<float>(childNumber - 6 * bound - t6) /
-                  (maxX - point[5].first);
-              b = childNumber - a * maxX;
-              theta[6] = {a, b};
-
-              double value = 0.0;
-              for (int i = 0; i < 7; i++) {
-                value += theta[i].first * theta[i].first * xx[i];
-                value += 2 * theta[i].first * theta[i].second * x[i];
-                value -= 2 * (theta[i].first + theta[i].second) * px[i];
-                value += theta[i].second * theta[i].second;
-                value += pp[i];
-              }
-              if (value < opt) {
-                opt = value;
-                point[0].second = bound + t1;
-                point[1].second = 2 * bound + t2;
-                point[2].second = 3 * bound + t3;
-                point[3].second = 4 * bound + t4;
-                point[4].second = 5 * bound + t5;
-                point[5].second = 6 * bound + t6;
               }
             }
           }

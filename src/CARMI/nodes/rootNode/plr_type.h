@@ -14,11 +14,13 @@
 #include <vector>
 
 #include "../../../params.h"
+#include "../../construct/structures.h"
 #include "trainModel/piecewiseLR.h"
+
 class PLRType {
  public:
   PLRType() = default;
-  explicit PLRType(int c) { flagNumber = (1 << 24) + c; }
+  explicit PLRType(int c) { flagNumber = (PLR_ROOT_NODE << 24) + c; }
 
   int flagNumber;  // 4 Byte (flag + childNumber)
 

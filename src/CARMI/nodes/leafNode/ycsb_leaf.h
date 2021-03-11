@@ -15,11 +15,13 @@
 #include <utility>
 #include <vector>
 
+#include "../../construct/structures.h"
+
 class YCSBLeaf {
  public:
   // YCSBLeaf() = default;
   YCSBLeaf() {
-    flagNumber = (10 << 24) + 0;
+    flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + 0;
     error = 0;
     m_left = -1;
   }

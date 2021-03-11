@@ -15,11 +15,12 @@
 #include <utility>
 #include <vector>
 
+#include "../../construct/structures.h"
+
 class PLRModel {
  public:
   PLRModel() = default;
-  void SetChildNumber(int c) { flagNumber = (5 << 24) + c; }
-  void Train(const std::vector<std::pair<double, double>> &dataset);
+  void SetChildNumber(int c) { flagNumber = (PLR_INNER_NODE << 24) + c; }
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + childNumber)

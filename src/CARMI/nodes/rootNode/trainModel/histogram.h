@@ -17,6 +17,8 @@
 #include <utility>
 #include <vector>
 
+#include "../../../../params.h"
+
 class HistogramModel {
  public:
   HistogramModel() {}
@@ -25,7 +27,7 @@ class HistogramModel {
     value = 1;
     minValue = 0;
   }
-  void Train(const std::vector<std::pair<double, double>> &dataset, int len);
+  void Train(const DataVectorType &dataset, int len);
   int Predict(double key) const {
     // return the idx in children
     int idx = static_cast<float>(key - minValue) / value;
@@ -54,8 +56,7 @@ class HistogramModel {
   float minValue;                      // 8B
 };
 
-void HistogramModel::Train(
-    const std::vector<std::pair<double, double>> &dataset, int len) {
+void HistogramModel::Train(const DataVectorType &dataset, int len) {
   if (dataset.size() == 0) return;
   double maxValue;
   for (int i = 0; i < dataset.size(); i++) {

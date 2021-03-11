@@ -16,15 +16,16 @@
 #include <utility>
 #include <vector>
 
+#include "../../construct/structures.h"
+
 class HisModel {
  public:
   HisModel() = default;
   void SetChildNumber(int c) {
-    flagNumber = (6 << 24) + std::min(c, 160);
+    flagNumber = (HIS_INNER_NODE << 24) + std::min(c, 160);
     minValue = 0;
     divisor = 1;
   }
-  void Train(const std::vector<std::pair<double, double>> &dataset);
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + childNumber)

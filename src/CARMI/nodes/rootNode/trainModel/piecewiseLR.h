@@ -19,13 +19,15 @@
 #include <utility>
 #include <vector>
 
+#include "../../../../params.h"
+
 class PiecewiseLR {
  public:
   PiecewiseLR() {
     for (int i = 0; i < 8; i++) theta.push_back({0.0001, 0.666});
   }
 
-  void Train(const std::vector<std::pair<double, double>> &dataset, int len);
+  void Train(const DataVectorType &dataset, int len);
   int Predict(double key) const {
     int s = 0;
     int e = 7;
@@ -56,12 +58,11 @@ class PiecewiseLR {
 
  private:
   int length;
-  std::vector<std::pair<double, double>> theta;
+  DataVectorType theta;
   std::vector<std::pair<double, int>> point;  // <point.first, boundary>
 };
 
-void PiecewiseLR::Train(const std::vector<std::pair<double, double>> &dataset,
-                        int len) {
+void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
   length = len - 1;
   int actualSize = 0;
   std::vector<double> index;

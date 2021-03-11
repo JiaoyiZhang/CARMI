@@ -17,16 +17,15 @@
 
 #include "../../carmi.h"
 
-inline void CARMI::initBS(
-    BSModel *bs, const std::vector<std::pair<double, double>> &dataset) {
+inline void CARMI::initBS(const DataVectorType &dataset, BSModel *bs) {
   int childNumber = bs->flagNumber & 0x00FFFFFF;
   bs->childLeft = allocateChildMemory(childNumber);
   if (dataset.size() == 0) return;
 
-  bs->Train(dataset);
+  Train(0, dataset.size(), dataset, bs);
 
-  std::vector<std::vector<std::pair<double, double>>> perSubDataset;
-  std::vector<std::pair<double, double>> tmp;
+  std::vector<DataVectorType> perSubDataset;
+  DataVectorType tmp;
   for (int i = 0; i < childNumber; i++) perSubDataset.push_back(tmp);
   for (int i = 0; i < dataset.size(); i++) {
     int p = bs->Predict(dataset[i].first);
@@ -37,21 +36,23 @@ inline void CARMI::initBS(
     case ARRAY_LEAF_NODE:
       for (int i = 0; i < childNumber; i++) {
         ArrayType tmp(kThreshold);
-        initArray(&tmp, perSubDataset[i], kMaxKeyNum);
+        initArray(kMaxKeyNum, 0, perSubDataset[i].size(), perSubDataset[i],
+                  &tmp);
         entireChild[bs->childLeft + i].array = tmp;
       }
       break;
     case GAPPED_ARRAY_LEAF_NODE:
       for (int i = 0; i < childNumber; i++) {
         GappedArrayType tmp(kThreshold);
-        initGA(&tmp, perSubDataset[i], kMaxKeyNum);
+        initGA(kMaxKeyNum, 0, perSubDataset[i].size(), perSubDataset[i], &tmp);
         entireChild[bs->childLeft + i].ga = tmp;
       }
       break;
   }
 }
 
-inline void CARMI::Train(BSModel *bs, const int left, const int size) {
+inline void CARMI::Train(const int left, const int size,
+                         const DataVectorType &dataset, BSModel *bs) {
   if (size == 0) return;
   int childNumber = bs->flagNumber & 0x00FFFFFF;
   float value = static_cast<float>(size) / childNumber;
@@ -60,38 +61,17 @@ inline void CARMI::Train(BSModel *bs, const int left, const int size) {
   int end = left + size;
   for (int i = start; i < end; i += value) {
     if (cnt >= childNumber) break;
-    if (initDataset[i].first != -1) {
-      bs->index[cnt - 1] = initDataset[i].first;
+    if (dataset[i].first != -1) {
+      bs->index[cnt - 1] = dataset[i].first;
     } else {
       for (int j = i + 1; j < end; j++) {
-        if (initDataset[j].first != -1) {
-          bs->index[cnt - 1] = initDataset[i].first;
+        if (dataset[j].first != -1) {
+          bs->index[cnt - 1] = dataset[i].first;
           break;
         }
       }
     }
     cnt++;
-  }
-}
-
-inline void BSModel::Train(
-    const std::vector<std::pair<double, double>> &dataset) {
-  if (dataset.size() == 0) return;
-  int childNumber = flagNumber & 0x00FFFFFF;
-  float value = static_cast<float>(dataset.size()) / childNumber;
-  int cnt = 1;
-  for (int i = value * cnt - 1; i < dataset.size(); i = value * (++cnt) - 1) {
-    if (cnt >= childNumber) break;
-    if (dataset[i].first != -1) {
-      index[cnt - 1] = dataset[i].first;
-    } else {
-      for (int j = i + 1; j < dataset.size(); j++) {
-        if (dataset[j].first != -1) {
-          index[cnt - 1] = dataset[i].first;
-          break;
-        }
-      }
-    }
   }
 }
 

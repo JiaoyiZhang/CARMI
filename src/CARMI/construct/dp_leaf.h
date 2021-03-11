@@ -31,22 +31,22 @@
  */
 template <typename TYPE>
 double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
-                              const DataRange &range) const {
-  double time = 0;
+                              const IndexPair &range) const {
+  double time_cost = 0;
   for (int i = range.left; i < range.left + range.size; i++) {
     auto predict = node.Predict(findQuery[i].first) + range.left;
     auto d = abs(i - predict);
-    time += (CostBaseTime * findQuery[i].second) / querySize;
+    time_cost += (CostBaseTime * findQuery[i].second) / querySize;
     if (d <= node.error)
-      time +=
+      time_cost +=
           (log(node.error + 1) / log(2) * findQuery[i].second * CostBSTime) *
           (2 - density) / querySize;
     else
-      time += (log(actualSize) / log(2) * findQuery[i].second * CostBSTime *
-               (2 - density)) /
-              querySize;
+      time_cost += (log(actualSize) / log(2) * findQuery[i].second *
+                    CostBSTime * (2 - density)) /
+                   querySize;
   }
-  return time;
+  return time_cost;
 }
 
 /**
@@ -60,37 +60,37 @@ double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
  */
 template <typename TYPE>
 double CARMI::CalLeafInsertTime(int actualSize, double density,
-                                const TYPE &node, const DataRange &range,
-                                const DataRange &findRange) const {
-  double time = 0;
+                                const TYPE &node, const IndexPair &range,
+                                const IndexPair &findRange) const {
+  double time_cost = 0;
   for (int i = range.left; i < range.left + range.size; i++) {
     int predict = node.Predict(insertQuery[i].first) + findRange.left;
     int d = abs(i - predict);
-    time += (CostBaseTime * insertQuery[i].second) / querySize;
+    time_cost += (CostBaseTime * insertQuery[i].second) / querySize;
     int actual;
     if (density == 1) {
       actual = TestBinarySearch(insertQuery[i].first, findRange.left,
                                 findRange.left + findRange.size);
-      time +=
+      time_cost +=
           CostMoveTime * findRange.size / 2 * insertQuery[i].second / querySize;
     } else {
       actual = TestBinarySearch(insertQuery[i].first, findRange.left,
                                 findRange.left + findRange.size);
-      time += CostMoveTime * density / (1 - density) * insertQuery[i].second /
-              querySize;
+      time_cost += CostMoveTime * density / (1 - density) *
+                   insertQuery[i].second / querySize;
     }
     d = abs(actual - predict);
 
     if (d <= node.error)
-      time +=
+      time_cost +=
           (log(node.error + 1) / log(2) * insertQuery[i].second * CostBSTime) *
           (2 - density) / querySize;
     else
-      time += (log(actualSize) / log(2) * insertQuery[i].second * CostBSTime *
-               (2 - density)) /
-              querySize;
+      time_cost += (log(actualSize) / log(2) * insertQuery[i].second *
+                    CostBSTime * (2 - density)) /
+                   querySize;
   }
-  return time;
+  return time_cost;
 }
 
 /**
@@ -98,7 +98,7 @@ double CARMI::CalLeafInsertTime(int actualSize, double density,
  * @param dataRange the range of data points in this node
  * @return the optimal cost of this subtree
  */
-NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
+NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
   NodeCost nodeCost;
   auto it = COST.find(dataRange.initRange);
   if (it != COST.end()) {
@@ -142,7 +142,7 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
     nodeCost.cost = nodeCost.time + nodeCost.space * kRate;  // ns + MB * kRate
     optimalCost = {nodeCost.time, nodeCost.space * kRate, nodeCost.cost, false};
     optimalStruct =
-        ParamStruct(EXTERNAL_ARRAY_LEAF_NODE, 0, 2, vector<MapKey>());
+        ParamStruct(EXTERNAL_ARRAY_LEAF_NODE, 0, 2, std::vector<MapKey>());
 
     nodeCost.space *= kRate;
     nodeCost.isInnerNode = false;
@@ -158,8 +158,8 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
   if (actualSize > 4096) actualSize = 4096;
 
   // choose an array node as the leaf node
-  double time = 0.0;
-  double space = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
+  double time_cost = 0.0;
+  double space_cost = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
 
   auto tmp = ArrayType(actualSize);
   Train(&tmp, dataRange.initRange.left, dataRange.initRange.size);
@@ -169,10 +169,10 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
   CalLeafInsertTime<ArrayType>(actualSize, 1, tmp, dataRange.insertRange,
                                dataRange.findRange);
 
-  double cost = time + space * kRate;  // ns + MB * kRate
+  double cost = time_cost + space_cost * kRate;  // ns + MB * kRate
   if (cost <= optimalCost.cost) {
-    optimalCost = NodeCost{time, space * kRate, cost, false};
-    optimalStruct = ParamStruct(ARRAY_LEAF_NODE, 0, 1, vector<MapKey>());
+    optimalCost = NodeCost{time_cost, space_cost * kRate, cost, false};
+    optimalStruct = ParamStruct(ARRAY_LEAF_NODE, 0, 1, std::vector<MapKey>());
   }
 
   // choose a gapped array node as the leaf node
@@ -189,8 +189,8 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
     auto tmpNode = GappedArrayType(actualSize);
     tmpNode.density = Density[i];
 
-    time = 0.0;
-    space = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
+    time_cost = 0.0;
+    space_cost = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
 
     Train(&tmpNode, dataRange.initRange.left, dataRange.initRange.size);
     auto errorGA = UpdateError(&tmpNode, dataRange.initRange.left,
@@ -200,11 +200,11 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
     CalLeafInsertTime<GappedArrayType>(actualSize, Density[i], tmpNode,
                                        dataRange.insertRange,
                                        dataRange.findRange);
-    cost = time + space * kRate;  // ns + MB * kRate
+    cost = time_cost + space_cost * kRate;  // ns + MB * kRate
     if (cost <= optimalCost.cost) {
-      optimalCost = NodeCost{time, space * kRate, cost, false};
-      optimalStruct =
-          ParamStruct(GAPPED_ARRAY_LEAF_NODE, 0, Density[i], vector<MapKey>());
+      optimalCost = NodeCost{time_cost, space_cost * kRate, cost, false};
+      optimalStruct = ParamStruct(GAPPED_ARRAY_LEAF_NODE, 0, Density[i],
+                                  std::vector<MapKey>());
     }
   }
 

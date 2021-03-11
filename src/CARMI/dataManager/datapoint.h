@@ -42,8 +42,8 @@ inline bool CARMI::allocateEmptyBlock(int left, int len) {
 inline int CARMI::getIndex(int size) {
 #ifdef DEBUG
   if (size > 4096 || size < 1)
-    cout << "size: " << size << ",\tsize > 4096 || size < 1, getIndex WRONG!"
-         << endl;
+    std::cout << "size: " << size
+              << ",\tsize > 4096 || size < 1, getIndex WRONG!" << std::endl;
 #endif  // DEBUG
   int j = 4096;
   for (int i = 12; i >= 0; i--, j /= 2) {
@@ -59,18 +59,18 @@ void CARMI::initEntireData(int left, int size, bool reinit) {
   len *= 2;
   entireDataSize = len;
 #ifdef DEBUG
-  cout << "dataset size:" << size << endl;
-  cout << "the size of entireData is:" << len << endl;
+  std::cout << "dataset size:" << size << std::endl;
+  std::cout << "the size of entireData is:" << len << std::endl;
 #endif  // DEBUG
-  vector<EmptyBlock>().swap(emptyBlocks);
-  vector<pair<double, double>>().swap(entireData);
-  entireData = vector<pair<double, double>>(len, {DBL_MIN, DBL_MIN});
+  std::vector<EmptyBlock>().swap(emptyBlocks);
+  DataVectorType().swap(entireData);
+  entireData = DataVectorType(len, {DBL_MIN, DBL_MIN});
   for (int i = 0, j = 1; i < 13; i++, j *= 2)
     emptyBlocks.push_back(EmptyBlock(j));
   if (reinit) len = size;
   auto res = allocateEmptyBlock(left, len);
 #ifdef DEBUG
-  if (!res) cout << "init allocateEmptyBlock WRONG!" << endl;
+  if (!res) std::cout << "init allocateEmptyBlock WRONG!" << std::endl;
 #endif  // DEBUG
 }
 
@@ -83,7 +83,7 @@ int CARMI::allocateMemory(int size) {
   size = emptyBlocks[idx].m_width;
 #ifdef DEBUG
   if (idx == -1)
-    cout << "getIndex in emptyBlocks WRONG!\tsize:" << size << endl;
+    std::cout << "getIndex in emptyBlocks WRONG!\tsize:" << size << std::endl;
 #endif  // DEBUG
   auto newLeft = -1;
   for (int i = idx; i < 13; i++) {
@@ -97,11 +97,11 @@ int CARMI::allocateMemory(int size) {
   // need to expand the reorganize entireData
   if (newLeft == -1) {
 #ifdef DEBUG
-    cout << "need expand the entire!" << endl;
+    std::cout << "need expand the entire!" << std::endl;
 #endif  // DEBUG
     unsigned int tmpSize = entireDataSize;
-    vector<pair<double, double>> tmpData = entireData;
-    vector<EmptyBlock> tmpBlocks = emptyBlocks;
+    DataVectorType tmpData = entireData;
+    std::vector<EmptyBlock> tmpBlocks = emptyBlocks;
 
     initEntireData(tmpSize, tmpSize, true);
     for (int i = 0; i < tmpSize; i++) entireData[i] = tmpData[i];

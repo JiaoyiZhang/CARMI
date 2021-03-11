@@ -33,9 +33,9 @@
 
 template <typename TYPE>
 TYPE CARMI::storeInnerNode(int storeIdx, const MapKey &key,
-                           const IndexPair &range) {
+                           const DataRange &range) {
   auto it = structMap.find(key);
-  if (it == structMap.end()) cout << "WRONG!" << endl;
+  if (it == structMap.end()) std::cout << "WRONG!" << std::endl;
 
   int optimalChildNumber = it->second.childNum;
   SubDataset subDataset = SubDataset(optimalChildNumber);
@@ -50,7 +50,7 @@ TYPE CARMI::storeInnerNode(int storeIdx, const MapKey &key,
       type = ARRAY_LEAF_NODE;
     else
       type = iter->second.type;
-    IndexPair subRange(subDataset.subInit[i], subDataset.subFind[i],
+    DataRange subRange(subDataset.subInit[i], subDataset.subFind[i],
                        subDataset.subInsert[i]);
     storeOptimalNode(node.childLeft + i, type, nowKey, subRange);
   }
@@ -58,7 +58,7 @@ TYPE CARMI::storeInnerNode(int storeIdx, const MapKey &key,
 }
 
 void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
-                             const IndexPair &range) {
+                             const DataRange &range) {
   if (range.initRange.size == 0) {
     if (kPrimaryIndex) {
       auto node = YCSBLeaf();
@@ -66,12 +66,13 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
       entireChild[storeIdx].ycsbLeaf = node;
     } else {
       auto node = GappedArrayType(kThreshold);
-      initGA(&node, range.initRange.left, range.initRange.size);
+      initGA(node.capacity, range.initRange.left, range.initRange.size,
+             initDataset, &node);
       entireChild[storeIdx].ga = node;
     }
 #ifdef DEBUG
     if (optimalType < ARRAY_LEAF_NODE)
-      cout << "WRONG! size==0, type is:" << optimalType << endl;
+      std::cout << "WRONG! size==0, type is:" << optimalType << std::endl;
 #endif  // DEBUG
     return;
   }
@@ -98,8 +99,9 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
       break;
     }
     case ARRAY_LEAF_NODE: {
-      auto node = ArrayType(max(range.initRange.size, kThreshold));
-      initArray(&node, range.initRange.left, range.initRange.size);
+      auto node = ArrayType(std::max(range.initRange.size, kThreshold));
+      initArray(node.m_capacity, range.initRange.left, range.initRange.size,
+                initDataset, &node);
       entireChild[storeIdx].array = node;
       if (range.initRange.size > 0)
         scanLeaf.insert({initDataset[range.initRange.left].first, storeIdx});
@@ -109,7 +111,8 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
       auto it = structMap.find(key);
       auto node = GappedArrayType(kThreshold);
       node.density = it->second.density;
-      initGA(&node, range.initRange.left, range.initRange.size);
+      initGA(node.capacity, range.initRange.left, range.initRange.size,
+             initDataset, &node);
       entireChild[storeIdx].ga = node;
       if (range.initRange.size > 0)
         scanLeaf.insert({initDataset[range.initRange.left].first, storeIdx});

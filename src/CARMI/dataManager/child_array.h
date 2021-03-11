@@ -23,7 +23,7 @@ void CARMI::initEntireChild(int size) {
   entireChildNumber = len;
   entireChild.clear();
   nowChildNumber = 0;
-  entireChild = vector<BaseNode>(len, BaseNode());
+  entireChild = std::vector<BaseNode>(len, BaseNode());
 }
 
 // allocate a block to the current inner node
@@ -37,7 +37,7 @@ int CARMI::allocateChildMemory(int size) {
     nowChildNumber += size;
   } else {
 #ifdef DEBUG
-    cout << "need expand the entireChild!" << endl;
+    std::cout << "need expand the entireChild!" << std::endl;
 #endif  // DEBUG
     entireChildNumber *= 1.5;
     BaseNode t;

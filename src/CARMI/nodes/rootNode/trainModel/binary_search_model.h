@@ -17,6 +17,8 @@
 #include <utility>
 #include <vector>
 
+#include "../../../../params.h"
+
 class BinarySearchModel {
  public:
   BinarySearchModel() {}
@@ -24,7 +26,7 @@ class BinarySearchModel {
     childNumber = childNum;
     index = std::vector<double>(childNum, 0);
   }
-  void Train(const std::vector<std::pair<double, double>> &dataset, int len);
+  void Train(const DataVectorType &dataset, int len);
   int Predict(double key) const {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -51,8 +53,7 @@ class BinarySearchModel {
   int childNumber;  // 4
 };
 
-void BinarySearchModel::Train(
-    const std::vector<std::pair<double, double>> &dataset, int len) {
+void BinarySearchModel::Train(const DataVectorType &dataset, int len) {
   if (dataset.size() == 0) return;
   // index.clear();
   int tmp = 0;
