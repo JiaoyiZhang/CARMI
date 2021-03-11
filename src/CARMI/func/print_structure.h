@@ -8,21 +8,20 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef PRINT_STRUCTURE_H
-#define PRINT_STRUCTURE_H
+#ifndef SRC_CARMI_FUNC_PRINT_STRUCTURE_H_
+#define SRC_CARMI_FUNC_PRINT_STRUCTURE_H_
 #include <vector>
 
 #include "../carmi.h"
-using namespace std;
 
-void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
+void CARMI::printStructure(std::vector<int> &levelVec, std::vector<int> &nodeVec,
                            int level, int type, int idx) const {
   levelVec[level]++;
-  vector<int> tree;
+  std::vector<int> tree;
   for (int i = 0; i < 11; i++) tree.push_back(0);
   switch (type) {
-    case 0: {
-      cout << "level " << level << ": now root is lr, idx:" << idx
+    case LR_ROOT_NODE: {
+      std::cout << "level " << level << ": now root is lr, idx:" << idx
            << ", number:" << (root.lrRoot.flagNumber & 0x00FFFFFF);
       for (int i = 0; i < (root.lrRoot.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = root.lrRoot.childLeft + i;
@@ -30,15 +29,15 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
         tree[t]++;
         nodeVec[t]++;
       }
-      cout << "\tchild:";
-      if (tree[4]) cout << "\tlr:" << tree[4];
-      if (tree[5]) cout << "\tplr:" << tree[5];
-      if (tree[6]) cout << "\this:" << tree[6];
-      if (tree[7]) cout << "\tbin:" << tree[7];
-      if (tree[8]) cout << "\tarray:" << tree[8];
-      if (tree[9]) cout << "\tga:" << tree[9];
-      if (tree[10]) cout << "\tycsb:" << tree[10];
-      cout << endl;
+      std::cout << "\tchild:";
+      if (tree[4]) std::cout << "\tlr:" << tree[4];
+      if (tree[5]) std::cout << "\tplr:" << tree[5];
+      if (tree[6]) std::cout << "\this:" << tree[6];
+      if (tree[7]) std::cout << "\tbin:" << tree[7];
+      if (tree[8]) std::cout << "\tarray:" << tree[8];
+      if (tree[9]) std::cout << "\tga:" << tree[9];
+      if (tree[10]) std::cout << "\tycsb:" << tree[10];
+      std::cout << std::endl;
       for (int i = 0; i < (root.lrRoot.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = root.lrRoot.childLeft + i;
         auto t = (entireChild[childIdx].lr.flagNumber >> 24);
@@ -47,8 +46,8 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
       }
       break;
     }
-    case 1: {
-      cout << "level " << level << ": now root is plr, idx:" << idx
+    case PLR_ROOT_NODE: {
+      std::cout << "level " << level << ": now root is plr, idx:" << idx
            << ", number:" << (root.plrRoot.flagNumber & 0x00FFFFFF);
       for (int i = 0; i < (root.plrRoot.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = root.plrRoot.childLeft + i;
@@ -56,15 +55,15 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
         tree[t]++;
         nodeVec[t]++;
       }
-      cout << "\tchild:";
-      if (tree[4]) cout << "\tlr:" << tree[4];
-      if (tree[5]) cout << "\tplr:" << tree[5];
-      if (tree[6]) cout << "\this:" << tree[6];
-      if (tree[7]) cout << "\tbin:" << tree[7];
-      if (tree[8]) cout << "\tarray:" << tree[8];
-      if (tree[9]) cout << "\tga:" << tree[9];
-      if (tree[10]) cout << "\tycsb:" << tree[10];
-      cout << endl;
+      std::cout << "\tchild:";
+      if (tree[4]) std::cout << "\tlr:" << tree[4];
+      if (tree[5]) std::cout << "\tplr:" << tree[5];
+      if (tree[6]) std::cout << "\this:" << tree[6];
+      if (tree[7]) std::cout << "\tbin:" << tree[7];
+      if (tree[8]) std::cout << "\tarray:" << tree[8];
+      if (tree[9]) std::cout << "\tga:" << tree[9];
+      if (tree[10]) std::cout << "\tycsb:" << tree[10];
+      std::cout << std::endl;
       for (int i = 0; i < (root.plrRoot.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = root.plrRoot.childLeft + i;
         auto t = (entireChild[childIdx].lr.flagNumber >> 24);
@@ -73,8 +72,8 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
       }
       break;
     }
-    case 2: {
-      cout << "level " << level << ": now root is his, idx:" << idx
+    case HIS_ROOT_NODE: {
+      std::cout << "level " << level << ": now root is his, idx:" << idx
            << ", number:" << (root.hisRoot.flagNumber & 0x00FFFFFF);
       for (int i = 0; i < (root.hisRoot.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = root.hisRoot.childLeft + i;
@@ -82,15 +81,15 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
         tree[t]++;
         nodeVec[t]++;
       }
-      cout << "\tchild:";
-      if (tree[4]) cout << "\tlr:" << tree[4];
-      if (tree[5]) cout << "\tplr:" << tree[5];
-      if (tree[6]) cout << "\this:" << tree[6];
-      if (tree[7]) cout << "\tbin:" << tree[7];
-      if (tree[8]) cout << "\tarray:" << tree[8];
-      if (tree[9]) cout << "\tga:" << tree[9];
-      if (tree[10]) cout << "\tycsb:" << tree[10];
-      cout << endl;
+      std::cout << "\tchild:";
+      if (tree[4]) std::cout << "\tlr:" << tree[4];
+      if (tree[5]) std::cout << "\tplr:" << tree[5];
+      if (tree[6]) std::cout << "\this:" << tree[6];
+      if (tree[7]) std::cout << "\tbin:" << tree[7];
+      if (tree[8]) std::cout << "\tarray:" << tree[8];
+      if (tree[9]) std::cout << "\tga:" << tree[9];
+      if (tree[10]) std::cout << "\tycsb:" << tree[10];
+      std::cout << std::endl;
       for (int i = 0; i < (root.hisRoot.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = root.hisRoot.childLeft + i;
         auto t = (entireChild[childIdx].lr.flagNumber >> 24);
@@ -99,8 +98,8 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
       }
       break;
     }
-    case 3: {
-      cout << "level " << level << ": now root is bin, idx:" << idx
+    case BS_ROOT_NODE: {
+      std::cout << "level " << level << ": now root is bin, idx:" << idx
            << ", number:" << (root.bsRoot.flagNumber & 0x00FFFFFF);
       for (int i = 0; i < (root.bsRoot.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = root.bsRoot.childLeft + i;
@@ -108,15 +107,15 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
         tree[t]++;
         nodeVec[t]++;
       }
-      cout << "\tchild:";
-      if (tree[4]) cout << "\tlr:" << tree[4];
-      if (tree[5]) cout << "\tplr:" << tree[5];
-      if (tree[6]) cout << "\this:" << tree[6];
-      if (tree[7]) cout << "\tbin:" << tree[7];
-      if (tree[8]) cout << "\tarray:" << tree[8];
-      if (tree[9]) cout << "\tga:" << tree[9];
-      if (tree[10]) cout << "\tycsb:" << tree[10];
-      cout << endl;
+      std::cout << "\tchild:";
+      if (tree[4]) std::cout << "\tlr:" << tree[4];
+      if (tree[5]) std::cout << "\tplr:" << tree[5];
+      if (tree[6]) std::cout << "\this:" << tree[6];
+      if (tree[7]) std::cout << "\tbin:" << tree[7];
+      if (tree[8]) std::cout << "\tarray:" << tree[8];
+      if (tree[9]) std::cout << "\tga:" << tree[9];
+      if (tree[10]) std::cout << "\tycsb:" << tree[10];
+      std::cout << std::endl;
       for (int i = 0; i < (root.bsRoot.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = root.bsRoot.childLeft + i;
         auto t = (entireChild[childIdx].lr.flagNumber >> 24);
@@ -126,7 +125,7 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
       break;
     }
 
-    case 4: {
+    case LR_INNER_NODE: {
       for (int i = 0; i < (entireChild[idx].lr.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = entireChild[idx].lr.childLeft + i;
         int t = (entireChild[childIdx].lr.flagNumber >> 24);
@@ -141,7 +140,7 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
       }
       break;
     }
-    case 5: {
+    case PLR_INNER_NODE: {
       for (int i = 0; i < (entireChild[idx].plr.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = entireChild[idx].plr.childLeft + i;
         int t = (entireChild[childIdx].plr.flagNumber >> 24);
@@ -156,7 +155,7 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
       }
       break;
     }
-    case 6: {
+    case HIS_INNER_NODE: {
       for (int i = 0; i < (entireChild[idx].his.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = entireChild[idx].plr.childLeft + i;
         int t = (entireChild[childIdx].his.flagNumber >> 24);
@@ -171,7 +170,7 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
       }
       break;
     }
-    case 7: {
+    case BS_INNER_NODE: {
       for (int i = 0; i < (entireChild[idx].bs.flagNumber & 0x00FFFFFF); i++) {
         auto childIdx = entireChild[idx].bs.childLeft + i;
         int t = (entireChild[childIdx].bs.flagNumber >> 24);
@@ -189,4 +188,4 @@ void CARMI::printStructure(vector<int> &levelVec, vector<int> &nodeVec,
   }
 }
 
-#endif  // !PRINT_STRUCTURE_H
+#endif  // SRC_CARMI_FUNC_PRINT_STRUCTURE_H_

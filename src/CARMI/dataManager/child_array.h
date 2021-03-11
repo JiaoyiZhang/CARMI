@@ -8,13 +8,12 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef CHILD_ARRAY_H
-#define CHILD_ARRAY_H
+#ifndef SRC_CARMI_DATAMANAGER_CHILD_ARRAY_H_
+#define SRC_CARMI_DATAMANAGER_CHILD_ARRAY_H_
 #include <iostream>
 #include <vector>
 
 #include "../carmi.h"
-using namespace std;
 
 // initialize entireChild
 void CARMI::initEntireChild(int size) {
@@ -51,4 +50,4 @@ int CARMI::allocateChildMemory(int size) {
   return newLeft;
 }
 
-#endif  // !CHILD_ARRAY_H
+#endif  // SRC_CARMI_DATAMANAGER_CHILD_ARRAY_H_

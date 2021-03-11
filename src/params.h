@@ -1,5 +1,15 @@
-#ifndef PARAMS
-#define PARAMS
+/**
+ * @file params.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-11
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_PARAMS_H_
+#define SRC_PARAMS_H_
 
 #define ZIPFIAN 1
 #define PARAM_ZIPFIAN 0.99
@@ -8,8 +18,8 @@
 // const bool kPrimaryIndex = false;
 bool kPrimaryIndex = false;
 
-const double kDensity = 0.5;        // the density of gap in gapped array
-const double kExpansionScale = 1.5; // scale of array expansion
+const double kDensity = 0.5;         // the density of gap in gapped array
+const double kExpansionScale = 1.5;  // scale of array expansion
 
 const double BaseNodeSpace = 64.0 / 1024 / 1024;
 
@@ -28,4 +38,4 @@ const double CostBSTime = 10.9438;
 
 const int reservedSpace = 1024 * 512;
 
-#endif
+#endif  // SRC_PARAMS_H_

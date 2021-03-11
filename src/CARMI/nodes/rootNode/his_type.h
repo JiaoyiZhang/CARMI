@@ -1,25 +1,33 @@
-#ifndef HIS_TYPE_H
-#define HIS_TYPE_H
+/**
+ * @file his_type.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-11
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_CARMI_NODES_ROOTNODE_HIS_TYPE_H_
+#define SRC_CARMI_NODES_ROOTNODE_HIS_TYPE_H_
 
-#include "trainModel/histogram.h"
-#include "../../../params.h"
 #include <vector>
-using namespace std;
 
-class HisType
-{
-public:
-    HisType() = default;
-    HisType(int c)
-    {
-        flagNumber = (2 << 24) + c;
-        model = HistogramModel(c);
-    }
+#include "../../../params.h"
+#include "trainModel/histogram.h"
 
-    int flagNumber; // 4 Byte (flag + childNumber)
+class HisType {
+ public:
+  HisType() = default;
+  explicit HisType(int c) {
+    flagNumber = (2 << 24) + c;
+    model = HistogramModel(c);
+  }
 
-    int childLeft;        // 4 Byte
-    HistogramModel model; // 16+16c
+  int flagNumber;  // 4 Byte (flag + childNumber)
+
+  int childLeft;         // 4 Byte
+  HistogramModel model;  // 16+16c
 };
 
-#endif
+#endif  // SRC_CARMI_NODES_ROOTNODE_HIS_TYPE_H_

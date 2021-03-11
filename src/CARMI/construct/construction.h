@@ -8,16 +8,16 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef CONSTRUCTION_H
-#define CONSTRUCTION_H
+#ifndef SRC_CARMI_CONSTRUCT_CONSTRUCTION_H_
+#define SRC_CARMI_CONSTRUCT_CONSTRUCTION_H_
 
 #include <map>
+#include <utility>
 #include <vector>
 
 #include "../carmi.h"
-#include "construct_root.h"
-#include "structures.h"
-using namespace std;
+#include "./construct_root.h"
+#include "./structures.h"
 
 /**
  * @brief construct each subtree using dp/greedy
@@ -100,4 +100,4 @@ inline int CARMI::Construction(const vector<pair<double, double>> &initData,
   return rootType;
 }
 
-#endif
+#endif  // SRC_CARMI_CONSTRUCT_CONSTRUCTION_H_

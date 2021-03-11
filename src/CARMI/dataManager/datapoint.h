@@ -8,17 +8,17 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef DATA_POINT_H
-#define DATA_POINT_H
+#ifndef SRC_CARMI_DATAMANAGER_DATAPOINT_H_
+#define SRC_CARMI_DATAMANAGER_DATAPOINT_H_
 #include <float.h>
 #include <math.h>
 
 #include <iostream>
+#include <utility>
 #include <vector>
 
 #include "../carmi.h"
-#include "empty_block.h"
-using namespace std;
+#include "./empty_block.h"
 
 // allocate empty blocks into emptyBlocks[i]
 // left: the beginning idx of empty blocks
@@ -135,4 +135,4 @@ void CARMI::releaseMemory(int left, int size) {
   }
 }
 
-#endif  // !DATA_POINT_H
+#endif  // SRC_CARMI_DATAMANAGER_DATAPOINT_H_

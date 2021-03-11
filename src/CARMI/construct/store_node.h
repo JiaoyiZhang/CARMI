@@ -47,7 +47,7 @@ TYPE CARMI::storeInnerNode(int storeIdx, const MapKey &key,
     int type;
     auto iter = structMap.find(nowKey);
     if (iter == structMap.end())
-      type = 4;
+      type = ARRAY_LEAF_NODE;
     else
       type = iter->second.type;
     IndexPair subRange(subDataset.subInit[i], subDataset.subFind[i],
@@ -70,34 +70,34 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
       entireChild[storeIdx].ga = node;
     }
 #ifdef DEBUG
-    if (optimalType < 4)
+    if (optimalType < ARRAY_LEAF_NODE)
       cout << "WRONG! size==0, type is:" << optimalType << endl;
 #endif  // DEBUG
     return;
   }
 
   switch (optimalType) {
-    case 0: {
+    case LR_INNER_NODE: {
       auto node = storeInnerNode<LRModel>(storeIdx, key, range);
       entireChild[storeIdx].lr = node;
       break;
     }
-    case 1: {
+    case PLR_INNER_NODE: {
       auto node = storeInnerNode<PLRModel>(storeIdx, key, range);
       entireChild[storeIdx].plr = node;
       break;
     }
-    case 2: {
+    case HIS_INNER_NODE: {
       auto node = storeInnerNode<HisModel>(storeIdx, key, range);
       entireChild[storeIdx].his = node;
       break;
     }
-    case 3: {
+    case BS_INNER_NODE: {
       auto node = storeInnerNode<BSModel>(storeIdx, key, range);
       entireChild[storeIdx].bs = node;
       break;
     }
-    case 4: {
+    case ARRAY_LEAF_NODE: {
       auto node = ArrayType(max(range.initRange.size, kThreshold));
       initArray(&node, range.initRange.left, range.initRange.size);
       entireChild[storeIdx].array = node;
@@ -105,7 +105,7 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
         scanLeaf.insert({initDataset[range.initRange.left].first, storeIdx});
       break;
     }
-    case 5: {
+    case GAPPED_ARRAY_LEAF_NODE: {
       auto it = structMap.find(key);
       auto node = GappedArrayType(kThreshold);
       node.density = it->second.density;
@@ -115,7 +115,7 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
         scanLeaf.insert({initDataset[range.initRange.left].first, storeIdx});
       break;
     }
-    case 6: {
+    case EXTERNAL_ARRAY_LEAF_NODE: {
       auto node = YCSBLeaf();
       initYCSB(&node, range.initRange.left, range.initRange.size);
       entireChild[storeIdx].ycsbLeaf = node;

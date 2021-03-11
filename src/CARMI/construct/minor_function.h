@@ -8,8 +8,10 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef MINOR_FUNCTION_H
-#define MINOR_FUNCTION_H
+#ifndef SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_
+#define SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_
+#include <utility>
+#include <vector>
 
 #include "../carmi.h"
 
@@ -17,7 +19,7 @@ double CARMI::CalculateEntropy(int size, int childNum,
                                const vector<DataRange> &perSize) const {
   double entropy = 0.0;
   for (int i = 0; i < childNum; i++) {
-    auto p = float(perSize[i].size) / size;
+    auto p = static_cast<float>(perSize[i].size) / size;
     if (p != 0) entropy += p * (-log(p) / log(2));
   }
   return entropy;
@@ -81,4 +83,4 @@ void CARMI::UpdateLeaf() {
     }
   }
 }
-#endif  // !MINOR_FUNCTION_H
+#endif  // SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_

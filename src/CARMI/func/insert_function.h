@@ -8,63 +8,65 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef INSERT_FUNCTION_H
-#define INSERT_FUNCTION_H
+#ifndef SRC_CARMI_FUNC_INSERT_FUNCTION_H_
+#define SRC_CARMI_FUNC_INSERT_FUNCTION_H_
 
 #include <float.h>
 
+#include <algorithm>
 #include <map>
+#include <utility>
+#include <vector>
 
 #include "../carmi.h"
-using namespace std;
 
-bool CARMI::Insert(pair<double, double> data) {
+bool CARMI::Insert(std::pair<double, double> data) {
   int idx = 0;  // idx in the INDEX
   int content;
   int type = rootType;
   int childIdx = 0;
   while (1) {
     switch (type) {
-      case 0: {
+      case LR_ROOT_NODE: {
         idx = root.lrRoot.childLeft + root.lrRoot.model.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 1: {
+      case PLR_ROOT_NODE: {
         idx = root.plrRoot.childLeft + root.plrRoot.model.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 2: {
+      case HIS_ROOT_NODE: {
         idx = root.hisRoot.childLeft + root.hisRoot.model.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 3: {
+      case BS_ROOT_NODE: {
         idx = root.bsRoot.childLeft + root.bsRoot.model.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 4: {
+      case LR_INNER_NODE: {
         idx = entireChild[idx].lr.childLeft +
               entireChild[idx].lr.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 5: {
+      case PLR_INNER_NODE: {
         idx = entireChild[idx].plr.childLeft +
               entireChild[idx].plr.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 6: {
+      case HIS_INNER_NODE: {
         idx = entireChild[idx].his.childLeft +
               entireChild[idx].his.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 7: {
+      case BS_INNER_NODE: {
         idx = entireChild[idx].bs.childLeft +
               entireChild[idx].bs.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 8: {
+      case ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         if (size >= 4096) {
-          vector<pair<double, double>> tmpDataset;
+          std::vector<std::pair<double, double>> tmpDataset;
           auto left = entireChild[idx].array.m_left;
           auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
           for (int i = left; i < left + size; i++)
@@ -77,8 +79,8 @@ bool CARMI::Insert(pair<double, double> data) {
           node.Train(tmpDataset);
           entireChild[idx].lr = node;
 
-          vector<vector<pair<double, double>>> subFindData;
-          vector<pair<double, double>> tmp;
+          std::vector<std::vector<std::pair<double, double>>> subFindData;
+          std::vector<std::pair<double, double>> tmp;
           for (int i = 0; i < childNum; i++) subFindData.push_back(tmp);
 
           for (int i = 0; i < size; i++) {
@@ -130,9 +132,10 @@ bool CARMI::Insert(pair<double, double> data) {
           return true;
         }
         int preIdx = entireChild[idx].array.Predict(data.first);
-        int start = max(0, preIdx - entireChild[idx].array.error) + left;
-        int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
-        start = min(start, end);
+        int start = std::max(0, preIdx - entireChild[idx].array.error) + left;
+        int end =
+            std::min(size - 1, preIdx + entireChild[idx].array.error) + left;
+        start = std::min(start, end);
 
         if (data.first <= entireData[start].first)
           preIdx = ArrayBinarySearch(data.first, left, start);
@@ -141,15 +144,15 @@ bool CARMI::Insert(pair<double, double> data) {
         else
           preIdx = ArrayBinarySearch(data.first, end, left + size - 1);
 
-        // // expand
-        // if ((size >= entireChild[idx].array.m_capacity) &&
-        // entireChild[idx].array.m_capacity < 4096)
-        // {
-        //     auto diff = preIdx - left;
-        //     initArray(&entireChild[idx].array, left, 1,
-        //     entireChild[idx].array.m_capacity); left =
-        //     entireChild[idx].array.m_left; preIdx = left + diff;
-        // }
+        // expand
+        if ((size >= entireChild[idx].array.m_capacity) &&
+            entireChild[idx].array.m_capacity < 4096) {
+          auto diff = preIdx - left;
+          initArray(&entireChild[idx].array, left, 1,
+                    entireChild[idx].array.m_capacity);
+          left = entireChild[idx].array.m_left;
+          preIdx = left + diff;
+        }
 
         // Insert data
         if ((preIdx == left + size - 1) &&
@@ -164,11 +167,11 @@ bool CARMI::Insert(pair<double, double> data) {
         entireData[preIdx] = data;
         return true;
       } break;
-      case 9: {
+      case GAPPED_ARRAY_LEAF_NODE: {
         auto left = entireChild[idx].ga.m_left;
         int size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
         if (size >= 4096) {
-          vector<pair<double, double>> tmpDataset;
+          std::vector<std::pair<double, double>> tmpDataset;
           auto left = entireChild[idx].ga.m_left;
           auto size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
           for (int i = left; i < left + size; i++)
@@ -181,8 +184,8 @@ bool CARMI::Insert(pair<double, double> data) {
           node.Train(tmpDataset);
           entireChild[idx].lr = node;
 
-          vector<vector<pair<double, double>>> subFindData;
-          vector<pair<double, double>> tmp;
+          std::vector<std::vector<std::pair<double, double>>> subFindData;
+          std::vector<std::pair<double, double>> tmp;
           for (int i = 0; i < childNum; i++) subFindData.push_back(tmp);
 
           for (int i = 0; i < size; i++) {
@@ -210,14 +213,15 @@ bool CARMI::Insert(pair<double, double> data) {
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);
         }
-        // if (entireChild[idx].ga.capacity < 4096 && (float(size) /
-        // entireChild[idx].ga.capacity > entireChild[idx].ga.density))
-        // {
-        //     // If an additional Insertion results in crossing the density
-        //     // then we expand the gapped array
-        //     initGA(&entireChild[idx].ga, left, size,
-        //     entireChild[idx].ga.capacity); left = entireChild[idx].ga.m_left;
-        // }
+        if (entireChild[idx].ga.capacity < 4096 &&
+            (static_cast<float>(size) / entireChild[idx].ga.capacity >
+             entireChild[idx].ga.density)) {
+          // If an additional Insertion results in crossing the density
+          // then we expand the gapped array
+          initGA(&entireChild[idx].ga, left, size,
+                 entireChild[idx].ga.capacity);
+          left = entireChild[idx].ga.m_left;
+        }
 
         if (size == 0) {
           entireData[left] = data;
@@ -244,11 +248,11 @@ bool CARMI::Insert(pair<double, double> data) {
         }
         int preIdx = entireChild[idx].ga.Predict(data.first);
 
-        int start = max(0, preIdx - entireChild[idx].ga.error) + left;
-        int end = min(entireChild[idx].ga.maxIndex,
-                      preIdx + entireChild[idx].ga.error) +
+        int start = std::max(0, preIdx - entireChild[idx].ga.error) + left;
+        int end = std::min(entireChild[idx].ga.maxIndex,
+                           preIdx + entireChild[idx].ga.error) +
                   left;
-        start = min(start, end);
+        start = std::min(start, end);
 
         if (entireData[start].first == DBL_MIN) start--;
         if (entireData[end].first == DBL_MIN) end--;
@@ -267,7 +271,7 @@ bool CARMI::Insert(pair<double, double> data) {
           entireData[preIdx] = data;
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex =
-              max(entireChild[idx].ga.maxIndex, preIdx - left);
+              std::max(entireChild[idx].ga.maxIndex, preIdx - left);
           return true;
         } else {
           if (entireData[preIdx - 1].first == DBL_MIN) {
@@ -279,7 +283,6 @@ bool CARMI::Insert(pair<double, double> data) {
               entireData[left + entireChild[idx].ga.maxIndex].first <
                   data.first) {
             entireChild[idx].ga.maxIndex = entireChild[idx].ga.maxIndex + 1;
-            ;
             entireData[entireChild[idx].ga.maxIndex + left] = data;
             entireChild[idx].ga.flagNumber++;
             return true;
@@ -304,12 +307,12 @@ bool CARMI::Insert(pair<double, double> data) {
           entireData[preIdx] = data;
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex =
-              max(entireChild[idx].ga.maxIndex, preIdx - left);
+              std::max(entireChild[idx].ga.maxIndex, preIdx - left);
           return true;
         }
         return false;
       } break;
-      case 10: {
+      case EXTERNAL_ARRAY_LEAF_NODE: {
         entireData[curr] = data;
         curr++;
         return true;
@@ -318,4 +321,4 @@ bool CARMI::Insert(pair<double, double> data) {
   }
 }
 
-#endif  // !INSERT_FUNCTION_H
+#endif  // SRC_CARMI_FUNC_INSERT_FUNCTION_H_

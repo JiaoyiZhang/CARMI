@@ -8,14 +8,14 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef CONSTRUCT_ROOT_H
-#define CONSTRUCT_ROOT_H
+#ifndef SRC_CARMI_CONSTRUCT_CONSTRUCT_ROOT_H_
+#define SRC_CARMI_CONSTRUCT_CONSTRUCT_ROOT_H_
+#include <vector>
 
 #include "../carmi.h"
-#include "dp.h"
-#include "store_node.h"
-#include "structures.h"
-using namespace std;
+#include "./dp.h"
+#include "./store_node.h"
+#include "./structures.h"
 
 /**
  * @brief determine whether the current setting is
@@ -37,7 +37,7 @@ void CARMI::CheckRoot(int c, int type, double time, double *optimalCost,
   DataRange range(0, initDataset.size());
   NodePartition<ModelType>(root.model, range, initDataset, &perSize);
   double entropy = CalculateEntropy(initDataset.size(), c, perSize);
-  double cost = (time + float(kRate * space)) / entropy;
+  double cost = (time + static_cast<float>(kRate * space)) / entropy;
 
   if (cost <= *optimalCost) {
     *optimalCost = cost;
@@ -54,13 +54,14 @@ RootStruct CARMI::ChooseRoot() {
   double OptimalValue = DBL_MAX;
   RootStruct rootStruct = RootStruct(0, 0);
   for (int c = 2; c <= initDataset.size() * 10; c *= 2) {
-    CheckRoot<LRType, LinearRegression>(c, 0, LRRootTime, &OptimalValue,
-                                        &rootStruct);
-    CheckRoot<PLRType, PiecewiseLR>(c, 1, PLRRootTime, &OptimalValue,
-                                    &rootStruct);
-    CheckRoot<HisType, HistogramModel>(c, 2, HisRootTime, &OptimalValue,
-                                       &rootStruct);
-    CheckRoot<BSType, BinarySearchModel>(c, 3, CostBSTime * log(c) / log(2),
+    CheckRoot<LRType, LinearRegression>(c, LR_ROOT_NODE, LRRootTime,
+                                        &OptimalValue, &rootStruct);
+    CheckRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE, PLRRootTime,
+                                    &OptimalValue, &rootStruct);
+    CheckRoot<HisType, HistogramModel>(c, HIS_ROOT_NODE, HisRootTime,
+                                       &OptimalValue, &rootStruct);
+    CheckRoot<BSType, BinarySearchModel>(c, BS_ROOT_NODE,
+                                         CostBSTime * log(c) / log(2),
                                          &OptimalValue, &rootStruct);
   }
 #ifdef DEBUG
@@ -78,7 +79,7 @@ RootStruct CARMI::ChooseRoot() {
  * @param range the range of data points in this node (root:0-size)
  * @return the constructed root
  */
-// TYPE
+
 template <typename TYPE, typename ModelType>
 TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const IndexPair &range,
                           SubDataset *subDataset, int *childLeft) {
@@ -100,33 +101,34 @@ TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const IndexPair &range,
  * @return the range of data points in all child node of the root node
  */
 SubDataset CARMI::StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost) {
-  IndexPair dataRange({0, int(initDataset.size())}, {0, int(findQuery.size())},
-                      {0, int(insertQuery.size())});
+  IndexPair dataRange({0, static_cast<int>(initDataset.size())},
+                      {0, static_cast<int>(findQuery.size())},
+                      {0, static_cast<int>(insertQuery.size())});
   SubDataset subDataset = SubDataset(rootStruct.rootChildNum);
   int childLeft;
   switch (rootStruct.rootType) {
-    case 0: {
+    case LR_ROOT_NODE: {
       nodeCost->time = LRRootTime;
       nodeCost->space += sizeof(LRType);
       root.lrRoot = ConstructRoot<LRType, LinearRegression>(
           rootStruct, dataRange, &subDataset, &childLeft);
       break;
     }
-    case 1: {
+    case PLR_ROOT_NODE: {
       nodeCost->time = PLRRootTime;
       nodeCost->space += sizeof(PLRType);
       root.plrRoot = ConstructRoot<PLRType, PiecewiseLR>(
           rootStruct, dataRange, &subDataset, &childLeft);
       break;
     }
-    case 2: {
+    case HIS_ROOT_NODE: {
       nodeCost->time = HisRootTime;
       nodeCost->space += sizeof(HisType);
       root.hisRoot = ConstructRoot<HisType, HistogramModel>(
           rootStruct, dataRange, &subDataset, &childLeft);
       break;
     }
-    case 3: {
+    case BS_ROOT_NODE: {
       nodeCost->time = CostBSTime * log(rootStruct.rootChildNum) / log(2);
       nodeCost->space += sizeof(BSType);
       root.bsRoot = ConstructRoot<BSType, BinarySearchModel>(
@@ -136,4 +138,4 @@ SubDataset CARMI::StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost) {
   }
   return subDataset;
 }
-#endif  // !CONSTRUCT_ROOT_H
+#endif  // SRC_CARMI_CONSTRUCT_CONSTRUCT_ROOT_H_

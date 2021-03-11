@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef INLINE_FUNCTION_H
-#define INLINE_FUNCTION_H
+#ifndef SRC_CARMI_FUNC_INLINEFUNCTION_H_
+#define SRC_CARMI_FUNC_INLINEFUNCTION_H_
 
 #include <float.h>
 
@@ -17,7 +17,6 @@
 
 #include "../../params.h"
 #include "../carmi.h"
-using namespace std;
 
 // search a key-value through binary search
 inline int CARMI::ArrayBinarySearch(double key, int start, int end) const {
@@ -80,4 +79,4 @@ inline int CARMI::TestBinarySearch(double key, int start, int end) const {
   return start;
 }
 
-#endif
+#endif  // SRC_CARMI_FUNC_INLINEFUNCTION_H_

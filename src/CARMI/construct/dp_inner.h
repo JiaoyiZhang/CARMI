@@ -8,12 +8,13 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef DP_INNER_H
-#define DP_INNER_H
+#ifndef SRC_CARMI_CONSTRUCT_DP_INNER_H_
+#define SRC_CARMI_CONSTRUCT_DP_INNER_H_
 #include <float.h>
 
+#include <vector>
+
 #include "../carmi.h"
-using namespace std;
 
 /**
  * @brief determine whether the current inner node's setting is
@@ -85,16 +86,16 @@ NodeCost CARMI::dpInner(const IndexPair &dataRange) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
 #endif  // DEBUG
-    CalInner<LRModel>(c, 0, frequency, LRInnerTime, dataRange, &optimalCost,
-                      &optimalStruct);
-    CalInner<PLRModel>(c, 1, frequency, PLRInnerTime, dataRange, &optimalCost,
-                       &optimalStruct);
+    CalInner<LRModel>(c, LR_INNER_NODE, frequency, LRInnerTime, dataRange,
+                      &optimalCost, &optimalStruct);
+    CalInner<PLRModel>(c, PLR_INNER_NODE, frequency, PLRInnerTime, dataRange,
+                       &optimalCost, &optimalStruct);
     if (c <= 160)
-      CalInner<HisModel>(c, 2, frequency, HisInnerTime, dataRange, &optimalCost,
-                         &optimalStruct);
+      CalInner<HisModel>(c, HIS_INNER_NODE, frequency, HisInnerTime, dataRange,
+                         &optimalCost, &optimalStruct);
     if (c <= 20)
-      CalInner<BSModel>(c, 3, frequency, BSInnerTime, dataRange, &optimalCost,
-                        &optimalStruct);
+      CalInner<BSModel>(c, BS_INNER_NODE, frequency, BSInnerTime, dataRange,
+                        &optimalCost, &optimalStruct);
   }
   MapKey key = {true, {dataRange.initRange.left, dataRange.initRange.size}};
   if (optimalCost.time < DBL_MAX) structMap.insert({key, optimalStruct});
@@ -102,4 +103,4 @@ NodeCost CARMI::dpInner(const IndexPair &dataRange) {
   return nodeCost;
 }
 
-#endif  // !DP_INNER_H
+#endif  // SRC_CARMI_CONSTRUCT_DP_INNER_H_

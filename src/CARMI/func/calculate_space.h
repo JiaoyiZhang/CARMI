@@ -8,28 +8,27 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef CALCULATE_SPACE_H
-#define CALCULATE_SPACE_H
+#ifndef SRC_CARMI_FUNC_CALCULATE_SPACE_H_
+#define SRC_CARMI_FUNC_CALCULATE_SPACE_H_
 
 #include <vector>
 
 #include "../carmi.h"
-using namespace std;
 
 long double CARMI::calculateSpace() const {
   long double space = 0;
 
   switch (rootType) {
-    case 0:
+    case LR_ROOT_NODE:
       space += sizeof(LRType);
       break;
-    case 1:
+    case PLR_ROOT_NODE:
       space += sizeof(PLRType);
       break;
-    case 2:
+    case HIS_ROOT_NODE:
       space += sizeof(HisType);
       break;
-    case 3:
+    case BS_ROOT_NODE:
       space += sizeof(BSType);
       break;
   }
@@ -40,28 +39,28 @@ long double CARMI::calculateSpace() const {
   space = space / 1024 / 1024;
 
 #ifdef DEBUG
-  cout << "Space of different classes (sizeof):" << endl;
-  cout << "LRType:" << sizeof(LRType)
-       << "\tlr model:" << sizeof(LinearRegression) << endl;
-  cout << "PLRType:" << sizeof(PLRType) << "\tnn model:" << sizeof(PiecewiseLR)
-       << endl;
-  cout << "HisType:" << sizeof(HisType)
-       << "\this model:" << sizeof(HistogramModel) << endl;
-  cout << "BSType:" << sizeof(BSType)
-       << "\tbs model:" << sizeof(BinarySearchModel) << endl;
-  cout << "LRModel:" << sizeof(LRModel) << endl;
-  cout << "PLRModel:" << sizeof(PLRModel) << endl;
-  cout << "HisModel:" << sizeof(HisModel) << endl;
-  cout << "BSModel:" << sizeof(BSModel) << endl;
-  cout << "ArrayType:" << sizeof(ArrayType) << endl;
-  cout << "GappedArrayType:" << sizeof(GappedArrayType) << endl;
-  cout << "YCSBLeaf:" << sizeof(YCSBLeaf) << endl;
+  std::cout << "Space of different classes (sizeof):" << std::endl;
+  std::cout << "LRType:" << sizeof(LRType)
+       << "\tlr model:" << sizeof(LinearRegression) << std::endl;
+  std::cout << "PLRType:" << sizeof(PLRType) << "\tnn model:" << sizeof(PiecewiseLR)
+       << std::endl;
+  std::cout << "HisType:" << sizeof(HisType)
+       << "\this model:" << sizeof(HistogramModel) << std::endl;
+  std::cout << "BSType:" << sizeof(BSType)
+       << "\tbs model:" << sizeof(BinarySearchModel) << std::endl;
+  std::cout << "LRModel:" << sizeof(LRModel) << std::endl;
+  std::cout << "PLRModel:" << sizeof(PLRModel) << std::endl;
+  std::cout << "HisModel:" << sizeof(HisModel) << std::endl;
+  std::cout << "BSModel:" << sizeof(BSModel) << std::endl;
+  std::cout << "ArrayType:" << sizeof(ArrayType) << std::endl;
+  std::cout << "GappedArrayType:" << sizeof(GappedArrayType) << std::endl;
+  std::cout << "YCSBLeaf:" << sizeof(YCSBLeaf) << std::endl;
 
-  cout << "\tStructure SPACE: " << space << "MB" << endl;
-  cout << "\nTOTAL SPACE (include data): " << space << "MB" << endl;
+  std::cout << "\tStructure SPACE: " << space << "MB" << std::endl;
+  std::cout << "\nTOTAL SPACE (include data): " << space << "MB" << std::endl;
 #endif  // DEBUG
 
   return space;
 }
 
-#endif  // !CALCULATE_SPACE_H
+#endif  // SRC_CARMI_FUNC_CALCULATE_SPACE_H_

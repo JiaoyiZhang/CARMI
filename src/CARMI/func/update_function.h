@@ -8,12 +8,14 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef UPDATE_FUNCTION_H
-#define UPDATE_FUNCTION_H
+#ifndef SRC_CARMI_FUNC_UPDATE_FUNCTION_H_
+#define SRC_CARMI_FUNC_UPDATE_FUNCTION_H_
+
+#include <algorithm>
+#include <utility>
 
 #include "../carmi.h"
 #include "inlineFunction.h"
-using namespace std;
 
 bool CARMI::Update(pair<double, double> data) {
   int idx = 0;  // idx in the INDEX
@@ -21,57 +23,57 @@ bool CARMI::Update(pair<double, double> data) {
   int type = rootType;
   while (1) {
     switch (type) {
-      case 0: {
+      case LR_ROOT_NODE: {
         idx = root.lrRoot.childLeft + root.lrRoot.model.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 1: {
+      case PLR_ROOT_NODE: {
         idx = root.plrRoot.childLeft + root.plrRoot.model.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 2: {
+      case HIS_ROOT_NODE: {
         idx = root.hisRoot.childLeft + root.hisRoot.model.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 3: {
+      case BS_ROOT_NODE: {
         idx = root.bsRoot.childLeft + root.bsRoot.model.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 4: {
+      case LR_INNER_NODE: {
         idx = entireChild[idx].lr.childLeft +
               entireChild[idx].lr.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 5: {
+      case PLR_INNER_NODE: {
         idx = entireChild[idx].plr.childLeft +
               entireChild[idx].plr.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 6: {
+      case HIS_INNER_NODE: {
         idx = entireChild[idx].his.childLeft +
               entireChild[idx].his.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 7: {
+      case BS_INNER_NODE: {
         idx = entireChild[idx].bs.childLeft +
               entireChild[idx].bs.Predict(data.first);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 8: {
+      case ARRAY_LEAF_NODE: {
         auto left = entireChild[idx].array.m_left;
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         int preIdx = entireChild[idx].array.Predict(data.first);
-        if (entireData[left + preIdx].first == data.first)
+        if (entireData[left + preIdx].first == data.first) {
           entireData[left + preIdx].second = data.second;
-        else {
+        } else {
           int start = max(0, preIdx - entireChild[idx].array.error) + left;
           int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
           start = min(start, end);
-          if (data.first <= entireData[start].first)
+          if (data.first <= entireData[start].first) {
             preIdx = ArrayBinarySearch(data.first, left, start);
-          else if (data.first <= entireData[end].first)
+          } else if (data.first <= entireData[end].first) {
             preIdx = ArrayBinarySearch(data.first, start, end);
-          else {
+          } else {
             preIdx = ArrayBinarySearch(data.first, end, left + size - 1);
             if (preIdx >= left + size) return false;
           }
@@ -80,7 +82,7 @@ bool CARMI::Update(pair<double, double> data) {
         }
         return true;
       } break;
-      case 9: {
+      case GAPPED_ARRAY_LEAF_NODE: {
         auto left = entireChild[idx].ga.m_left;
         int preIdx = entireChild[idx].ga.Predict(data.first);
         if (entireData[left + preIdx].first == data.first) {
@@ -95,11 +97,11 @@ bool CARMI::Update(pair<double, double> data) {
           if (entireData[start].first == -1) start--;
           if (entireData[end].first == -1) end--;
 
-          if (data.first <= entireData[start].first)
+          if (data.first <= entireData[start].first) {
             preIdx = GABinarySearch(data.first, left, start);
-          else if (data.first <= entireData[end].first)
+          } else if (data.first <= entireData[end].first) {
             preIdx = GABinarySearch(data.first, start, end);
-          else {
+          } else {
             preIdx = GABinarySearch(data.first, end,
                                     left + entireChild[idx].ga.maxIndex);
             if (preIdx > left + entireChild[idx].ga.maxIndex) return false;
@@ -110,7 +112,7 @@ bool CARMI::Update(pair<double, double> data) {
           return true;
         }
       } break;
-      case 10: {
+      case EXTERNAL_ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
         int preIdx = entireChild[idx].ycsbLeaf.Predict(data.first);
         auto left = entireChild[idx].ycsbLeaf.m_left;
@@ -123,11 +125,11 @@ bool CARMI::Update(pair<double, double> data) {
               min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
           start = min(start, end);
           int res;
-          if (data.first <= entireData[start].first)
+          if (data.first <= entireData[start].first) {
             res = YCSBBinarySearch(data.first, left, start);
-          else if (data.first <= entireData[end].first)
+          } else if (data.first <= entireData[end].first) {
             res = YCSBBinarySearch(data.first, start, end);
-          else {
+          } else {
             res = YCSBBinarySearch(data.first, end, left + size - 1);
             if (res >= left + size) return false;
           }
@@ -141,4 +143,4 @@ bool CARMI::Update(pair<double, double> data) {
   }
 }
 
-#endif  // !UPDATE_FUNCTION_H
+#endif  // SRC_CARMI_FUNC_UPDATE_FUNCTION_H_

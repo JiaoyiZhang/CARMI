@@ -1,24 +1,29 @@
-#ifndef NN_TYPE_H
-#define NN_TYPE_H
+/**
+ * @file plr_type.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-11
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_CARMI_NODES_ROOTNODE_PLR_TYPE_H_
+#define SRC_CARMI_NODES_ROOTNODE_PLR_TYPE_H_
+
+#include <vector>
 
 #include "../../../params.h"
 #include "trainModel/piecewiseLR.h"
-#include <vector>
-using namespace std;
+class PLRType {
+ public:
+  PLRType() = default;
+  explicit PLRType(int c) { flagNumber = (1 << 24) + c; }
 
-class PLRType
-{
-public:
-    PLRType() = default;
-    PLRType(int c)
-    {
-        flagNumber = (1 << 24) + c;
-    }
+  int flagNumber;  // 4 Byte (flag + childNumber)
 
-    int flagNumber; // 4 Byte (flag + childNumber)
-
-    int childLeft;     // 4 Byte
-    PiecewiseLR model; // 24*8+4 Byte
+  int childLeft;      // 4 Byte
+  PiecewiseLR model;  // 24*8+4 Byte
 };
 
-#endif
+#endif  // SRC_CARMI_NODES_ROOTNODE_PLR_TYPE_H_

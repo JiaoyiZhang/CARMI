@@ -1,24 +1,31 @@
-#ifndef BS_H
-#define BS_H
+/**
+ * @file bs.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-11
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_CARMI_NODES_INNERNODE_BS_H_
+#define SRC_CARMI_NODES_INNERNODE_BS_H_
+#include <algorithm>
+#include <utility>
 #include <vector>
-using namespace std;
+class BSModel {
+ public:
+  BSModel() = default;
+  void SetChildNumber(int c) {
+    flagNumber = (7 << 24) + std::min(c, 15);
+    for (int i = 0; i < 14; i++) index[i] = 0;
+  }
+  void Train(const std::vector<std::pair<double, double>> &dataset);
+  int Predict(double key) const;
 
-class BSModel
-{
-public:
-    BSModel() = default;
-    void SetChildNumber(int c)
-    {
-        flagNumber = (7 << 24) + min(c, 15);
-        for (int i = 0; i < 14; i++)
-            index[i] = 0;
-    }
-    void Train(const vector<pair<double, double>> &dataset);
-    int Predict(double key) const;
-
-    int flagNumber;  // 4 Byte (flag + childNumber)
-    int childLeft;   // 4 Byte
-    float index[14]; // 56 Byte (childNumber = 15)
+  int flagNumber;   // 4 Byte (flag + childNumber)
+  int childLeft;    // 4 Byte
+  float index[14];  // 56 Byte (childNumber = 15)
 };
 
-#endif
+#endif  // SRC_CARMI_NODES_INNERNODE_BS_H_

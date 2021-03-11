@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef DP_H
-#define DP_H
+#ifndef SRC_CARMI_CONSTRUCT_DP_H_
+#define SRC_CARMI_CONSTRUCT_DP_H_
 
 #include <float.h>
 
@@ -19,11 +19,10 @@
 
 #include "../../params.h"
 #include "../func/inlineFunction.h"
-#include "dp_inner.h"
-#include "dp_leaf.h"
-#include "greedy.h"
-#include "structures.h"
-using namespace std;
+#include "./dp_inner.h"
+#include "./dp_leaf.h"
+#include "./greedy.h"
+#include "./structures.h"
 
 NodeCost CARMI::dp(const IndexPair &range) {
   NodeCost nodeCost;
@@ -32,11 +31,11 @@ NodeCost CARMI::dp(const IndexPair &range) {
     return nodeCost;
   }
 
-  if (range.initRange.size <= kMaxKeyNum)
+  if (range.initRange.size <= kMaxKeyNum) {
     return dpLeaf(range);
-  else if (range.initRange.size > 4096)
+  } else if (range.initRange.size > 4096) {
     return dpInner(range);
-  else {
+  } else {
     auto res0 = dpLeaf(range);
     auto res1 = dpInner(range);
     if (res0.space + res0.time > res1.space + res1.time)
@@ -46,4 +45,4 @@ NodeCost CARMI::dp(const IndexPair &range) {
   }
 }
 
-#endif  // !DP_H
+#endif  // SRC_CARMI_CONSTRUCT_DP_H_

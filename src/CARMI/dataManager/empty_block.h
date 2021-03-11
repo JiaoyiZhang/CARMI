@@ -8,15 +8,14 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef EMPTY_BLOCK_H
-#define EMPTY_BLOCK_H
+#ifndef SRC_CARMI_DATAMANAGER_EMPTY_BLOCK_H_
+#define SRC_CARMI_DATAMANAGER_EMPTY_BLOCK_H_
 #include <iostream>
 #include <set>
-using namespace std;
 
 class EmptyBlock {
  public:
-  EmptyBlock(int w) { m_width = w; }
+  explicit EmptyBlock(int w) { m_width = w; }
 
   // allocate a block, return idx
   // erase the corresponding key
@@ -44,8 +43,8 @@ class EmptyBlock {
       return true;
   }
 
-  set<int> m_block;
+  std::set<int> m_block;
   int m_width;
 };
 
-#endif  // !EMPTY_BLOCK_H
+#endif  // SRC_CARMI_DATAMANAGER_EMPTY_BLOCK_H_

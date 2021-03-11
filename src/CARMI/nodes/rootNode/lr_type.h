@@ -1,26 +1,31 @@
-#ifndef LR_TYPE_H
-#define LR_TYPE_H
+/**
+ * @file lr_type.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-11
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_CARMI_NODES_ROOTNODE_LR_TYPE_H_
+#define SRC_CARMI_NODES_ROOTNODE_LR_TYPE_H_
+
+#include <fstream>
+#include <vector>
 
 #include "../../../params.h"
-
 #include "trainModel/linear_regression.h"
-#include <vector>
-#include <fstream>
-using namespace std;
 
-class LRType
-{
-public:
-    LRType() = default;
-    LRType(int c)
-    {
-        flagNumber = (0 << 24) + c;
-    }
+class LRType {
+ public:
+  LRType() = default;
+  explicit LRType(int c) { flagNumber = (0 << 24) + c; }
 
-    int flagNumber; // 4 Byte (flag + childNumber)
+  int flagNumber;  // 4 Byte (flag + childNumber)
 
-    int childLeft;          // 4 Byte
-    LinearRegression model; // 20 Byte
+  int childLeft;           // 4 Byte
+  LinearRegression model;  // 20 Byte
 };
 
-#endif
+#endif  // SRC_CARMI_NODES_ROOTNODE_LR_TYPE_H_

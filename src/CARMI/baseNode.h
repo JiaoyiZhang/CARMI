@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef BASE_NODE_H
-#define BASE_NODE_H
+#ifndef SRC_CARMI_BASENODE_H_
+#define SRC_CARMI_BASENODE_H_
 #include <iostream>
 
 #include "nodes/innerNode/bs.h"
@@ -23,15 +23,14 @@
 #include "nodes/rootNode/his_type.h"
 #include "nodes/rootNode/lr_type.h"
 #include "nodes/rootNode/plr_type.h"
-using namespace std;
 
 union CARMIRoot {
   LRType lrRoot;
   PLRType plrRoot;
   HisType hisRoot;
   BSType bsRoot;
-  CARMIRoot(){};
-  ~CARMIRoot(){};
+  CARMIRoot() {}
+  ~CARMIRoot() {}
 };
 
 union BaseNode {
@@ -44,8 +43,8 @@ union BaseNode {
   GappedArrayType ga;
   YCSBLeaf ycsbLeaf;
 
-  BaseNode(){};
-  ~BaseNode(){};
+  BaseNode() {}
+  ~BaseNode() {}
 };
 
-#endif  // !BASE_NODE_H
+#endif  // SRC_CARMI_BASENODE_H_

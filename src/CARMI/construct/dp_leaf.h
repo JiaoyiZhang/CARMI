@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef DP_LEAF_H
-#define DP_LEAF_H
+#ifndef SRC_CARMI_CONSTRUCT_DP_LEAF_H_
+#define SRC_CARMI_CONSTRUCT_DP_LEAF_H_
 
 #include <float.h>
 
@@ -19,8 +19,7 @@
 
 #include "../../params.h"
 #include "../func/inlineFunction.h"
-#include "structures.h"
-using namespace std;
+#include "./structures.h"
 
 /**
  * @brief calculate the time cost of find queries
@@ -38,11 +37,11 @@ double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
     auto predict = node.Predict(findQuery[i].first) + range.left;
     auto d = abs(i - predict);
     time += (CostBaseTime * findQuery[i].second) / querySize;
-    if (d <= node.error) {
+    if (d <= node.error)
       time +=
           (log(node.error + 1) / log(2) * findQuery[i].second * CostBSTime) *
           (2 - density) / querySize;
-    } else
+    else
       time += (log(actualSize) / log(2) * findQuery[i].second * CostBSTime *
                (2 - density)) /
               querySize;
@@ -82,11 +81,11 @@ double CARMI::CalLeafInsertTime(int actualSize, double density,
     }
     d = abs(actual - predict);
 
-    if (d <= node.error) {
+    if (d <= node.error)
       time +=
           (log(node.error + 1) / log(2) * insertQuery[i].second * CostBSTime) *
           (2 - density) / querySize;
-    } else
+    else
       time += (log(actualSize) / log(2) * insertQuery[i].second * CostBSTime *
                (2 - density)) /
               querySize;
@@ -124,11 +123,11 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
       auto predict = tmp.Predict(findQuery[i].first) + dataRange.findRange.left;
       auto d = abs(i - predict);
       nodeCost.time += (CostBaseTime * findQuery[i].second) / querySize;
-      if (d <= error) {
+      if (d <= error)
         nodeCost.time +=
             (log(error + 1) / log(2) * findQuery[i].second * CostBSTime) /
             querySize;
-      } else
+      else
         nodeCost.time += (log(dataRange.initRange.size) / log(2) *
                           findQuery[i].second * CostBSTime) /
                          querySize;
@@ -142,7 +141,8 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
 
     nodeCost.cost = nodeCost.time + nodeCost.space * kRate;  // ns + MB * kRate
     optimalCost = {nodeCost.time, nodeCost.space * kRate, nodeCost.cost, false};
-    optimalStruct = ParamStruct(6, 0, 2, vector<MapKey>());
+    optimalStruct =
+        ParamStruct(EXTERNAL_ARRAY_LEAF_NODE, 0, 2, vector<MapKey>());
 
     nodeCost.space *= kRate;
     nodeCost.isInnerNode = false;
@@ -172,7 +172,7 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
   double cost = time + space * kRate;  // ns + MB * kRate
   if (cost <= optimalCost.cost) {
     optimalCost = NodeCost{time, space * kRate, cost, false};
-    optimalStruct = ParamStruct(4, 0, 1, vector<MapKey>());
+    optimalStruct = ParamStruct(ARRAY_LEAF_NODE, 0, 1, vector<MapKey>());
   }
 
   // choose a gapped array node as the leaf node
@@ -180,8 +180,10 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
   for (int i = 0; i < 3; i++) {
     // calculate the actual space
     int actualSize = kThreshold;
-    while ((float(dataRange.initRange.size) / float(actualSize) >= Density[i]))
-      actualSize = float(actualSize) / Density[i] + 1;
+    while ((static_cast<float>(dataRange.initRange.size) /
+                static_cast<float>(actualSize) >=
+            Density[i]))
+      actualSize = static_cast<float>(actualSize) / Density[i] + 1;
     if (actualSize > 4096) actualSize = 4096;
 
     auto tmpNode = GappedArrayType(actualSize);
@@ -201,7 +203,8 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
     cost = time + space * kRate;  // ns + MB * kRate
     if (cost <= optimalCost.cost) {
       optimalCost = NodeCost{time, space * kRate, cost, false};
-      optimalStruct = ParamStruct(5, 0, Density[i], vector<MapKey>());
+      optimalStruct =
+          ParamStruct(GAPPED_ARRAY_LEAF_NODE, 0, Density[i], vector<MapKey>());
     }
   }
 
@@ -212,4 +215,4 @@ NodeCost CARMI::dpLeaf(const IndexPair &dataRange) {
   return optimalCost;
 }
 
-#endif  // !DP_LEAF_H
+#endif  // SRC_CARMI_CONSTRUCT_DP_LEAF_H_

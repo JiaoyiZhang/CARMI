@@ -8,71 +8,71 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef FIND_FUNCTION_H
-#define FIND_FUNCTION_H
+#ifndef SRC_CARMI_FUNC_FIND_FUNCTION_H_
+#define SRC_CARMI_FUNC_FIND_FUNCTION_H_
 
 #include <float.h>
 
-#include "../carmi.h"
-using namespace std;
+#include <algorithm>
 
-CARMI::iterator CARMI::Find(double key)
-// pair<double, double> CARMI::Find(double key) const
-{
+#include "../carmi.h"
+
+CARMI::iterator CARMI::Find(double key) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {
     switch (type) {
-      case 0: {
+      case LR_ROOT_NODE: {
         idx = root.lrRoot.childLeft + root.lrRoot.model.Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 1: {
+      case PLR_ROOT_NODE: {
         idx = root.plrRoot.childLeft + root.plrRoot.model.Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 2: {
+      case HIS_ROOT_NODE: {
         idx = root.hisRoot.childLeft + root.hisRoot.model.Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 3: {
+      case BS_ROOT_NODE: {
         idx = root.bsRoot.childLeft + root.bsRoot.model.Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 4: {
+      case LR_INNER_NODE: {
         idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 5: {
+      case PLR_INNER_NODE: {
         idx =
             entireChild[idx].plr.childLeft + entireChild[idx].plr.Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 6: {
+      case HIS_INNER_NODE: {
         idx =
             entireChild[idx].his.childLeft + entireChild[idx].his.Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 7: {
+      case BS_INNER_NODE: {
         idx = entireChild[idx].bs.childLeft + entireChild[idx].bs.Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
-      case 8: {
+      case ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         int preIdx = entireChild[idx].array.Predict(key);
         auto left = entireChild[idx].array.m_left;
         if (entireData[left + preIdx].first == key) {
           return CARMI::iterator(this, &entireChild[idx], preIdx);
         } else {
-          int start = max(0, preIdx - entireChild[idx].array.error) + left;
-          int end = min(size - 1, preIdx + entireChild[idx].array.error) + left;
-          start = min(start, end);
+          int start = std::max(0, preIdx - entireChild[idx].array.error) + left;
+          int end =
+              std::min(size - 1, preIdx + entireChild[idx].array.error) + left;
+          start = std::min(start, end);
           int res;
-          if (key <= entireData[start].first)
+          if (key <= entireData[start].first) {
             res = ArrayBinarySearch(key, left, start);
-          else if (key <= entireData[end].first)
+          } else if (key <= entireData[end].first) {
             res = ArrayBinarySearch(key, start, end);
-          else {
+          } else {
             res = ArrayBinarySearch(key, end, left + size - 1);
             if (res >= left + size) {
               CARMI::iterator it;
@@ -86,26 +86,26 @@ CARMI::iterator CARMI::Find(double key)
           return it.end();
         }
       } break;
-      case 9: {
+      case GAPPED_ARRAY_LEAF_NODE: {
         auto left = entireChild[idx].ga.m_left;
         int preIdx = entireChild[idx].ga.Predict(key);
         if (entireData[left + preIdx].first == key) {
           return CARMI::iterator(this, &entireChild[idx], preIdx);
         } else {
-          int start = max(0, preIdx - entireChild[idx].ga.error) + left;
-          int end = min(entireChild[idx].ga.maxIndex,
-                        preIdx + entireChild[idx].ga.error) +
+          int start = std::max(0, preIdx - entireChild[idx].ga.error) + left;
+          int end = std::min(entireChild[idx].ga.maxIndex,
+                             preIdx + entireChild[idx].ga.error) +
                     left;
-          start = min(start, end);
+          start = std::min(start, end);
 
           int res;
           if (entireData[start].first == DBL_MIN) start--;
           if (entireData[end].first == DBL_MIN) end--;
-          if (key <= entireData[start].first)
+          if (key <= entireData[start].first) {
             res = GABinarySearch(key, left, start);
-          else if (key <= entireData[end].first)
+          } else if (key <= entireData[end].first) {
             res = GABinarySearch(key, start, end);
-          else {
+          } else {
             res = GABinarySearch(key, end, left + entireChild[idx].ga.maxIndex);
             if (res > left + entireChild[idx].ga.maxIndex) {
               CARMI::iterator it;
@@ -120,23 +120,25 @@ CARMI::iterator CARMI::Find(double key)
           return it.end();
         }
       } break;
-      case 10: {
+      case EXTERNAL_ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
         int preIdx = entireChild[idx].ycsbLeaf.Predict(key);
         auto left = entireChild[idx].ycsbLeaf.m_left;
         if (entireData[left + preIdx].first == key) {
           return CARMI::iterator(this, &entireChild[idx], preIdx);
         } else {
-          int start = max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
+          int start =
+              std::max(0, preIdx - entireChild[idx].ycsbLeaf.error) + left;
           int end =
-              min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) + left;
-          start = min(start, end);
+              std::min(size - 1, preIdx + entireChild[idx].ycsbLeaf.error) +
+              left;
+          start = std::min(start, end);
           int res;
-          if (key <= entireData[start].first)
+          if (key <= entireData[start].first) {
             res = YCSBBinarySearch(key, left, start);
-          else if (key <= entireData[end].first)
+          } else if (key <= entireData[end].first) {
             res = YCSBBinarySearch(key, start, end);
-          else {
+          } else {
             res = YCSBBinarySearch(key, end, left + size - 1);
             if (res >= left + size) {
               CARMI::iterator it;
@@ -154,4 +156,4 @@ CARMI::iterator CARMI::Find(double key)
   }
 }
 
-#endif  // !FIND_FUNCTION_H
+#endif  // SRC_CARMI_FUNC_FIND_FUNCTION_H_

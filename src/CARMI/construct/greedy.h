@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef GREEDY_CHILD_H
-#define GREEDY_CHILD_H
+#ifndef SRC_CARMI_CONSTRUCT_GREEDY_H_
+#define SRC_CARMI_CONSTRUCT_GREEDY_H_
 
 #include <float.h>
 
@@ -19,10 +19,9 @@
 
 #include "../../params.h"
 #include "../carmi.h"
-#include "dp_inner.h"
-#include "minor_function.h"
-#include "structures.h"
-using namespace std;
+#include "./dp_inner.h"
+#include "./minor_function.h"
+#include "./structures.h"
 
 template <typename TYPE>
 void CARMI::CheckGreedy(int c, int type, double pi, int frequency, double time,
@@ -37,7 +36,7 @@ void CARMI::CheckGreedy(int c, int type, double pi, int frequency, double time,
 
   NodePartition<TYPE>(node, range, initDataset, &perSize);
   double entropy = CalculateEntropy(range.size, c, perSize);
-  double cost = (time + float(kRate * space) / pi) / entropy;
+  double cost = (time + static_cast<float>(kRate * space) / pi) / entropy;
 
   if (cost <= optimalCost->cost) {
     optimalStruct->type = type;
@@ -51,9 +50,10 @@ NodeCost CARMI::GreedyAlgorithm(const IndexPair &dataRange) {
     return nodeCost;
 
   NodeCost optimalCost = NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
-  double pi =
-      float(dataRange.findRange.size + dataRange.insertRange.size) / querySize;
-  ParamStruct optimalStruct = {0, 32, 2, vector<MapKey>()};
+  double pi = static_cast<float>(dataRange.findRange.size +
+                                 dataRange.insertRange.size) /
+              querySize;
+  ParamStruct optimalStruct = {LR_INNER_NODE, 32, 2, vector<MapKey>()};
   int frequency = 0;
   int findEnd = dataRange.findRange.left + dataRange.findRange.size;
   for (int l = dataRange.findRange.left; l < findEnd; l++)
@@ -67,32 +67,32 @@ NodeCost CARMI::GreedyAlgorithm(const IndexPair &dataRange) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
 #endif  // DEBUG
-    CheckGreedy<LRModel>(c, 0, pi, frequency, LRInnerTime, dataRange.initRange,
-                         &optimalStruct, &optimalCost);
-    CheckGreedy<LRModel>(c, 1, pi, frequency, PLRInnerTime, dataRange.initRange,
-                         &optimalStruct, &optimalCost);
-    CheckGreedy<HisModel>(c, 2, pi, frequency, HisInnerTime,
+    CheckGreedy<LRModel>(c, LR_INNER_NODE, pi, frequency, LRInnerTime,
+                         dataRange.initRange, &optimalStruct, &optimalCost);
+    CheckGreedy<LRModel>(c, PLR_INNER_NODE, pi, frequency, PLRInnerTime,
+                         dataRange.initRange, &optimalStruct, &optimalCost);
+    CheckGreedy<HisModel>(c, HIS_INNER_NODE, pi, frequency, HisInnerTime,
                           dataRange.initRange, &optimalStruct, &optimalCost);
-    CheckGreedy<BSModel>(c, 3, pi, frequency, BSInnerTime, dataRange.initRange,
-                         &optimalStruct, &optimalCost);
+    CheckGreedy<BSModel>(c, BS_INNER_NODE, pi, frequency, BSInnerTime,
+                         dataRange.initRange, &optimalStruct, &optimalCost);
   }
 
   // construct child
   SubDataset subDataset = SubDataset(optimalStruct.childNum);
   switch (optimalStruct.type) {
-    case 0: {
+    case LR_INNER_NODE: {
       InnerDivideAll<LRModel>(optimalStruct.childNum, dataRange, &subDataset);
       break;
     }
-    case 1: {
+    case PLR_INNER_NODE: {
       InnerDivideAll<PLRModel>(optimalStruct.childNum, dataRange, &subDataset);
       break;
     }
-    case 2: {
+    case HIS_INNER_NODE: {
       InnerDivideAll<HisModel>(optimalStruct.childNum, dataRange, &subDataset);
       break;
     }
-    case 3: {
+    case BS_INNER_NODE: {
       InnerDivideAll<BSModel>(optimalStruct.childNum, dataRange, &subDataset);
       break;
     }
@@ -120,4 +120,4 @@ NodeCost CARMI::GreedyAlgorithm(const IndexPair &dataRange) {
   nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost, true};
   return nodeCost;
 }
-#endif  // !GREEDY_H
+#endif  // SRC_CARMI_CONSTRUCT_GREEDY_H_
