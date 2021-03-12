@@ -24,9 +24,10 @@
 #include "./structures.h"
 
 template <typename TYPE>
-void CARMI::CheckGreedy(int c, NodeType type, double pi, int frequency,
-                        double time_cost, const IndexPair &range,
-                        ParamStruct *optimalStruct, NodeCost *optimalCost) {
+void CARMI::CheckGreedy(int c, NodeType type, double pi,
+                        double frequency_weight, double time_cost,
+                        const IndexPair &range, ParamStruct *optimalStruct,
+                        NodeCost *optimalCost) {
   std::vector<IndexPair> perSize(c, emptyRange);
   double space_cost = 64.0 * c / 1024 / 1024;
 
@@ -42,7 +43,7 @@ void CARMI::CheckGreedy(int c, NodeType type, double pi, int frequency,
   if (cost <= optimalCost->cost) {
     optimalStruct->type = type;
     optimalStruct->childNum = c;
-    *optimalCost = {time_cost * frequency / querySize, kRate * space_cost, cost,
+    *optimalCost = {time_cost * frequency_weight, kRate * space_cost, cost,
                     true};
   }
 }
@@ -63,19 +64,20 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   int insertEnd = dataRange.insertRange.left + dataRange.insertRange.size;
   for (int l = dataRange.insertRange.left; l < insertEnd; l++)
     frequency += insertQuery[l].second;
+  double frequency_weight = static_cast<double>(frequency) / querySize;
   int tmpEnd = dataRange.initRange.size / 2;
   IndexPair singleRange(dataRange.initRange.left, dataRange.initRange.size);
   for (int c = 2; c < tmpEnd; c *= 2) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
 #endif  // DEBUG
-    CheckGreedy<LRModel>(c, LR_INNER_NODE, pi, frequency, LRInnerTime,
+    CheckGreedy<LRModel>(c, LR_INNER_NODE, pi, frequency_weight, LRInnerTime,
                          dataRange.initRange, &optimalStruct, &optimalCost);
-    CheckGreedy<LRModel>(c, PLR_INNER_NODE, pi, frequency, PLRInnerTime,
+    CheckGreedy<LRModel>(c, PLR_INNER_NODE, pi, frequency_weight, PLRInnerTime,
                          dataRange.initRange, &optimalStruct, &optimalCost);
-    CheckGreedy<HisModel>(c, HIS_INNER_NODE, pi, frequency, HisInnerTime,
+    CheckGreedy<HisModel>(c, HIS_INNER_NODE, pi, frequency_weight, HisInnerTime,
                           dataRange.initRange, &optimalStruct, &optimalCost);
-    CheckGreedy<BSModel>(c, BS_INNER_NODE, pi, frequency, BSInnerTime,
+    CheckGreedy<BSModel>(c, BS_INNER_NODE, pi, frequency_weight, BSInnerTime,
                          dataRange.initRange, &optimalStruct, &optimalCost);
   }
 

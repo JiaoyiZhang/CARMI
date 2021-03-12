@@ -34,7 +34,13 @@ class CARMI {
     initDataset = initData;
     findQuery = findData;
     insertQuery = insertData;
-    querySize = findData.size() + insertData.size();
+    querySize = 0;
+    for (int i = 0; i < findData.size(); i++) {
+      querySize += findData[i].second;
+    }
+    for (int i = 0; i < insertData.size(); i++) {
+      querySize += insertData[i].second;
+    }
 
     if (!kPrimaryIndex)
       initEntireData(0, initDataset.size(), false);
@@ -163,7 +169,7 @@ class CARMI {
   template <typename TYPE>
   TYPE InnerDivideAll(int c, const DataRange &range, SubDataset *subDataset);
   template <typename TYPE>
-  void CalInner(int c, NodeType type, int frequency, double time_cost,
+  void CalInner(int c, NodeType type, double frequency_weight, double time_cost,
                 const DataRange &dataRange, NodeCost *optimalCost,
                 ParamStruct *optimalStruct);
   NodeCost dpInner(const DataRange &dataRange);
@@ -178,7 +184,7 @@ class CARMI {
   NodeCost dpLeaf(const DataRange &dataRange);
 
   template <typename TYPE>
-  void CheckGreedy(int c, NodeType type, double pi, int frequency,
+  void CheckGreedy(int c, NodeType type, double pi, double frequency_weight,
                    double time_cost, const IndexPair &range,
                    ParamStruct *optimalStruct, NodeCost *optimalCost);
   NodeCost GreedyAlgorithm(const DataRange &range);
