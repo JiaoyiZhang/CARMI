@@ -318,7 +318,7 @@ bool CARMI::Insert(DataType data) {
         return false;
       } break;
       case EXTERNAL_ARRAY_LEAF_NODE: {
-        entireData[curr] = data;
+        externalData[curr] = data;
         curr++;
         return true;
       } break;

@@ -64,8 +64,8 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
  * @return the type of root
  */
 inline void CARMI::Construction(const DataVectorType &initData,
-                               const DataVectorType &findData,
-                               const DataVectorType &insertData) {
+                                const DataVectorType &findData,
+                                const DataVectorType &insertData) {
   NodeCost nodeCost = {0, 0, 0, true};
   RootStruct res = ChooseRoot();
   // RootStruct res = RootStruct(0, 131072);
@@ -77,14 +77,16 @@ inline void CARMI::Construction(const DataVectorType &initData,
 
   if (kPrimaryIndex) {
     DataVectorType tmp(100000, {DBL_MIN, DBL_MIN});
-    entireData.insert(entireData.end(), tmp.begin(), tmp.end());
+    externalData.insert(externalData.end(), tmp.begin(), tmp.end());
     nowDataSize += 100000;
+    DataVectorType().swap(entireData);
+  } else {
+    entireData.erase(entireData.begin() + nowDataSize + reservedSpace,
+                     entireData.end());
   }
   DataVectorType().swap(initDataset);
   DataVectorType().swap(findQuery);
   DataVectorType().swap(insertQuery);
-  entireData.erase(entireData.begin() + nowDataSize + reservedSpace,
-                   entireData.end());
 
 #ifdef DEBUG
   std::cout << "Construction over!" << std::endl;

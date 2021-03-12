@@ -129,8 +129,8 @@ bool CARMI::Delete(double key) {
         auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
         int preIdx = entireChild[idx].ycsbLeaf.Predict(key);
         auto left = entireChild[idx].ycsbLeaf.m_left;
-        if (entireData[left + preIdx].first == key) {
-          entireData.erase(entireData.begin() + left + preIdx);
+        if (externalData[left + preIdx].first == key) {
+          externalData.erase(externalData.begin() + left + preIdx);
           return true;
         } else {
           int start =
@@ -140,16 +140,16 @@ bool CARMI::Delete(double key) {
               left;
           start = std::min(start, end);
           int res;
-          if (key <= entireData[start].first) {
+          if (key <= externalData[start].first) {
             res = YCSBBinarySearch(key, left, start);
-          } else if (key <= entireData[end].first) {
+          } else if (key <= externalData[end].first) {
             res = YCSBBinarySearch(key, start, end);
           } else {
             res = YCSBBinarySearch(key, end, left + size - 1);
             if (res >= left + size) return false;
           }
-          if (entireData[res].first == key) {
-            entireData.erase(entireData.begin() + res);
+          if (externalData[res].first == key) {
+            externalData.erase(externalData.begin() + res);
             return true;
           }
           return false;

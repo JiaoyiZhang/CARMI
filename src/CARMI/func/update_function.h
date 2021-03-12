@@ -117,8 +117,8 @@ bool CARMI::Update(DataType data) {
         auto size = entireChild[idx].ycsbLeaf.flagNumber & 0x00FFFFFF;
         int preIdx = entireChild[idx].ycsbLeaf.Predict(data.first);
         auto left = entireChild[idx].ycsbLeaf.m_left;
-        if (entireData[left + preIdx].first == data.first) {
-          entireData[left + preIdx].second = data.second;
+        if (externalData[left + preIdx].first == data.first) {
+          externalData[left + preIdx].second = data.second;
           return true;
         } else {
           int start =
@@ -128,17 +128,20 @@ bool CARMI::Update(DataType data) {
               left;
           start = std::min(start, end);
           int res;
-          if (data.first <= entireData[start].first) {
+          if (data.first <= externalData[start].first) {
             res = YCSBBinarySearch(data.first, left, start);
-          } else if (data.first <= entireData[end].first) {
+          } else if (data.first <= externalData[end].first) {
             res = YCSBBinarySearch(data.first, start, end);
           } else {
             res = YCSBBinarySearch(data.first, end, left + size - 1);
-            if (res >= left + size) return false;
+            if (res >= left + size) {
+              return false;
+            }
           }
-          if (entireData[res].first == data.first)
-            entireData[res].second = data.second;
-          return true;
+          if (externalData[res].first == data.first) {
+            externalData[res].second = data.second;
+            return true;
+          }
           return false;
         }
       } break;

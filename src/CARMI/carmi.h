@@ -39,7 +39,7 @@ class CARMI {
     if (!kPrimaryIndex)
       initEntireData(0, initDataset.size(), false);
     else
-      entireData = initDataset;
+      externalData = initDataset;
     initEntireChild(initDataset.size());
     Construction(initData, findData, insertData);
   }
@@ -52,7 +52,7 @@ class CARMI {
     if (!kPrimaryIndex)
       initEntireData(0, initDataset.size(), false);
     else
-      entireData = initDataset;
+      externalData = initDataset;
     initEntireChild(initDataset.size());
     Construction(initData, tmp, tmp);
   }
@@ -63,19 +63,23 @@ class CARMI {
         : tree(t), currnode(l), currslot(s) {}
     inline const double &key() const {
       int left;
-      if (kPrimaryIndex)
+      if (kPrimaryIndex) {
         left = currnode->ycsbLeaf.m_left;
-      else
+        return tree->externalData[left + currslot].first;
+      } else {
         left = currnode->array.m_left;
-      return tree->entireData[left + currslot].first;
+        return tree->entireData[left + currslot].first;
+      }
     }
     inline const double &data() const {
       int left;
-      if (kPrimaryIndex)
+      if (kPrimaryIndex) {
         left = currnode->ycsbLeaf.m_left;
-      else
+        return tree->externalData[left + currslot].second;
+      } else {
         left = currnode->array.m_left;
-      return tree->entireData[left + currslot].second;
+        return tree->entireData[left + currslot].second;
+      }
     }
     inline iterator &end() const {
       static iterator it;
@@ -103,7 +107,7 @@ class CARMI {
         return end();
       } else {
         int left = currnode->ycsbLeaf.m_left;
-        if (tree->entireData[left + currslot].first != DBL_MIN) {
+        if (tree->externalData[left + currslot].first != DBL_MIN) {
           currslot++;
           return *this;
         } else {
@@ -174,9 +178,9 @@ class CARMI {
   NodeCost dpLeaf(const DataRange &dataRange);
 
   template <typename TYPE>
-  void CheckGreedy(int c, NodeType type, double pi, int frequency, double time_cost,
-                   const IndexPair &range, ParamStruct *optimalStruct,
-                   NodeCost *optimalCost);
+  void CheckGreedy(int c, NodeType type, double pi, int frequency,
+                   double time_cost, const IndexPair &range,
+                   ParamStruct *optimalStruct, NodeCost *optimalCost);
   NodeCost GreedyAlgorithm(const DataRange &range);
 
   template <typename TYPE>
@@ -240,8 +244,9 @@ class CARMI {
   const int kThreshold = 2;  // used to initialize a leaf node
   std::vector<BaseNode> entireChild;
   DataVectorType entireData;
+  DataVectorType externalData;
 
-  int curr;  // for YCSB
+  int curr;  // the current insert index for external array
 
  private:
   unsigned int entireChildNumber;
