@@ -34,7 +34,9 @@ long double CARMI::calculateSpace() const {
   }
 
   space_cost += 64 * nowChildNumber;
-  if (!kPrimaryIndex) space_cost += entireData.size() * 16;
+  if (!kPrimaryIndex) {
+    space_cost += entireData.size() * 16;
+  }
 
   space_cost = space_cost / 1024 / 1024;
 

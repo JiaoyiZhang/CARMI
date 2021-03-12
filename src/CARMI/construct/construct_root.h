@@ -32,7 +32,7 @@ void CARMI::isBetterRoot(int c, NodeType type, double time_cost,
   std::vector<IndexPair> perSize(c, emptyRange);
   double space_cost = BaseNodeSpace * c;
 
-  TYPE root = TYPE(c);
+  TYPE root(c);
   root.model.Train(initDataset, c);
   IndexPair range(0, initDataset.size());
   NodePartition<ModelType>(root.model, range, initDataset, &perSize);

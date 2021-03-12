@@ -47,7 +47,7 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
 
     storeOptimalNode(i, type, key, range);
 
-    nodeCost->cost += resChild.space + resChild.time;
+    nodeCost->cost += resChild.space * kRate + resChild.time;
     nodeCost->time += resChild.time;
     nodeCost->space += resChild.space;
 

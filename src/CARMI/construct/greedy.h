@@ -29,9 +29,9 @@ void CARMI::CheckGreedy(int c, NodeType type, double pi,
                         const IndexPair &range, ParamStruct *optimalStruct,
                         NodeCost *optimalCost) {
   std::vector<IndexPair> perSize(c, emptyRange);
-  double space_cost = 64.0 * c / 1024 / 1024;
+  double space_cost = BaseNodeSpace * c;
 
-  TYPE node = TYPE();
+  TYPE node;
   node.SetChildNumber(c);
   Train(range.left, range.size, initDataset, &node);
 
@@ -43,8 +43,7 @@ void CARMI::CheckGreedy(int c, NodeType type, double pi,
   if (cost <= optimalCost->cost) {
     optimalStruct->type = type;
     optimalStruct->childNum = c;
-    *optimalCost = {time_cost * frequency_weight, kRate * space_cost, cost,
-                    true};
+    *optimalCost = {time_cost, space_cost, cost, true};
   }
 }
 NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
@@ -52,7 +51,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   if (dataRange.initRange.size == 0 && dataRange.findRange.size == 0)
     return nodeCost;
 
-  NodeCost optimalCost = NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
+  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, true};
   double pi = static_cast<float>(dataRange.findRange.size +
                                  dataRange.insertRange.size) /
               querySize;
@@ -82,7 +81,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   }
 
   // construct child
-  SubDataset subDataset = SubDataset(optimalStruct.childNum);
+  SubDataset subDataset(optimalStruct.childNum);
   switch (optimalStruct.type) {
     case LR_INNER_NODE: {
       InnerDivideAll<LRModel>(optimalStruct.childNum, dataRange, &subDataset);
@@ -107,8 +106,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
     NodeCost res = {0, 0, 0, true};
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
-    if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
-        kAlgorithmThreshold)
+    if (subDataset.subInit[i].size > kAlgorithmThreshold)
       res = GreedyAlgorithm(range);
     else
       res = dp(range);

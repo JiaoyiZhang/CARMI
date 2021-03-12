@@ -38,7 +38,7 @@ TYPE CARMI::storeInnerNode(int storeIdx, const MapKey &key,
   if (it == structMap.end()) std::cout << "WRONG!" << std::endl;
 
   int optimalChildNumber = it->second.childNum;
-  SubDataset subDataset = SubDataset(optimalChildNumber);
+  SubDataset subDataset(optimalChildNumber);
   TYPE node = InnerDivideAll<TYPE>(optimalChildNumber, range, &subDataset);
   node.childLeft = allocateChildMemory(optimalChildNumber);
 
@@ -61,11 +61,11 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
                              const DataRange &range) {
   if (range.initRange.size == 0) {
     if (kPrimaryIndex) {
-      auto node = YCSBLeaf();
+      YCSBLeaf node;
       initYCSB(&node, range.initRange.left, range.initRange.size);
       entireChild[storeIdx].ycsbLeaf = node;
     } else {
-      auto node = GappedArrayType(kThreshold);
+      GappedArrayType node(kThreshold);
       initGA(node.capacity, range.initRange.left, range.initRange.size,
              initDataset, &node);
       entireChild[storeIdx].ga = node;
@@ -99,7 +99,7 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
       break;
     }
     case ARRAY_LEAF_NODE: {
-      auto node = ArrayType(std::max(range.initRange.size, kThreshold));
+      ArrayType node(std::max(range.initRange.size, kThreshold));
       initArray(node.m_capacity, range.initRange.left, range.initRange.size,
                 initDataset, &node);
       entireChild[storeIdx].array = node;
@@ -109,7 +109,7 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
     }
     case GAPPED_ARRAY_LEAF_NODE: {
       auto it = structMap.find(key);
-      auto node = GappedArrayType(kThreshold);
+      GappedArrayType node(kThreshold);
       node.density = it->second.density;
       initGA(node.capacity, range.initRange.left, range.initRange.size,
              initDataset, &node);
@@ -119,7 +119,7 @@ void CARMI::storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
       break;
     }
     case EXTERNAL_ARRAY_LEAF_NODE: {
-      auto node = YCSBLeaf();
+      YCSBLeaf node;
       initYCSB(&node, range.initRange.left, range.initRange.size);
       entireChild[storeIdx].ycsbLeaf = node;
       break;

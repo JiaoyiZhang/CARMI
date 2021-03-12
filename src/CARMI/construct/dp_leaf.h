@@ -107,14 +107,14 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
     return nodeCost;
   }
 
-  NodeCost optimalCost = NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, false};
+  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, false};
   ParamStruct optimalStruct;
 
   if (kPrimaryIndex) {
     nodeCost.time = 0.0;
     nodeCost.space = 0.0;
 
-    auto tmp = YCSBLeaf();
+    YCSBLeaf tmp;
     Train(&tmp, dataRange.initRange.left, dataRange.initRange.size);
     auto error =
         UpdateError(&tmp, dataRange.initRange.left, dataRange.initRange.size);
@@ -140,11 +140,10 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
     }
 
     nodeCost.cost = nodeCost.time + nodeCost.space * kRate;  // ns + MB * kRate
-    optimalCost = {nodeCost.time, nodeCost.space * kRate, nodeCost.cost, false};
+    optimalCost = {nodeCost.time, nodeCost.space, nodeCost.cost, false};
     optimalStruct =
         ParamStruct(EXTERNAL_ARRAY_LEAF_NODE, 0, 2, std::vector<MapKey>());
 
-    nodeCost.space *= kRate;
     nodeCost.isInnerNode = false;
     MapKey key = {false, {dataRange.initRange.left, dataRange.initRange.size}};
     COST.insert({dataRange.initRange, optimalCost});
@@ -161,7 +160,7 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
   double time_cost = 0.0;
   double space_cost = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
 
-  auto tmp = ArrayType(actualSize);
+  ArrayType tmp(actualSize);
   Train(&tmp, dataRange.initRange.left, dataRange.initRange.size);
   auto error =
       UpdateError(&tmp, dataRange.initRange.left, dataRange.initRange.size);
@@ -171,7 +170,7 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
 
   double cost = time_cost + space_cost * kRate;  // ns + MB * kRate
   if (cost <= optimalCost.cost) {
-    optimalCost = NodeCost{time_cost, space_cost * kRate, cost, false};
+    optimalCost = {time_cost, space_cost, cost, false};
     optimalStruct = ParamStruct(ARRAY_LEAF_NODE, 0, 1, std::vector<MapKey>());
   }
 
@@ -186,7 +185,7 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
       actualSize = static_cast<float>(actualSize) / Density[i] + 1;
     if (actualSize > 4096) actualSize = 4096;
 
-    auto tmpNode = GappedArrayType(actualSize);
+    GappedArrayType tmpNode(actualSize);
     tmpNode.density = Density[i];
 
     time_cost = 0.0;
@@ -202,7 +201,7 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
                                        dataRange.findRange);
     cost = time_cost + space_cost * kRate;  // ns + MB * kRate
     if (cost <= optimalCost.cost) {
-      optimalCost = NodeCost{time_cost, space_cost * kRate, cost, false};
+      optimalCost = {time_cost, space_cost, cost, false};
       optimalStruct = ParamStruct(GAPPED_ARRAY_LEAF_NODE, 0, Density[i],
                                   std::vector<MapKey>());
     }

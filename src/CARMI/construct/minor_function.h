@@ -40,7 +40,7 @@ void CARMI::NodePartition(const TYPE &node, const IndexPair &range,
 template <typename TYPE>
 TYPE CARMI::InnerDivideAll(int c, const DataRange &range,
                            SubDataset *subDataset) {
-  TYPE node = TYPE();
+  TYPE node;
   node.SetChildNumber(c);
   Train(range.initRange.left, range.initRange.size, initDataset, &node);
 

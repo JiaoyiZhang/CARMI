@@ -38,7 +38,7 @@ NodeCost CARMI::dp(const DataRange &range) {
   } else {
     auto res0 = dpLeaf(range);
     auto res1 = dpInner(range);
-    if (res0.space + res0.time > res1.space + res1.time)
+    if (res0.space * kRate + res0.time > res1.space * kRate + res1.time)
       return res1;
     else
       return res0;

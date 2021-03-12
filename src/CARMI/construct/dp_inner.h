@@ -34,7 +34,6 @@ void CARMI::CalInner(int c, NodeType type, double frequency_weight,
   double space_cost = BaseNodeSpace * c;  // MB
   time_cost = time_cost * frequency_weight;
   double RootCost = time_cost + kRate * space_cost;
-  space_cost *= kRate;
   if (RootCost > optimalCost->cost) return;
 
   SubDataset subDataset(c);
@@ -45,8 +44,7 @@ void CARMI::CalInner(int c, NodeType type, double frequency_weight,
     NodeCost res;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
-    if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
-        kAlgorithmThreshold)
+    if (subDataset.subInit[i].size > kAlgorithmThreshold)
       res = GreedyAlgorithm(range);
     else
       res = dp(range);
@@ -56,7 +54,7 @@ void CARMI::CalInner(int c, NodeType type, double frequency_weight,
     tmpChild.push_back(key);
     space_cost += res.space;
     time_cost += res.time;
-    RootCost += res.space + res.time;
+    RootCost += kRate * res.space + res.time;
   }
   if (RootCost <= optimalCost->cost) {
     *optimalCost = {time_cost, space_cost, RootCost, true};
@@ -71,7 +69,7 @@ void CARMI::CalInner(int c, NodeType type, double frequency_weight,
  */
 NodeCost CARMI::dpInner(const DataRange &dataRange) {
   NodeCost nodeCost;
-  NodeCost optimalCost = NodeCost{DBL_MAX, DBL_MAX, DBL_MAX, true};
+  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, true};
   ParamStruct optimalStruct = {0, 32, 2, std::vector<MapKey>()};
   int frequency = 0;
   int findEnd = dataRange.findRange.left + dataRange.findRange.size;
