@@ -28,6 +28,7 @@ class CARMI {
         int kLeafID);  // RMI
   CARMI(const DataVectorType &initData, const DataVectorType &findData,
         const DataVectorType &insertData, double rate, int thre) {
+    emptyNode.ga = GappedArrayType(kThreshold);
     kAlgorithmThreshold = thre;
     kRate = rate;
     nowDataSize = 0;
@@ -54,6 +55,7 @@ class CARMI {
     initDataset = initData;
     DataVectorType tmp;
     querySize = initData.size();
+    root.hisRoot = HisType(131072);
 
     if (!kPrimaryIndex)
       initEntireData(0, initDataset.size(), false);
@@ -171,7 +173,7 @@ class CARMI {
   template <typename TYPE>
   void CalInner(int c, NodeType type, double frequency_weight, double time_cost,
                 const DataRange &dataRange, NodeCost *optimalCost,
-                ParamStruct *optimalStruct);
+                BaseNode *optimal_node_struct);
   NodeCost dpInner(const DataRange &dataRange);
 
   template <typename TYPE>
@@ -186,13 +188,12 @@ class CARMI {
   template <typename TYPE>
   void CheckGreedy(int c, NodeType type, double pi, double frequency_weight,
                    double time_cost, const IndexPair &range,
-                   ParamStruct *optimalStruct, NodeCost *optimalCost);
+                   BaseNode *optimal_node_struct, NodeCost *optimalCost);
   NodeCost GreedyAlgorithm(const DataRange &range);
 
   template <typename TYPE>
-  TYPE storeInnerNode(int storeIdx, const MapKey &key, const DataRange &range);
-  void storeOptimalNode(int storeIdx, int optimalType, const MapKey key,
-                        const DataRange &range);
+  TYPE storeInnerNode(int storeIdx, const DataRange &range);
+  void storeOptimalNode(int storeIdx, int optimalType, const DataRange &range);
   bool allocateEmptyBlock(int left, int len);
   int getIndex(int size);
   void initEntireData(int left, int size, bool reinit);
@@ -206,34 +207,36 @@ class CARMI {
   void initPLR(const DataVectorType &dataset, PLRModel *plr);
   void initHis(const DataVectorType &dataset, HisModel *his);
   void initBS(const DataVectorType &dataset, BSModel *bs);
-  void Train(const int left, const int size, const DataVectorType &dataset,
-             LRModel *lr);
-  void Train(const int left, const int size, const DataVectorType &dataset,
-             PLRModel *plr);
-  void Train(const int left, const int size, const DataVectorType &dataset,
-             HisModel *his);
-  void Train(const int left, const int size, const DataVectorType &dataset,
-             BSModel *bs);
+  void Train(int left, int size, const DataVectorType &dataset, LRModel *lr);
+  void Train(int left, int size, const DataVectorType &dataset, PLRModel *plr);
+  void Train(int left, int size, const DataVectorType &dataset, HisModel *his);
+  void Train(int left, int size, const DataVectorType &dataset, BSModel *bs);
+  void Train(int left, int size, LRModel *lr);
+  void Train(int left, int size, PLRModel *plr);
+  void Train(int left, int size, HisModel *his);
+  void Train(int left, int size, BSModel *bs);
 
-  void initArray(int cap, const int left, const int size,
-                 const DataVectorType &dataset, ArrayType *arr);
-  int UpdateError(ArrayType *arr);  // for CARMI
-  int UpdateError(ArrayType *arr, const int start_idx,
-                  const int size);  // for dp
-  void Train(ArrayType *arr);
-  void Train(ArrayType *arr, const int start_idx, const int size);
+  void initArray(int cap, int left, int size, const DataVectorType &dataset,
+                 ArrayType *arr);
+  void UpdatePara(int cap, int size, ArrayType *arr);
+  void StoreData(int start_idx, int size, const DataVectorType &dataset,
+                 ArrayType *arr);
+  void Train(int start_idx, int size, const DataVectorType &dataset,
+             ArrayType *arr);
+  void Train(int start_idx, int size, ArrayType *arr);
 
-  void initGA(int cap, const int left, const int size,
-              const DataVectorType &subDataset, GappedArrayType *ga);
-  int UpdateError(GappedArrayType *ga);  // for CARMI
-  int UpdateError(GappedArrayType *ga, const int start_idx,
-                  const int size);  // for dp
-  void Train(GappedArrayType *ga);
-  void Train(GappedArrayType *ga, const int start_idx, const int size);
+  void initGA(int cap, int left, int size, const DataVectorType &subDataset,
+              GappedArrayType *ga);
 
-  void initYCSB(YCSBLeaf *ycsb, const int start_idx, const int size);
-  int UpdateError(YCSBLeaf *ycsb, const int start_idx, const int size);
-  void Train(YCSBLeaf *ycsb, const int start_idx, const int size);
+  void UpdatePara(int cap, int size, GappedArrayType *ga);
+  void StoreData(int start_idx, int size, const DataVectorType &dataset,
+                 GappedArrayType *ga);
+  void Train(int start_idx, int size, const DataVectorType &dataset,
+             GappedArrayType *ga);
+  void Train(int start_idx, int size, GappedArrayType *ga);
+
+  void initYCSB(YCSBLeaf *ycsb, int start_idx, int size);
+  void Train(YCSBLeaf *ycsb, int start_idx, int size);
 
   void UpdateLeaf();
   int ArrayBinarySearch(double key, int start, int end) const;
@@ -269,16 +272,18 @@ class CARMI {
   DataVectorType insertQuery;
 
   std::map<IndexPair, NodeCost> COST;
-  std::map<MapKey, ParamStruct> structMap;
+  std::map<IndexPair, BaseNode> structMap;
   int querySize;
 
   int kLeafNodeID;   // for static structure
   int kInnerNodeID;  // for static structure
 
  private:
+  // const ParamStruct leafP = {5, 2, 0.5, std::vector<MapKey>()};
+  BaseNode emptyNode;
+  IndexPair emptyRange = IndexPair(-1, 0);
+
   const NodeCost emptyCost = {0, 0, 0, false};
-  const IndexPair emptyRange = {-1, 0};
-  const ParamStruct leafP = {5, 2, 0.5, std::vector<MapKey>()};
 
  public:
   friend class LRType;
@@ -316,10 +321,10 @@ CARMI::CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
       root.lrRoot = LRType(childNum);
       root.lrRoot.childLeft = left;
 
-      root.lrRoot.model.Train(dataset, childNum);
+      root.lrRoot.model->Train(dataset, childNum);
 
       for (int i = 0; i < dataset.size(); i++) {
-        int p = root.lrRoot.model.Predict(dataset[i].first);
+        int p = root.lrRoot.model->Predict(dataset[i].first);
         perSubDataset[p].push_back(dataset[i]);
       }
 
@@ -334,10 +339,10 @@ CARMI::CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
       root.plrRoot = PLRType(childNum);
       root.plrRoot.childLeft = left;
 
-      root.plrRoot.model.Train(dataset, childNum);
+      root.plrRoot.model->Train(dataset, childNum);
 
       for (int i = 0; i < dataset.size(); i++) {
-        int p = root.plrRoot.model.Predict(dataset[i].first);
+        int p = root.plrRoot.model->Predict(dataset[i].first);
         perSubDataset[p].push_back(dataset[i]);
       }
 
@@ -352,10 +357,10 @@ CARMI::CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
       root.hisRoot = HisType(childNum);
       root.hisRoot.childLeft = left;
 
-      root.hisRoot.model.Train(dataset, childNum);
+      root.hisRoot.model->Train(dataset, childNum);
 
       for (int i = 0; i < dataset.size(); i++) {
-        int p = root.hisRoot.model.Predict(dataset[i].first);
+        int p = root.hisRoot.model->Predict(dataset[i].first);
         perSubDataset[p].push_back(dataset[i]);
       }
 
@@ -370,10 +375,10 @@ CARMI::CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
       root.bsRoot = BSType(childNum);
       root.bsRoot.childLeft = left;
 
-      root.bsRoot.model.Train(dataset, childNum);
+      root.bsRoot.model->Train(dataset, childNum);
 
       for (int i = 0; i < dataset.size(); i++) {
-        int p = root.bsRoot.model.Predict(dataset[i].first);
+        int p = root.bsRoot.model->Predict(dataset[i].first);
         perSubDataset[p].push_back(dataset[i]);
       }
 

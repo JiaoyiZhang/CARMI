@@ -23,19 +23,19 @@ CARMI::iterator CARMI::Find(double key) {
   while (1) {
     switch (type) {
       case LR_ROOT_NODE: {
-        idx = root.lrRoot.childLeft + root.lrRoot.model.Predict(key);
+        idx = root.lrRoot.childLeft + root.lrRoot.model->Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
       case PLR_ROOT_NODE: {
-        idx = root.plrRoot.childLeft + root.plrRoot.model.Predict(key);
+        idx = root.plrRoot.childLeft + root.plrRoot.model->Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
       case HIS_ROOT_NODE: {
-        idx = root.hisRoot.childLeft + root.hisRoot.model.Predict(key);
+        idx = root.hisRoot.childLeft + root.hisRoot.model->Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
       case BS_ROOT_NODE: {
-        idx = root.bsRoot.childLeft + root.bsRoot.model.Predict(key);
+        idx = root.bsRoot.childLeft + root.bsRoot.model->Predict(key);
         type = entireChild[idx].lr.flagNumber >> 24;
       } break;
       case LR_INNER_NODE: {

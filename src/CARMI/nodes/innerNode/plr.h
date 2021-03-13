@@ -25,10 +25,9 @@ class PLRModel {
 
   int flagNumber;  // 4 Byte (flag + childNumber)
 
-  int childLeft;                   // 4 Byte
-  std::pair<float, int> point[6];  // 48 Byte
-  float maxX;
-  float tmp;
+  int childLeft;  // 4 Byte
+  int index[6];   // 24 Byte
+  float keys[8];   // 32 Byte
 };
 
 #endif  // SRC_CARMI_NODES_INNERNODE_PLR_H_

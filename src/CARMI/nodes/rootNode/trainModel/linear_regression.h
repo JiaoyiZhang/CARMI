@@ -45,11 +45,13 @@ class LinearRegression {
 void LinearRegression::Train(const DataVectorType &dataset, int len) {
   length = len - 1;
   int actualSize = 0;
-  std::vector<double> index;
+  int idx = 0;
+  std::vector<double> index(dataset.size(), 0);
   for (int i = 0; i < dataset.size(); i++) {
-    if (dataset[i].first != -1) actualSize++;
-    index.push_back(static_cast<double>(i) /
-                    static_cast<double>(dataset.size()));
+    if (dataset[i].first != -1) {
+      actualSize++;
+    }
+    index[idx++] = static_cast<double>(i) / static_cast<double>(dataset.size());
   }
   if (actualSize == 0) return;
 

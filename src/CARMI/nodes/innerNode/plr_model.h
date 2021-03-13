@@ -55,118 +55,246 @@ inline void CARMI::initPLR(const DataVectorType &dataset, PLRModel *plr) {
 inline void CARMI::Train(const int left, const int size,
                          const DataVectorType &dataset, PLRModel *plr) {
   int childNumber = plr->flagNumber & 0x00FFFFFF;
-  int actualSize = 0;
-  std::vector<double> xx(7, 0.0);
-  std::vector<double> x(7, 0.0);
-  std::vector<double> px(7, 0.0);
-  std::vector<double> pp(7, 0.0);
-  if (size == 0) return;
-  int width = size / 7;
-  for (int i = 0; i < 7; i++) {
-    plr->point[i] = {dataset[(i + 1) * width].first, childNumber * (i + 1) / 7};
-  }
-  if (childNumber <= 32) return;
-  for (int k = 0; k < 7; k++) {
-    int start = k * width;
-    int end = (k + 1) * width;
-    for (int i = start; i < end; i++) {
-      xx[k] += dataset[i].first * dataset[i].first;
-      x[k] += dataset[i].first;
-      px[k] += static_cast<float>(i) / size * dataset[i].first;
-      pp[k] += static_cast<float>(i * i) / size / size;
-    }
-    px[k] *= childNumber;
-    pp[k] *= childNumber * childNumber;
-  }
-  double opt = DBL_MAX;
-  DataVectorType theta(6, {1, 1});
-  int bound = childNumber / 7;
-  int a, b;
-  for (int t1 = -2; t1 < 2; t1++) {
-    theta[0] = {static_cast<float>(bound + t1) / plr->point[0].first, 0};
-    for (int t2 = -2; t2 < 2; t2++) {
-      a = static_cast<float>(bound + t2 - t1) /
-          (plr->point[1].first - plr->point[0].first);
-      b = bound * 2 + t2 - a * plr->point[1].first;
-      theta[1] = {a, b};
-      for (int t3 = -2; t3 < 2; t3++) {
-        a = static_cast<float>(bound + t3 - t2) /
-            (plr->point[2].first - plr->point[1].first);
-        b = bound * 3 + t3 - a * plr->point[2].first;
-        theta[2] = {a, b};
-        for (int t4 = -2; t4 < 2; t4++) {
-          a = static_cast<float>(bound + t4 - t3) /
-              (plr->point[3].first - plr->point[2].first);
-          b = bound * 4 + t4 - a * plr->point[3].first;
-          theta[3] = {a, b};
-          for (int t5 = -2; t5 < 2; t5++) {
-            a = static_cast<float>(bound + t5 - t4) /
-                (plr->point[4].first - plr->point[3].first);
-            b = bound * 5 + t5 - a * plr->point[4].first;
-            theta[4] = {a, b};
-            for (int t6 = -2; t6 < 2; t6++) {
-              a = static_cast<float>(bound + t6 - t5) /
-                  (plr->point[5].first - plr->point[4].first);
-              b = bound * 6 + t6 - a * plr->point[5].first;
-              theta[5] = {a, b};
-              a = static_cast<float>(childNumber - 6 * bound - t6) /
-                  (plr->maxX - plr->point[5].first);
-              b = childNumber - a * plr->maxX;
-              theta[6] = {a, b};
+  DataVectorType data(size, {-1, 0});
 
-              double value = 0.0;
-              for (int i = 0; i < 7; i++) {
-                value += theta[i].first * theta[i].first * xx[i];
-                value += 2 * theta[i].first * theta[i].second * x[i];
-                value -= 2 * (theta[i].first + theta[i].second) * px[i];
-                value += theta[i].second * theta[i].second;
-                value += pp[i];
-              }
-              if (value < opt) {
-                opt = value;
-                plr->point[0].second = bound + t1;
-                plr->point[1].second = 2 * bound + t2;
-                plr->point[2].second = 3 * bound + t3;
-                plr->point[3].second = 4 * bound + t4;
-                plr->point[4].second = 5 * bound + t5;
-                plr->point[5].second = 6 * bound + t6;
-              }
+  int end = left + size;
+  plr->keys[0] = dataset[left].first;
+  plr->keys[7] = dataset[end].first;
+  for (int i = left, j = 0; i < end; i++, j++) {
+    data[j].first = dataset[i].first;
+    data[j].second =
+        static_cast<int>(static_cast<float>(j) / data.size() * childNumber - 1);
+  }
+
+  SegmentPoint tmp;
+  tmp.cost = DBL_MAX;
+  std::vector<SegmentPoint> tmpp(size, tmp);
+  std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
+
+  for (int j = 1; j < size; j++) {
+    dp[0][j].cost = CalculateCost(0, j, &data);
+    dp[0][j].key[0] = data[j].first;
+    dp[0][j].idx[0] = data[j].second;
+  }
+  for (int i = 1; i < 6; i++) {
+    for (int j = i + 1; j < size - 1; j++) {
+      SegmentPoint opt;
+      opt.cost = DBL_MAX;
+      for (int k = 1; k < j; k++) {
+        float res = DBL_MAX;
+        if (i < 5) {
+          res = dp[0][k].cost + CalculateCost(k, j, &data);
+        } else {
+          res = dp[0][k].cost + CalculateCost(k, j, &data) +
+                CalculateCost(j, size - 1, &data);
+        }
+        if (res < opt.cost) {
+          opt.cost = res;
+          for (int l = 0; l < i; l++) {
+            opt.idx[l] = dp[0][k].idx[l];
+            opt.key[l] = dp[0][k].key[l];
+          }
+          opt.key[i] = data[j].first;
+          opt.idx[i] = data[j].second;
+        } else if (res == opt.cost) {
+          int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+          for (int l = 0; l < i; l++) {
+            dp_idx[l] = dp[0][k].idx[l];
+          }
+          dp_idx[i] = data[j].second;
+
+          float var0 = Diff(i + 1, childNumber, dp_idx);
+          float var1 = Diff(i + 1, childNumber, opt.idx);
+          if (var0 < var1) {
+            for (int l = 0; l < i; l++) {
+              opt.idx[l] = dp[0][k].idx[l];
+              opt.key[l] = dp[0][k].key[l];
             }
+            opt.key[i] = data[j].first;
+            opt.idx[i] = data[j].second;
           }
         }
       }
+      dp[1][j].cost = opt.cost;
+      for (int l = 0; l <= i; l++) {
+        dp[1][j].idx[l] = opt.idx[l];
+        dp[1][j].key[l] = opt.key[l];
+      }
     }
+    for (int m = i + 1; m < size - 1; m++) {
+      dp[0][m].cost = dp[1][m].cost;
+      for (int l = 0; l <= i; l++) {
+        dp[0][m].idx[l] = dp[1][m].idx[l];
+        dp[0][m].key[l] = dp[1][m].key[l];
+      }
+    }
+  }
+
+  SegmentPoint opt;
+  opt.cost = DBL_MAX;
+  for (int j = 6; j < size; j++) {
+    if (dp[1][j].cost < opt.cost) {
+      opt.cost = dp[1][j].cost;
+      for (int k = 0; k < 6; k++) {
+        opt.idx[k] = dp[1][j].idx[k];
+        opt.key[k] = dp[1][j].key[k];
+      }
+    } else if (dp[1][j].cost == opt.cost) {
+      dp[1][j].idx[6] = childNumber - 1;
+      opt.idx[6] = childNumber - 1;
+      float var0 = Diff(7, childNumber, dp[1][j].idx);
+      float var1 = Diff(7, childNumber, opt.idx);
+      if (var0 < var1) {
+        opt.cost = dp[1][j].cost;
+        for (int k = 0; k < 6; k++) {
+          opt.idx[k] = dp[1][j].idx[k];
+          opt.key[k] = dp[1][j].key[k];
+        }
+      }
+    }
+  }
+  for (int i = 0; i < 6; i++) {
+    plr->keys[i + 1] = opt.key[i];
+    plr->index[i] = opt.idx[i];
+  }
+}
+
+inline void CARMI::Train(const int left, const int size, PLRModel *plr) {
+  int childNumber = plr->flagNumber & 0x00FFFFFF;
+  DataVectorType data(size, {-1, 0});
+
+  int end = left + size;
+  plr->keys[0] = initDataset[left].first;
+  plr->keys[7] = initDataset[end].first;
+  for (int i = left, j = 0; i < end; i++, j++) {
+    data[j].first = initDataset[i].first;
+    data[j].second =
+        static_cast<int>(static_cast<float>(j) / data.size() * childNumber - 1);
+  }
+
+  SegmentPoint tmp;
+  tmp.cost = DBL_MAX;
+  std::vector<SegmentPoint> tmpp(size, tmp);
+  std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
+
+  for (int j = 1; j < size; j++) {
+    dp[0][j].cost = CalculateCost(0, j, &data);
+    dp[0][j].key[0] = data[j].first;
+    dp[0][j].idx[0] = data[j].second;
+  }
+  for (int i = 1; i < 6; i++) {
+    for (int j = i + 1; j < size - 1; j++) {
+      SegmentPoint opt;
+      opt.cost = DBL_MAX;
+      for (int k = 1; k < j; k++) {
+        float res = DBL_MAX;
+        if (i < 5) {
+          res = dp[0][k].cost + CalculateCost(k, j, &data);
+        } else {
+          res = dp[0][k].cost + CalculateCost(k, j, &data) +
+                CalculateCost(j, size - 1, &data);
+        }
+        if (res < opt.cost) {
+          opt.cost = res;
+          for (int l = 0; l < i; l++) {
+            opt.idx[l] = dp[0][k].idx[l];
+            opt.key[l] = dp[0][k].key[l];
+          }
+          opt.key[i] = data[j].first;
+          opt.idx[i] = data[j].second;
+        } else if (res == opt.cost) {
+          int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+          for (int l = 0; l < i; l++) {
+            dp_idx[l] = dp[0][k].idx[l];
+          }
+          dp_idx[i] = data[j].second;
+
+          float var0 = Diff(i + 1, childNumber, dp_idx);
+          float var1 = Diff(i + 1, childNumber, opt.idx);
+          if (var0 < var1) {
+            for (int l = 0; l < i; l++) {
+              opt.idx[l] = dp[0][k].idx[l];
+              opt.key[l] = dp[0][k].key[l];
+            }
+            opt.key[i] = data[j].first;
+            opt.idx[i] = data[j].second;
+          }
+        }
+      }
+      dp[1][j].cost = opt.cost;
+      for (int l = 0; l <= i; l++) {
+        dp[1][j].idx[l] = opt.idx[l];
+        dp[1][j].key[l] = opt.key[l];
+      }
+    }
+    for (int m = i + 1; m < size - 1; m++) {
+      dp[0][m].cost = dp[1][m].cost;
+      for (int l = 0; l <= i; l++) {
+        dp[0][m].idx[l] = dp[1][m].idx[l];
+        dp[0][m].key[l] = dp[1][m].key[l];
+      }
+    }
+  }
+
+  SegmentPoint opt;
+  opt.cost = DBL_MAX;
+  for (int j = 6; j < size; j++) {
+    if (dp[1][j].cost < opt.cost) {
+      opt.cost = dp[1][j].cost;
+      for (int k = 0; k < 6; k++) {
+        opt.idx[k] = dp[1][j].idx[k];
+        opt.key[k] = dp[1][j].key[k];
+      }
+    } else if (dp[1][j].cost == opt.cost) {
+      dp[1][j].idx[6] = childNumber - 1;
+      opt.idx[6] = childNumber - 1;
+      float var0 = Diff(7, childNumber, dp[1][j].idx);
+      float var1 = Diff(7, childNumber, opt.idx);
+      if (var0 < var1) {
+        opt.cost = dp[1][j].cost;
+        for (int k = 0; k < 6; k++) {
+          opt.idx[k] = dp[1][j].idx[k];
+          opt.key[k] = dp[1][j].key[k];
+        }
+      }
+    }
+  }
+
+  for (int i = 0; i < 6; i++) {
+    plr->keys[i + 1] = opt.key[i];
+    plr->index[i] = opt.idx[i];
   }
 }
 
 inline int PLRModel::Predict(double key) const {
   int s = 0;
-  int e = 5;
+  int e = 7;
   int mid;
   while (s < e) {
     mid = (s + e) / 2;
-    if (point[mid].first < key)
+    if (keys[mid] < key)
       s = mid + 1;
     else
       e = mid;
   }
 
+  if (e == 0) {
+    return 0;
+  }
   int p;
-  if (s == 0) {
-    p = static_cast<float>(point[0].second) / point[0].first * key;
-  } else if (s == 5) {
-    int childNumber = flagNumber & 0x00FFFFFF;
-    int a = static_cast<float>(childNumber - point[5].second) /
-            (maxX - point[5].first);
-    int b = childNumber - a * maxX;
+  int childNumber = flagNumber & 0x00FFFFFF;
+  if (e == 5) {
+    float a =
+        static_cast<float>(childNumber - 1 - index[5]) / (keys[7] - keys[6]);
+    float b = childNumber - 1 - a * keys[7];
     p = a * key + b;
   } else {
-    int a = static_cast<float>(point[s].second - point[s - 1].second) /
-            (point[s].second - point[s - 1].first);
-    int b = point[s].second - a * point[s].first;
+    float a =
+        static_cast<float>(index[e + 1] - index[e]) / (keys[e] - keys[e - 1]);
+    float b = index[e + 1] - a * keys[e];
     p = a * key + b;
   }
-  if (p >= (flagNumber & 0x00FFFFFF)) p = (flagNumber & 0x00FFFFFF) - 1;
+  if (p >= childNumber) p = childNumber - 1;
 
   return p;
 }

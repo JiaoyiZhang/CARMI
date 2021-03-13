@@ -18,14 +18,21 @@
 #include <vector>
 
 #include "../../../../params.h"
-
 class HistogramModel {
  public:
-  HistogramModel() {}
-  explicit HistogramModel(int childNum) {
+  explicit HistogramModel(int childNum)
+      : base(ceil(childNum * 2 / 16.0), 0),
+        offset(ceil(childNum * 2 / 16.0), 0) {
     childNumber = childNum * 2;  // means the max idx of table
     value = 1;
     minValue = 0;
+  }
+  HistogramModel(const HistogramModel &his) {
+    value = his.value;
+    childNumber = his.childNumber;
+    minValue = his.minValue;
+    offset = his.offset;
+    base = his.base;
   }
   void Train(const DataVectorType &dataset, int len);
   int Predict(double key) const {
@@ -36,27 +43,26 @@ class HistogramModel {
     else if (idx >= childNumber)
       idx = childNumber - 1;
 
-    int base;
-    int tmpIdx = idx / 16;
-    base = Base[tmpIdx];
-    int j = idx % 16;
-    int tmp = Offset[tmpIdx] >> (15 - j);
-    for (; j >= 0; j--) {
-      base += tmp & 1;
-      tmp = tmp >> 1;
-    }
-    return base;
+    int index = base[(idx >> 4)];
+    int tmp = offset[(idx >> 4)] >> (15 - (idx & 0x0000000F));
+    tmp = (tmp & 0x55555555) + ((tmp >> 1) & 0x55555555);
+    tmp = (tmp & 0x33333333) + ((tmp >> 2) & 0x33333333);
+    tmp = (tmp & 0x0f0f0f0f) + ((tmp >> 4) & 0x0f0f0f0f);
+    tmp = (tmp & 0x00ff00ff) + ((tmp >> 8) & 0x00ff00ff);
+    index += tmp;
+    return index;
   }
 
- private:
-  float value;                         // 4B
-  std::vector<unsigned short> Offset;  // 2c/32*8 = c/2 Byte
-  std::vector<unsigned short> Base;    // c/2 Byte
-  int childNumber;                     // 4B
-  float minValue;                      // 8B
+ public:
+  float value;  // 4B
+  std::vector<unsigned int> base;
+  std::vector<unsigned short int> offset;
+  int childNumber;  // 4B
+  float minValue;   // 8B
 };
 
 void HistogramModel::Train(const DataVectorType &dataset, int len) {
+  int actualChildNumber = childNumber / 2;
   if (dataset.size() == 0) return;
   double maxValue;
   for (int i = 0; i < dataset.size(); i++) {
@@ -86,18 +92,19 @@ void HistogramModel::Train(const DataVectorType &dataset, int len) {
       }
     }
     if (table[0] > 0) cnt++;
-    table[0] = table[0] / dataset.size() * childNumber;
+    table[0] = table[0] / dataset.size() * actualChildNumber;
     for (int i = 1; i < table.size(); i++) {
       if (table[i] > 0) cnt++;
-      table[i] = table[i] / dataset.size() * childNumber + table[i - 1];
+      table[i] = table[i] / dataset.size() * actualChildNumber + table[i - 1];
     }
   }
-  table[0] = round(table[0]);
+  table[0] = std::max(0, static_cast<int>(round(table[0]) - 1));
   for (int i = 1; i < childNumber; i++) {
-    table[i] = round(table[i]);
+    table[i] = std::max(0, static_cast<int>(round(table[i]) - 1));
     if (table[i] - table[i - 1] > 1) table[i] = table[i - 1] + 1;
   }
 
+  int index = 0;
   for (int i = 0; i < childNumber; i += 16) {
     unsigned short start_idx = static_cast<int>(table[i]);
     unsigned short tmp = 0;
@@ -107,19 +114,16 @@ void HistogramModel::Train(const DataVectorType &dataset, int len) {
           tmp = tmp << 1;
           j++;
         }
-        Base.push_back(table[i]);
-        Offset.push_back(tmp);
+        base[index] = table[i];
+        offset[index++] = tmp;
         return;
       }
       unsigned short diff = static_cast<int>(table[j]) - start_idx;
       tmp = (tmp << 1) + diff;
-#ifdef DEBUG
-      if (diff > 1) std::cout << "diff wrong, diff:" << diff << std::endl;
-#endif  // DEBUG
       if (diff > 0) start_idx += diff;
     }
-    Base.push_back(table[i]);
-    Offset.push_back(tmp);
+    base[index] = table[i];
+    offset[index++] = tmp;
   }
 }
 

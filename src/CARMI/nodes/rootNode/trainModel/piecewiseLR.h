@@ -11,6 +11,7 @@
 #ifndef SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_
 #define SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_
 
+#include <float.h>
 #include <math.h>
 
 #include <algorithm>
@@ -20,17 +21,24 @@
 #include <vector>
 
 #include "../../../../params.h"
+#include "../../../construct/structures.h"
 
 class PiecewiseLR {
  public:
   PiecewiseLR() {
-    for (int i = 0; i < 8; i++) theta.push_back({0.0001, 0.666});
+    for (int i = 0; i < 9; i++) {
+      point.push_back({-1, 0});
+    }
+  }
+  PiecewiseLR(const PiecewiseLR &node) {
+    length = node.length;
+    point = node.point;
   }
 
   void Train(const DataVectorType &dataset, int len);
   int Predict(double key) const {
     int s = 0;
-    int e = 7;
+    int e = 8;
     int mid;
     while (s < e) {
       mid = (s + e) / 2;
@@ -39,68 +47,172 @@ class PiecewiseLR {
       else
         e = mid;
     }
-    // return the predicted idx in the children
-    int p = theta[e].first * key + theta[e].second;
     if (e == 0) {
-      if (p < 0)
-        p = 0;
-      else if (p > point[e].second)
-        p = point[e].second;
-    } else {
-      if (p < point[e - 1].second)
-        p = point[e - 1].second;
-      else if (p > point[e].second)
-        p = point[e].second;
+      return 0;
     }
-    if (p > length) p = length;
+    // return the predicted idx in the children
+    float a = (point[e].second - point[e - 1].second) /
+              (point[e].first - point[e - 1].first);
+    float b = point[e].second - a * point[e].first;
+    int p = a * key + b;
+    if (p < point[e - 1].second)
+      p = point[e - 1].second;
+    else if (p > point[e].second)
+      p = point[e].second;
     return p;
   }
 
  private:
   int length;
-  DataVectorType theta;
-  std::vector<std::pair<double, int>> point;  // <point.first, boundary>
+  std::vector<std::pair<float, int>> point;  // <point.first, boundary>
+};
+
+float CalculateCost(int left, int right, const DataVectorType *dataset) {
+  float a = ((*dataset)[right].second - (*dataset)[left].second) /
+            ((*dataset)[right].first - (*dataset)[left].first);
+  float b = (*dataset)[left].second - a * (*dataset)[left].first;
+  float cost = 0;
+  int y;
+  for (int i = left; i <= right; i++) {
+    if ((*dataset)[i].first != -1) {
+      y = a * (*dataset)[i].first + b;
+      cost += (y - (*dataset)[i].second) * (y - (*dataset)[i].second);
+    }
+  }
+  if (cost < 0) {
+    std::cout << "wrong" << std::endl;
+  }
+  return cost;
+}
+
+float Diff(int n, int len, const int idx[]) {
+  int opt[8];
+  for (int i = 0; i < n; i++) {
+    opt[i] = abs(static_cast<float>(len) / 8.0 * i - idx[i]);
+  }
+  float diff = 0.0;
+  for (int i = 0; i < n; i++) {
+    diff += opt[i] * opt[i];
+  }
+  return diff;
+}
+
+struct SegmentPoint {
+  float cost;
+  double key[7] = {-1, -1, -1, -1, -1, -1, -1};
+  int idx[8] = {-1, -1, -1, -1, -1, -1, -1};
 };
 
 void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
+  DataVectorType data;
+  data.insert(data.begin(), dataset.begin(), dataset.end());
   length = len - 1;
+  for (int i = 0; i < 9; i++) {
+    point[i] = {data[data.size() - 1].first, length};
+  }
+  point[0].first = dataset[0].first;
+  point[0].second = 0;
   int actualSize = 0;
-  std::vector<double> index;
-  for (int i = 0; i < dataset.size(); i++) {
-    if (dataset[i].first != -1) actualSize++;
-    index.push_back(static_cast<double>(i) /
-                    static_cast<double>(dataset.size()));
+  for (int i = 0; i < data.size(); i++) {
+    if (data[i].first != -1) {
+      actualSize++;
+    }
+    data[i].second =
+        static_cast<int>(static_cast<float>(i) / data.size() * len);
   }
   if (actualSize == 0) return;
+  int size = data.size();
 
-  int seg = dataset.size() / 8;
-  int i = 0;
-  for (int k = 1; k <= 8; k++) {
-    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-    int end = std::min(k * seg, static_cast<int>(dataset.size() - 1));
-    if (dataset[end].first != -1)
-      point.push_back({dataset[end].first, length});
-    else
-      point.push_back({dataset[end - 1].first, length});
-    for (; i < end; i++) {
-      if (dataset[i].first != -1) {
-        t1 += dataset[i].first * dataset[i].first;
-        t2 += dataset[i].first;
-        t3 += dataset[i].first * index[i];
-        t4 += index[i];
+  SegmentPoint tmp;
+  tmp.cost = DBL_MAX;
+  std::vector<SegmentPoint> tmpp(size, tmp);
+  std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
+
+  for (int j = 1; j < size; j++) {
+    dp[0][j].cost = CalculateCost(0, j, &data);
+    dp[0][j].key[0] = data[j].first;
+    dp[0][j].idx[0] = data[j].second;
+  }
+  for (int i = 1; i < 7; i++) {
+    for (int j = i + 1; j < size - 1; j++) {
+      SegmentPoint opt;
+      opt.cost = DBL_MAX;
+      for (int k = 1; k < j; k++) {
+        float res = DBL_MAX;
+        if (i < 6) {
+          res = dp[0][k].cost + CalculateCost(k, j, &data);
+        } else {
+          res = dp[0][k].cost + CalculateCost(k, j, &data) +
+                CalculateCost(j, size - 1, &data);
+        }
+        if (res < opt.cost) {
+          opt.cost = res;
+          for (int l = 0; l < i; l++) {
+            opt.idx[l] = dp[0][k].idx[l];
+            opt.key[l] = dp[0][k].key[l];
+          }
+          opt.key[i] = data[j].first;
+          opt.idx[i] = data[j].second;
+        } else if (res == opt.cost) {
+          int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+          for (int l = 0; l < i; l++) {
+            dp_idx[l] = dp[0][k].idx[l];
+          }
+          dp_idx[i] = data[j].second;
+
+          float var0 = Diff(i + 1, len, dp_idx);
+          float var1 = Diff(i + 1, len, opt.idx);
+          if (var0 < var1) {
+            for (int l = 0; l < i; l++) {
+              opt.idx[l] = dp[0][k].idx[l];
+              opt.key[l] = dp[0][k].key[l];
+            }
+            opt.key[i] = data[j].first;
+            opt.idx[i] = data[j].second;
+          }
+        }
+      }
+      dp[1][j].cost = opt.cost;
+      for (int l = 0; l <= i; l++) {
+        dp[1][j].idx[l] = opt.idx[l];
+        dp[1][j].key[l] = opt.key[l];
       }
     }
-    auto theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
-    auto theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
-    theta1 *= len;
-    theta2 *= len;
-    theta[k - 1] = {theta1, theta2};
-    int pointIdx = theta1 * point[k - 1].first + theta2;
-    if (pointIdx < 0)
-      pointIdx = 0;
-    else if (pointIdx > length)
-      pointIdx = length;
-    point[k - 1].second = pointIdx;
+    for (int m = i + 1; m < size - 1; m++) {
+      dp[0][m].cost = dp[1][m].cost;
+      for (int l = 0; l <= i; l++) {
+        dp[0][m].idx[l] = dp[1][m].idx[l];
+        dp[0][m].key[l] = dp[1][m].key[l];
+      }
+    }
+  }
+
+  SegmentPoint opt;
+  opt.cost = DBL_MAX;
+  for (int j = 7; j < size; j++) {
+    if (dp[1][j].cost < opt.cost) {
+      opt.cost = dp[1][j].cost;
+      for (int k = 0; k < 7; k++) {
+        opt.idx[k] = dp[1][j].idx[k];
+        opt.key[k] = dp[1][j].key[k];
+      }
+    } else if (dp[1][j].cost == opt.cost) {
+      dp[1][j].idx[7] = length;
+      opt.idx[7] = length;
+      float var0 = Diff(8, len, dp[1][j].idx);
+      float var1 = Diff(8, len, opt.idx);
+      if (var0 < var1) {
+        opt.cost = dp[1][j].cost;
+        for (int k = 0; k < 7; k++) {
+          opt.idx[k] = dp[1][j].idx[k];
+          opt.key[k] = dp[1][j].key[k];
+        }
+      }
+    }
+  }
+  for (int i = 0; i < 7; i++) {
+    point[i + 1].first = opt.key[i];
+    point[i + 1].second = opt.idx[i];
   }
 }
 #endif  // SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_

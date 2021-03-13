@@ -15,18 +15,22 @@
 #include <vector>
 
 #include "../../../params.h"
-#include "trainModel/linear_regression.h"
 #include "../../construct/structures.h"
+#include "trainModel/linear_regression.h"
 
 class LRType {
  public:
   LRType() = default;
-  explicit LRType(int c) { flagNumber = (LR_ROOT_NODE << 24) + c; }
+  explicit LRType(int c) {
+    flagNumber = (LR_ROOT_NODE << 24) + c;
+    model = new LinearRegression();
+  }
+  ~LRType() { delete model; }
 
   int flagNumber;  // 4 Byte (flag + childNumber)
 
-  int childLeft;           // 4 Byte
-  LinearRegression model;  // 20 Byte
+  int childLeft;            // 4 Byte
+  LinearRegression* model;  // 20 Byte
 };
 
 #endif  // SRC_CARMI_NODES_ROOTNODE_LR_TYPE_H_

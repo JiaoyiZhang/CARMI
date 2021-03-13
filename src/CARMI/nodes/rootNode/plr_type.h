@@ -20,12 +20,16 @@
 class PLRType {
  public:
   PLRType() = default;
-  explicit PLRType(int c) { flagNumber = (PLR_ROOT_NODE << 24) + c; }
+  explicit PLRType(int c) {
+    flagNumber = (PLR_ROOT_NODE << 24) + c;
+    model = new PiecewiseLR();
+  }
+  ~PLRType() { delete model; }
 
   int flagNumber;  // 4 Byte (flag + childNumber)
 
-  int childLeft;      // 4 Byte
-  PiecewiseLR model;  // 24*8+4 Byte
+  int childLeft;       // 4 Byte
+  PiecewiseLR *model;  // 24*8+4 Byte
 };
 
 #endif  // SRC_CARMI_NODES_ROOTNODE_PLR_TYPE_H_

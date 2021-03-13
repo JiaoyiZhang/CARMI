@@ -38,6 +38,7 @@ class IndexPair {
  public:
   int left;
   int size;
+  IndexPair() { left = -1, size = 0; }
   IndexPair(int l, int s) {
     left = l;
     size = s;
@@ -55,32 +56,6 @@ class IndexPair {
   }
 };
 
-struct MapKey {
-  bool isInnerNode;  // ->delete
-  IndexPair initRange;
-  bool operator<(const MapKey &a) const {
-    if (initRange.left == a.initRange.left)
-      return initRange.size < a.initRange.size;
-    else
-      return initRange.left < a.initRange.left;
-  }
-};
-
-struct ParamStruct {
-  int type;                   // 0-4
-  int childNum;               // for inner nodes
-  double density;             // for leaf nodes
-  std::vector<MapKey> child;  // the key in the corresponding map
-  ParamStruct() {}
-  ParamStruct(int t, int c, double d, std::vector<MapKey> tmpChild) {
-    type = t;
-    childNum = c;
-    density = d;
-    child = tmpChild;
-  }
-};
-
-// change the name
 class DataRange {
  public:
   IndexPair initRange;
@@ -116,4 +91,5 @@ enum NodeType {
   GAPPED_ARRAY_LEAF_NODE,
   EXTERNAL_ARRAY_LEAF_NODE
 };
+
 #endif  // SRC_CARMI_CONSTRUCT_STRUCTURES_H_

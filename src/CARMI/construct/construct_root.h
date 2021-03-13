@@ -33,9 +33,9 @@ void CARMI::isBetterRoot(int c, NodeType type, double time_cost,
   double space_cost = BaseNodeSpace * c;
 
   TYPE root(c);
-  root.model.Train(initDataset, c);
+  root.model->Train(initDataset, c);
   IndexPair range(0, initDataset.size());
-  NodePartition<ModelType>(root.model, range, initDataset, &perSize);
+  NodePartition<ModelType>(*(root.model), range, initDataset, &perSize);
   double entropy = CalculateEntropy(initDataset.size(), c, perSize);
   double cost = (time_cost + static_cast<float>(kRate * space_cost)) / entropy;
 
@@ -85,11 +85,12 @@ TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const DataRange &range,
                           SubDataset *subDataset, int *childLeft) {
   TYPE root(rootStruct.rootChildNum);
   *childLeft = allocateChildMemory(rootStruct.rootChildNum);
-  root.model.Train(initDataset, rootStruct.rootChildNum);
+  root.model->Train(initDataset, rootStruct.rootChildNum);
 
-  NodePartition<ModelType>(root.model, range.initRange, initDataset,
+  NodePartition<ModelType>(*(root.model), range.initRange, initDataset,
                            &(subDataset->subInit));
-  NodePartition<ModelType>(root.model, range.insertRange, insertQuery,
+  subDataset->subFind = subDataset->subInit;
+  NodePartition<ModelType>(*(root.model), range.insertRange, insertQuery,
                            &(subDataset->subInsert));
   return root;
 }

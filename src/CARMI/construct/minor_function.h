@@ -32,7 +32,9 @@ void CARMI::NodePartition(const TYPE &node, const IndexPair &range,
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = node.Predict(dataset[i].first);
-    if ((*subData)[p].left == -1) (*subData)[p].left = i;
+    if ((*subData)[p].left == -1) {
+      (*subData)[p].left = i;
+    }
     (*subData)[p].size++;
   }
 }
@@ -42,13 +44,13 @@ TYPE CARMI::InnerDivideAll(int c, const DataRange &range,
                            SubDataset *subDataset) {
   TYPE node;
   node.SetChildNumber(c);
-  Train(range.initRange.left, range.initRange.size, initDataset, &node);
+  Train(range.initRange.left, range.initRange.size, &node);
 
   NodePartition<TYPE>(node, range.initRange, initDataset,
                       &(subDataset->subInit));
   subDataset->subFind = subDataset->subInit;
-  NodePartition<TYPE>(node, range.initRange, initDataset,
-                      &(subDataset->subInit));
+  NodePartition<TYPE>(node, range.insertRange, insertQuery,
+                      &(subDataset->subInsert));
   return node;
 }
 

@@ -22,7 +22,7 @@ class HisModel {
  public:
   HisModel() = default;
   void SetChildNumber(int c) {
-    flagNumber = (HIS_INNER_NODE << 24) + std::min(c, 160);
+    flagNumber = (HIS_INNER_NODE << 24) + std::min(c, 256);
     minValue = 0;
     divisor = 1;
   }
@@ -30,11 +30,11 @@ class HisModel {
 
   int flagNumber;  // 4 Byte (flag + childNumber)
 
-  int childLeft;              // 4 Byte
-  double divisor;             // 4 Byte (TODO: float)
-  double minValue;            // 4 Byte (TODO: float)
-  unsigned short Offset[10];  // 20 Byte (TODO:Offset[11])
-  unsigned short Base[10];    // 20 Byte
+  int childLeft;             // 4 Byte
+  float divisor;            // 4 Byte (TODO: float)
+  float minValue;           // 4 Byte (TODO: float)
+  unsigned char base[16];  // 16 Byte (TODO:Offset[11])
+  unsigned short offset[16];   // 32 Byte
 };
 
 #endif  // SRC_CARMI_NODES_INNERNODE_HIS_H_

@@ -22,9 +22,12 @@
 class BinarySearchModel {
  public:
   BinarySearchModel() {}
-  explicit BinarySearchModel(int childNum) {
+  explicit BinarySearchModel(int childNum) : index(childNum, 0) {
     childNumber = childNum;
-    index = std::vector<double>(childNum, 0);
+  }
+  BinarySearchModel(const BinarySearchModel &node) {
+    childNumber = node.childNumber;
+    index = node.index;
   }
   void Train(const DataVectorType &dataset, int len);
   int Predict(double key) const {
@@ -40,12 +43,6 @@ class BinarySearchModel {
     }
     return end_idx;
   }
-
-  //   // designed for test
-  //   void GetIndex std::vector<double> &v) {
-  //     for (int i = 0; i < childNumber; i++) v.push_back(index[i]);
-  //   }
-  //   int GetChildNum() { return childNumber; }
 
  private:
   std::vector<double> index;  // 8c

@@ -31,8 +31,36 @@ inline int ArrayType::Predict(double key) const {
   return p;
 }
 
-inline void CARMI::initArray(int cap, const int left, const int size,
+inline void CARMI::initArray(int cap, int left, int size,
                              const DataVectorType &dataset, ArrayType *arr) {
+  if (size == 0) return;
+  DataVectorType newDataset(size, {DBL_MIN, DBL_MIN});
+  int actualSize = 0;
+  for (int i = left; i < left + size; i++) {
+    if (dataset[i].second != DBL_MIN) {
+      newDataset[actualSize++] = dataset[i];
+    }
+  }
+
+  UpdatePara(cap, actualSize, arr);
+  StoreData(left, size, newDataset, arr);
+
+  if (size > 4096)
+    std::cout << "init Array setDataset WRONG! datasetSize > 4096, size is:"
+              << size << std::endl;
+
+  Train(arr->m_left, size, entireData, arr);
+}
+
+/**
+ * @brief update m_capacity, flagNumber and m_left
+ *
+ * @param cap
+ * @param left
+ * @param size
+ * @param arr
+ */
+inline void CARMI::UpdatePara(int cap, int size, ArrayType *arr) {
   if (arr->m_left != -1) {
     releaseMemory(arr->m_left, arr->m_capacity);
   }
@@ -47,28 +75,45 @@ inline void CARMI::initArray(int cap, const int left, const int size,
   }
 
   arr->m_left = allocateMemory(arr->m_capacity);
-  if (size == 0) return;
+}
 
-  if (size > 4096)
-    std::cout << "init Array setDataset WRONG! datasetSize > 4096, size is:"
-              << size << std::endl;
-
+inline void CARMI::StoreData(int left, int size, const DataVectorType &dataset,
+                             ArrayType *arr) {
   int end = left + size;
   for (int i = arr->m_left, j = left; j < end; i++, j++)
     entireData[i] = dataset[j];
-
-  Train(arr);
-  UpdateError(arr);
 }
 
-inline int CARMI::UpdateError(ArrayType *arr) {
+inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
+                         ArrayType *arr) {
+  int actualSize = 0;
+  std::vector<double> index;
+  int end = start_idx + size;
+  for (int i = start_idx; i < end; i++) {
+    if (dataset[i].first != DBL_MIN) {
+      actualSize++;
+    }
+    index.push_back(static_cast<double>(i - start_idx) / size);
+  }
+  if (actualSize == 0) return;
+
+  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+  for (int i = start_idx; i < end; i++) {
+    if (dataset[i].first != DBL_MIN) {
+      t1 += dataset[i].first * dataset[i].first;
+      t2 += dataset[i].first;
+      t3 += dataset[i].first * index[i - start_idx];
+      t4 += index[i - start_idx];
+    }
+  }
+  arr->theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
+  arr->theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
+
   // find: max|pi-yi|
   int maxError = 0, p, d;
-  int size = arr->flagNumber & 0x00FFFFFF;
-  int end = arr->m_left + size;
-  for (int i = arr->m_left; i < end; i++) {
-    p = arr->Predict(entireData[i].first) + arr->m_left;
-    d = abs(i - p);
+  for (int i = start_idx; i < end; i++) {
+    p = arr->Predict(dataset[i].first);
+    d = abs(i - start_idx - p);
     if (d > maxError) maxError = d;
   }
 
@@ -79,9 +124,9 @@ inline int CARMI::UpdateError(ArrayType *arr) {
   for (int e = 0; e <= maxError; e++) {
     cntBetween = 0;
     cntOut = 0;
-    for (int i = arr->m_left; i < end; i++) {
-      p = arr->Predict(entireData[i].first) + arr->m_left;
-      d = abs(i - p);
+    for (int i = start_idx; i < start_idx + size; i++) {
+      p = arr->Predict(dataset[i].first);
+      d = abs(i - start_idx - p);
       if (d <= e)
         cntBetween++;
       else
@@ -96,14 +141,35 @@ inline int CARMI::UpdateError(ArrayType *arr) {
       arr->error = e;
     }
   }
-  return arr->error;
 }
 
-inline int CARMI::UpdateError(ArrayType *arr, const int start_idx,
-                              const int size) {
+inline void CARMI::Train(int start_idx, int size, ArrayType *arr) {
+  int actualSize = 0;
+  std::vector<double> index;
+  int end = start_idx + size;
+  for (int i = start_idx; i < end; i++) {
+    if (initDataset[i].first != DBL_MIN) {
+      actualSize++;
+    }
+    index.push_back(static_cast<double>(i - start_idx) / size);
+  }
+  if (actualSize == 0) return;
+
+  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+  for (int i = start_idx; i < end; i++) {
+    if (initDataset[i].first != DBL_MIN) {
+      t1 += initDataset[i].first * initDataset[i].first;
+      t2 += initDataset[i].first;
+      t3 += initDataset[i].first * index[i - start_idx];
+      t4 += index[i - start_idx];
+    }
+  }
+  arr->theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
+  arr->theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
+
   // find: max|pi-yi|
   int maxError = 0, p, d;
-  for (int i = start_idx; i < start_idx + size; i++) {
+  for (int i = start_idx; i < end; i++) {
     p = arr->Predict(initDataset[i].first);
     d = abs(i - start_idx - p);
     if (d > maxError) maxError = d;
@@ -133,49 +199,5 @@ inline int CARMI::UpdateError(ArrayType *arr, const int start_idx,
       arr->error = e;
     }
   }
-  return arr->error;
 }
-
-inline void CARMI::Train(ArrayType *arr) {
-  int actualSize = 0;
-  std::vector<double> index;
-  int size = arr->flagNumber & 0x00FFFFFF;
-  int end = arr->m_left + size;
-  for (int i = arr->m_left; i < end; i++) {
-    if (entireData[i].first != DBL_MIN) actualSize++;
-    index.push_back(static_cast<double>(i - arr->m_left) / size);
-  }
-  if (actualSize == 0) return;
-
-  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-  for (int i = arr->m_left; i < end; i++) {
-    if (entireData[i].first != DBL_MIN) {
-      t1 += entireData[i].first * entireData[i].first;
-      t2 += entireData[i].first;
-      t3 += entireData[i].first * index[i - arr->m_left];
-      t4 += index[i - arr->m_left];
-    }
-  }
-  arr->theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
-  arr->theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
-}
-
-inline void CARMI::Train(ArrayType *arr, const int start_idx, const int size) {
-  if ((arr->flagNumber & 0x00FFFFFF) != size) arr->flagNumber += size;
-  std::vector<double> index;
-  int end = start_idx + size;
-  for (int i = start_idx; i < end; i++)
-    index.push_back(static_cast<double>(i - start_idx) / size);
-
-  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-  for (int i = start_idx; i < end; i++) {
-    t1 += initDataset[i].first * initDataset[i].first;
-    t2 += initDataset[i].first;
-    t3 += initDataset[i].first * index[i - start_idx];
-    t4 += index[i - start_idx];
-  }
-  arr->theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
-  arr->theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
-}
-
 #endif  // SRC_CARMI_NODES_LEAFNODE_ARRAY_TYPE_H_

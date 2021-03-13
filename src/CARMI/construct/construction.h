@@ -30,7 +30,7 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
                                     NodeCost *nodeCost) {
   for (int i = 0; i < rootStruct.rootChildNum; i++) {
     COST.insert({emptyRange, emptyCost});
-    structMap.insert({(MapKey){false, emptyRange}, leafP});
+    structMap.insert({emptyRange, emptyNode});
 
     NodeCost resChild;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
@@ -40,12 +40,10 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
     else
       resChild = dp(range);
 
-    MapKey key = {resChild.isInnerNode,
-                  {subDataset.subInit[i].size, subDataset.subInsert[i].size}};
-    auto it = structMap.find(key);
-    int type = it->second.type;
+    auto it = structMap.find(subDataset.subInit[i]);
+    int type = it->second.lr.flagNumber >> 24;
 
-    storeOptimalNode(i, type, key, range);
+    storeOptimalNode(i, type, range);
 
     nodeCost->cost += resChild.space * kRate + resChild.time;
     nodeCost->time += resChild.time;
@@ -67,8 +65,8 @@ inline void CARMI::Construction(const DataVectorType &initData,
                                 const DataVectorType &findData,
                                 const DataVectorType &insertData) {
   NodeCost nodeCost = {0, 0, 0, true};
-  RootStruct res = ChooseRoot();
-  // RootStruct res = RootStruct(0, 131072);
+  // RootStruct res = ChooseRoot();
+  RootStruct res = RootStruct(0, 131072);
   rootType = res.rootType;
   SubDataset subDataset = StoreRoot(res, &nodeCost);
 

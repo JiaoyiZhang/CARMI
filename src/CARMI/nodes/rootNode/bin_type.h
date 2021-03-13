@@ -19,16 +19,16 @@
 
 class BSType {
  public:
-  BSType() = default;
-  explicit BSType(int c) {
+  BSType() : model() {}
+  explicit BSType(int c) : model(new BinarySearchModel(c)) {
     flagNumber = (BS_ROOT_NODE << 24) + c;
-    model = BinarySearchModel(c);
   }
+  ~BSType() { delete model; }
 
   int flagNumber;  // 4 Byte (flag + childNumber)
 
-  int childLeft;            // 4c Byte + 4
-  BinarySearchModel model;  // 8c + 4
+  int childLeft;             // 4c Byte + 4
+  BinarySearchModel* model;  // 8c + 4
 };
 
 #endif  // SRC_CARMI_NODES_ROOTNODE_BIN_TYPE_H_
