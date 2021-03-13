@@ -218,12 +218,6 @@ inline int HisModel::Predict(double key) const {
   tmp = (tmp & 0x0f0f0f0f) + ((tmp >> 4) & 0x0f0f0f0f);
   tmp = (tmp & 0x00ff00ff) + ((tmp >> 8) & 0x00ff00ff);
   index += tmp;
-#ifdef DEBUG
-  if (index >= childNumber) {
-    std::cout << "index " << index << ", >= childNumber:" << childNumber
-              << std::endl;
-  }
-#endif  // DEBUG
   return index;
 }
 

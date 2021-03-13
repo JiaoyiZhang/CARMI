@@ -76,14 +76,14 @@ NodeCost CARMI::dpInner(const DataRange &dataRange) {
     frequency += insertQuery[l].second;
   double frequency_weight = static_cast<double>(frequency) / querySize;
   int tmpEnd = dataRange.initRange.size / 2;
-  for (int c = 2; c < tmpEnd; c *= 2) {
+  for (int c = 16; c < tmpEnd; c *= 2) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
 #endif  // DEBUG
     CalInner<LRModel>(c, LR_INNER_NODE, frequency_weight, LRInnerTime,
                       dataRange, &optimalCost, &optimal_node_struct);
-    CalInner<PLRModel>(c, PLR_INNER_NODE, frequency_weight, PLRInnerTime,
-                       dataRange, &optimalCost, &optimal_node_struct);
+    // CalInner<PLRModel>(c, PLR_INNER_NODE, frequency_weight, PLRInnerTime,
+    //                    dataRange, &optimalCost, &optimal_node_struct);
     if (c <= 160)
       CalInner<HisModel>(c, HIS_INNER_NODE, frequency_weight, HisInnerTime,
                          dataRange, &optimalCost, &optimal_node_struct);

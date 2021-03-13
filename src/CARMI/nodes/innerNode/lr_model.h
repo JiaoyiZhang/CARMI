@@ -187,6 +187,9 @@ inline int LRModel::Predict(double key) const {
     p = left;
   else if (p >= left + bound)
     p = left + bound - 1;
+  if (p >= (flagNumber & 0x00FFFFFF)) {
+    p = (flagNumber & 0x00FFFFFF) - 1;
+  }
   return p;
 }
 #endif  // SRC_CARMI_NODES_INNERNODE_LR_MODEL_H_

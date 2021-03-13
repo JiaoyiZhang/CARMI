@@ -46,13 +46,11 @@ class BinarySearchModel {
 
  private:
   std::vector<double> index;  // 8c
-  // double index[131072]; // 8c
   int childNumber;  // 4
 };
 
 void BinarySearchModel::Train(const DataVectorType &dataset, int len) {
   if (dataset.size() == 0) return;
-  // index.clear();
   int tmp = 0;
   childNumber = len;
   float value = static_cast<float>(dataset.size()) / childNumber;
@@ -60,11 +58,9 @@ void BinarySearchModel::Train(const DataVectorType &dataset, int len) {
   for (int i = value * cnt - 1; i < dataset.size(); i = value * (++cnt) - 1) {
     if (dataset[i].first != -1) {
       index[tmp++] = dataset[i].first;
-      // index.push_back(dataset[i].first);
     } else {
       for (int j = i + 1; j < dataset.size(); j++) {
         if (dataset[j].first != -1) {
-          // index.push_back(dataset[j].first);
           index[tmp++] = dataset[j].first;
           break;
         }
