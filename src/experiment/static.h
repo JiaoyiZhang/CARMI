@@ -19,15 +19,15 @@
 #include "workload/workloade.h"
 
 extern int childNum;
-extern ofstream outRes;
+extern std::ofstream outRes;
 
 void RunStatic(double initRatio, int kLeafID, const DataVectorType &initDataset,
                const DataVectorType &testInsertQuery,
-               const vector<int> &length) {
+               const std::vector<int> &length) {
   for (int j = 2; j < 3; j++) {
-    cout << "root type:" << j << endl;
+    std::cout << "root type:" << j << std::endl;
     CARMI carmi(initDataset, 131072, j, kLeafID);
-    cout << "index init over!" << endl;
+    std::cout << "index init over!" << std::endl;
     switch (j) {
       case LR_ROOT_NODE:
         outRes << "lr,";
@@ -54,7 +54,7 @@ void RunStatic(double initRatio, int kLeafID, const DataVectorType &initDataset,
     else if (initRatio == kRangeScan)
       WorkloadE(initDataset, testInsertQuery, length, &carmi);  // range scan
   }
-  outRes << endl;
+  outRes << std::endl;
 }
 
 #endif  // SRC_EXPERIMENT_STATIC_H_

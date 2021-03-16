@@ -11,31 +11,33 @@
  */
 #ifndef SRC_EXPERIMENT_WORKLOAD_WORKLOADE_H_
 #define SRC_EXPERIMENT_WORKLOAD_WORKLOADE_H_
+#include <chrono>
 #include <vector>
 
 #include "../../CARMI/func/find_function.h"
 #include "../../CARMI/func/insert_function.h"
 #include "./zipfian.h"
 
-extern ofstream outRes;
+extern std::ofstream outRes;
 
 // read mostly workload (range scan)
 // a mix of 95/5 reads and writes
 void WorkloadE(const DataVectorType &initDataset,
-               const DataVectorType &insertDataset, const vector<int> &length,
-               CARMI *carmi) {
+               const DataVectorType &insertDataset,
+               const std::vector<int> &length, CARMI *carmi) {
   auto init = initDataset;
   auto insert = insertDataset;
 
-  default_random_engine engine;
+  std::default_random_engine engine;
 
-  unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-  engine = default_random_engine(seed);
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  engine = std::default_random_engine(seed);
   shuffle(init.begin(), init.end(), engine);
 
   if (!kPrimaryIndex) {
-    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed1);
+    unsigned seed1 =
+        std::chrono::system_clock::now().time_since_epoch().count();
+    engine = std::default_random_engine(seed1);
     shuffle(insert.begin(), insert.end(), engine);
   }
 
@@ -52,16 +54,16 @@ void WorkloadE(const DataVectorType &initDataset,
   if (tmp_end != 5000)
     std::cout << "wrong, workload e, tmp_end:" << tmp_end << std::endl;
 #endif  // DEBUG
-  vector<int> index(tmp_end, 0);
+  std::vector<int> index(tmp_end, 0);
   for (int i = 0; i < tmp_end; i++) {
     int idx = zip.GenerateNextIndex();
     index[i] = idx;
   }
 
   DataVectorType ret(100, {-1, -1});
-  chrono::_V2::system_clock::time_point s, e;
+  std::chrono::_V2::system_clock::time_point s, e;
   double tmp;
-  s = chrono::system_clock::now();
+  s = std::chrono::system_clock::now();
 #if ZIPFIAN
   for (int i = 0; i < end; i++) {
     for (int j = 0; j < 19 && findCnt < init.size(); j++) {
@@ -87,14 +89,14 @@ void WorkloadE(const DataVectorType &initDataset,
     carmi->Insert(insert[i]);
   }
 #endif
-  e = chrono::system_clock::now();
-  tmp = static_cast<double>(
-            chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
-        chrono::nanoseconds::period::den;
-  cout << "over!" << endl;
+  e = std::chrono::system_clock::now();
+  tmp =
+      static_cast<double>(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(e - s).count()) /
+      std::chrono::nanoseconds::period::den;
 
   findCnt = 0;
-  s = chrono::system_clock::now();
+  s = std::chrono::system_clock::now();
 #if ZIPFIAN
   for (int i = 0; i < end; i++) {
     for (int j = 0; j < 19 && findCnt < init.size(); j++) {
@@ -114,13 +116,15 @@ void WorkloadE(const DataVectorType &initDataset,
     }
   }
 #endif
-  e = chrono::system_clock::now();
-  double tmp0 = static_cast<double>(
-                    chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
-                chrono::nanoseconds::period::den;
+  e = std::chrono::system_clock::now();
+  double tmp0 =
+      static_cast<double>(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(e - s).count()) /
+      std::chrono::nanoseconds::period::den;
   tmp -= tmp0;
 
-  cout << "total time:" << tmp * kSecondToNanosecond / kTestSize << endl;
+  std::cout << "total time:" << tmp * kSecondToNanosecond / kTestSize
+            << std::endl;
   outRes << tmp * kSecondToNanosecond / kTestSize << ",";
 }
 

@@ -20,14 +20,15 @@
 #include "dataset/normal_distribution.h"
 #include "dataset/uniform_distribution.h"
 
-void fixedSynthetic(double initRatio, int kLeafID, const vector<int> &lengt);
+void fixedSynthetic(double initRatio, int kLeafID,
+                    const std::vector<int> &lengt);
 
 void fixedExperiment() {
   // for range scan
-  vector<int> length;
+  std::vector<int> length;
   // static structure
   for (int i = 0; i < 2; i++) {
-    std::cout << "kleafnode:" << i << endl;
+    std::cout << "kleafnode:" << i << std::endl;
     fixedSynthetic(kReadOnly, i, length);
     if (i == 1) fixedSynthetic(kWriteHeavy, i, length);
   }
@@ -36,57 +37,67 @@ void fixedExperiment() {
 
   srand(time(0));
   for (int i = 0; i < kDatasetSize; i++) {
-    length.push_back(min(i + rand() % 100 + 1, kDatasetSize) - i);
+    length.push_back(std::min(i + rand() % 100 + 1, kDatasetSize) - i);
   }
   fixedSynthetic(kRangeScan, 0, length);
 }
 
-void fixedSynthetic(double initRatio, int kLeafID, const vector<int> &length) {
+void fixedSynthetic(double initRatio, int kLeafID,
+                    const std::vector<int> &length) {
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                "&&&&&&&"
-            << endl;
-  std::cout << "initRatio is: " << initRatio << endl;
-  outRes << "initRatio," << initRatio << endl;
+            << std::endl;
+  std::cout << "initRatio is: " << initRatio << std::endl;
+  outRes << "initRatio," << initRatio << std::endl;
   double init = initRatio;
   if (init == 2) init = 0.95;
   LongitudesDataset longData = LongitudesDataset(init);
   UniformDataset uniData = UniformDataset(init);
   NormalDataset norData = NormalDataset(init);
   ExponentialDataset expData = ExponentialDataset(init);
+
   DataVectorType initData;
   DataVectorType trainFind;
   DataVectorType trainInsert;
   DataVectorType testInsert;
+  std::vector<int> trainInsertIndex;
 
   for (int i = 0; i < 1; i++) {
     int childNum = 131072;
-    cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-    outRes << "+++++++++++ childNum: " << childNum << endl;
-    uniData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
-    outRes << "+++++++++++ uniform dataset++++++++++++++++++++++++++" << endl;
+    std::cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++"
+              << std::endl;
+    outRes << "+++++++++++ childNum: " << childNum << std::endl;
+    uniData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                            &trainInsertIndex, &testInsert);
+    outRes << "+++++++++++ uniform dataset++++++++++++++++++++++++++"
+           << std::endl;
     RunStatic(initRatio, kLeafID, initData, testInsert, length);
 
     std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
-              << endl;
-    outRes << "+++++++++++ childNum: " << childNum << endl;
-    expData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+              << std::endl;
+    outRes << "+++++++++++ childNum: " << childNum << std::endl;
+    expData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                            &trainInsertIndex, &testInsert);
     outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
-           << endl;
+           << std::endl;
     RunStatic(initRatio, kLeafID, initData, testInsert, length);
 
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
-              << endl;
-    outRes << "+++++++++++ childNum: " << childNum << endl;
-    norData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
-    outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++" << endl;
+              << std::endl;
+    outRes << "+++++++++++ childNum: " << childNum << std::endl;
+    norData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                            &trainInsertIndex, &testInsert);
+    outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
+           << std::endl;
     RunStatic(initRatio, kLeafID, initData, testInsert, length);
 
     std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
-              << endl;
-    outRes << "+++++++++++ childNum: " << childNum << endl;
-    longData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+              << std::endl;
+    outRes << "+++++++++++ childNum: " << childNum << std::endl;
+    longData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                             &trainInsertIndex, &testInsert);
     outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
-           << endl;
+           << std::endl;
     RunStatic(initRatio, kLeafID, initData, testInsert, length);
   }
 }

@@ -35,6 +35,7 @@ class LonglatDataset {
   void GenerateDataset(DataVectorType *initDataset,
                        DataVectorType *trainFindQuery,
                        DataVectorType *trainInsertQuery,
+                       std::vector<int> *trainInsertIndex,
                        DataVectorType *testInsertQuery);
 
  private:
@@ -44,11 +45,13 @@ class LonglatDataset {
 void LonglatDataset::GenerateDataset(DataVectorType *initDataset,
                                      DataVectorType *trainFindQuery,
                                      DataVectorType *trainInsertQuery,
+                                     std::vector<int> *trainInsertIndex,
                                      DataVectorType *testInsertQuery) {
   DataVectorType().swap(*initDataset);
   DataVectorType().swap(*trainFindQuery);
   DataVectorType().swap(*trainInsertQuery);
   DataVectorType().swap(*testInsertQuery);
+  std::vector<int>().swap(*trainInsertIndex);
 
   DataVectorType ds;
   std::ifstream inFile("../src/experiment/dataset/longlat.csv", std::ios::in);
@@ -99,10 +102,12 @@ void LonglatDataset::GenerateDataset(DataVectorType *initDataset,
     int cnt = round(1.0 / (1.0 - proportion));
     for (int j = cnt - 1; j < kDatasetSize; j += cnt) {
       trainInsertQuery->push_back((*initDataset)[j]);
+      trainInsertIndex->push_back(j);
     }
   } else if (proportion == kWritePartial) {
     for (int j = kDatasetSize * 0.6; j < kDatasetSize * 0.9; j += 2) {
       trainInsertQuery->push_back((*initDataset)[j]);
+      trainInsertIndex->push_back(j);
     }
   }
 

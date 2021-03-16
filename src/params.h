@@ -27,26 +27,31 @@ bool kPrimaryIndex = false;
 const double kDensity = 0.5;         // the density of gap in gapped array
 const double kExpansionScale = 1.5;  // scale of array expansion
 
+const int kLeafMaxCapacity = 4096;
 const int kAlgorithmThre = 4096;
-const double BaseNodeSpace = 64.0 / 1024 / 1024;
+const int kReservedSpace = 1024 * 512;
 
-const double LRRootTime = 12.7013;
-const double PLRRootTime = 39.6429;
-const double HisRootTime = 44.2824;
+const double kLRRootTime = 12.7013;
+const double kPLRRootTime = 39.6429;
+const double kHisRootTime = 44.2824;
 
-const double LRInnerTime = 92.4801;
-const double PLRInnerTime = 97.1858;
-const double HisInnerTime = 109.8874;
-const double BSInnerTime = 114.371;
+const double kLRInnerTime = 92.4801;
+const double kPLRInnerTime = 97.1858;
+const double kHisInnerTime = 109.8874;
+const double kBSInnerTime = 114.371;
 
-const double CostMoveTime = 6.25;
-const double CostBaseTime = 161.241;
-const double CostBSTime = 10.9438;
+const double kCostMoveTime = 6.25;
+const double kCostBaseTime = 161.241;
+const double kCostBSTime = 10.9438;
 
-const int reservedSpace = 1024 * 512;
+const int kHisMaxChildNumber = 256;
+const int kBSMaxChildNumber = 20;
+const int kMinChildNumber = 16;
+const int kInsertNewChildNumber = 128;
 
-const int kDataPointSize = 16;
-const int kDatasetSize = 1024 * 1024 * 1024 / kDataPointSize;
+const double kBaseNodeSpace = 64.0 / 1024 / 1024;  // MB
+const float kDataPointSize = 16.0 / 1024 / 1024;   // MB
+const int kDatasetSize = 1024.0 / kDataPointSize;  // 1 GB / 16 bytes
 const float kTestSize = 100000.0;
 const float kMaxValue = 100000000;
 

@@ -78,6 +78,7 @@ void mainSynthetic(double initRatio, int thre, const vector<int> &length) {
   DataVectorType trainFind;
   DataVectorType trainInsert;
   DataVectorType testInsert;
+  std::vector<int> trainInsertIndex;
 
   vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
   vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
@@ -91,43 +92,47 @@ void mainSynthetic(double initRatio, int thre, const vector<int> &length) {
       kRate = rate[r];
     outRes << "kRate:" << kRate << endl;
     cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++" << endl;
-    uniData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+    uniData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                            &trainInsertIndex, &testInsert);
     if (r == 3) {
       // btree_test(initRatio, initData, testInsert, length);
       // artTree_test(initRatio, initData, testInsert, length);
     }
-    Core(initRatio, kRate, thre, length, &initData, &trainFind, &trainInsert,
-         &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
+         &trainFind, &trainInsert, &testInsert);
 
     std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
               << endl;
-    expData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+    expData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                            &trainInsertIndex, &testInsert);
     if (r == 3) {
       // btree_test(initRatio, initData, testInsert, length);
       // artTree_test(initRatio, initData, testInsert, length);
     }
-    Core(initRatio, kRate, thre, length, &initData, &trainFind, &trainInsert,
-         &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
+         &trainFind, &trainInsert, &testInsert);
 
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
               << endl;
-    norData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+    norData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                            &trainInsertIndex, &testInsert);
     if (r == 3) {
       // btree_test(initRatio, initData, testInsert, length);
       // artTree_test(initRatio, initData, testInsert, length);
     }
-    Core(initRatio, kRate, thre, length, &initData, &trainFind, &trainInsert,
-         &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
+         &trainFind, &trainInsert, &testInsert);
 
     std::cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++"
               << endl;
-    logData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+    logData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                            &trainInsertIndex, &testInsert);
     if (r == 3) {
       // btree_test(initRatio, initData, testInsert, length);
       // artTree_test(initRatio, initData, testInsert, length);
     }
-    Core(initRatio, kRate, thre, length, &initData, &trainFind, &trainInsert,
-         &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
+         &trainFind, &trainInsert, &testInsert);
 
     outRes << endl;
   }
@@ -149,6 +154,7 @@ void mainMap(double initRatio, int thre, const vector<int> &length) {
   DataVectorType trainFind;
   DataVectorType trainInsert;
   DataVectorType testInsert;
+  std::vector<int> trainInsertIndex;
 
   vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
   vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
@@ -163,23 +169,25 @@ void mainMap(double initRatio, int thre, const vector<int> &length) {
     outRes << "kRate:" << kRate << endl;
     std::cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++"
               << endl;
-    latData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+    latData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                            &trainInsertIndex, &testInsert);
     if (r == 3) {
       // btree_test(initRatio, initData, testInsert, length);
       // artTree_test(initRatio, initData, testInsert, length);
     }
-    Core(initRatio, kRate, thre, length, &initData, &trainFind, &trainInsert,
-         &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
+         &trainFind, &trainInsert, &testInsert);
 
     std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
               << endl;
-    longData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+    longData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                             &trainInsertIndex, &testInsert);
     if (r == 3) {
       // btree_test(initRatio, initData, testInsert, length);
       // artTree_test(initRatio, initData, testInsert, length);
     }
-    Core(initRatio, kRate, thre, length, &initData, &trainFind, &trainInsert,
-         &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
+         &trainFind, &trainInsert, &testInsert);
 
     outRes << endl;
   }
@@ -202,6 +210,7 @@ void mainYCSB(double initRatio, int thre, const vector<int> &length) {
   DataVectorType trainFind;
   DataVectorType trainInsert;
   DataVectorType testInsert;
+  std::vector<int> trainInsertIndex;
 
   vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
   vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
@@ -214,13 +223,14 @@ void mainYCSB(double initRatio, int thre, const vector<int> &length) {
       kRate = rate[r];
     outRes << "kRate:" << kRate << endl;
     std::cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++" << endl;
-    ycsbData.GenerateDataset(&initData, &trainFind, &trainInsert, &testInsert);
+    ycsbData.GenerateDataset(&initData, &trainFind, &trainInsert,
+                             &trainInsertIndex, &testInsert);
     if (r == 3) {
       // btree_test(initRatio, initData, testInsert, length);
       // artTree_test(initRatio, initData, testInsert, length);
     }
-    Core(initRatio, kRate, thre, length, &initData, &trainFind, &trainInsert,
-         &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
+         &trainFind, &trainInsert, &testInsert);
 
     outRes << endl;
   }

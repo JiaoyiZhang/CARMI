@@ -16,38 +16,33 @@ extern bool kPrimaryIndex;
 
 class YCSBDataset {
  public:
-  YCSBDataset(double initRatio) {
-    init = initRatio;
-    insertNumber = 100000 * (1 - initRatio);
-    if (initRatio == 0) {
-      num = 0;
-      init = 0.85;
-      insertNumber = 15000;
-    } else if (initRatio == 1)
-      num = -1;
-    else
-      num = round(initRatio / (1 - initRatio));
+  explicit YCSBDataset(float initRatio) {
+    proportion = initRatio;
+    if (proportion == kRangeScan) {
+      proportion = kReadHeavy;
+    }
   }
 
   void GenerateDataset(DataVectorType *initDataset,
                        DataVectorType *trainFindQuery,
                        DataVectorType *trainInsertQuery,
+                       std::vector<int> *trainInsertIndex,
                        DataVectorType *testInsertQuery);
 
  private:
-  int num;
-  float init;
-  int insertNumber;
+  float proportion;
 };
 
 void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
                                   DataVectorType *trainFindQuery,
                                   DataVectorType *trainInsertQuery,
+                                  std::vector<int> *trainInsertIndex,
                                   DataVectorType *testInsertQuery) {
   DataVectorType().swap((*initDataset));
   DataVectorType().swap((*trainFindQuery));
   DataVectorType().swap((*trainInsertQuery));
   DataVectorType().swap((*testInsertQuery));
+  std::vector<int>().swap(*trainInsertIndex);
 
   DataVectorType ds;
   std::ifstream inFile("..//src//experiment//dataset//newycsbdata.csv",
@@ -68,24 +63,36 @@ void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
     double k = stod(key);
     double v = k / 10;
     ds.push_back({k, v});
-    if (ds.size() == round(67108864.0 / init)) break;
+    if (ds.size() == kDatasetSize + kTestSize * (1 - proportion)) {
+      break;
+    }
   }
 
   std::sort(ds.begin(), ds.end());
-  for (int i = 0; i < ds.size(); i++) (*initDataset).push_back(ds[i]);
-  int end = round(67108864 / init * (1 - init));
-  auto maxValue = ds[ds.size() - 1];
-  end = round(100000 * (1 - init));
-  for (int i = 1; i <= end; i++)
-    (*testInsertQuery).push_back({maxValue.first + i, maxValue.second + i});
 
-  std::default_random_engine engine;
+  int i = 0;
+  int end = kDatasetSize;
+  for (; i < end; i++) {
+    initDataset->push_back(ds[i]);
+  }
+  end = ds.size();
+  for (; i < end; i++) {
+    testInsertQuery->push_back(ds[i]);
+  }
 
-  unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
-  engine = std::default_random_engine(seed1);
   trainFindQuery = initDataset;
-  for (int i = 0; i < (*trainFindQuery).size(); i++) {
-    (*trainFindQuery)[i].second = 1;
+
+  if (proportion != kWritePartial && proportion != kReadOnly) {
+    int cnt = round(1.0 / (1.0 - proportion));
+    for (int j = cnt - 1; j < kDatasetSize; j += cnt) {
+      trainInsertQuery->push_back((*initDataset)[j]);
+      trainInsertIndex->push_back(j);
+    }
+  } else if (proportion == kWritePartial) {
+    for (int j = kDatasetSize * 0.6; j < kDatasetSize * 0.9; j += 2) {
+      trainInsertQuery->push_back((*initDataset)[j]);
+      trainInsertIndex->push_back(j);
+    }
   }
 
   std::cout << "YCSB: init size:" << (*initDataset).size()

@@ -10,37 +10,38 @@
  */
 #ifndef SRC_EXPERIMENT_WORKLOAD_WORKLOADC_H_
 #define SRC_EXPERIMENT_WORKLOAD_WORKLOADC_H_
+#include <chrono>
 #include <vector>
 
 #include "../../CARMI/carmi.h"
 #include "../../CARMI/func/find_function.h"
 #include "../../CARMI/func/insert_function.h"
 #include "./zipfian.h"
-extern ofstream outRes;
+extern std::ofstream outRes;
 
 // read only workload
 // 100% read
 void WorkloadC(const DataVectorType& initDataset, CARMI* carmi) {
   auto init = initDataset;
 
-  default_random_engine engine;
+  std::default_random_engine engine;
 
-  unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-  engine = default_random_engine(seed);
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  engine = std::default_random_engine(seed);
   shuffle(init.begin(), init.end(), engine);
 
   int end = kTestSize;
   Zipfian zip;
   zip.InitZipfian(PARAM_ZIPFIAN, init.size());
-  vector<int> index(end, 0);
+  std::vector<int> index(end, 0);
   for (int i = 0; i < end; i++) {
     int idx = zip.GenerateNextIndex();
     index[i] = idx;
   }
 
-  chrono::_V2::system_clock::time_point s, e;
+  std::chrono::_V2::system_clock::time_point s, e;
   double tmp;
-  s = chrono::system_clock::now();
+  s = std::chrono::system_clock::now();
 #if ZIPFIAN
   for (int i = 0; i < end; i++) {
     carmi->Find(init[index[i]].first);
@@ -50,12 +51,13 @@ void WorkloadC(const DataVectorType& initDataset, CARMI* carmi) {
     carmi->Find(init[i].first);
   }
 #endif
-  e = chrono::system_clock::now();
-  tmp = static_cast<double>(
-            chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
-        chrono::nanoseconds::period::den;
+  e = std::chrono::system_clock::now();
+  tmp =
+      static_cast<double>(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(e - s).count()) /
+      std::chrono::nanoseconds::period::den;
 
-  s = chrono::system_clock::now();
+  s = std::chrono::system_clock::now();
 
 #if ZIPFIAN
   for (int i = 0; i < end; i++) {
@@ -66,13 +68,15 @@ void WorkloadC(const DataVectorType& initDataset, CARMI* carmi) {
     // init[i].first;
   }
 #endif
-  e = chrono::system_clock::now();
-  double tmp0 = static_cast<double>(
-                    chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
-                chrono::nanoseconds::period::den;
+  e = std::chrono::system_clock::now();
+  double tmp0 =
+      static_cast<double>(
+          std::chrono::duration_cast<std::chrono::nanoseconds>(e - s).count()) /
+      std::chrono::nanoseconds::period::den;
   tmp -= tmp0;
 
-  cout << "total time:" << tmp * kSecondToNanosecond / kTestSize << endl;
+  std::cout << "total time:" << tmp * kSecondToNanosecond / kTestSize
+            << std::endl;
   outRes << tmp * kSecondToNanosecond / kTestSize << ",";
 }
 
