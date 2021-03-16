@@ -23,11 +23,13 @@
 
 /**
  * @brief calculate the time cost of find queries
- * @param node this leaf node
- * @param range the range of find queries
+ *
+ * @tparam TYPE the type of this leaf node
  * @param actualSize the capacity of this leaf node
  * @param density the density of of this leaf node (array: 1)
- * @return the time cost of this leaf node
+ * @param node this leaf node
+ * @param range the range of find queries
+ * @return double the time cost of this leaf node
  */
 template <typename TYPE>
 double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
@@ -36,14 +38,13 @@ double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
   for (int i = range.left; i < range.left + range.size; i++) {
     auto predict = node.Predict(findQuery[i].first) + range.left;
     auto d = abs(i - predict);
-    time_cost += (CostBaseTime * findQuery[i].second) / querySize;
+    time_cost += (kCostBaseTime * findQuery[i].second) / querySize;
     if (d <= node.error)
-      time_cost +=
-          (log(node.error + 1) / log(2) * findQuery[i].second * CostBSTime) *
-          (2 - density) / querySize;
+      time_cost += (log2(node.error + 1) * findQuery[i].second * kCostBSTime) *
+                   (2 - density) / querySize;
     else
-      time_cost += (log(actualSize) / log(2) * findQuery[i].second *
-                    CostBSTime * (2 - density)) /
+      time_cost += (log2(actualSize) * findQuery[i].second * kCostBSTime *
+                    (2 - density)) /
                    querySize;
   }
   return time_cost;
@@ -51,12 +52,14 @@ double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
 
 /**
  * @brief calculate the time cost of insert queries
+ *
+ * @tparam TYPE the type of this leaf node
+ * @param actualSize the capacity of this leaf node
+ * @param density the density of of this leaf node (array: 1)
  * @param node this leaf node
  * @param range the range of insert queries
  * @param findRange the range of find queries
- * @param actualSize the capacity of this leaf node
- * @param density the density of of this leaf node (array: 1)
- * @return the time cost of this leaf node
+ * @return double the time cost of this leaf node
  */
 template <typename TYPE>
 double CARMI::CalLeafInsertTime(int actualSize, double density,
@@ -65,48 +68,36 @@ double CARMI::CalLeafInsertTime(int actualSize, double density,
   double time_cost = 0;
   for (int i = range.left; i < range.left + range.size; i++) {
     int predict = node.Predict(insertQuery[i].first) + findRange.left;
-    int d = abs(i - predict);
-    time_cost += (CostBaseTime * insertQuery[i].second) / querySize;
-    int actual;
-    if (density == 1) {
-      actual = TestBinarySearch(insertQuery[i].first, findRange.left,
-                                findRange.left + findRange.size);
-      time_cost +=
-          CostMoveTime * findRange.size / 2 * insertQuery[i].second / querySize;
-    } else {
-      actual = TestBinarySearch(insertQuery[i].first, findRange.left,
-                                findRange.left + findRange.size);
-      time_cost += CostMoveTime * density / (1 - density) *
-                   insertQuery[i].second / querySize;
-    }
-    d = abs(actual - predict);
-
+    int d = abs(insertQueryIndex[i] - predict);
+    time_cost += (kCostBaseTime * insertQuery[i].second) / querySize;
+    // add the cost of binary search between error or the entire node
     if (d <= node.error)
       time_cost +=
-          (log(node.error + 1) / log(2) * insertQuery[i].second * CostBSTime) *
+          (log2(node.error + 1) * insertQuery[i].second * kCostBSTime) *
           (2 - density) / querySize;
     else
-      time_cost += (log(actualSize) / log(2) * insertQuery[i].second *
-                    CostBSTime * (2 - density)) /
+      time_cost += (log2(actualSize) * insertQuery[i].second * kCostBSTime *
+                    (2 - density)) /
                    querySize;
+    // add the cost of moving data points
+    if (density == 1)
+      time_cost += kCostMoveTime * findRange.size / 2 * insertQuery[i].second /
+                   querySize;
+    else
+      time_cost += kCostMoveTime * density / (1 - density) *
+                   insertQuery[i].second / querySize;
   }
   return time_cost;
 }
 
 /**
  * @brief traverse all possible settings to find the optimal leaf node
+ *
  * @param dataRange the range of data points in this node
- * @return the optimal cost of this subtree
+ * @return NodeCost the optimal cost of this subtree
  */
-NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
+NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
   NodeCost nodeCost;
-  auto it = COST.find(dataRange.initRange);
-  if (it != COST.end()) {
-    nodeCost = it->second;
-    nodeCost.isInnerNode = false;
-    return nodeCost;
-  }
-
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, false};
   BaseNode optimal_node_struct;
 
@@ -121,21 +112,20 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
     for (int i = dataRange.findRange.left; i < findEnd; i++) {
       auto predict = tmp.Predict(findQuery[i].first) + dataRange.findRange.left;
       auto d = abs(i - predict);
-      nodeCost.time += (CostBaseTime * findQuery[i].second) / querySize;
+      nodeCost.time += (kCostBaseTime * findQuery[i].second) / querySize;
       if (d <= error)
         nodeCost.time +=
-            (log(error + 1) / log(2) * findQuery[i].second * CostBSTime) /
-            querySize;
+            (log2(error + 1) * findQuery[i].second * kCostBSTime) / querySize;
       else
-        nodeCost.time += (log(dataRange.initRange.size) / log(2) *
-                          findQuery[i].second * CostBSTime) /
+        nodeCost.time += (log2(dataRange.initRange.size) * findQuery[i].second *
+                          kCostBSTime) /
                          querySize;
     }
 
     int insertEnd = dataRange.insertRange.left + dataRange.insertRange.size;
     for (int i = dataRange.insertRange.left; i < insertEnd; i++) {
       nodeCost.time +=
-          ((CostBaseTime + CostMoveTime) * insertQuery[i].second) / querySize;
+          ((kCostBaseTime + kCostMoveTime) * insertQuery[i].second) / querySize;
     }
 
     nodeCost.cost = nodeCost.time + nodeCost.space * kRate;  // ns + MB * kRate
@@ -151,11 +141,11 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
   int actualSize = kThreshold;
   while (dataRange.initRange.size >= actualSize) actualSize *= kExpansionScale;
 
-  if (actualSize > 4096) actualSize = 4096;
+  if (actualSize > kLeafMaxCapacity) actualSize = kLeafMaxCapacity;
 
   // choose an array node as the leaf node
   double time_cost = 0.0;
-  double space_cost = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
+  double space_cost = kDataPointSize * pow(2, log2(actualSize) + 1);
 
   ArrayType tmp(actualSize);
   Train(dataRange.initRange.left, dataRange.initRange.size, &tmp);
@@ -178,13 +168,13 @@ NodeCost CARMI::dpLeaf(const DataRange &dataRange) {
                 static_cast<float>(actualSize) >=
             Density[i]))
       actualSize = static_cast<float>(actualSize) / Density[i] + 1;
-    if (actualSize > 4096) actualSize = 4096;
+    if (actualSize > kLeafMaxCapacity) actualSize = kLeafMaxCapacity;
 
     GappedArrayType tmpNode(actualSize);
     tmpNode.density = Density[i];
 
     time_cost = 0.0;
-    space_cost = 16.0 * pow(2, log(actualSize) / log(2) + 1) / 1024 / 1024;
+    space_cost = kDataPointSize * pow(2, log2(actualSize) + 1);
 
     Train(dataRange.initRange.left, dataRange.initRange.size, &tmpNode);
     CalLeafFindTime<GappedArrayType>(actualSize, Density[i], tmpNode,

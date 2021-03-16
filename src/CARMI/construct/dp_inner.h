@@ -19,19 +19,22 @@
 /**
  * @brief determine whether the current inner node's setting is
  *        better than the previous optimal setting
- * @param optimalCost the optimal cost of the previous setting
- * @param optimalStruct the optimal setting
- * @param time_cost the time cost of this inner node
- * @param frequency_weight the frequency weight of data points
+ *
+ * @tparam TYPE the type of this inner node
  * @param c the child number of this inner node
  * @param type the type of this inne node
+ * @param frequency_weight the frequency weight of these queries
+ * @param time_cost the time cost of this inner node
  * @param dataRange the range of data points in this node
+ * @param optimalCost the optimal cost of the previous setting
+ * @param optimal_node_struct the optimal setting
  */
 template <typename TYPE>
-void CARMI::CalInner(int c, NodeType type, double frequency_weight,
-                     double time_cost, const DataRange &dataRange,
-                     NodeCost *optimalCost, BaseNode *optimal_node_struct) {
-  double space_cost = BaseNodeSpace * c;  // MB
+void CARMI::ChooseBetterInner(int c, NodeType type, double frequency_weight,
+                              double time_cost, const DataRange &dataRange,
+                              NodeCost *optimalCost,
+                              TYPE *optimal_node_struct) {
+  double space_cost = kBaseNodeSpace * c;  // MB
   time_cost = time_cost * frequency_weight;
   double RootCost = time_cost + kRate * space_cost;
   if (RootCost > optimalCost->cost) return;
@@ -46,7 +49,7 @@ void CARMI::CalInner(int c, NodeType type, double frequency_weight,
     if (subDataset.subInit[i].size > kAlgorithmThreshold)
       res = GreedyAlgorithm(range);
     else
-      res = dp(range);
+      res = DP(range);
 
     space_cost += res.space;
     time_cost += res.time;
@@ -54,16 +57,17 @@ void CARMI::CalInner(int c, NodeType type, double frequency_weight,
   }
   if (RootCost <= optimalCost->cost) {
     *optimalCost = {time_cost, space_cost, RootCost, true};
-    (*optimal_node_struct).lr = *(reinterpret_cast<LRModel *>(&node));
+    *optimal_node_struct = node;
   }
 }
 
 /**
  * @brief traverse all possible settings to find the optimal inner node
+ *
  * @param dataRange the range of data points in this node
- * @return the optimal cost of this subtree
+ * @return NodeCost the optimal cost of this subtree
  */
-NodeCost CARMI::dpInner(const DataRange &dataRange) {
+NodeCost CARMI::DPInner(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, true};
   BaseNode optimal_node_struct = emptyNode;
@@ -76,23 +80,28 @@ NodeCost CARMI::dpInner(const DataRange &dataRange) {
     frequency += insertQuery[l].second;
   double frequency_weight = static_cast<double>(frequency) / querySize;
   int tmpEnd = dataRange.initRange.size / 2;
-  for (int c = 16; c < tmpEnd; c *= 2) {
+  for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
 #endif  // DEBUG
-    CalInner<LRModel>(c, LR_INNER_NODE, frequency_weight, LRInnerTime,
-                      dataRange, &optimalCost, &optimal_node_struct);
-    // CalInner<PLRModel>(c, PLR_INNER_NODE, frequency_weight, PLRInnerTime,
-    //                    dataRange, &optimalCost, &optimal_node_struct);
-    if (c <= 160)
-      CalInner<HisModel>(c, HIS_INNER_NODE, frequency_weight, HisInnerTime,
-                         dataRange, &optimalCost, &optimal_node_struct);
-    if (c <= 20)
-      CalInner<BSModel>(c, BS_INNER_NODE, frequency_weight, BSInnerTime,
-                        dataRange, &optimalCost, &optimal_node_struct);
+    ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight, kLRInnerTime,
+                               dataRange, &optimalCost,
+                               &(optimal_node_struct.lr));
+    ChooseBetterInner<PLRModel>(c, PLR_INNER_NODE, frequency_weight,
+                                kPLRInnerTime, dataRange, &optimalCost,
+                                &(optimal_node_struct.plr));
+    if (c <= kHisMaxChildNumber)
+      ChooseBetterInner<HisModel>(c, HIS_INNER_NODE, frequency_weight,
+                                  kHisInnerTime, dataRange, &optimalCost,
+                                  &(optimal_node_struct.his));
+    if (c <= kBSMaxChildNumber)
+      ChooseBetterInner<BSModel>(c, BS_INNER_NODE, frequency_weight,
+                                 kBSInnerTime, dataRange, &optimalCost,
+                                 &(optimal_node_struct.bs));
   }
   if (optimalCost.time < DBL_MAX)
     structMap.insert({dataRange.initRange, optimal_node_struct});
+  COST.insert({dataRange.initRange, optimalCost});
   nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost, true};
   return nodeCost;
 }

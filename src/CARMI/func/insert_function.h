@@ -65,7 +65,7 @@ bool CARMI::Insert(DataType data) {
       } break;
       case ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
-        if (size >= 4096) {
+        if (size >= kLeafMaxCapacity) {
           DataVectorType tmpDataset;
           auto left = entireChild[idx].array.m_left;
           auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
@@ -73,8 +73,8 @@ bool CARMI::Insert(DataType data) {
             tmpDataset.push_back(entireData[i]);
 
           auto node = LRModel();  // create a new iplrer node
-          int childNum = 128;
-          node.SetChildNumber(128);
+          int childNum = kInsertNewChildNumber;
+          node.SetChildNumber(kInsertNewChildNumber);
           node.childLeft = allocateChildMemory(childNum);
           Train(0, tmpDataset.size(), tmpDataset, &node);
           entireChild[idx].lr = node;
@@ -146,7 +146,7 @@ bool CARMI::Insert(DataType data) {
 
         // expand
         if ((size >= entireChild[idx].array.m_capacity) &&
-            entireChild[idx].array.m_capacity < 4096) {
+            entireChild[idx].array.m_capacity < kLeafMaxCapacity) {
           auto diff = preIdx - left;
           initArray(entireChild[idx].array.m_capacity, left, 1, entireData,
                     &entireChild[idx].array);
@@ -170,7 +170,7 @@ bool CARMI::Insert(DataType data) {
       case GAPPED_ARRAY_LEAF_NODE: {
         auto left = entireChild[idx].ga.m_left;
         int size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
-        if (size >= 4096) {
+        if (size >= kLeafMaxCapacity) {
           DataVectorType tmpDataset;
           auto left = entireChild[idx].ga.m_left;
           auto size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
@@ -178,8 +178,8 @@ bool CARMI::Insert(DataType data) {
             tmpDataset.push_back(entireData[i]);
 
           auto node = LRModel();  // create a new iplrer node
-          node.SetChildNumber(128);
-          int childNum = 128;
+          node.SetChildNumber(kInsertNewChildNumber);
+          int childNum = kInsertNewChildNumber;
           node.childLeft = allocateChildMemory(childNum);
           Train(0, tmpDataset.size(), tmpDataset, &node);
           entireChild[idx].lr = node;
@@ -214,7 +214,7 @@ bool CARMI::Insert(DataType data) {
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);
         }
-        if (entireChild[idx].ga.capacity < 4096 &&
+        if (entireChild[idx].ga.capacity < kLeafMaxCapacity &&
             (static_cast<float>(size) / entireChild[idx].ga.capacity >
              entireChild[idx].ga.density)) {
           // If an additional Insertion results in crossing the density

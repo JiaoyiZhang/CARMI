@@ -23,21 +23,32 @@
 #include "./dp_leaf.h"
 #include "./greedy.h"
 #include "./structures.h"
-
-NodeCost CARMI::dp(const DataRange &range) {
+/**
+ * @brief the dynamic programming algorithm
+ *
+ * @param range the range of data points
+ * @return NodeCost the cost of the subtree
+ */
+NodeCost CARMI::DP(const DataRange &range) {
   NodeCost nodeCost;
   if (range.initRange.size == 0 && range.findRange.size == 0) {
     nodeCost = {0, 0, 0, false};
     return nodeCost;
   }
+  auto it = COST.find(range.initRange);
+  if (it != COST.end()) {
+    nodeCost = it->second;
+    nodeCost.isInnerNode = false;
+    return nodeCost;
+  }
 
   if (range.initRange.size <= kMaxKeyNum) {
-    return dpLeaf(range);
-  } else if (range.initRange.size > 4096) {
-    return dpInner(range);
+    return DPLeaf(range);
+  } else if (range.initRange.size > kLeafMaxCapacity) {
+    return DPInner(range);
   } else {
-    auto res0 = dpLeaf(range);
-    auto res1 = dpInner(range);
+    auto res0 = DPLeaf(range);
+    auto res1 = DPInner(range);
     if (res0.space * kRate + res0.time > res1.space * kRate + res1.time)
       return res1;
     else

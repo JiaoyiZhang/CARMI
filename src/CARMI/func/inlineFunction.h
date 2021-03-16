@@ -67,16 +67,4 @@ inline int CARMI::YCSBBinarySearch(double key, int start, int end) const {
   return start;
 }
 
-// designed for construction
-inline int CARMI::TestBinarySearch(double key, int start, int end) const {
-  while (start < end) {
-    int mid = (start + end) / 2;
-    if (initDataset[mid].first < key)
-      start = mid + 1;
-    else
-      end = mid;
-  }
-  return start;
-}
-
 #endif  // SRC_CARMI_FUNC_INLINEFUNCTION_H_

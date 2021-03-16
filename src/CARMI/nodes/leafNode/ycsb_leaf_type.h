@@ -44,7 +44,7 @@ inline void CARMI::Train(YCSBLeaf *ycsb, const int start_idx, const int size) {
   }
 
   // find the optimal value of error
-  int minRes = size * log(size) / log(2);
+  int minRes = size * log2(size);
   int res;
   int cntBetween, cntOut;
   for (int e = 0; e <= maxError; e++) {
@@ -59,9 +59,9 @@ inline void CARMI::Train(YCSBLeaf *ycsb, const int start_idx, const int size) {
         cntOut++;
     }
     if (e != 0)
-      res = cntBetween * log(e) / log(2) + cntOut * log(size) / log(2);
+      res = cntBetween * log2(e) + cntOut * log2(size);
     else
-      res = cntOut * log(size) / log(2);
+      res = cntOut * log2(size);
     if (res < minRes) {
       minRes = res;
       ycsb->error = e;

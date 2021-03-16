@@ -21,6 +21,7 @@
 
 /**
  * @brief construct each subtree using dp/greedy
+ *
  * @param rootStruct the type and childNumber of root
  * @param subDataset the left and size of data points in each child node
  * @param nodeCost the space, time, cost of the index (is added ...)
@@ -38,7 +39,7 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
     if (subDataset.subInit[i].size > kAlgorithmThreshold)
       resChild = GreedyAlgorithm(range);
     else
-      resChild = dp(range);
+      resChild = DP(range);
 
     auto it = structMap.find(subDataset.subInit[i]);
     int type = it->second.lr.flagNumber >> 24;
@@ -59,14 +60,17 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
  * @param initData the dataset used to initialize the index
  * @param findData the find queries used to training CARMI
  * @param insertData the insert queries used to training CARMI
- * @return the type of root
  */
 inline void CARMI::Construction(const DataVectorType &initData,
                                 const DataVectorType &findData,
                                 const DataVectorType &insertData) {
   NodeCost nodeCost = {0, 0, 0, true};
-  // RootStruct res = ChooseRoot();
+#ifndef DEBUG
+  RootStruct res = ChooseRoot();
+#endif  // DEBUG
+#ifdef DEBUG
   RootStruct res = RootStruct(0, 131072);
+#endif  // DEBUG
   rootType = res.rootType;
   SubDataset subDataset = StoreRoot(res, &nodeCost);
 
@@ -79,12 +83,13 @@ inline void CARMI::Construction(const DataVectorType &initData,
     nowDataSize += 100000;
     DataVectorType().swap(entireData);
   } else {
-    entireData.erase(entireData.begin() + nowDataSize + reservedSpace,
+    entireData.erase(entireData.begin() + nowDataSize + kReservedSpace,
                      entireData.end());
   }
   DataVectorType().swap(initDataset);
   DataVectorType().swap(findQuery);
   DataVectorType().swap(insertQuery);
+  std::vector<int>().swap(insertQueryIndex);
 
 #ifdef DEBUG
   std::cout << "Construction over!" << std::endl;

@@ -22,14 +22,24 @@
 #include "./dp_inner.h"
 #include "./minor_function.h"
 #include "./structures.h"
-
+/**
+ * @brief choose the optimal setting
+ *
+ * @tparam TYPE the type of this node
+ * @param c the number of child nodes
+ * @param type the type index of this node
+ * @param frequency_weight the frequency weight of these queries
+ * @param time_cost the time cost of this node
+ * @param range the range of queries
+ * @param optimal_node_struct the optimal setting
+ * @param optimalCost the optimal cost
+ */
 template <typename TYPE>
-void CARMI::CheckGreedy(int c, NodeType type, double pi,
-                        double frequency_weight, double time_cost,
-                        const IndexPair &range, BaseNode *optimal_node_struct,
-                        NodeCost *optimalCost) {
+void CARMI::CheckGreedy(int c, NodeType type, double frequency_weight,
+                        double time_cost, const IndexPair &range,
+                        BaseNode *optimal_node_struct, NodeCost *optimalCost) {
   std::vector<IndexPair> perSize(c, IndexPair(-1, 0));
-  double space_cost = BaseNodeSpace * c;
+  double space_cost = kBaseNodeSpace * c;
 
   TYPE node;
   node.SetChildNumber(c);
@@ -38,23 +48,26 @@ void CARMI::CheckGreedy(int c, NodeType type, double pi,
   NodePartition<TYPE>(node, range, initDataset, &perSize);
   double entropy = CalculateEntropy(range.size, c, perSize);
   double cost =
-      (time_cost + static_cast<float>(kRate * space_cost) / pi) / entropy;
+      (time_cost + static_cast<float>(kRate * space_cost) / frequency_weight) /
+      entropy;
 
   if (cost <= optimalCost->cost) {
     (*optimal_node_struct).lr = *(reinterpret_cast<LRModel *>(&node));
     *optimalCost = {time_cost, space_cost, cost, true};
   }
 }
-
+/**
+ * @brief the greedy algorithm
+ * 
+ * @param dataRange the range of these queries
+ * @return NodeCost the optimal cost of the subtree
+ */
 NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   NodeCost nodeCost = {0, 0, 0, false};
   if (dataRange.initRange.size == 0 && dataRange.findRange.size == 0)
     return nodeCost;
 
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, true};
-  double pi = static_cast<float>(dataRange.findRange.size +
-                                 dataRange.insertRange.size) /
-              querySize;
   BaseNode optimal_node_struct;
   int frequency = 0;
   int findEnd = dataRange.findRange.left + dataRange.findRange.size;
@@ -70,16 +83,16 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
 #endif  // DEBUG
-    CheckGreedy<LRModel>(c, LR_INNER_NODE, pi, frequency_weight, LRInnerTime,
+    CheckGreedy<LRModel>(c, LR_INNER_NODE, frequency_weight, kLRInnerTime,
                          dataRange.initRange, &optimal_node_struct,
                          &optimalCost);
-    CheckGreedy<LRModel>(c, PLR_INNER_NODE, pi, frequency_weight, PLRInnerTime,
+    CheckGreedy<LRModel>(c, PLR_INNER_NODE, frequency_weight, kPLRInnerTime,
                          dataRange.initRange, &optimal_node_struct,
                          &optimalCost);
-    CheckGreedy<HisModel>(c, HIS_INNER_NODE, pi, frequency_weight, HisInnerTime,
+    CheckGreedy<HisModel>(c, HIS_INNER_NODE, frequency_weight, kHisInnerTime,
                           dataRange.initRange, &optimal_node_struct,
                           &optimalCost);
-    CheckGreedy<BSModel>(c, BS_INNER_NODE, pi, frequency_weight, BSInnerTime,
+    CheckGreedy<BSModel>(c, BS_INNER_NODE, frequency_weight, kBSInnerTime,
                          dataRange.initRange, &optimal_node_struct,
                          &optimalCost);
   }
@@ -114,7 +127,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
     if (subDataset.subInit[i].size > kAlgorithmThreshold)
       res = GreedyAlgorithm(range);
     else
-      res = dp(range);
+      res = DP(range);
   }
 
   if (optimalCost.time < DBL_MAX)

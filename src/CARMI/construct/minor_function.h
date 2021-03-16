@@ -20,7 +20,7 @@ double CARMI::CalculateEntropy(int size, int childNum,
   double entropy = 0.0;
   for (int i = 0; i < childNum; i++) {
     auto p = static_cast<float>(perSize[i].size) / size;
-    if (p != 0) entropy += p * (-log(p) / log(2));
+    if (p != 0) entropy += p * (-log2(p));
   }
   return entropy;
 }

@@ -41,11 +41,11 @@ inline bool CARMI::allocateEmptyBlock(int left, int len) {
 // return idx
 inline int CARMI::getIndex(int size) {
 #ifdef DEBUG
-  if (size > 4096 || size < 1)
+  if (size > kLeafMaxCapacity || size < 1)
     std::cout << "size: " << size
               << ",\tsize > 4096 || size < 1, getIndex WRONG!" << std::endl;
 #endif  // DEBUG
-  int j = 4096;
+  int j = kLeafMaxCapacity;
   for (int i = 12; i >= 0; i--, j /= 2) {
     if (size <= j && size > j / 2) return i;
   }

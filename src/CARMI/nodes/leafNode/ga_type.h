@@ -44,7 +44,7 @@ inline void CARMI::initGA(int cap, int left, int size,
   StoreData(left, size, newDataset, ga);
 
 #ifdef DEBUG
-  if (size > 4096)
+  if (size > kLeafMaxCapacity)
     std::cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:"
               << size << std::endl;
 #endif  // DEBUG
@@ -70,8 +70,8 @@ inline void CARMI::UpdatePara(int cap, int size, GappedArrayType *ga) {
   while ((static_cast<float>(size) / static_cast<float>(ga->capacity) >
           ga->density))
     ga->capacity = static_cast<float>(ga->capacity) / ga->density;
-  if (ga->capacity > 4096) {
-    ga->capacity = 4096;
+  if (ga->capacity > kLeafMaxCapacity) {
+    ga->capacity = kLeafMaxCapacity;
   }
   ga->m_left = allocateMemory(ga->capacity);
 }
@@ -138,7 +138,7 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
   }
 
   // find the optimal value of ga->error
-  int minRes = size * log(size) / log(2);
+  int minRes = size * log2(size);
   int res;
   int cntBetween, cntOut;
   for (int e = 0; e <= maxError; e++) {
@@ -155,9 +155,9 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
       }
     }
     if (e != 0)
-      res = cntBetween * log(e) / log(2) + cntOut * log(size) / log(2);
+      res = cntBetween * log2(e) + cntOut * log2(size);
     else
-      res = cntOut * log(size) / log(2);
+      res = cntOut * log2(size);
     if (res < minRes) {
       minRes = res;
       ga->error = e;
@@ -204,7 +204,7 @@ inline void CARMI::Train(int start_idx, int size, GappedArrayType *ga) {
   }
 
   // find the optimal value of ga->error
-  int minRes = size * log(size) / log(2);
+  int minRes = size * log2(size);
   int res;
   int cntBetween, cntOut;
   for (int e = 0; e <= maxError; e++) {
@@ -221,9 +221,9 @@ inline void CARMI::Train(int start_idx, int size, GappedArrayType *ga) {
       }
     }
     if (e != 0)
-      res = cntBetween * log(e) / log(2) + cntOut * log(size) / log(2);
+      res = cntBetween * log2(e) + cntOut * log2(size);
     else
-      res = cntOut * log(size) / log(2);
+      res = cntOut * log2(size);
     if (res < minRes) {
       minRes = res;
       ga->error = e;

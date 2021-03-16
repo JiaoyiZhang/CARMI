@@ -45,7 +45,7 @@ inline void CARMI::initArray(int cap, int left, int size,
   UpdatePara(cap, actualSize, arr);
   StoreData(left, size, newDataset, arr);
 
-  if (size > 4096)
+  if (size > kLeafMaxCapacity)
     std::cout << "init Array setDataset WRONG! datasetSize > 4096, size is:"
               << size << std::endl;
 
@@ -70,8 +70,8 @@ inline void CARMI::UpdatePara(int cap, int size, ArrayType *arr) {
     arr->m_capacity *= kExpansionScale;
   }
 
-  if (arr->m_capacity > 4096) {
-    arr->m_capacity = 4096;
+  if (arr->m_capacity > kLeafMaxCapacity) {
+    arr->m_capacity = kLeafMaxCapacity;
   }
 
   arr->m_left = allocateMemory(arr->m_capacity);
@@ -118,7 +118,7 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
   }
 
   // find the optimal value of error
-  int minRes = size * log(size) / log(2);
+  int minRes = size * log2(size);
   int res;
   int cntBetween, cntOut;
   for (int e = 0; e <= maxError; e++) {
@@ -133,9 +133,9 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
         cntOut++;
     }
     if (e != 0)
-      res = cntBetween * log(e) / log(2) + cntOut * log(size) / log(2);
+      res = cntBetween * log2(e) + cntOut * log2(size);
     else
-      res = cntOut * log(size) / log(2);
+      res = cntOut * log2(size);
     if (res < minRes) {
       minRes = res;
       arr->error = e;
@@ -176,7 +176,7 @@ inline void CARMI::Train(int start_idx, int size, ArrayType *arr) {
   }
 
   // find the optimal value of error
-  int minRes = size * log(size) / log(2);
+  int minRes = size * log2(size);
   int res;
   int cntBetween, cntOut;
   for (int e = 0; e <= maxError; e++) {
@@ -191,9 +191,9 @@ inline void CARMI::Train(int start_idx, int size, ArrayType *arr) {
         cntOut++;
     }
     if (e != 0)
-      res = cntBetween * log(e) / log(2) + cntOut * log(size) / log(2);
+      res = cntBetween * log2(e) + cntOut * log2(size);
     else
-      res = cntOut * log(size) / log(2);
+      res = cntOut * log2(size);
     if (res < minRes) {
       minRes = res;
       arr->error = e;

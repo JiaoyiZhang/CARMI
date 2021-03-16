@@ -27,7 +27,8 @@ class CARMI {
   CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
         int kLeafID);  // RMI
   CARMI(const DataVectorType &initData, const DataVectorType &findData,
-        const DataVectorType &insertData, double rate, int thre) {
+        const DataVectorType &insertData, const std::vector<int> &insertIndex,
+        double rate, int thre) {
     emptyNode.ga = GappedArrayType(kThreshold);
     kAlgorithmThreshold = thre;
     kRate = rate;
@@ -35,6 +36,7 @@ class CARMI {
     initDataset = initData;
     findQuery = findData;
     insertQuery = insertData;
+    insertQueryIndex = insertIndex;
     querySize = 0;
     for (int i = 0; i < findData.size(); i++) {
       querySize += findData[i].second;
@@ -160,7 +162,7 @@ class CARMI {
                         const SubDataset &subDataset, NodeCost *nodeCost);
 
  private:
-  NodeCost dp(const DataRange &range);
+  NodeCost DP(const DataRange &range);
   double CalculateEntropy(int size, int childNum,
                           const std::vector<IndexPair> &perSize) const;
   template <typename TYPE>
@@ -171,10 +173,10 @@ class CARMI {
   template <typename TYPE>
   TYPE InnerDivideAll(int c, const DataRange &range, SubDataset *subDataset);
   template <typename TYPE>
-  void CalInner(int c, NodeType type, double frequency_weight, double time_cost,
-                const DataRange &dataRange, NodeCost *optimalCost,
-                BaseNode *optimal_node_struct);
-  NodeCost dpInner(const DataRange &dataRange);
+  void ChooseBetterInner(int c, NodeType type, double frequency_weight,
+                         double time_cost, const DataRange &dataRange,
+                         NodeCost *optimalCost, TYPE *optimal_node_struct);
+  NodeCost DPInner(const DataRange &dataRange);
 
   template <typename TYPE>
   double CalLeafFindTime(int actualSize, double density, const TYPE &node,
@@ -183,10 +185,10 @@ class CARMI {
   double CalLeafInsertTime(int actualSize, double density, const TYPE &node,
                            const IndexPair &range,
                            const IndexPair &findRange) const;
-  NodeCost dpLeaf(const DataRange &dataRange);
+  NodeCost DPLeaf(const DataRange &dataRange);
 
   template <typename TYPE>
-  void CheckGreedy(int c, NodeType type, double pi, double frequency_weight,
+  void CheckGreedy(int c, NodeType type, double frequency_weight,
                    double time_cost, const IndexPair &range,
                    BaseNode *optimal_node_struct, NodeCost *optimalCost);
   NodeCost GreedyAlgorithm(const DataRange &range);
@@ -242,7 +244,8 @@ class CARMI {
   int ArrayBinarySearch(double key, int start, int end) const;
   int GABinarySearch(double key, int start_idx, int end_idx) const;
   int YCSBBinarySearch(double key, int start, int end) const;
-  int TestBinarySearch(double key, int start, int end) const;
+
+  inline float log2(double value) const { return log(value) / log(2); }
 
  public:
   CARMIRoot root;
@@ -270,6 +273,7 @@ class CARMI {
   DataVectorType initDataset;
   DataVectorType findQuery;
   DataVectorType insertQuery;
+  std::vector<int> insertQueryIndex;
 
   std::map<IndexPair, NodeCost> COST;
   std::map<IndexPair, BaseNode> structMap;
@@ -279,7 +283,6 @@ class CARMI {
   int kInnerNodeID;  // for static structure
 
  private:
-  // const ParamStruct leafP = {5, 2, 0.5, std::vector<MapKey>()};
   BaseNode emptyNode;
   IndexPair emptyRange = IndexPair(-1, 0);
 

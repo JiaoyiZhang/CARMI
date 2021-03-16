@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "../../carmi.h"
+#include "../rootNode/trainModel/candidate_plr.h"
 
 inline void CARMI::initPLR(const DataVectorType &dataset, PLRModel *plr) {
   int childNumber = plr->flagNumber & 0x00FFFFFF;
@@ -66,27 +67,51 @@ inline void CARMI::Train(const int left, const int size,
         static_cast<int>(static_cast<float>(j) / data.size() * childNumber - 1);
   }
 
+  int cand_size = 100;
+  DataVectorType cand_point(cand_size, {0, 0});
+  std::vector<int> cand_index(cand_size, 0);
+  CandidateCost cand_cost(cand_size);
+  int seg = size / cand_size;
+  for (int i = 0; i < cand_size - 1; i++) {
+    cand_index[i] = i * seg;
+    cand_point[i] = data[i * seg];
+  }
+  cand_index[cand_size - 1] = size - 1;
+  cand_point[cand_size - 1] = data[size - 1];
+  cand_cost.StoreValue(data, cand_index);
+
   SegmentPoint tmp;
   tmp.cost = DBL_MAX;
-  std::vector<SegmentPoint> tmpp(size, tmp);
+  std::vector<SegmentPoint> tmpp(cand_size, tmp);
   std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
 
-  for (int j = 1; j < size; j++) {
-    dp[0][j].cost = CalculateCost(0, j, &data);
-    dp[0][j].key[0] = data[j].first;
-    dp[0][j].idx[0] = data[j].second;
+  for (int j = 1; j < cand_size; j++) {
+    dp[0][j].cost = cand_cost.CalculateCost(0, cand_index[j], cand_point[0],
+                                            cand_point[cand_index[j]]);
+    dp[0][j].key[0] = cand_point[cand_index[j]].first;
+    dp[0][j].idx[0] = cand_point[cand_index[j]].second;
   }
+
   for (int i = 1; i < 6; i++) {
-    for (int j = i + 1; j < size - 1; j++) {
+    for (int j = i + 1; j < cand_size - 1; j++) {
       SegmentPoint opt;
       opt.cost = DBL_MAX;
       for (int k = 1; k < j; k++) {
         float res = DBL_MAX;
         if (i < 5) {
-          res = dp[0][k].cost + CalculateCost(k, j, &data);
+          res = dp[0][k].cost +
+                cand_cost.CalculateCost(cand_index[k], cand_index[j],
+                                        cand_point[cand_index[k]],
+                                        cand_point[cand_index[j]]);
         } else {
-          res = dp[0][k].cost + CalculateCost(k, j, &data) +
-                CalculateCost(j, size - 1, &data);
+          res =
+              dp[0][k].cost +
+              cand_cost.CalculateCost(cand_index[k], cand_index[j],
+                                      cand_point[cand_index[k]],
+                                      cand_point[cand_index[j]]) +
+              cand_cost.CalculateCost(cand_index[j], cand_index[cand_size - 1],
+                                      cand_point[cand_index[j]],
+                                      cand_point[cand_index[cand_size - 1]]);
         }
         if (res < opt.cost) {
           opt.cost = res;
@@ -94,14 +119,14 @@ inline void CARMI::Train(const int left, const int size,
             opt.idx[l] = dp[0][k].idx[l];
             opt.key[l] = dp[0][k].key[l];
           }
-          opt.key[i] = data[j].first;
-          opt.idx[i] = data[j].second;
+          opt.key[i] = cand_point[cand_index[j]].first;
+          opt.idx[i] = cand_point[cand_index[j]].second;
         } else if (res == opt.cost) {
           int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
           for (int l = 0; l < i; l++) {
             dp_idx[l] = dp[0][k].idx[l];
           }
-          dp_idx[i] = data[j].second;
+          dp_idx[i] = cand_point[cand_index[j]].second;
 
           float var0 = Diff(i + 1, childNumber, dp_idx);
           float var1 = Diff(i + 1, childNumber, opt.idx);
@@ -110,8 +135,8 @@ inline void CARMI::Train(const int left, const int size,
               opt.idx[l] = dp[0][k].idx[l];
               opt.key[l] = dp[0][k].key[l];
             }
-            opt.key[i] = data[j].first;
-            opt.idx[i] = data[j].second;
+            opt.key[i] = cand_point[cand_index[j]].first;
+            opt.idx[i] = cand_point[cand_index[j]].second;
           }
         }
       }
@@ -172,27 +197,51 @@ inline void CARMI::Train(const int left, const int size, PLRModel *plr) {
         static_cast<int>(static_cast<float>(j) / data.size() * childNumber - 1);
   }
 
+  int cand_size = 100;
+  DataVectorType cand_point(cand_size, {0, 0});
+  std::vector<int> cand_index(cand_size, 0);
+  CandidateCost cand_cost(cand_size);
+  int seg = size / cand_size;
+  for (int i = 0; i < cand_size - 1; i++) {
+    cand_index[i] = i * seg;
+    cand_point[i] = data[i * seg];
+  }
+  cand_index[cand_size - 1] = size - 1;
+  cand_point[cand_size - 1] = data[size - 1];
+  cand_cost.StoreValue(data, cand_index);
+
   SegmentPoint tmp;
   tmp.cost = DBL_MAX;
-  std::vector<SegmentPoint> tmpp(size, tmp);
+  std::vector<SegmentPoint> tmpp(cand_size, tmp);
   std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
 
-  for (int j = 1; j < size; j++) {
-    dp[0][j].cost = CalculateCost(0, j, &data);
-    dp[0][j].key[0] = data[j].first;
-    dp[0][j].idx[0] = data[j].second;
+  for (int j = 1; j < cand_size; j++) {
+    dp[0][j].cost = cand_cost.CalculateCost(0, cand_index[j], cand_point[0],
+                                            cand_point[cand_index[j]]);
+    dp[0][j].key[0] = cand_point[cand_index[j]].first;
+    dp[0][j].idx[0] = cand_point[cand_index[j]].second;
   }
+
   for (int i = 1; i < 6; i++) {
-    for (int j = i + 1; j < size - 1; j++) {
+    for (int j = i + 1; j < cand_size - 1; j++) {
       SegmentPoint opt;
       opt.cost = DBL_MAX;
       for (int k = 1; k < j; k++) {
         float res = DBL_MAX;
         if (i < 5) {
-          res = dp[0][k].cost + CalculateCost(k, j, &data);
+          res = dp[0][k].cost +
+                cand_cost.CalculateCost(cand_index[k], cand_index[j],
+                                        cand_point[cand_index[k]],
+                                        cand_point[cand_index[j]]);
         } else {
-          res = dp[0][k].cost + CalculateCost(k, j, &data) +
-                CalculateCost(j, size - 1, &data);
+          res =
+              dp[0][k].cost +
+              cand_cost.CalculateCost(cand_index[k], cand_index[j],
+                                      cand_point[cand_index[k]],
+                                      cand_point[cand_index[j]]) +
+              cand_cost.CalculateCost(cand_index[j], cand_index[cand_size - 1],
+                                      cand_point[cand_index[j]],
+                                      cand_point[cand_index[cand_size - 1]]);
         }
         if (res < opt.cost) {
           opt.cost = res;
@@ -200,14 +249,14 @@ inline void CARMI::Train(const int left, const int size, PLRModel *plr) {
             opt.idx[l] = dp[0][k].idx[l];
             opt.key[l] = dp[0][k].key[l];
           }
-          opt.key[i] = data[j].first;
-          opt.idx[i] = data[j].second;
+          opt.key[i] = cand_point[cand_index[j]].first;
+          opt.idx[i] = cand_point[cand_index[j]].second;
         } else if (res == opt.cost) {
           int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
           for (int l = 0; l < i; l++) {
             dp_idx[l] = dp[0][k].idx[l];
           }
-          dp_idx[i] = data[j].second;
+          dp_idx[i] = cand_point[cand_index[j]].second;
 
           float var0 = Diff(i + 1, childNumber, dp_idx);
           float var1 = Diff(i + 1, childNumber, opt.idx);
@@ -216,8 +265,8 @@ inline void CARMI::Train(const int left, const int size, PLRModel *plr) {
               opt.idx[l] = dp[0][k].idx[l];
               opt.key[l] = dp[0][k].key[l];
             }
-            opt.key[i] = data[j].first;
-            opt.idx[i] = data[j].second;
+            opt.key[i] = cand_point[cand_index[j]].first;
+            opt.idx[i] = cand_point[cand_index[j]].second;
           }
         }
       }

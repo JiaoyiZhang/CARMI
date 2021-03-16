@@ -20,25 +20,23 @@ long double CARMI::calculateSpace() const {
 
   switch (rootType) {
     case LR_ROOT_NODE:
-      space_cost += sizeof(LRType);
+      space_cost += sizeof(LRType) / 1024 / 1024;
       break;
     case PLR_ROOT_NODE:
-      space_cost += sizeof(PLRType);
+      space_cost += sizeof(PLRType) / 1024 / 1024;
       break;
     case HIS_ROOT_NODE:
-      space_cost += sizeof(HisType);
+      space_cost += sizeof(HisType) / 1024 / 1024;
       break;
     case BS_ROOT_NODE:
-      space_cost += sizeof(BSType);
+      space_cost += sizeof(BSType) / 1024 / 1024;
       break;
   }
 
-  space_cost += 64 * nowChildNumber;
+  space_cost += kBaseNodeSpace * nowChildNumber;
   if (!kPrimaryIndex) {
-    space_cost += entireData.size() * 16;
+    space_cost += entireData.size() * kDataPointSize;
   }
-
-  space_cost = space_cost / 1024 / 1024;
 
 #ifdef DEBUG
   std::cout << "Space of different classes (sizeof):" << std::endl;

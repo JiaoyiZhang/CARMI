@@ -45,6 +45,12 @@ union BaseNode {
 
   BaseNode() {}
   ~BaseNode() {}
+  BaseNode& operator=(const BaseNode& node) {
+    if (this != &node) {
+      this->lr = node.lr;
+    }
+    return *this;
+  }
 };
 
 #endif  // SRC_CARMI_BASENODE_H_
