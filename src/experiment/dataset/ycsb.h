@@ -2,100 +2,96 @@
 #define YCSB_H
 
 #include <algorithm>
-#include <random>
-#include <iostream>
+#include <chrono>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <random>
 #include <sstream>
 #include <string>
-#include <chrono>
 #include <vector>
+
 #include "../../params.h"
-#include <iomanip>
-using namespace std;
 extern bool kPrimaryIndex;
 
-class YCSBDataset
-{
-public:
-    YCSBDataset(double initRatio)
-    {
-        init = initRatio;
-        insertNumber = 100000 * (1 - initRatio);
-        if (initRatio == 0)
-        {
-            num = 0;
-            init = 0.85;
-            insertNumber = 15000;
-        }
-        else if (initRatio == 1)
-            num = -1;
-        else
-            num = round(initRatio / (1 - initRatio));
-    }
+class YCSBDataset {
+ public:
+  YCSBDataset(double initRatio) {
+    init = initRatio;
+    insertNumber = 100000 * (1 - initRatio);
+    if (initRatio == 0) {
+      num = 0;
+      init = 0.85;
+      insertNumber = 15000;
+    } else if (initRatio == 1)
+      num = -1;
+    else
+      num = round(initRatio / (1 - initRatio));
+  }
 
-    void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery);
+  void GenerateDataset(DataVectorType *initDataset,
+                       DataVectorType *trainFindQuery,
+                       DataVectorType *trainInsertQuery,
+                       DataVectorType *testInsertQuery);
 
-private:
-    int num;
-    float init;
-    int insertNumber;
+ private:
+  int num;
+  float init;
+  int insertNumber;
 };
 
-void YCSBDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery)
-{
-    vector<pair<double, double>>().swap(initDataset);
-    vector<pair<double, double>>().swap(trainFindQuery);
-    vector<pair<double, double>>().swap(trainInsertQuery);
-    vector<pair<double, double>>().swap(testInsertQuery);
+void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
+                                  DataVectorType *trainFindQuery,
+                                  DataVectorType *trainInsertQuery,
+                                  DataVectorType *testInsertQuery) {
+  DataVectorType().swap((*initDataset));
+  DataVectorType().swap((*trainFindQuery));
+  DataVectorType().swap((*trainInsertQuery));
+  DataVectorType().swap((*testInsertQuery));
 
-    vector<pair<double, double>> ds;
-    ifstream inFile("..//src//experiment//dataset//newycsbdata.csv", ios::in);
-    if (!inFile)
-    {
-        cout << "打开文件失败！" << endl;
-        exit(1);
-    }
-    string line;
-    while (getline(inFile, line))
-    {
-        if (line.empty())
-            continue;
-        istringstream sin(line);
-        vector<string> fields;
-        string field;
-        while (getline(sin, field, ','))
-            fields.push_back(field);
-        string key = fields[0];
-        key.erase(0, 4); // delete "user"
-        double k = stod(key);
-        double v = k / 10;
-        ds.push_back({k, v});
-        if (ds.size() == round(67108864.0 / init))
-            break;
-    }
+  DataVectorType ds;
+  std::ifstream inFile("..//src//experiment//dataset//newycsbdata.csv",
+                       std::ios::in);
+  if (!inFile) {
+    std::cout << "打开文件失败！" << std::endl;
+    exit(1);
+  }
+  std::string line;
+  while (getline(inFile, line)) {
+    if (line.empty()) continue;
+    std::istringstream sin(line);
+    std::vector<std::string> fields;
+    std::string field;
+    while (getline(sin, field, ',')) fields.push_back(field);
+    std::string key = fields[0];
+    key.erase(0, 4);  // delete "user"
+    double k = stod(key);
+    double v = k / 10;
+    ds.push_back({k, v});
+    if (ds.size() == round(67108864.0 / init)) break;
+  }
 
-    std::sort(ds.begin(), ds.end());
-    for (int i = 0; i < ds.size(); i++)
-        initDataset.push_back(ds[i]);
-    int end = round(67108864 / init * (1 - init));
-    auto maxValue = ds[ds.size() - 1];
-    // for (int i = 1; i <= end; i++)
-    //     trainInsertQuery.push_back({maxValue.first + i, maxValue.second + i});
-    end = round(100000 * (1 - init));
-    for (int i = 1; i <= end; i++)
-        testInsertQuery.push_back({maxValue.first + i, maxValue.second + i});
+  std::sort(ds.begin(), ds.end());
+  for (int i = 0; i < ds.size(); i++) (*initDataset).push_back(ds[i]);
+  int end = round(67108864 / init * (1 - init));
+  auto maxValue = ds[ds.size() - 1];
+  end = round(100000 * (1 - init));
+  for (int i = 1; i <= end; i++)
+    (*testInsertQuery).push_back({maxValue.first + i, maxValue.second + i});
 
-    default_random_engine engine;
+  std::default_random_engine engine;
 
-    unsigned seed1 = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed1);
-    trainFindQuery = initDataset;
-    for (int i = 0; i < trainFindQuery.size(); i++)
-        trainFindQuery[i].second = 1;
-    // for (int i = 0; i < trainInsertQuery.size(); i++)
-    //     trainInsertQuery[i].second = 1;
+  unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+  engine = std::default_random_engine(seed1);
+  trainFindQuery = initDataset;
+  for (int i = 0; i < (*trainFindQuery).size(); i++) {
+    (*trainFindQuery)[i].second = 1;
+  }
 
-    cout << "YCSB: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\ttrain insert size:" << trainInsertQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
+  std::cout << "YCSB: init size:" << (*initDataset).size()
+            << "\tFind size:" << (*trainFindQuery).size()
+            << "\ttrain insert size:" << (*trainInsertQuery).size()
+            << "\tWrite size:" << (*testInsertQuery).size() << std::endl;
 }
 
 #endif

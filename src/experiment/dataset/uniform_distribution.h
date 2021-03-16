@@ -1,105 +1,97 @@
-#ifndef UNIFORM_DISTRIBUTION_H
-#define UNIFORM_DISTRIBUTION_H
+/**
+ * @file uniform_distribution.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-15
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_EXPERIMENT_DATASET_UNIFORM_DISTRIBUTION_H_
+#define SRC_EXPERIMENT_DATASET_UNIFORM_DISTRIBUTION_H_
 
 #include <algorithm>
-#include <random>
-#include <iostream>
 #include <chrono>
+#include <iostream>
+#include <random>
+#include <utility>
 #include <vector>
-using namespace std;
 
-class UniformDataset
-{
-public:
-    UniformDataset(int total, double initRatio)
-    {
-        num = 2;
-        totalSize = total / initRatio;
-        insertNumber = 100000 * (1 - initRatio);
-        if (initRatio == 0)
-        { // several leaf nodes are inserted
-            initSize = 0;
-            totalSize = round(total / 0.85);
-            insertNumber = 15000;
-        }
-        else if (initRatio == 1)
-        {
-            num = -1;
-            initSize = total;
-        }
-        else
-        {
-            initSize = total;
-            num = round(initRatio / (1 - initRatio));
-        }
+#include "../../params.h"
+
+class UniformDataset {
+ public:
+  explicit UniformDataset(float initRatio) {
+    proportion = initRatio;
+    if (proportion == kRangeScan) {
+      proportion = kReadHeavy;
     }
+  }
 
-    void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery);
+  void GenerateDataset(DataVectorType *initDataset,
+                       DataVectorType *trainFindQuery,
+                       DataVectorType *trainInsertQuery,
+                       DataVectorType *testInsertQuery);
 
-private:
-    int totalSize;
-    int initSize;
-
-    int num;
-    int insertNumber;
+ private:
+  float proportion;
 };
 
-void UniformDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery)
-{
-    vector<pair<double, double>>().swap(initDataset);
-    vector<pair<double, double>>().swap(trainFindQuery);
-    vector<pair<double, double>>().swap(trainInsertQuery);
-    vector<pair<double, double>>().swap(testInsertQuery);
+void UniformDataset::GenerateDataset(DataVectorType *initDataset,
+                                     DataVectorType *trainFindQuery,
+                                     DataVectorType *trainInsertQuery,
+                                     DataVectorType *testInsertQuery) {
+  DataVectorType().swap(*initDataset);
+  DataVectorType().swap(*trainFindQuery);
+  DataVectorType().swap(*trainInsertQuery);
+  DataVectorType().swap(*testInsertQuery);
 
-    if (initSize != 0 && num != -1)
-        totalSize *= 1.5;
-    int cnt = 0;
-    if (initSize == 0)
-    {
-        int i = 0;
-        totalSize = 67108864;
-        for (; i <= 0.6 * totalSize; i++)
-            initDataset.push_back({double(i), double(i) * 10});
-        for (; i < 0.9 * totalSize; i++)
-        {
-            initDataset.push_back({double(i), double(i) * 10});
-            if (trainInsertQuery.size() < 11842741)
-                trainInsertQuery.push_back({double(i + 0.5), double(i + 0.5) * 10});
-            if (testInsertQuery.size() < insertNumber)
-                testInsertQuery.push_back({double(i + 0.5001), double(i + 0.5001) * 10});
-        }
-        for (; i < totalSize; i++)
-            initDataset.push_back({double(i), double(i) * 10});
-    }
-    else if (num == -1)
-    {
-        for (int i = 0; i < totalSize; i++)
-            initDataset.push_back({double(i), double(i) * 10});
-    }
-    else
-    {
-        for (int i = 0; i < totalSize; i++)
-        {
-            cnt++;
-            if (cnt <= num)
-            {
-                if (initDataset.size() == 67108864)
-                    break;
-                initDataset.push_back({double(i), double(i) * 10});
-            }
-            else
-            {
-                trainInsertQuery.push_back({double(i), double(i) * 10});
-                i++;
-                if (testInsertQuery.size() < insertNumber)
-                    testInsertQuery.push_back({double(i), double(i) * 10});
-                cnt = 0;
-            }
-        }
-    }
-    trainFindQuery = initDataset;
+  std::vector<double> dataset(kDatasetSize + kTestSize * (1 - proportion), 0);
 
-    cout << "uniform: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\ttrain insert size:" << trainInsertQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
+  for (int i = 0; i < dataset.size(); i++) {
+    dataset[i] = i;
+  }
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::default_random_engine engine(seed);
+  shuffle(dataset.begin(), dataset.end(), engine);
+
+  int i = 0;
+  int end = round(kTestSize * (1 - proportion));
+  for (; i < end; i++) {
+    testInsertQuery->push_back({dataset[i], dataset[i] * 10});
+  }
+  end = dataset.size();
+  for (; i < end; i++) {
+    initDataset->push_back({dataset[i], dataset[i] * 10});
+  }
+
+  std::sort(initDataset->begin(), initDataset->end(),
+            [](std::pair<double, double> p1, std::pair<double, double> p2) {
+              return p1.first < p2.first;
+            });
+  std::sort(testInsertQuery->begin(), testInsertQuery->end(),
+            [](std::pair<double, double> p1, std::pair<double, double> p2) {
+              return p1.first < p2.first;
+            });
+
+  trainFindQuery = initDataset;
+
+  if (proportion != kWritePartial && proportion != kReadOnly) {
+    int cnt = round(1.0 / (1.0 - proportion));
+    for (int j = cnt - 1; j < kDatasetSize; j += cnt) {
+      trainInsertQuery->push_back((*initDataset)[j]);
+    }
+  } else if (proportion == kWritePartial) {
+    for (int j = kDatasetSize * 0.6; j < kDatasetSize * 0.9; j += 2) {
+      trainInsertQuery->push_back((*initDataset)[j]);
+    }
+  }
+
+  std::cout << "uniform: init size:" << (*initDataset).size()
+            << "\tFind size:" << (*trainFindQuery).size()
+            << "\ttrain insert size:" << (*trainInsertQuery).size()
+            << "\tWrite size:" << (*testInsertQuery).size() << std ::endl;
 }
 
-#endif
+#endif  // SRC_EXPERIMENT_DATASET_UNIFORM_DISTRIBUTION_H_

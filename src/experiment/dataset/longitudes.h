@@ -1,122 +1,114 @@
-#ifndef LONGITUDES_H
-#define LONGITUDES_H
+/**
+ * @file longitudes.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-16
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_EXPERIMENT_DATASET_LONGITUDES_H_
+#define SRC_EXPERIMENT_DATASET_LONGITUDES_H_
 
 #include <algorithm>
-#include <random>
-#include <iostream>
+#include <chrono>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <random>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
-#include <iomanip>
-#include <chrono>
-using namespace std;
 
-class LongitudesDataset
-{
-public:
-	LongitudesDataset(double initRatio)
-	{
-		init = initRatio;
-		insertNumber = 100000 * (1 - initRatio);
-		if (initRatio == 0)
-		{
-			num = 0;
-			init = 0.85;
-			insertNumber = 15000;
-		}
-		else if (initRatio == 1)
-			num = -1;
-		else
-			num = round(initRatio / (1 - initRatio));
-	}
+#include "../../params.h"
+class LongitudesDataset {
+ public:
+  explicit LongitudesDataset(float initRatio) {
+    proportion = initRatio;
+    if (proportion == kRangeScan) {
+      proportion = kReadHeavy;
+    }
+  }
 
-	void GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery);
+  void GenerateDataset(DataVectorType *initDataset,
+                       DataVectorType *trainFindQuery,
+                       DataVectorType *trainInsertQuery,
+                       DataVectorType *testInsertQuery);
 
-private:
-	int num;
-	float init;
-	int insertNumber;
+ private:
+  float proportion;
 };
 
-void LongitudesDataset::GenerateDataset(vector<pair<double, double>> &initDataset, vector<pair<double, double>> &trainFindQuery, vector<pair<double, double>> &trainInsertQuery, vector<pair<double, double>> &testInsertQuery)
-{
-	vector<pair<double, double>>().swap(initDataset);
-	vector<pair<double, double>>().swap(trainFindQuery);
-	vector<pair<double, double>>().swap(trainInsertQuery);
-	vector<pair<double, double>>().swap(testInsertQuery);
+void LongitudesDataset::GenerateDataset(DataVectorType *initDataset,
+                                        DataVectorType *trainFindQuery,
+                                        DataVectorType *trainInsertQuery,
+                                        DataVectorType *testInsertQuery) {
+  DataVectorType().swap(*initDataset);
+  DataVectorType().swap(*trainFindQuery);
+  DataVectorType().swap(*trainInsertQuery);
+  DataVectorType().swap(*testInsertQuery);
 
-	vector<pair<double, double>> insertDataset;
+  DataVectorType insertDataset;
 
-	vector<pair<double, double>> ds;
-	ifstream inFile("../src/experiment/dataset/longitude.csv", ios::in);
-	if (!inFile)
-	{
-		cout << "打开文件失败！" << endl;
-		exit(1);
-	}
-	string line;
-	while (getline(inFile, line))
-	{
-		if (line.empty())
-			continue;
-		istringstream sin(line);
-		vector<string> fields;
-		string field;
-		while (getline(sin, field, ','))
-			fields.push_back(field);
-		string key = fields[0];
-		string value = fields[1];
-		double k = stod(key);
-		double v = stod(value);
-		ds.push_back({k, v});
-	}
-	cout << "longitude size:" << ds.size() << endl;
+  DataVectorType ds;
+  std::ifstream inFile("../src/experiment/dataset/longitude.csv", std::ios::in);
+  if (!inFile) {
+    std::cout << "打开文件失败！" << std::endl;
+    exit(1);
+  }
+  std::string line;
+  while (getline(inFile, line)) {
+    if (line.empty()) continue;
+    std::istringstream sin(line);
+    std::vector<std::string> fields;
+    std::string field;
+    while (getline(sin, field, ',')) fields.push_back(field);
+    std::string key = fields[0];
+    std::string value = fields[1];
+    double k = stod(key);
+    double v = stod(value);
+    ds.push_back({k, v});
+  }
+  std::cout << "longitude size:" << ds.size() << std::endl;
 
-	std::sort(ds.begin(), ds.end());
-	if (num == 0)
-	{
-		int totalSize = round(67108864 / 0.85);
-		int i = 0;
-		for (; i <= 0.6 * totalSize; i++)
-			initDataset.push_back(ds[i]);
-		for (; i < 0.9 * totalSize; i += 2)
-		{
-			initDataset.push_back(ds[i]);
-			trainInsertQuery.push_back(ds[i + 1]);
-			if (testInsertQuery.size() < insertNumber)
-				testInsertQuery.push_back(ds[i + 1]);
-		}
-        for (; i < totalSize; i++)
-			initDataset.push_back(ds[i]);
-	}
-	else if (num == -1)
-	{
-		for (int i = 0; i < 67108864; i++)
-			initDataset.push_back(ds[i]);
-	}
-	else
-	{
-		int cnt = 0;
-		for (int i = 0; i < ds.size(); i++)
-		{
-			if (initDataset.size() == 67108864)
-				break;
-			cnt++;
-			if (cnt <= num)
-				initDataset.push_back(ds[i]);
-			else
-			{
-				trainInsertQuery.push_back(ds[i]);
-				if (testInsertQuery.size() < insertNumber)
-					testInsertQuery.push_back(ds[i++]);
-				cnt = 0;
-			}
-		}
-	}
-	trainFindQuery = initDataset;
+  int i = 0;
+  int end = round(kTestSize * (1 - proportion));
+  for (; i < end; i++) {
+    testInsertQuery->push_back(ds[i]);
+  }
+  end = ds.size();
+  for (; i < end; i++) {
+    initDataset->push_back(ds[i]);
+  }
 
-	cout << "longitudes: init size:" << initDataset.size() << "\tFind size:" << trainFindQuery.size() << "\ttrain insert size:" << trainInsertQuery.size() << "\tWrite size:" << testInsertQuery.size() << endl;
+  std::sort(initDataset->begin(), initDataset->end(),
+            [](std::pair<double, double> p1, std::pair<double, double> p2) {
+              return p1.first < p2.first;
+            });
+  std::sort(testInsertQuery->begin(), testInsertQuery->end(),
+            [](std::pair<double, double> p1, std::pair<double, double> p2) {
+              return p1.first < p2.first;
+            });
+
+  trainFindQuery = initDataset;
+
+  if (proportion != kWritePartial && proportion != kReadOnly) {
+    int cnt = round(1.0 / (1.0 - proportion));
+    for (int j = cnt - 1; j < kDatasetSize; j += cnt) {
+      trainInsertQuery->push_back((*initDataset)[j]);
+    }
+  } else if (proportion == kWritePartial) {
+    for (int j = kDatasetSize * 0.6; j < kDatasetSize * 0.9; j += 2) {
+      trainInsertQuery->push_back((*initDataset)[j]);
+    }
+  }
+
+  std::cout << "longitudes: init size:" << (*initDataset).size()
+            << "\tFind size:" << (*trainFindQuery).size()
+            << "\ttrain insert size:" << (*trainInsertQuery).size()
+            << "\tWrite size:" << (*testInsertQuery).size() << std::endl;
 }
 
-#endif
+#endif  // SRC_EXPERIMENT_DATASET_LONGITUDES_H_
