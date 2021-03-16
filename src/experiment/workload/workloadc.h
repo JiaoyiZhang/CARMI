@@ -1,72 +1,79 @@
-#ifndef WORKLOAD_C_H
-#define WORKLOAD_C_H
+/**
+ * @file workloadc.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-16
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_EXPERIMENT_WORKLOAD_WORKLOADC_H_
+#define SRC_EXPERIMENT_WORKLOAD_WORKLOADC_H_
 #include <vector>
-#include "zipfian.h"
+
 #include "../../CARMI/carmi.h"
 #include "../../CARMI/func/find_function.h"
 #include "../../CARMI/func/insert_function.h"
-using namespace std;
+#include "./zipfian.h"
 extern ofstream outRes;
 
 // read only workload
 // 100% read
-void WorkloadC(CARMI *carmi, vector<pair<double, double>> &initDataset)
-{
-    auto init = initDataset;
+void WorkloadC(const DataVectorType& initDataset, CARMI* carmi) {
+  auto init = initDataset;
 
-    default_random_engine engine;
+  default_random_engine engine;
 
-    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
-    engine = default_random_engine(seed);
-    shuffle(init.begin(), init.end(), engine);
+  unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+  engine = default_random_engine(seed);
+  shuffle(init.begin(), init.end(), engine);
 
-    int end = 100000;
-    Zipfian zip;
-    zip.InitZipfian(PARAM_ZIPFIAN, init.size());
-    vector<int> index(end, 0);
-    for (int i = 0; i < end; i++)
-    {
-        int idx = zip.GenerateNextIndex();
-        index[i] = idx;
-    }
+  int end = kTestSize;
+  Zipfian zip;
+  zip.InitZipfian(PARAM_ZIPFIAN, init.size());
+  vector<int> index(end, 0);
+  for (int i = 0; i < end; i++) {
+    int idx = zip.GenerateNextIndex();
+    index[i] = idx;
+  }
 
-    chrono::_V2::system_clock::time_point s, e;
-    double tmp;
-    s = chrono::system_clock::now();
+  chrono::_V2::system_clock::time_point s, e;
+  double tmp;
+  s = chrono::system_clock::now();
 #if ZIPFIAN
-    for (int i = 0; i < end; i++)
-    {
-        carmi->Find(init[index[i]].first);
-    }
+  for (int i = 0; i < end; i++) {
+    carmi->Find(init[index[i]].first);
+  }
 #else
-    for (int i = 0; i < end; i++)
-    {
-        carmi->Find(init[i].first);
-    }
+  for (int i = 0; i < end; i++) {
+    carmi->Find(init[i].first);
+  }
 #endif
-    e = chrono::system_clock::now();
-    tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
+  e = chrono::system_clock::now();
+  tmp = static_cast<double>(
+            chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
+        chrono::nanoseconds::period::den;
 
-    s = chrono::system_clock::now();
+  s = chrono::system_clock::now();
 
 #if ZIPFIAN
-    for (int i = 0; i < end; i++)
-    {
-        // init[index[i]].first;
-    }
+  for (int i = 0; i < end; i++) {
+    // init[index[i]].first;
+  }
 #else
-    for (int i = 0; i < end; i++)
-    {
-        // init[i].first;
-    }
+  for (int i = 0; i < end; i++) {
+    // init[i].first;
+  }
 #endif
-    e = chrono::system_clock::now();
-    double tmp0 = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) / chrono::nanoseconds::period::den;
-    tmp -= tmp0;
+  e = chrono::system_clock::now();
+  double tmp0 = static_cast<double>(
+                    chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
+                chrono::nanoseconds::period::den;
+  tmp -= tmp0;
 
-    cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
-
-    outRes << tmp / 100000.0 * 1000000000 << ",";
+  cout << "total time:" << tmp * kSecondToNanosecond / kTestSize << endl;
+  outRes << tmp * kSecondToNanosecond / kTestSize << ",";
 }
 
-#endif // !WORKLOAD_C_H
+#endif  // SRC_EXPERIMENT_WORKLOAD_WORKLOADC_H_

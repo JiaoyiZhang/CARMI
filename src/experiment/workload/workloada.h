@@ -1,22 +1,31 @@
-#ifndef WORKLOAD_A_H
-#define WORKLOAD_A_H
+/**
+ * @file workloada.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-16
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_EXPERIMENT_WORKLOAD_WORKLOADA_H_
+#define SRC_EXPERIMENT_WORKLOAD_WORKLOADA_H_
 #include <chrono>
 #include <vector>
 
 #include "../../CARMI/carmi.h"
 #include "../../CARMI/func/find_function.h"
 #include "../../CARMI/func/insert_function.h"
-#include "zipfian.h"
-using namespace std;
+#include "./zipfian.h"
 
 extern ofstream outRes;
 
-// update heavy workload
+// write heavy workload
 // a mix of 50/50 reads and writes
-void WorkloadA(CARMI *carmi, vector<pair<double, double>> &initDataset,
-               vector<pair<double, double>> &insertDataset) {
-  auto init = initDataset;
-  auto insert = insertDataset;
+void WorkloadA(const DataVectorType &initDataset,
+               const DataVectorType &insertDataset, CARMI *carmi) {
+  DataVectorType init = initDataset;
+  DataVectorType insert = insertDataset;
 
   default_random_engine engine;
 
@@ -30,7 +39,7 @@ void WorkloadA(CARMI *carmi, vector<pair<double, double>> &initDataset,
     shuffle(insert.begin(), insert.end(), engine);
   }
 
-  int end = 50000;
+  int end = kTestSize * kWriteHeavy;  // 50000
   Zipfian zip;
   zip.InitZipfian(PARAM_ZIPFIAN, init.size());
   vector<int> index(end, 0);
@@ -54,30 +63,26 @@ void WorkloadA(CARMI *carmi, vector<pair<double, double>> &initDataset,
   }
 #endif
   e = chrono::system_clock::now();
-  tmp = double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
+  tmp = static_cast<double>(
+            chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
         chrono::nanoseconds::period::den;
 
   s = chrono::system_clock::now();
 #if ZIPFIAN
   for (int i = 0; i < end; i++) {
-    // init[index[i]].first;
-    // insert[i];
   }
 #else
   for (int i = 0; i < end; i++) {
-    // init[i].first;
-    // insert[i];
   }
 #endif
   e = chrono::system_clock::now();
-  double tmp0 =
-      double(chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
-      chrono::nanoseconds::period::den;
+  double tmp0 = static_cast<double>(
+                    chrono::duration_cast<chrono::nanoseconds>(e - s).count()) /
+                chrono::nanoseconds::period::den;
   tmp -= tmp0;
 
-  cout << "total time:" << tmp / 100000.0 * 1000000000 << endl;
-
-  outRes << tmp / 100000.0 * 1000000000 << ",";
+  cout << "total time:" << tmp * kSecondToNanosecond / kTestSize << endl;
+  outRes << tmp * kSecondToNanosecond / kTestSize << ",";
 }
 
-#endif  // !WORKLOAD_A_H
+#endif  // SRC_EXPERIMENT_WORKLOAD_WORKLOADA_H_
