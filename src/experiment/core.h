@@ -1,5 +1,16 @@
-#ifndef CORE_H
-#define CORE_H
+/**
+ * @file core.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-16
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_EXPERIMENT_CORE_H_
+#define SRC_EXPERIMENT_CORE_H_
+#include <vector>
 
 #include "../CARMI/carmi.h"
 #include "../CARMI/construct/construction.h"
@@ -10,18 +21,16 @@
 #include "workload/workloadc.h"
 #include "workload/workloadd.h"
 #include "workload/workloade.h"
-using namespace std;
 
 extern ofstream outRes;
 
-void Core(double initRatio, vector<pair<double, double>> &initDataset,
-          vector<pair<double, double>> &trainFindQuery,
-          vector<pair<double, double>> &trainInsertQuery,
-          vector<pair<double, double>> &testInsertQuery, vector<int> &length,
-          double rate, int thre) {
-  for (int i = 0; i < trainFindQuery.size(); i++) trainFindQuery[i].second = 1;
-  for (int i = 0; i < trainInsertQuery.size(); i++)
-    trainInsertQuery[i].second = 1;
+void Core(double initRatio, double rate, int thre, const vector<int> &length,
+          DataVectorType *initDataset, DataVectorType *trainFindQuery,
+          DataVectorType *trainInsertQuery, DataVectorType *testInsertQuery) {
+  for (int i = 0; i < trainFindQuery->size(); i++)
+    (*trainFindQuery)[i].second = 1;
+  for (int i = 0; i < trainInsertQuery->size(); i++)
+    (*trainInsertQuery)[i].second = 1;
 
 #ifdef DEBUG
   std::cout << endl;
@@ -34,14 +43,15 @@ void Core(double initRatio, vector<pair<double, double>> &initDataset,
   strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
   std::cout << "\nTEST time: " << tmpTime << endl;
 #endif
-  CARMI carmi(initDataset, trainFindQuery, trainInsertQuery, rate, thre);
+
+  CARMI carmi(*initDataset, *trainFindQuery, *trainInsertQuery, rate, thre);
 
 #ifdef DEBUG
   time(&timep);
   char tmpTime1[64];
   strftime(tmpTime1, sizeof(tmpTime1), "%Y-%m-%d %H:%M:%S", localtime(&timep));
   std::cout << "finish time: " << tmpTime1 << endl;
-#endif
+
   std::cout << "\nprint the space:" << endl;
   auto space = carmi.calculateSpace();
   outRes << space << ",";
@@ -61,17 +71,18 @@ void Core(double initRatio, vector<pair<double, double>> &initDataset,
     if (nodeVec[i] != 0) cout << "node " << i << ": " << nodeVec[i] << endl;
     nodeVec[i] = 0;
   }
+#endif
 
-  if (initRatio == 0.5)
-    WorkloadA(&carmi, initDataset, testInsertQuery);  // write-heavy
-  else if (initRatio == 0.95)
-    WorkloadB(&carmi, initDataset, testInsertQuery);  // read-heavy
-  else if (initRatio == 1)
-    WorkloadC(&carmi, initDataset);  // read-only
-  else if (initRatio == 0)
-    WorkloadD(&carmi, initDataset, testInsertQuery);  // write-partial
-  else if (initRatio == 2)
-    WorkloadE(&carmi, initDataset, testInsertQuery, length);  // range scan
+  if (initRatio == kWriteHeavy)
+    WorkloadA(*initDataset, *testInsertQuery, &carmi);  // write-heavy
+  else if (initRatio == kReadHeavy)
+    WorkloadB(*initDataset, *testInsertQuery, &carmi);  // read-heavy
+  else if (initRatio == kReadOnly)
+    WorkloadC(*initDataset, &carmi);  // read-only
+  else if (initRatio == kWritePartial)
+    WorkloadD(*initDataset, *testInsertQuery, &carmi);  // write-partial
+  else if (initRatio == kRangeScan)
+    WorkloadE(*initDataset, *testInsertQuery, length, &carmi);  // range scan
 }
 
-#endif  // !CORE_H
+#endif  // SRC_EXPERIMENT_CORE_H_

@@ -1,5 +1,16 @@
-#ifndef STATIC_H
-#define STATIC_H
+/**
+ * @file static.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-16
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_EXPERIMENT_STATIC_H_
+#define SRC_EXPERIMENT_STATIC_H_
+#include <vector>
 
 #include "workload/workloada.h"
 #include "workload/workloadb.h"
@@ -7,14 +18,12 @@
 #include "workload/workloadd.h"
 #include "workload/workloade.h"
 
-using namespace std;
-
 extern int childNum;
 extern ofstream outRes;
 
-void RunStatic(double initRatio, vector<pair<double, double>> &initDataset,
-               vector<pair<double, double>> &testInsertQuery,
-               vector<int> &length, int kLeafID) {
+void RunStatic(double initRatio, int kLeafID, const DataVectorType &initDataset,
+               const DataVectorType &testInsertQuery,
+               const vector<int> &length) {
   for (int j = 2; j < 3; j++) {
     cout << "root type:" << j << endl;
     CARMI carmi(initDataset, 131072, j, kLeafID);
@@ -34,18 +43,18 @@ void RunStatic(double initRatio, vector<pair<double, double>> &initDataset,
         break;
     }
 
-    if (initRatio == 0.5)
-      WorkloadA(&carmi, initDataset, testInsertQuery);  // write-heavy
-    else if (initRatio == 0.95)
-      WorkloadB(&carmi, initDataset, testInsertQuery);  // read-heavy
-    else if (initRatio == 1)
-      WorkloadC(&carmi, initDataset);  // read-only
-    else if (initRatio == 0)
-      WorkloadD(&carmi, initDataset, testInsertQuery);  // write-partially
-    else if (initRatio == 2)
-      WorkloadE(&carmi, initDataset, testInsertQuery, length);  // range scan
+    if (initRatio == kWriteHeavy)
+      WorkloadA(initDataset, testInsertQuery, &carmi);  // write-heavy
+    else if (initRatio == kReadHeavy)
+      WorkloadB(initDataset, testInsertQuery, &carmi);  // read-heavy
+    else if (initRatio == kReadOnly)
+      WorkloadC(initDataset, &carmi);  // read-only
+    else if (initRatio == kWritePartial)
+      WorkloadD(initDataset, testInsertQuery, &carmi);  // write-partial
+    else if (initRatio == kRangeScan)
+      WorkloadE(initDataset, testInsertQuery, length, &carmi);  // range scan
   }
   outRes << endl;
 }
 
-#endif  // !STATIC_H
+#endif  // SRC_EXPERIMENT_STATIC_H_

@@ -27,6 +27,7 @@ bool kPrimaryIndex = false;
 const double kDensity = 0.5;         // the density of gap in gapped array
 const double kExpansionScale = 1.5;  // scale of array expansion
 
+const int kAlgorithmThre = 4096;
 const double BaseNodeSpace = 64.0 / 1024 / 1024;
 
 const double LRRootTime = 12.7013;
@@ -43,5 +44,18 @@ const double CostBaseTime = 161.241;
 const double CostBSTime = 10.9438;
 
 const int reservedSpace = 1024 * 512;
+
+const int kDataPointSize = 16;
+const int kDatasetSize = 1024 * 1024 * 1024 / kDataPointSize;
+const float kTestSize = 100000.0;
+const float kMaxValue = 100000000;
+
+const float kReadOnly = 1;
+const float kWriteHeavy = 0.5;
+const float kReadHeavy = 0.95;
+const float kWritePartial = 0.85;
+const float kRangeScan = 2;
+
+const float kSecondToNanosecond = 1000000000.0;
 
 #endif  // SRC_PARAMS_H_
