@@ -27,44 +27,37 @@ bool CARMI::Insert(DataType data) {
   int childIdx = 0;
   while (1) {
     switch (type) {
-      case LR_ROOT_NODE: {
+      case LR_ROOT_NODE:
         idx = root.lrRoot.childLeft + root.lrRoot.model->Predict(data.first);
-        type = entireChild[idx].lr.flagNumber >> 24;
-      } break;
-      case PLR_ROOT_NODE: {
+        break;
+      case PLR_ROOT_NODE:
         idx = root.plrRoot.childLeft + root.plrRoot.model->Predict(data.first);
-        type = entireChild[idx].lr.flagNumber >> 24;
-      } break;
-      case HIS_ROOT_NODE: {
+        break;
+      case HIS_ROOT_NODE:
         idx = root.hisRoot.childLeft + root.hisRoot.model->Predict(data.first);
-        type = entireChild[idx].lr.flagNumber >> 24;
-      } break;
-      case BS_ROOT_NODE: {
+        break;
+      case BS_ROOT_NODE:
         idx = root.bsRoot.childLeft + root.bsRoot.model->Predict(data.first);
-        type = entireChild[idx].lr.flagNumber >> 24;
-      } break;
-      case LR_INNER_NODE: {
+        break;
+      case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft +
               entireChild[idx].lr.Predict(data.first);
-        type = entireChild[idx].lr.flagNumber >> 24;
-      } break;
-      case PLR_INNER_NODE: {
+        break;
+      case PLR_INNER_NODE:
         idx = entireChild[idx].plr.childLeft +
               entireChild[idx].plr.Predict(data.first);
-        type = entireChild[idx].lr.flagNumber >> 24;
-      } break;
-      case HIS_INNER_NODE: {
+        break;
+      case HIS_INNER_NODE:
         idx = entireChild[idx].his.childLeft +
               entireChild[idx].his.Predict(data.first);
-        type = entireChild[idx].lr.flagNumber >> 24;
-      } break;
-      case BS_INNER_NODE: {
+        break;
+      case BS_INNER_NODE:
         idx = entireChild[idx].bs.childLeft +
               entireChild[idx].bs.Predict(data.first);
-        type = entireChild[idx].lr.flagNumber >> 24;
-      } break;
+        break;
       case ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+        // split
         if (size >= kLeafMaxCapacity) {
           DataVectorType tmpDataset;
           auto left = entireChild[idx].array.m_left;
@@ -72,7 +65,7 @@ bool CARMI::Insert(DataType data) {
           for (int i = left; i < left + size; i++)
             tmpDataset.push_back(entireData[i]);
 
-          auto node = LRModel();  // create a new iplrer node
+          auto node = LRModel();  // create a new inner node
           int childNum = kInsertNewChildNumber;
           node.SetChildNumber(kInsertNewChildNumber);
           node.childLeft = allocateChildMemory(childNum);
@@ -90,7 +83,7 @@ bool CARMI::Insert(DataType data) {
 
           for (int i = 0; i < childNum; i++) {
             ArrayType tmpLeaf(kThreshold);
-            initArray(kMaxKeyNum, left, 1, subFindData[i], &tmpLeaf);
+            InitArray(kMaxKeyNum, left, 1, subFindData[i], &tmpLeaf);
             entireChild[node.childLeft + i].array = tmpLeaf;
           }
           auto previousIdx = entireChild[idx].array.previousLeaf;
@@ -108,10 +101,11 @@ bool CARMI::Insert(DataType data) {
                 entireChild[idx].lr.Predict(data.first);
         }
         auto left = entireChild[idx].array.m_left;
+        // size == 0
         if (size == 0) {
           entireData[left] = data;
           entireChild[idx].array.flagNumber++;
-          initArray(entireChild[idx].array.m_capacity, left, 1, entireData,
+          InitArray(entireChild[idx].array.m_capacity, left, 1, entireData,
                     &entireChild[idx].array);
           if (entireChild[idx].array.nextLeaf == -1) {
             scanLeaf.insert({data.first, idx});
@@ -132,23 +126,14 @@ bool CARMI::Insert(DataType data) {
           return true;
         }
         int preIdx = entireChild[idx].array.Predict(data.first);
-        int start = std::max(0, preIdx - entireChild[idx].array.error) + left;
-        int end =
-            std::min(size - 1, preIdx + entireChild[idx].array.error) + left;
-        start = std::min(start, end);
-
-        if (data.first <= entireData[start].first)
-          preIdx = ArrayBinarySearch(data.first, left, start);
-        else if (data.first <= entireData[end].first)
-          preIdx = ArrayBinarySearch(data.first, start, end);
-        else
-          preIdx = ArrayBinarySearch(data.first, end, left + size - 1);
+        preIdx = ArraySearch(data.first, preIdx, entireChild[idx].array.error,
+                             left, size);
 
         // expand
         if ((size >= entireChild[idx].array.m_capacity) &&
             entireChild[idx].array.m_capacity < kLeafMaxCapacity) {
           auto diff = preIdx - left;
-          initArray(entireChild[idx].array.m_capacity, left, 1, entireData,
+          InitArray(entireChild[idx].array.m_capacity, left, 1, entireData,
                     &entireChild[idx].array);
           left = entireChild[idx].array.m_left;
           preIdx = left + diff;
@@ -166,10 +151,11 @@ bool CARMI::Insert(DataType data) {
           entireData[i] = entireData[i - 1];
         entireData[preIdx] = data;
         return true;
-      } break;
+      }
       case GAPPED_ARRAY_LEAF_NODE: {
         auto left = entireChild[idx].ga.m_left;
         int size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
+        // split
         if (size >= kLeafMaxCapacity) {
           DataVectorType tmpDataset;
           auto left = entireChild[idx].ga.m_left;
@@ -177,7 +163,7 @@ bool CARMI::Insert(DataType data) {
           for (int i = left; i < left + size; i++)
             tmpDataset.push_back(entireData[i]);
 
-          auto node = LRModel();  // create a new iplrer node
+          auto node = LRModel();  // create a new inner node
           node.SetChildNumber(kInsertNewChildNumber);
           int childNum = kInsertNewChildNumber;
           node.childLeft = allocateChildMemory(childNum);
@@ -195,7 +181,7 @@ bool CARMI::Insert(DataType data) {
 
           for (int i = 0; i < childNum; i++) {
             GappedArrayType tmpLeaf(kThreshold);
-            initGA(kMaxKeyNum, 0, subFindData[i].size(), subFindData[i],
+            InitGA(kMaxKeyNum, 0, subFindData[i].size(), subFindData[i],
                    &tmpLeaf);
             entireChild[node.childLeft + i].ga = tmpLeaf;
           }
@@ -214,6 +200,7 @@ bool CARMI::Insert(DataType data) {
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);
         }
+        // expand
         if (entireChild[idx].ga.capacity < kLeafMaxCapacity &&
             (static_cast<float>(size) / entireChild[idx].ga.capacity >
              entireChild[idx].ga.density)) {
@@ -224,14 +211,15 @@ bool CARMI::Insert(DataType data) {
           for (int i = left; i < right; i++) {
             newDataset.push_back(entireData[i]);
           }
-          initGA(entireChild[idx].ga.capacity, left, size, newDataset,
+          InitGA(entireChild[idx].ga.capacity, left, size, newDataset,
                  &entireChild[idx].ga);
         }
+        // size == 0
         if (size == 0) {
           entireData[left] = data;
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex = 0;
-          initGA(entireChild[idx].ga.capacity, left, 1, entireData,
+          InitGA(entireChild[idx].ga.capacity, left, 1, entireData,
                  &entireChild[idx].ga);
           if (entireChild[idx].ga.nextLeaf == -1) {
             scanLeaf.insert({data.first, idx});
@@ -251,24 +239,11 @@ bool CARMI::Insert(DataType data) {
           }
           return true;
         }
+        // find position
         int preIdx = entireChild[idx].ga.Predict(data.first);
-
-        int start = std::max(0, preIdx - entireChild[idx].ga.error) + left;
-        int end = std::min(entireChild[idx].ga.maxIndex,
-                           preIdx + entireChild[idx].ga.error) +
-                  left;
-        start = std::min(start, end);
-
-        if (entireData[start].first == DBL_MIN) start--;
-        if (entireData[end].first == DBL_MIN) end--;
-
-        if (data.first <= entireData[start].first)
-          preIdx = GABinarySearch(data.first, left, start);
-        else if (data.first <= entireData[end].first)
-          preIdx = GABinarySearch(data.first, start, end);
-        else
-          preIdx = GABinarySearch(data.first, end,
-                                  left + entireChild[idx].ga.maxIndex);
+        preIdx =
+            ExternalSearch(data.first, preIdx,
+                           entireChild[idx].externalArray.error, left, size);
 
         // if the Insertion position is a gap,
         //  then we Insert the element into the gap and are done
@@ -316,13 +291,16 @@ bool CARMI::Insert(DataType data) {
           return true;
         }
         return false;
-      } break;
+      }
       case EXTERNAL_ARRAY_LEAF_NODE: {
+        // TODO
         externalData[curr] = data;
         curr++;
         return true;
-      } break;
+      }
     }
+
+    type = entireChild[idx].lr.flagNumber >> 24;
   }
 }
 

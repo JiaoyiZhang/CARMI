@@ -13,6 +13,7 @@
 
 #include <float.h>
 
+#include <algorithm>
 #include <vector>
 
 #include "../../params.h"
@@ -56,7 +57,7 @@ inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx) const {
 
 // search a key-value through binary search in
 // the YCSB leaf node
-inline int CARMI::YCSBBinarySearch(double key, int start, int end) const {
+inline int CARMI::ExternalBinarySearch(double key, int start, int end) const {
   while (start < end) {
     int mid = (start + end) / 2;
     if (entireData[mid].first < key)
@@ -67,4 +68,51 @@ inline int CARMI::YCSBBinarySearch(double key, int start, int end) const {
   return start;
 }
 
+inline int CARMI::ArraySearch(double key, int preIdx, int error, int left,
+                              int size) const {
+  int start = std::max(0, preIdx - error) + left;
+  int end = std::min(size - 1, preIdx + error) + left;
+  start = std::min(start, end);
+  int res;
+  if (key <= entireData[start].first)
+    res = ArrayBinarySearch(key, left, start);
+  else if (key <= entireData[end].first)
+    res = ArrayBinarySearch(key, start, end);
+  else
+    res = ArrayBinarySearch(key, end, left + size - 1);
+  return res;
+}
+
+inline int CARMI::GASearch(double key, int preIdx, int error, int left,
+                           int maxIndex) const {
+  int start = std::max(0, preIdx - error) + left;
+  int end = std::min(maxIndex, preIdx + error) + left;
+  start = std::min(start, end);
+
+  int res;
+  if (entireData[start].first == DBL_MIN) start--;
+  if (entireData[end].first == DBL_MIN) end--;
+  if (key <= entireData[start].first)
+    res = GABinarySearch(key, left, start);
+  else if (key <= entireData[end].first)
+    res = GABinarySearch(key, start, end);
+  else
+    res = GABinarySearch(key, end, left + maxIndex);
+  return res;
+}
+
+inline int CARMI::ExternalSearch(double key, int preIdx, int error, int left,
+                                 int size) const {
+  int start = std::max(0, preIdx - error) + left;
+  int end = std::min(size - 1, preIdx + error) + left;
+  start = std::min(start, end);
+  int res;
+  if (key <= externalData[start].first)
+    res = ExternalBinarySearch(key, left, start);
+  else if (key <= externalData[end].first)
+    res = ExternalBinarySearch(key, start, end);
+  else
+    res = ExternalBinarySearch(key, end, left + size - 1);
+  return res;
+}
 #endif  // SRC_CARMI_FUNC_INLINEFUNCTION_H_
