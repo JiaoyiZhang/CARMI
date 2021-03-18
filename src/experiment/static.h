@@ -12,6 +12,8 @@
 #define SRC_EXPERIMENT_STATIC_H_
 #include <vector>
 
+#include "../CARMI/carmi.h"
+#include "../CARMI/staticRMI/rmi_root.h"
 #include "workload/workloada.h"
 #include "workload/workloadb.h"
 #include "workload/workloadc.h"

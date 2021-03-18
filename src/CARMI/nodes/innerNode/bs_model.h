@@ -17,40 +17,6 @@
 
 #include "../../carmi.h"
 
-inline void CARMI::initBS(const DataVectorType &dataset, BSModel *bs) {
-  int childNumber = bs->flagNumber & 0x00FFFFFF;
-  bs->childLeft = allocateChildMemory(childNumber);
-  if (dataset.size() == 0) return;
-
-  Train(0, dataset.size(), dataset, bs);
-
-  std::vector<DataVectorType> perSubDataset;
-  DataVectorType tmp;
-  for (int i = 0; i < childNumber; i++) perSubDataset.push_back(tmp);
-  for (int i = 0; i < dataset.size(); i++) {
-    int p = bs->Predict(dataset[i].first);
-    perSubDataset[p].push_back(dataset[i]);
-  }
-
-  switch (kLeafNodeID) {
-    case ARRAY_LEAF_NODE:
-      for (int i = 0; i < childNumber; i++) {
-        ArrayType tmp(kThreshold);
-        initArray(kMaxKeyNum, 0, perSubDataset[i].size(), perSubDataset[i],
-                  &tmp);
-        entireChild[bs->childLeft + i].array = tmp;
-      }
-      break;
-    case GAPPED_ARRAY_LEAF_NODE:
-      for (int i = 0; i < childNumber; i++) {
-        GappedArrayType tmp(kThreshold);
-        initGA(kMaxKeyNum, 0, perSubDataset[i].size(), perSubDataset[i], &tmp);
-        entireChild[bs->childLeft + i].ga = tmp;
-      }
-      break;
-  }
-}
-
 inline void CARMI::Train(const int left, const int size,
                          const DataVectorType &dataset, BSModel *bs) {
   if (size == 0) return;
