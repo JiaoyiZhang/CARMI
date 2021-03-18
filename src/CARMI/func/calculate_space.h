@@ -20,16 +20,16 @@ long double CARMI::CalculateSpace() const {
 
   switch (rootType) {
     case LR_ROOT_NODE:
-      space_cost += sizeof(LRType) / 1024 / 1024;
+      space_cost += kLRRootSpace;
       break;
     case PLR_ROOT_NODE:
-      space_cost += sizeof(PLRType) / 1024 / 1024;
+      space_cost += kPLRRootSpace;
       break;
     case HIS_ROOT_NODE:
-      space_cost += sizeof(HisType) / 1024 / 1024;
+      space_cost += kHisRootSpace;
       break;
     case BS_ROOT_NODE:
-      space_cost += sizeof(BSType) / 1024 / 1024; // para
+      space_cost += kBSRootSpace;
       break;
   }
 

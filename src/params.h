@@ -35,6 +35,11 @@ const double kLRRootTime = 12.7013;
 const double kPLRRootTime = 39.6429;
 const double kHisRootTime = 44.2824;
 
+const double kLRRootSpace = sizeof(LRType) / 1024.0 / 1024.0;
+const double kPLRRootSpace = sizeof(PLRType) / 1024.0 / 1024.0;
+const double kHisRootSpace = sizeof(HisType) / 1024.0 / 1024.0;
+const double kBSRootSpace = sizeof(BSType) / 1024.0 / 1024.0;
+
 const double kLRInnerTime = 92.4801;
 const double kPLRInnerTime = 97.1858;
 const double kHisInnerTime = 109.8874;
