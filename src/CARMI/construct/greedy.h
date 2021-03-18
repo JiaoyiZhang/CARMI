@@ -62,8 +62,11 @@ void CARMI::IsBetterGreedy(int c, NodeType type, double frequency_weight,
  */
 NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   NodeCost nodeCost = emptyCost;
-  if (dataRange.initRange.size == 0 && dataRange.findRange.size == 0)
+  if (dataRange.initRange.size == 0) {
+    nodeCost = emptyCost;
+    ConstructEmptyNode(dataRange);
     return nodeCost;
+  }
 
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct;
@@ -120,9 +123,12 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
     else
       res = DP(range);
   }
-
+#ifdef DEBUG
   if (optimalCost.time < DBL_MAX)
-    structMap.insert({dataRange.initRange, optimal_node_struct});
+    std::cout << "wrong, greedy time is DBL_MAX" << std::endl;
+#endif  // DEBUG
+
+  structMap.insert({dataRange.initRange, optimal_node_struct});
   COST.insert({dataRange.initRange, optimalCost});
   nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost};
   return nodeCost;

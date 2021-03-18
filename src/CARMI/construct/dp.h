@@ -31,10 +31,12 @@
  */
 NodeCost CARMI::DP(const DataRange &range) {
   NodeCost nodeCost;
-  if (range.initRange.size == 0 && range.findRange.size == 0) {
+  if (range.initRange.size == 0) {
     nodeCost = emptyCost;
+    ConstructEmptyNode(range);
     return nodeCost;
   }
+
   auto it = COST.find(range.initRange);
   if (it != COST.end()) {
     nodeCost = it->second;

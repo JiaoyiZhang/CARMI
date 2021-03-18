@@ -42,8 +42,7 @@ inline void CARMI::InitArray(int cap, int left, int size,
     }
   }
 
-  UpdatePara(cap, actualSize, arr);
-  StoreData(left, size, newDataset, arr);
+  StoreData(cap, left, size, newDataset, arr);
 
   if (size > kLeafMaxCapacity)
     std::cout << "init Array setDataset WRONG! datasetSize > 4096, size is:"
@@ -52,33 +51,20 @@ inline void CARMI::InitArray(int cap, int left, int size,
   Train(arr->m_left, size, entireData, arr);
 }
 
-/**
- * @brief update m_capacity, flagNumber and m_left
- *
- * @param cap
- * @param left
- * @param size
- * @param arr
- */
-inline void CARMI::UpdatePara(int cap, int size, ArrayType *arr) {
+inline void CARMI::StoreData(int cap, int left, int size,
+                             const DataVectorType &dataset, ArrayType *arr) {
   if (arr->m_left != -1) {
     ReleaseMemory(arr->m_left, arr->m_capacity);
   }
-  arr->m_capacity = cap;
+  if (cap < size) {
+    arr->m_capacity = GetIndex(size);
+  } else {
+    arr->m_capacity = cap;
+  }
   arr->flagNumber += size;
-  while (size > arr->m_capacity) {
-    arr->m_capacity *= kExpansionScale;
-  }
-
-  if (arr->m_capacity > kLeafMaxCapacity) {
-    arr->m_capacity = kLeafMaxCapacity;
-  }
 
   arr->m_left = AllocateMemory(arr->m_capacity);
-}
 
-inline void CARMI::StoreData(int left, int size, const DataVectorType &dataset,
-                             ArrayType *arr) {
   int end = left + size;
   for (int i = arr->m_left, j = left; j < end; i++, j++)
     entireData[i] = dataset[j];

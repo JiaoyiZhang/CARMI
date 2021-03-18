@@ -92,8 +92,13 @@ NodeCost CARMI::DPInner(const DataRange &dataRange) {
                                  kBSInnerTime, dataRange, &optimalCost,
                                  &(optimal_node_struct.bs));
   }
+
+#ifdef DEBUG
   if (optimalCost.time < DBL_MAX)
-    structMap.insert({dataRange.initRange, optimal_node_struct});
+    std::cout << "wrong, dp inner time is DBL_MAX" << std::endl;
+#endif  // DEBUG
+
+  structMap.insert({dataRange.initRange, optimal_node_struct});
   COST.insert({dataRange.initRange, optimalCost});
   nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost};
   return nodeCost;

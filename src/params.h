@@ -13,7 +13,7 @@
 
 #define ZIPFIAN 1
 #define PARAM_ZIPFIAN 0.99
-#define DEBUG
+// #define DEBUG
 
 #include <utility>
 #include <vector>
@@ -35,18 +35,13 @@ const double kLRRootTime = 12.7013;
 const double kPLRRootTime = 39.6429;
 const double kHisRootTime = 44.2824;
 
-const double kLRRootSpace = sizeof(LRType) / 1024.0 / 1024.0;
-const double kPLRRootSpace = sizeof(PLRType) / 1024.0 / 1024.0;
-const double kHisRootSpace = sizeof(HisType) / 1024.0 / 1024.0;
-const double kBSRootSpace = sizeof(BSType) / 1024.0 / 1024.0;
-
 const double kLRInnerTime = 92.4801;
 const double kPLRInnerTime = 97.1858;
 const double kHisInnerTime = 109.8874;
 const double kBSInnerTime = 114.371;
 
 const double kCostMoveTime = 6.25;
-const double kCostBaseTime = 161.241;
+const double kLeafBaseTime = 161.241;
 const double kCostBSTime = 10.9438;
 
 const int kHisMaxChildNumber = 256;
@@ -67,5 +62,7 @@ const float kWritePartial = 0.85;
 const float kRangeScan = 2;
 
 const float kSecondToNanosecond = 1000000000.0;
+
+const float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity
 
 #endif  // SRC_PARAMS_H_

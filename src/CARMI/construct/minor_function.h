@@ -124,4 +124,19 @@ double CARMI::CalculateFrequencyWeight(const DataRange &dataRange) {
   double frequency_weight = frequency / querySize;
   return frequency_weight;
 }
+
+void CARMI::ConstructEmptyNode(const DataRange &range) {
+  BaseNode optimal_node_struct;
+  if (kPrimaryIndex) {
+    ExternalArray tmp;
+    Train(&tmp, range.initRange.left, range.initRange.size);
+    optimal_node_struct.externalArray = tmp;
+  } else {
+    GappedArrayType tmpNode(kThreshold);
+    tmpNode.density = 0.5;
+    Train(range.initRange.left, range.initRange.size, &tmpNode);
+    optimal_node_struct.ga = tmpNode;
+  }
+  structMap.insert({range.initRange, optimal_node_struct});
+}
 #endif  // SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_

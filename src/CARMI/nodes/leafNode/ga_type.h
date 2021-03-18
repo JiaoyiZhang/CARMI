@@ -40,8 +40,7 @@ inline void CARMI::InitGA(int cap, int left, int size,
       newDataset[actualSize++] = subDataset[i];
     }
   }
-  UpdatePara(cap, actualSize, ga);
-  StoreData(left, size, newDataset, ga);
+  StoreData(cap, left, size, newDataset, ga);
 
 #ifdef DEBUG
   if (size > kLeafMaxCapacity)
@@ -53,31 +52,20 @@ inline void CARMI::InitGA(int cap, int left, int size,
 
   Train(ga->m_left, ga->maxIndex - ga->m_left, entireData, ga);
 }
-
-/**
- * @brief update capacity and m_left
- *
- * @param cap
- * @param left
- * @param size
- * @param ga
- */
-inline void CARMI::UpdatePara(int cap, int size, GappedArrayType *ga) {
+inline void CARMI::StoreData(int cap, int left, int size,
+                             const DataVectorType &dataset,
+                             GappedArrayType *ga) {
   if (ga->m_left != -1) {
     ReleaseMemory(ga->m_left, ga->capacity);
   }
-  ga->capacity = cap;
-  while ((static_cast<float>(size) / static_cast<float>(ga->capacity) >
-          ga->density))
-    ga->capacity = static_cast<float>(ga->capacity) / ga->density;
+  if ((static_cast<float>(size) / cap > ga->density))
+    ga->capacity = static_cast<float>(cap) / ga->density;
   if (ga->capacity > kLeafMaxCapacity) {
     ga->capacity = kLeafMaxCapacity;
   }
+  ga->capacity = GetIndex(ga->capacity);
   ga->m_left = AllocateMemory(ga->capacity);
-}
 
-inline void CARMI::StoreData(int left, int size, const DataVectorType &dataset,
-                             GappedArrayType *ga) {
   int k = ga->density / (1 - ga->density);
   float rate = static_cast<float>(dataset.size()) / ga->capacity;
   if (rate > ga->density) {

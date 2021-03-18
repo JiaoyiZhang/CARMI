@@ -39,29 +39,19 @@
  * @return TYPE trained node
  */
 template <typename TYPE>
-TYPE CARMI::StoreInnerNode(const DataRange &range) {
-  auto it = structMap.find(range.initRange);
-
-#ifdef DEBUG
-  if (it == structMap.end()) std::cout << "WRONG!" << std::endl;
-#endif  // DEBUG
-
-  TYPE node = *(reinterpret_cast<TYPE *>(&it->second));
-  int optimalChildNumber = node.flagNumber & 0x00FFFFFF;
+TYPE CARMI::StoreInnerNode(const IndexPair &range, TYPE *node) {
+  int optimalChildNumber = node->flagNumber & 0x00FFFFFF;
   SubDataset subDataset(optimalChildNumber);
 
-  NodePartition<TYPE>(node, range.initRange, initDataset,
-                      &(subDataset.subInit));
-  node.childLeft = AllocateChildMemory(optimalChildNumber);
+  NodePartition<TYPE>(*node, range, initDataset, &(subDataset.subInit));
+  node->childLeft = AllocateChildMemory(optimalChildNumber);
 
   for (int i = 0; i < optimalChildNumber; i++) {
-    auto iter = structMap.find(subDataset.subInit[i]);
-    int type = iter->second.array.flagNumber >> 24;
     DataRange subRange(subDataset.subInit[i], subDataset.subFind[i],
                        subDataset.subInsert[i]);
-    StoreOptimalNode(node.childLeft + i, type, subRange);
+    StoreOptimalNode(node->childLeft + i, subRange);
   }
-  return node;
+  return *node;
 }
 
 /**
@@ -71,72 +61,55 @@ TYPE CARMI::StoreInnerNode(const DataRange &range) {
  * @param optimalType the type of this node
  * @param range the left and size of the data points in initDataset
  */
-void CARMI::StoreOptimalNode(int storeIdx, int optimalType,
-                             const DataRange &range) {
-//   if (range.initRange.size == 0) {
-//     if (kPrimaryIndex) {
-//       ExternalArray node;
-//       InitExternalArray(&node, range.initRange.left, range.initRange.size);
-//       entireChild[storeIdx].externalArray = node;
-//     } else {
-//       GappedArrayType node(kThreshold);
-//       InitGA(node.capacity, range.initRange.left, range.initRange.size,
-//              initDataset, &node);
-//       entireChild[storeIdx].ga = node;
-//     }
-// #ifdef DEBUG
-//     if (optimalType < ARRAY_LEAF_NODE)
-//       std::cout << "WRONG! size==0, type is:" << optimalType << std::endl;
-// #endif  // DEBUG
-//     return;
-//   }
-
+void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
   auto it = structMap.find(range.initRange);
 
-  switch (optimalType) {
+#ifdef DEBUG
+  if (it == structMap.end()) std::cout << "WRONG!" << std::endl;
+#endif  // DEBUG
+
+  int type = it->second.array.flagNumber >> 24;
+  switch (type) {
     case LR_INNER_NODE: {
-      auto node = StoreInnerNode<LRModel>(range);
-      entireChild[storeIdx].lr = node;
+      StoreInnerNode<LRModel>(range.initRange, &(it->second.lr));
+      entireChild[storeIdx].lr = it->second.lr;
       break;
     }
     case PLR_INNER_NODE: {
-      auto node = StoreInnerNode<PLRModel>(range);
-      entireChild[storeIdx].plr = node;
+      StoreInnerNode<PLRModel>(range.initRange, &(it->second.plr));
+      entireChild[storeIdx].plr = it->second.plr;
       break;
     }
     case HIS_INNER_NODE: {
-      auto node = StoreInnerNode<HisModel>(range);
-      entireChild[storeIdx].his = node;
+      StoreInnerNode<HisModel>(range.initRange, &(it->second.his));
+      entireChild[storeIdx].his = it->second.his;
       break;
     }
     case BS_INNER_NODE: {
-      auto node = StoreInnerNode<BSModel>(range);
-      entireChild[storeIdx].bs = node;
+      StoreInnerNode<BSModel>(range.initRange, &(it->second.bs));
+      entireChild[storeIdx].bs = it->second.bs;
       break;
     }
     case ARRAY_LEAF_NODE: {
-      ArrayType node = *(reinterpret_cast<ArrayType *>(&it->second));
-      UpdatePara(std::max(range.initRange.size, kThreshold),
-                 range.initRange.size, &node);
-      StoreData(range.initRange.left, range.initRange.size, initDataset, &node);
+      ArrayType node = it->second.array;
+      StoreData(node.m_capacity, range.initRange.left, range.initRange.size,
+                initDataset, &node);
       entireChild[storeIdx].array = node;
       if (range.initRange.size > 0)
         scanLeaf.insert({initDataset[range.initRange.left].first, storeIdx});
       break;
     }
     case GAPPED_ARRAY_LEAF_NODE: {
-      GappedArrayType node =
-          *(reinterpret_cast<GappedArrayType *>(&it->second));  // .ga
-      UpdatePara(std::max(range.initRange.size, kThreshold),
-                 range.initRange.size, &node);
-      StoreData(range.initRange.left, range.initRange.size, initDataset, &node);
+      GappedArrayType node = it->second.ga;
+      StoreData(node.capacity, range.initRange.left, range.initRange.size,
+                initDataset, &node);
       entireChild[storeIdx].ga = node;
       if (range.initRange.size > 0)
         scanLeaf.insert({initDataset[range.initRange.left].first, storeIdx});
       break;
     }
     case EXTERNAL_ARRAY_LEAF_NODE: {
-      ExternalArray node = *(reinterpret_cast<ExternalArray *>(&it->second));
+      ExternalArray node = it->second.externalArray;
       node.flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + range.initRange.size;
       node.m_left = range.initRange.left;
       entireChild[storeIdx].externalArray = node;

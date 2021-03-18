@@ -175,6 +175,7 @@ class CARMI {
                          NodeCost *optimalCost, TYPE *optimal_node_struct);
   NodeCost DPInner(const DataRange &dataRange);
 
+  void ConstructEmptyNode(const DataRange &range);
   template <typename TYPE>
   double CalLeafFindTime(int actualSize, double density, const TYPE &node,
                          const IndexPair &range) const;
@@ -191,11 +192,12 @@ class CARMI {
   NodeCost GreedyAlgorithm(const DataRange &range);
 
   template <typename TYPE>
-  TYPE StoreInnerNode(const DataRange &range);
-  void StoreOptimalNode(int storeIdx, int optimalType, const DataRange &range);
+  TYPE StoreInnerNode(const IndexPair &range, TYPE *node);
+  void StoreOptimalNode(int storeIdx, const DataRange &range);
   bool AllocateEmptyBlock(int left, int len);
   int GetIndex(int size);
   void InitEntireData(int left, int size, bool reinit);
+  int AllocateSingleMemory(int size, int *idx);
   int AllocateMemory(int size);
   void ReleaseMemory(int left, int size);
 
@@ -217,9 +219,8 @@ class CARMI {
 
   void InitArray(int cap, int left, int size, const DataVectorType &dataset,
                  ArrayType *arr);
-  void UpdatePara(int cap, int size, ArrayType *arr);
-  void StoreData(int start_idx, int size, const DataVectorType &dataset,
-                 ArrayType *arr);
+  void StoreData(int cap, int start_idx, int size,
+                 const DataVectorType &dataset, ArrayType *arr);
   void Train(int start_idx, int size, const DataVectorType &dataset,
              ArrayType *arr);
   void Train(int start_idx, int size, ArrayType *arr);
@@ -227,9 +228,8 @@ class CARMI {
   void InitGA(int cap, int left, int size, const DataVectorType &subDataset,
               GappedArrayType *ga);
 
-  void UpdatePara(int cap, int size, GappedArrayType *ga);
-  void StoreData(int start_idx, int size, const DataVectorType &dataset,
-                 GappedArrayType *ga);
+  void StoreData(int cap, int start_idx, int size,
+                 const DataVectorType &dataset, GappedArrayType *ga);
   void Train(int start_idx, int size, const DataVectorType &dataset,
              GappedArrayType *ga);
   void Train(int start_idx, int size, GappedArrayType *ga);
