@@ -50,8 +50,9 @@ inline void CARMI::InitGA(int cap, int left, int size,
 
   ga->flagNumber += size;
 
-  Train(ga->m_left, ga->maxIndex - ga->m_left, entireData, ga);
+  Train(ga->m_left, ga->maxIndex, entireData, ga);
 }
+
 inline void CARMI::StoreData(int cap, int left, int size,
                              const DataVectorType &dataset,
                              GappedArrayType *ga) {

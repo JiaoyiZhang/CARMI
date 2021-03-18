@@ -38,7 +38,7 @@ template <typename TYPE>
 void CARMI::IsBetterGreedy(int c, NodeType type, double frequency_weight,
                            double time_cost, const IndexPair &range,
                            TYPE *optimal_node_struct, NodeCost *optimalCost) {
-  std::vector<IndexPair> perSize(c, IndexPair(-1, 0));
+  std::vector<IndexPair> perSize(c, emptyRange);
   double space_cost = kBaseNodeSpace * c;
 
   TYPE node;

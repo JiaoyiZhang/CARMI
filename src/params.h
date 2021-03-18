@@ -65,4 +65,6 @@ const float kSecondToNanosecond = 1000000000.0;
 
 const float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity
 
+const int kRMIInnerChild = 32;
+
 #endif  // SRC_PARAMS_H_

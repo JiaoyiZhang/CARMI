@@ -25,7 +25,7 @@
 class CARMI {
  public:
   CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
-        int kLeafID);  // RMI
+        int kLeafID);  // for static structure
   CARMI(const DataVectorType &initData, const DataVectorType &findData,
         const DataVectorType &insertData, const std::vector<int> &insertIndex,
         double rate, int thre) {
@@ -52,20 +52,7 @@ class CARMI {
     InitEntireChild(initDataset.size());
     Construction(initData, findData, insertData);
   }
-  explicit CARMI(const DataVectorType &initData) {
-    nowDataSize = 0;
-    initDataset = initData;
-    DataVectorType tmp;
-    querySize = initData.size();
-    root.hisRoot = HisType(131072);
 
-    if (!kPrimaryIndex)
-      InitEntireData(0, initDataset.size(), false);
-    else
-      externalData = initDataset;
-    InitEntireChild(initDataset.size());
-    Construction(initData, tmp, tmp);
-  }
   class iterator {
    public:
     inline iterator() : currnode(NULL), currslot(0) {}
@@ -131,21 +118,27 @@ class CARMI {
     BaseNode *currnode;
     int currslot;
   };
-  long double CalculateSpace() const;
-  void PrintStructure(int level, NodeType type, int idx,
-                      std::vector<int> *levelVec,
-                      std::vector<int> *nodeVec) const;
 
-  // pair<double, double> Find(double key) const;
+  // main functions
+ public:
   iterator Find(double key);
   bool Insert(DataType data);
   bool Update(DataType data);
   bool Delete(double key);
 
+  long double CalculateSpace() const;
+  void PrintStructure(int level, NodeType type, int idx,
+                      std::vector<int> *levelVec,
+                      std::vector<int> *nodeVec) const;
+
  private:
+  // construction algorithms
+  // main function
   void Construction(const DataVectorType &initData,
                     const DataVectorType &findData,
                     const DataVectorType &insertData);
+
+  // root
   template <typename TYPE, typename ModelType>
   void IsBetterRoot(int c, NodeType type, double time_cost, double *optimalCost,
                     RootStruct *rootStruct);
@@ -155,27 +148,19 @@ class CARMI {
                      SubDataset *subDataset, int *childLeft);
   SubDataset StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost);
 
+  // use the constructed root to construct lower layers
   void ConstructSubTree(const RootStruct &rootStruct,
                         const SubDataset &subDataset, NodeCost *nodeCost);
 
  private:
+  // dynamic programming
   NodeCost DP(const DataRange &range);
-  double CalculateEntropy(int size, int childNum,
-                          const std::vector<IndexPair> &perSize) const;
-  template <typename TYPE>
-  void NodePartition(const TYPE &node, const IndexPair &range,
-                     const DataVectorType &dataset,
-                     std::vector<IndexPair> *subData) const;
-  double CalculateFrequencyWeight(const DataRange &dataRange);
-  template <typename TYPE>
-  TYPE InnerDivideAll(int c, const DataRange &range, SubDataset *subDataset);
+  NodeCost DPInner(const DataRange &dataRange);
+  NodeCost DPLeaf(const DataRange &dataRange);
   template <typename TYPE>
   void ChooseBetterInner(int c, NodeType type, double frequency_weight,
                          double time_cost, const DataRange &dataRange,
                          NodeCost *optimalCost, TYPE *optimal_node_struct);
-  NodeCost DPInner(const DataRange &dataRange);
-
-  void ConstructEmptyNode(const DataRange &range);
   template <typename TYPE>
   double CalLeafFindTime(int actualSize, double density, const TYPE &node,
                          const IndexPair &range) const;
@@ -183,27 +168,51 @@ class CARMI {
   double CalLeafInsertTime(int actualSize, double density, const TYPE &node,
                            const IndexPair &range,
                            const IndexPair &findRange) const;
-  NodeCost DPLeaf(const DataRange &dataRange);
 
+ private:
+  // greedy algorithm
   template <typename TYPE>
   void IsBetterGreedy(int c, NodeType type, double frequency_weight,
                       double time_cost, const IndexPair &range,
                       TYPE *optimal_node_struct, NodeCost *optimalCost);
   NodeCost GreedyAlgorithm(const DataRange &range);
 
+ private:
+  // store nodes
   template <typename TYPE>
   TYPE StoreInnerNode(const IndexPair &range, TYPE *node);
   void StoreOptimalNode(int storeIdx, const DataRange &range);
-  bool AllocateEmptyBlock(int left, int len);
-  int GetIndex(int size);
+
+ private:
+  // manage entireData and entireChild
   void InitEntireData(int left, int size, bool reinit);
-  int AllocateSingleMemory(int size, int *idx);
+  void InitEntireChild(int size);
+
   int AllocateMemory(int size);
   void ReleaseMemory(int left, int size);
 
-  void InitEntireChild(int size);
+  int GetIndex(int size);
+  bool AllocateEmptyBlock(int left, int len);
+  int AllocateSingleMemory(int size, int *idx);
   int AllocateChildMemory(int size);
 
+ private:
+  // minor functions
+  double CalculateFrequencyWeight(const DataRange &dataRange);
+  double CalculateEntropy(int size, int childNum,
+                          const std::vector<IndexPair> &perSize) const;
+  template <typename TYPE>
+  void NodePartition(const TYPE &node, const IndexPair &range,
+                     const DataVectorType &dataset,
+                     std::vector<IndexPair> *subData) const;
+  template <typename TYPE>
+  TYPE InnerDivideAll(int c, const DataRange &range, SubDataset *subDataset);
+  void ConstructEmptyNode(const DataRange &range);
+  void UpdateLeaf();
+  inline float log2(double value) const { return log(value) / log(2); }
+
+ private:
+  // inner nodes
   void InitLR(const DataVectorType &dataset, LRModel *lr);
   void InitPLR(const DataVectorType &dataset, PLRModel *plr);
   void InitHis(const DataVectorType &dataset, HisModel *his);
@@ -213,25 +222,25 @@ class CARMI {
   void Train(int left, int size, const DataVectorType &dataset, HisModel *his);
   void Train(int left, int size, const DataVectorType &dataset, BSModel *bs);
 
+ private:
+  // leaf nodes
   void InitArray(int cap, int left, int size, const DataVectorType &dataset,
                  ArrayType *arr);
-  void StoreData(int cap, int start_idx, int size,
-                 const DataVectorType &dataset, ArrayType *arr);
-  void Train(int start_idx, int size, const DataVectorType &dataset,
-             ArrayType *arr);
-
   void InitGA(int cap, int left, int size, const DataVectorType &subDataset,
               GappedArrayType *ga);
-
-  void StoreData(int cap, int start_idx, int size,
-                 const DataVectorType &dataset, GappedArrayType *ga);
+  void InitExternalArray(ExternalArray *ycsb, int start_idx, int size);
+  void Train(int start_idx, int size, const DataVectorType &dataset,
+             ArrayType *arr);
   void Train(int start_idx, int size, const DataVectorType &dataset,
              GappedArrayType *ga);
-
-  void InitExternalArray(ExternalArray *ycsb, int start_idx, int size);
   void Train(ExternalArray *ycsb, int start_idx, int size);
+  void StoreData(int cap, int start_idx, int size,
+                 const DataVectorType &dataset, ArrayType *arr);
+  void StoreData(int cap, int start_idx, int size,
+                 const DataVectorType &dataset, GappedArrayType *ga);
 
-  void UpdateLeaf();
+ private:
+  // for public functions
   int ArrayBinarySearch(double key, int start, int end) const;
   int GABinarySearch(double key, int start_idx, int end_idx) const;
   int ExternalBinarySearch(double key, int start, int end) const;
@@ -240,7 +249,17 @@ class CARMI {
   int ExternalSearch(double key, int preIdx, int error, int left,
                      int size) const;
 
-  inline float log2(double value) const { return log(value) / log(2); }
+  void PrintRoot(int level, int idx, std::vector<int> *levelVec,
+                 std::vector<int> *nodeVec) const;
+  void PrintInner(int level, int idx, std::vector<int> *levelVec,
+                 std::vector<int> *nodeVec) const;
+
+ private:
+  // for static RMI
+  template <typename TYPE>
+  void InitSRMILeaf(const IndexPair &range, TYPE *node);
+  template <typename ROOTTYPE, typename INNERTYPE>
+  ROOTTYPE InitSRMIRoot(int childNum, const IndexPair &range);
 
  public:
   CARMIRoot root;

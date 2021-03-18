@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "../CARMI/carmi.h"
-#include "../CARMI/staticRMI/rmi_root.h"
+#include "../CARMI/staticRMI/rmi.h"
 #include "workload/workloada.h"
 #include "workload/workloadb.h"
 #include "workload/workloadc.h"
