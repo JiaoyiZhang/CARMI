@@ -131,10 +131,6 @@ class CARMI {
     BaseNode *currnode;
     int currslot;
   };
-
-  void Construction(const DataVectorType &initData,
-                    const DataVectorType &findData,
-                    const DataVectorType &insertData);
   long double CalculateSpace() const;
   void PrintStructure(int level, NodeType type, int idx,
                       std::vector<int> *levelVec,
@@ -147,6 +143,9 @@ class CARMI {
   bool Delete(double key);
 
  private:
+  void Construction(const DataVectorType &initData,
+                    const DataVectorType &findData,
+                    const DataVectorType &insertData);
   template <typename TYPE, typename ModelType>
   void IsBetterRoot(int c, NodeType type, double time_cost, double *optimalCost,
                     RootStruct *rootStruct);
@@ -167,7 +166,7 @@ class CARMI {
   void NodePartition(const TYPE &node, const IndexPair &range,
                      const DataVectorType &dataset,
                      std::vector<IndexPair> *subData) const;
-
+  double CalculateFrequencyWeight(const DataRange &dataRange);
   template <typename TYPE>
   TYPE InnerDivideAll(int c, const DataRange &range, SubDataset *subDataset);
   template <typename TYPE>

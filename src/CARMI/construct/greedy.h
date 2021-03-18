@@ -67,14 +67,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
 
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, true};
   BaseNode optimal_node_struct;
-  int frequency = 0;
-  int findEnd = dataRange.findRange.left + dataRange.findRange.size;
-  for (int l = dataRange.findRange.left; l < findEnd; l++)
-    frequency += findQuery[l].second;
-  int insertEnd = dataRange.insertRange.left + dataRange.insertRange.size;
-  for (int l = dataRange.insertRange.left; l < insertEnd; l++)
-    frequency += insertQuery[l].second;
-  double frequency_weight = static_cast<double>(frequency) / querySize;
+  double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
   IndexPair singleRange(dataRange.initRange.left, dataRange.initRange.size);
   for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {

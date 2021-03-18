@@ -106,4 +106,22 @@ void CARMI::UpdateLeaf() {
   }
   scanLeaf.clear();
 }
+
+/**
+ * @brief calculate the frequency weight
+ *
+ * @param dataRange the left and size of data points
+ * @return double frequency weight
+ */
+double CARMI::CalculateFrequencyWeight(const DataRange &dataRange) {
+  float frequency = 0.0;
+  int findEnd = dataRange.findRange.left + dataRange.findRange.size;
+  for (int l = dataRange.findRange.left; l < findEnd; l++)
+    frequency += findQuery[l].second;
+  int insertEnd = dataRange.insertRange.left + dataRange.insertRange.size;
+  for (int l = dataRange.insertRange.left; l < insertEnd; l++)
+    frequency += insertQuery[l].second;
+  double frequency_weight = frequency / querySize;
+  return frequency_weight;
+}
 #endif  // SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_
