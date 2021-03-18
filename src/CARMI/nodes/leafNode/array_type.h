@@ -18,7 +18,7 @@
 
 #include "../../../params.h"
 #include "../../carmi.h"
-#include "./array.h"
+#include "./leaf_nodes.h"
 
 inline int ArrayType::Predict(double key) const {
   // return the predicted idx in the leaf node
@@ -129,61 +129,4 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
   }
 }
 
-inline void CARMI::Train(int start_idx, int size, ArrayType *arr) {
-  int actualSize = 0;
-  std::vector<double> index;
-  int end = start_idx + size;
-  for (int i = start_idx; i < end; i++) {
-    if (initDataset[i].first != DBL_MIN) {
-      actualSize++;
-    }
-    index.push_back(static_cast<double>(i - start_idx) / size);
-  }
-  if (actualSize == 0) return;
-
-  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-  for (int i = start_idx; i < end; i++) {
-    if (initDataset[i].first != DBL_MIN) {
-      t1 += initDataset[i].first * initDataset[i].first;
-      t2 += initDataset[i].first;
-      t3 += initDataset[i].first * index[i - start_idx];
-      t4 += index[i - start_idx];
-    }
-  }
-  arr->theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
-  arr->theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
-
-  // find: max|pi-yi|
-  int maxError = 0, p, d;
-  for (int i = start_idx; i < end; i++) {
-    p = arr->Predict(initDataset[i].first);
-    d = abs(i - start_idx - p);
-    if (d > maxError) maxError = d;
-  }
-
-  // find the optimal value of error
-  int minRes = size * log2(size);
-  int res;
-  int cntBetween, cntOut;
-  for (int e = 0; e <= maxError; e++) {
-    cntBetween = 0;
-    cntOut = 0;
-    for (int i = start_idx; i < start_idx + size; i++) {
-      p = arr->Predict(initDataset[i].first);
-      d = abs(i - start_idx - p);
-      if (d <= e)
-        cntBetween++;
-      else
-        cntOut++;
-    }
-    if (e != 0)
-      res = cntBetween * log2(e) + cntOut * log2(size);
-    else
-      res = cntOut * log2(size);
-    if (res < minRes) {
-      minRes = res;
-      arr->error = e;
-    }
-  }
-}
 #endif  // SRC_CARMI_NODES_LEAFNODE_ARRAY_TYPE_H_

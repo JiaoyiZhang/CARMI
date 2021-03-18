@@ -212,10 +212,6 @@ class CARMI {
   void Train(int left, int size, const DataVectorType &dataset, PLRModel *plr);
   void Train(int left, int size, const DataVectorType &dataset, HisModel *his);
   void Train(int left, int size, const DataVectorType &dataset, BSModel *bs);
-  void Train(int left, int size, LRModel *lr);
-  void Train(int left, int size, PLRModel *plr);
-  void Train(int left, int size, HisModel *his);
-  void Train(int left, int size, BSModel *bs);
 
   void InitArray(int cap, int left, int size, const DataVectorType &dataset,
                  ArrayType *arr);
@@ -223,7 +219,6 @@ class CARMI {
                  const DataVectorType &dataset, ArrayType *arr);
   void Train(int start_idx, int size, const DataVectorType &dataset,
              ArrayType *arr);
-  void Train(int start_idx, int size, ArrayType *arr);
 
   void InitGA(int cap, int left, int size, const DataVectorType &subDataset,
               GappedArrayType *ga);
@@ -232,7 +227,6 @@ class CARMI {
                  const DataVectorType &dataset, GappedArrayType *ga);
   void Train(int start_idx, int size, const DataVectorType &dataset,
              GappedArrayType *ga);
-  void Train(int start_idx, int size, GappedArrayType *ga);
 
   void InitExternalArray(ExternalArray *ycsb, int start_idx, int size);
   void Train(ExternalArray *ycsb, int start_idx, int size);
@@ -271,7 +265,7 @@ class CARMI {
 
   std::map<IndexPair, NodeCost> COST;
   std::map<IndexPair, BaseNode> structMap;
-  std::map<double, int> scanLeaf;
+  std::vector<int> scanLeaf;
   BaseNode emptyNode;
   IndexPair emptyRange = IndexPair(-1, 0);
 

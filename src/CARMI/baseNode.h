@@ -13,13 +13,8 @@
 #include <iostream>
 
 #include "nodes/innerNode/inner_nodes.h"
-#include "nodes/leafNode/array.h"
-#include "nodes/leafNode/external_array.h"
-#include "nodes/leafNode/ga.h"
-#include "nodes/rootNode/bin_type.h"
-#include "nodes/rootNode/his_type.h"
-#include "nodes/rootNode/lr_type.h"
-#include "nodes/rootNode/plr_type.h"
+#include "nodes/leafNode/leaf_nodes.h"
+#include "nodes/rootNode/root_nodes.h"
 
 union CARMIRoot {
   LRType lrRoot;

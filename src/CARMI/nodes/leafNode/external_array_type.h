@@ -15,7 +15,7 @@
 
 #include "../../../params.h"
 #include "../../carmi.h"
-#include "./external_array.h"
+#include "./leaf_nodes.h"
 
 inline void CARMI::Train(ExternalArray *ycsb, const int start_idx,
                          const int size) {
