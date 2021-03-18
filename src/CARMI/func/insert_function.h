@@ -107,22 +107,6 @@ bool CARMI::Insert(DataType data) {
           entireChild[idx].array.flagNumber++;
           InitArray(entireChild[idx].array.m_capacity, left, 1, entireData,
                     &entireChild[idx].array);
-          if (entireChild[idx].array.nextLeaf == -1) {
-            scanLeaf.insert({data.first, idx});
-            auto it = scanLeaf.find(data.first);
-            auto pre = it;
-            pre--;
-            if (pre != scanLeaf.begin()) {
-              entireChild[pre->second].array.nextLeaf = idx;
-              entireChild[it->second].array.previousLeaf = pre->second;
-            }
-            auto next = it;
-            next++;
-            if (next != scanLeaf.end()) {
-              entireChild[it->second].array.nextLeaf = next->second;
-              entireChild[next->second].array.previousLeaf = idx;
-            }
-          }
           return true;
         }
         int preIdx = entireChild[idx].array.Predict(data.first);
@@ -221,22 +205,6 @@ bool CARMI::Insert(DataType data) {
           entireChild[idx].ga.maxIndex = 0;
           InitGA(entireChild[idx].ga.capacity, left, 1, entireData,
                  &entireChild[idx].ga);
-          if (entireChild[idx].ga.nextLeaf == -1) {
-            scanLeaf.insert({data.first, idx});
-            auto it = scanLeaf.find(data.first);
-            auto pre = it;
-            pre--;
-            if (pre != scanLeaf.begin()) {
-              entireChild[pre->second].array.nextLeaf = idx;
-              entireChild[it->second].array.previousLeaf = pre->second;
-            }
-            auto next = it;
-            next++;
-            if (next != scanLeaf.end()) {
-              entireChild[it->second].array.nextLeaf = next->second;
-              entireChild[next->second].array.previousLeaf = idx;
-            }
-          }
           return true;
         }
         // find position
@@ -293,7 +261,7 @@ bool CARMI::Insert(DataType data) {
         return false;
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {
-        // TODO
+        // TODO(Jiaoyi): change the right bound.
         externalData[curr] = data;
         curr++;
         return true;

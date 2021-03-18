@@ -138,7 +138,7 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
   double space_cost = kDataPointSize * actualSize;
 
   ArrayType tmp(actualSize);
-  Train(dataRange.initRange.left, dataRange.initRange.size, &tmp);
+  Train(dataRange.initRange.left, dataRange.initRange.size, initDataset, &tmp);
   time_cost +=
       CalLeafFindTime<ArrayType>(actualSize, 1, tmp, dataRange.findRange);
   time_cost += CalLeafInsertTime<ArrayType>(
@@ -164,7 +164,8 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     time_cost = 0.0;
     space_cost = kDataPointSize * actualSize;
 
-    Train(dataRange.initRange.left, dataRange.initRange.size, &tmpNode);
+    Train(dataRange.initRange.left, dataRange.initRange.size, initDataset,
+          &tmpNode);
     time_cost += CalLeafFindTime<GappedArrayType>(actualSize, density, tmpNode,
                                                   dataRange.findRange);
     time_cost += CalLeafInsertTime<GappedArrayType>(

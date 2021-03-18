@@ -95,8 +95,7 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
       StoreData(node.m_capacity, range.initRange.left, range.initRange.size,
                 initDataset, &node);
       entireChild[storeIdx].array = node;
-      if (range.initRange.size > 0)
-        scanLeaf.insert({initDataset[range.initRange.left].first, storeIdx});
+      scanLeaf.push_back(storeIdx);
       break;
     }
     case GAPPED_ARRAY_LEAF_NODE: {
@@ -104,8 +103,7 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
       StoreData(node.capacity, range.initRange.left, range.initRange.size,
                 initDataset, &node);
       entireChild[storeIdx].ga = node;
-      if (range.initRange.size > 0)
-        scanLeaf.insert({initDataset[range.initRange.left].first, storeIdx});
+      scanLeaf.push_back(storeIdx);
       break;
     }
     case EXTERNAL_ARRAY_LEAF_NODE: {

@@ -70,7 +70,7 @@ TYPE CARMI::InnerDivideAll(int c, const DataRange &range,
                            SubDataset *subDataset) {
   TYPE node;
   node.SetChildNumber(c);
-  Train(range.initRange.left, range.initRange.size, &node);
+  Train(range.initRange.left, range.initRange.size, initDataset, &node);
 
   NodePartition<TYPE>(node, range.initRange, initDataset,
                       &(subDataset->subInit));
@@ -86,24 +86,15 @@ TYPE CARMI::InnerDivideAll(int c, const DataRange &range,
  */
 void CARMI::UpdateLeaf() {
   if (kPrimaryIndex) return;
-  auto it = scanLeaf.begin();
-  int pre = it->second;
-  auto next = it;
-  next++;
-  entireChild[it->second].array.nextLeaf = next->second;
-  it++;
-
-  for (; it != scanLeaf.end(); it++) {
-    next = it;
-    next++;
-    if (next == scanLeaf.end()) {
-      entireChild[it->second].array.previousLeaf = pre;
-    } else {
-      entireChild[it->second].array.previousLeaf = pre;
-      pre = it->second;
-      entireChild[it->second].array.nextLeaf = next->second;
-    }
+  entireChild[scanLeaf[0]].array.nextLeaf = scanLeaf[1];
+  int end = scanLeaf.size() - 1;
+  entireChild[end].array.nextLeaf = -1;
+  entireChild[end].array.previousLeaf = scanLeaf[end - 1];
+  for (int i = 1; i < end; i++) {
+    entireChild[scanLeaf[i]].array.nextLeaf = scanLeaf[i + 1];
+    entireChild[scanLeaf[i]].array.previousLeaf = scanLeaf[i - 1];
   }
+
   scanLeaf.clear();
 }
 
@@ -134,7 +125,7 @@ void CARMI::ConstructEmptyNode(const DataRange &range) {
   } else {
     GappedArrayType tmpNode(kThreshold);
     tmpNode.density = 0.5;
-    Train(range.initRange.left, range.initRange.size, &tmpNode);
+    Train(range.initRange.left, range.initRange.size, initDataset, &tmpNode);
     optimal_node_struct.ga = tmpNode;
   }
   structMap.insert({range.initRange, optimal_node_struct});

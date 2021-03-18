@@ -43,7 +43,7 @@ void CARMI::IsBetterGreedy(int c, NodeType type, double frequency_weight,
 
   TYPE node;
   node.SetChildNumber(c);
-  Train(range.left, range.size, &node);
+  Train(range.left, range.size, initDataset, &node);
 
   NodePartition<TYPE>(node, range, initDataset, &perSize);
   double entropy = CalculateEntropy(range.size, c, perSize);
