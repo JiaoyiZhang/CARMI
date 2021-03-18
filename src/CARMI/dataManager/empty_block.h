@@ -17,8 +17,12 @@ class EmptyBlock {
  public:
   explicit EmptyBlock(int w) { m_width = w; }
 
-  // allocate a block, return idx
-  // erase the corresponding key
+  /**
+   * @brief allocate a block and erase the corresponding key
+   * 
+   * @param size the size that needs to be allocated
+   * @return int return the key
+   */
   int allocate(int size) {
     // if the set is empty, allocation fails
     if (m_block.empty()) return -1;

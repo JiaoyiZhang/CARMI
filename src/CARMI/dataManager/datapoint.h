@@ -20,114 +20,173 @@
 #include "../carmi.h"
 #include "./empty_block.h"
 
-// allocate empty blocks into emptyBlocks[i]
-// left: the beginning idx of empty blocks
-// len: the length of the blocks
+/**
+ * @brief allocate empty blocks into emptyBlocks[i]
+ *
+ * @param left the beginning idx of empty blocks
+ * @param len the length of the blocks
+ * @return true allocation is successful
+ * @return false fails to allocate all blocks
+ */
 inline bool CARMI::AllocateEmptyBlock(int left, int len) {
   if (len == 0) return true;
   int res = 0;
-  for (int i = 12; i >= 0; i--) {
+  for (int i = emptyBlocks.size() - 1; i >= 0; i--) {
     res = emptyBlocks[i].addBlock(left, len);
     while (res > 0) {
       len = res;
       res = emptyBlocks[i].addBlock(left, len);
     }
-    if (res == 0) return true;
+    if (res == 0) {
+      return true;
+    }
   }
   return false;
 }
 
-// find the corresponding index in emptyBlocks
-// return idx
+/**
+ * @brief find the corresponding index in emptyBlocks
+ *
+ * @param size the size of the data points
+ * @return int the index in emptyBlocks
+ */
 inline int CARMI::GetIndex(int size) {
 #ifdef DEBUG
   if (size > kLeafMaxCapacity || size < 1)
     std::cout << "size: " << size
               << ",\tsize > 4096 || size < 1, GetIndex WRONG!" << std::endl;
 #endif  // DEBUG
-  int j = kLeafMaxCapacity;
-  for (int i = 12; i >= 0; i--, j /= 2) {
-    if (size <= j && size > j / 2) return i;
+
+  for (int j = emptyBlocks.size() - 1; j > 0; j--) {
+    if (size <= emptyBlocks[j].m_width && size > emptyBlocks[j - 1].m_width) {
+      return j;
+    }
   }
   return -1;
 }
 
-// initialize entireData
+/**
+ * @brief initialize entireData
+ *
+ * @param left the left index of data points needed to be allocated
+ * @param size the size of data points
+ * @param reinit whether the entireData has been initialized
+ */
 void CARMI::InitEntireData(int left, int size, bool reinit) {
   unsigned int len = 4096;
   while (len < size) len *= 2;
   len *= 2;
   entireDataSize = len;
+
 #ifdef DEBUG
   std::cout << "dataset size:" << size << std::endl;
   std::cout << "the size of entireData is:" << len << std::endl;
 #endif  // DEBUG
+
   std::vector<EmptyBlock>().swap(emptyBlocks);
   DataVectorType().swap(entireData);
   entireData = DataVectorType(len, {DBL_MIN, DBL_MIN});
-  for (int i = 0, j = 1; i < 13; i++, j *= 2)
-    emptyBlocks.push_back(EmptyBlock(j));
+  emptyBlocks.push_back(EmptyBlock(1));
+  emptyBlocks.push_back(EmptyBlock(2));
+  emptyBlocks.push_back(EmptyBlock(3));
+  for (int i = 1; i < 11; i++) {
+    emptyBlocks.push_back(EmptyBlock(2 * pow(2, i)));
+    emptyBlocks.push_back(EmptyBlock(3 * pow(2, i)));
+  }
+  emptyBlocks.push_back(EmptyBlock(4096));
   if (reinit) len = size;
   auto res = AllocateEmptyBlock(left, len);
+
 #ifdef DEBUG
   if (!res) std::cout << "init AllocateEmptyBlock WRONG!" << std::endl;
 #endif  // DEBUG
 }
 
-// allocate a block to the current leaf node
-// size: the size of the leaf node needs to be allocated
-// return the starting position of the allocation
-// return -1, if it fails
+/**
+ * @brief allocate a block to this leaf node
+ *
+ * @param size the size of the leaf node needs to be allocated
+ * @param idx the idx in emptyBlocks
+ * @return int return idx (if it fails, return -1)
+ */
+int CARMI::AllocateSingleMemory(int size, int *idx) {
+  auto newLeft = -1;
+  for (int i = *idx; i < emptyBlocks.size(); i++) {
+    newLeft = emptyBlocks[i].allocate(size);
+    if (newLeft != -1) {
+      // split the block to smaller blocks
+      if (i > *idx) {
+        bool success = AllocateEmptyBlock(newLeft, size);
+
+        if (!success) {
+#ifdef DEBUG
+          std::cout << "in allocate memory, split block wrong" << std::endl;
+#endif  // DEBUG
+        } else {
+          newLeft = emptyBlocks[*idx].allocate(size);
+        }
+      }
+
+      *idx = i;
+      break;
+    }
+  }
+  return newLeft;
+}
+
+/**
+ * @brief allocate a block to the current leaf node
+ *
+ * @param size the size of the leaf node needs to be allocated
+ * @return int return idx (if it fails, return -1)
+ */
 int CARMI::AllocateMemory(int size) {
   int idx = GetIndex(size);  // idx in emptyBlocks[]
   size = emptyBlocks[idx].m_width;
+
 #ifdef DEBUG
   if (idx == -1)
     std::cout << "GetIndex in emptyBlocks WRONG!\tsize:" << size << std::endl;
 #endif  // DEBUG
-  auto newLeft = -1;
-  for (int i = idx; i < 13; i++) {
-    newLeft = emptyBlocks[i].allocate(size);
-    if (newLeft != -1) {
-      idx = i;
-      break;
-    }
-  }
+
+  auto newLeft = AllocateSingleMemory(size, &idx);
   // allocation fails
   // need to expand the reorganize entireData
   if (newLeft == -1) {
 #ifdef DEBUG
     std::cout << "need expand the entire!" << std::endl;
 #endif  // DEBUG
+
     unsigned int tmpSize = entireDataSize;
     DataVectorType tmpData = entireData;
     std::vector<EmptyBlock> tmpBlocks = emptyBlocks;
 
     InitEntireData(tmpSize, tmpSize, true);
     for (int i = 0; i < tmpSize; i++) entireData[i] = tmpData[i];
-    for (int i = 0; i < 13; i++)
+    for (int i = 0; i < emptyBlocks.size(); i++)
       emptyBlocks[i].m_block.insert(tmpBlocks[i].m_block.begin(),
                                     tmpBlocks[i].m_block.end());
-    for (int i = idx; i < 13; i++) {
-      newLeft = emptyBlocks[i].allocate(size);
-      if (newLeft != -1) {
-        idx = i;
-        break;
-      }
-    }
+    newLeft = AllocateSingleMemory(size, &idx);
   }
 
-  // add the left blocks into the corresponding blocks
+  // add the blocks into the corresponding blocks
   auto res =
       AllocateEmptyBlock(newLeft + size, emptyBlocks[idx].m_width - size);
-  if (newLeft + size > nowDataSize) nowDataSize = newLeft + size;
+  if (newLeft + size > nowDataSize) {
+    nowDataSize = newLeft + size;
+  }
   return newLeft;
 }
 
-// release the specified space
+/**
+ * @brief release the specified space
+ *
+ * @param left the left index
+ * @param size the size
+ */
 void CARMI::ReleaseMemory(int left, int size) {
   int idx = GetIndex(size);
-  for (int i = idx; i < 13; i++) {
+  for (int i = idx; i < emptyBlocks.size(); i++) {
     if (!emptyBlocks[i].find(left + emptyBlocks[i].m_width)) {
       emptyBlocks[i].m_block.insert(left);
       break;
