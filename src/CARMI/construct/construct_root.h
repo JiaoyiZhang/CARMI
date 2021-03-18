@@ -30,7 +30,7 @@
  * @param rootStruct used to record the optimal setting
  */
 template <typename TYPE, typename ModelType>
-void CARMI::isBetterRoot(int c, NodeType type, double time_cost,
+void CARMI::IsBetterRoot(int c, NodeType type, double time_cost,
                          double *optimalCost, RootStruct *rootStruct) {
   std::vector<IndexPair> perSize(c, emptyRange);
   double space_cost = kBaseNodeSpace * c;
@@ -58,13 +58,13 @@ RootStruct CARMI::ChooseRoot() {
   double OptimalValue = DBL_MAX;
   RootStruct rootStruct(0, 0);
   for (int c = 2; c <= initDataset.size() * 10; c *= 2) {
-    isBetterRoot<LRType, LinearRegression>(c, LR_ROOT_NODE, kLRRootTime,
+    IsBetterRoot<LRType, LinearRegression>(c, LR_ROOT_NODE, kLRRootTime,
                                            &OptimalValue, &rootStruct);
-    isBetterRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE, kPLRRootTime,
+    IsBetterRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE, kPLRRootTime,
                                        &OptimalValue, &rootStruct);
-    isBetterRoot<HisType, HistogramModel>(c, HIS_ROOT_NODE, kHisRootTime,
+    IsBetterRoot<HisType, HistogramModel>(c, HIS_ROOT_NODE, kHisRootTime,
                                           &OptimalValue, &rootStruct);
-    isBetterRoot<BSType, BinarySearchModel>(
+    IsBetterRoot<BSType, BinarySearchModel>(
         c, BS_ROOT_NODE, kCostBSTime * log2(c), &OptimalValue, &rootStruct);
   }
 #ifdef DEBUG
@@ -91,7 +91,7 @@ template <typename TYPE, typename ModelType>
 TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const DataRange &range,
                           SubDataset *subDataset, int *childLeft) {
   TYPE root(rootStruct.rootChildNum);
-  *childLeft = allocateChildMemory(rootStruct.rootChildNum);
+  *childLeft = AllocateChildMemory(rootStruct.rootChildNum);
   root.model->Train(initDataset, rootStruct.rootChildNum);
 
   NodePartition<ModelType>(*(root.model), range.initRange, initDataset,

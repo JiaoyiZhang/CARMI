@@ -16,7 +16,7 @@
 #include "../carmi.h"
 
 // initialize entireChild
-void CARMI::initEntireChild(int size) {
+void CARMI::InitEntireChild(int size) {
   unsigned int len = 4096;
   while (len < size) len *= 2;
   len *= 2;
@@ -30,7 +30,7 @@ void CARMI::initEntireChild(int size) {
 // size: the size of the inner node needs to be allocated
 // return the starting position of the allocation
 // return -1, if it fails
-int CARMI::allocateChildMemory(int size) {
+int CARMI::AllocateChildMemory(int size) {
   int newLeft = -1;
   if (nowChildNumber + size <= entireChildNumber) {
     newLeft = nowChildNumber;
@@ -39,7 +39,7 @@ int CARMI::allocateChildMemory(int size) {
 #ifdef DEBUG
     std::cout << "need expand the entireChild!" << std::endl;
 #endif  // DEBUG
-    entireChildNumber *= 1.5;
+    entireChildNumber *= kExpansionScale;
     BaseNode t;
     for (int i = nowChildNumber; i < entireChildNumber; i++)
       entireChild.push_back(t);

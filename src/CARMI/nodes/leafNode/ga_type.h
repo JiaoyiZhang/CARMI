@@ -30,7 +30,7 @@ inline int GappedArrayType::Predict(double key) const {
   return p;
 }
 
-inline void CARMI::initGA(int cap, int left, int size,
+inline void CARMI::InitGA(int cap, int left, int size,
                           const DataVectorType &subDataset,
                           GappedArrayType *ga) {
   DataVectorType newDataset(size, {DBL_MIN, DBL_MIN});
@@ -64,7 +64,7 @@ inline void CARMI::initGA(int cap, int left, int size,
  */
 inline void CARMI::UpdatePara(int cap, int size, GappedArrayType *ga) {
   if (ga->m_left != -1) {
-    releaseMemory(ga->m_left, ga->capacity);
+    ReleaseMemory(ga->m_left, ga->capacity);
   }
   ga->capacity = cap;
   while ((static_cast<float>(size) / static_cast<float>(ga->capacity) >
@@ -73,7 +73,7 @@ inline void CARMI::UpdatePara(int cap, int size, GappedArrayType *ga) {
   if (ga->capacity > kLeafMaxCapacity) {
     ga->capacity = kLeafMaxCapacity;
   }
-  ga->m_left = allocateMemory(ga->capacity);
+  ga->m_left = AllocateMemory(ga->capacity);
 }
 
 inline void CARMI::StoreData(int left, int size, const DataVectorType &dataset,

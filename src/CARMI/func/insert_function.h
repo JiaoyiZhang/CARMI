@@ -68,7 +68,7 @@ bool CARMI::Insert(DataType data) {
           auto node = LRModel();  // create a new inner node
           int childNum = kInsertNewChildNumber;
           node.SetChildNumber(kInsertNewChildNumber);
-          node.childLeft = allocateChildMemory(childNum);
+          node.childLeft = AllocateChildMemory(childNum);
           Train(0, tmpDataset.size(), tmpDataset, &node);
           entireChild[idx].lr = node;
 
@@ -166,7 +166,7 @@ bool CARMI::Insert(DataType data) {
           auto node = LRModel();  // create a new inner node
           node.SetChildNumber(kInsertNewChildNumber);
           int childNum = kInsertNewChildNumber;
-          node.childLeft = allocateChildMemory(childNum);
+          node.childLeft = AllocateChildMemory(childNum);
           Train(0, tmpDataset.size(), tmpDataset, &node);
           entireChild[idx].lr = node;
 

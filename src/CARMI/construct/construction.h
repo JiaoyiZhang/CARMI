@@ -44,7 +44,7 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
     auto it = structMap.find(subDataset.subInit[i]);
     int type = it->second.lr.flagNumber >> 24;
 
-    storeOptimalNode(i, type, range);
+    StoreOptimalNode(i, type, range);
 
     nodeCost->cost += resChild.space * kRate + resChild.time;
     nodeCost->time += resChild.time;

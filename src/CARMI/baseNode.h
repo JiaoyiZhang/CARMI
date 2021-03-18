@@ -12,13 +12,10 @@
 #define SRC_CARMI_BASENODE_H_
 #include <iostream>
 
-#include "nodes/innerNode/bs.h"
-#include "nodes/innerNode/his.h"
-#include "nodes/innerNode/lr.h"
-#include "nodes/innerNode/plr.h"
+#include "nodes/innerNode/inner_nodes.h"
 #include "nodes/leafNode/array.h"
+#include "nodes/leafNode/external_array.h"
 #include "nodes/leafNode/ga.h"
-#include "nodes/leafNode/ycsb_leaf.h"
 #include "nodes/rootNode/bin_type.h"
 #include "nodes/rootNode/his_type.h"
 #include "nodes/rootNode/lr_type.h"
@@ -41,7 +38,7 @@ union BaseNode {
 
   ArrayType array;
   GappedArrayType ga;
-  YCSBLeaf ycsbLeaf;
+  ExternalArray externalArray;
 
   BaseNode() {}
   ~BaseNode() {}

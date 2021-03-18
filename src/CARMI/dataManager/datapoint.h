@@ -23,7 +23,7 @@
 // allocate empty blocks into emptyBlocks[i]
 // left: the beginning idx of empty blocks
 // len: the length of the blocks
-inline bool CARMI::allocateEmptyBlock(int left, int len) {
+inline bool CARMI::AllocateEmptyBlock(int left, int len) {
   if (len == 0) return true;
   int res = 0;
   for (int i = 12; i >= 0; i--) {
@@ -39,11 +39,11 @@ inline bool CARMI::allocateEmptyBlock(int left, int len) {
 
 // find the corresponding index in emptyBlocks
 // return idx
-inline int CARMI::getIndex(int size) {
+inline int CARMI::GetIndex(int size) {
 #ifdef DEBUG
   if (size > kLeafMaxCapacity || size < 1)
     std::cout << "size: " << size
-              << ",\tsize > 4096 || size < 1, getIndex WRONG!" << std::endl;
+              << ",\tsize > 4096 || size < 1, GetIndex WRONG!" << std::endl;
 #endif  // DEBUG
   int j = kLeafMaxCapacity;
   for (int i = 12; i >= 0; i--, j /= 2) {
@@ -53,7 +53,7 @@ inline int CARMI::getIndex(int size) {
 }
 
 // initialize entireData
-void CARMI::initEntireData(int left, int size, bool reinit) {
+void CARMI::InitEntireData(int left, int size, bool reinit) {
   unsigned int len = 4096;
   while (len < size) len *= 2;
   len *= 2;
@@ -68,9 +68,9 @@ void CARMI::initEntireData(int left, int size, bool reinit) {
   for (int i = 0, j = 1; i < 13; i++, j *= 2)
     emptyBlocks.push_back(EmptyBlock(j));
   if (reinit) len = size;
-  auto res = allocateEmptyBlock(left, len);
+  auto res = AllocateEmptyBlock(left, len);
 #ifdef DEBUG
-  if (!res) std::cout << "init allocateEmptyBlock WRONG!" << std::endl;
+  if (!res) std::cout << "init AllocateEmptyBlock WRONG!" << std::endl;
 #endif  // DEBUG
 }
 
@@ -78,12 +78,12 @@ void CARMI::initEntireData(int left, int size, bool reinit) {
 // size: the size of the leaf node needs to be allocated
 // return the starting position of the allocation
 // return -1, if it fails
-int CARMI::allocateMemory(int size) {
-  int idx = getIndex(size);  // idx in emptyBlocks[]
+int CARMI::AllocateMemory(int size) {
+  int idx = GetIndex(size);  // idx in emptyBlocks[]
   size = emptyBlocks[idx].m_width;
 #ifdef DEBUG
   if (idx == -1)
-    std::cout << "getIndex in emptyBlocks WRONG!\tsize:" << size << std::endl;
+    std::cout << "GetIndex in emptyBlocks WRONG!\tsize:" << size << std::endl;
 #endif  // DEBUG
   auto newLeft = -1;
   for (int i = idx; i < 13; i++) {
@@ -103,7 +103,7 @@ int CARMI::allocateMemory(int size) {
     DataVectorType tmpData = entireData;
     std::vector<EmptyBlock> tmpBlocks = emptyBlocks;
 
-    initEntireData(tmpSize, tmpSize, true);
+    InitEntireData(tmpSize, tmpSize, true);
     for (int i = 0; i < tmpSize; i++) entireData[i] = tmpData[i];
     for (int i = 0; i < 13; i++)
       emptyBlocks[i].m_block.insert(tmpBlocks[i].m_block.begin(),
@@ -119,14 +119,14 @@ int CARMI::allocateMemory(int size) {
 
   // add the left blocks into the corresponding blocks
   auto res =
-      allocateEmptyBlock(newLeft + size, emptyBlocks[idx].m_width - size);
+      AllocateEmptyBlock(newLeft + size, emptyBlocks[idx].m_width - size);
   if (newLeft + size > nowDataSize) nowDataSize = newLeft + size;
   return newLeft;
 }
 
 // release the specified space
-void CARMI::releaseMemory(int left, int size) {
-  int idx = getIndex(size);
+void CARMI::ReleaseMemory(int left, int size) {
+  int idx = GetIndex(size);
   for (int i = idx; i < 13; i++) {
     if (!emptyBlocks[i].find(left + emptyBlocks[i].m_width)) {
       emptyBlocks[i].m_block.insert(left);

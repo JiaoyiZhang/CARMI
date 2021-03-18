@@ -15,7 +15,7 @@
 
 #include "../carmi.h"
 
-long double CARMI::calculateSpace() const {
+long double CARMI::CalculateSpace() const {
   long double space_cost = 0;
 
   switch (rootType) {
@@ -29,7 +29,7 @@ long double CARMI::calculateSpace() const {
       space_cost += sizeof(HisType) / 1024 / 1024;
       break;
     case BS_ROOT_NODE:
-      space_cost += sizeof(BSType) / 1024 / 1024;
+      space_cost += sizeof(BSType) / 1024 / 1024; // para
       break;
   }
 
@@ -39,23 +39,6 @@ long double CARMI::calculateSpace() const {
   }
 
 #ifdef DEBUG
-  std::cout << "Space of different classes (sizeof):" << std::endl;
-  std::cout << "LRType:" << sizeof(LRType)
-            << "\tlr model:" << sizeof(LinearRegression) << std::endl;
-  std::cout << "PLRType:" << sizeof(PLRType)
-            << "\tnn model:" << sizeof(PiecewiseLR) << std::endl;
-  std::cout << "HisType:" << sizeof(HisType)
-            << "\this model:" << sizeof(HistogramModel) << std::endl;
-  std::cout << "BSType:" << sizeof(BSType)
-            << "\tbs model:" << sizeof(BinarySearchModel) << std::endl;
-  std::cout << "LRModel:" << sizeof(LRModel) << std::endl;
-  std::cout << "PLRModel:" << sizeof(PLRModel) << std::endl;
-  std::cout << "HisModel:" << sizeof(HisModel) << std::endl;
-  std::cout << "BSModel:" << sizeof(BSModel) << std::endl;
-  std::cout << "ArrayType:" << sizeof(ArrayType) << std::endl;
-  std::cout << "GappedArrayType:" << sizeof(GappedArrayType) << std::endl;
-  std::cout << "YCSBLeaf:" << sizeof(YCSBLeaf) << std::endl;
-
   std::cout << "\tStructure SPACE: " << space_cost << "MB" << std::endl;
   std::cout << "\nTOTAL SPACE (include data): " << space_cost << "MB"
             << std::endl;

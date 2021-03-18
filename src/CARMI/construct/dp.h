@@ -32,7 +32,7 @@
 NodeCost CARMI::DP(const DataRange &range) {
   NodeCost nodeCost;
   if (range.initRange.size == 0 && range.findRange.size == 0) {
-    nodeCost = {0, 0, 0, false};
+    nodeCost = emptyCost;
     return nodeCost;
   }
   auto it = COST.find(range.initRange);
@@ -47,8 +47,8 @@ NodeCost CARMI::DP(const DataRange &range) {
   } else if (range.initRange.size > kLeafMaxCapacity) {
     return DPInner(range);
   } else {
-    auto res0 = DPLeaf(range);
     auto res1 = DPInner(range);
+    auto res0 = DPLeaf(range);
     if (res0.space * kRate + res0.time > res1.space * kRate + res1.time)
       return res1;
     else

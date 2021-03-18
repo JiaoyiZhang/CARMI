@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_LEAFNODE_YCSB_LEAF_H_
-#define SRC_CARMI_NODES_LEAFNODE_YCSB_LEAF_H_
+#ifndef SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_H_
+#define SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_H_
 
 #include <iostream>
 #include <utility>
@@ -17,10 +17,10 @@
 
 #include "../../construct/structures.h"
 
-class YCSBLeaf {
+class ExternalArray {
  public:
-  // YCSBLeaf() = default;
-  YCSBLeaf() {
+  // ExternalArray() = default;
+  ExternalArray() {
     flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + 0;
     error = 0;
     m_left = -1;
@@ -47,4 +47,4 @@ class YCSBLeaf {
   std::pair<float, float> tmppp[5];
 };
 
-#endif  // SRC_CARMI_NODES_LEAFNODE_YCSB_LEAF_H_
+#endif  // SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_H_

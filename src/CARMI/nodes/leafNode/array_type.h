@@ -31,7 +31,7 @@ inline int ArrayType::Predict(double key) const {
   return p;
 }
 
-inline void CARMI::initArray(int cap, int left, int size,
+inline void CARMI::InitArray(int cap, int left, int size,
                              const DataVectorType &dataset, ArrayType *arr) {
   if (size == 0) return;
   DataVectorType newDataset(size, {DBL_MIN, DBL_MIN});
@@ -62,7 +62,7 @@ inline void CARMI::initArray(int cap, int left, int size,
  */
 inline void CARMI::UpdatePara(int cap, int size, ArrayType *arr) {
   if (arr->m_left != -1) {
-    releaseMemory(arr->m_left, arr->m_capacity);
+    ReleaseMemory(arr->m_left, arr->m_capacity);
   }
   arr->m_capacity = cap;
   arr->flagNumber += size;
@@ -74,7 +74,7 @@ inline void CARMI::UpdatePara(int cap, int size, ArrayType *arr) {
     arr->m_capacity = kLeafMaxCapacity;
   }
 
-  arr->m_left = allocateMemory(arr->m_capacity);
+  arr->m_left = AllocateMemory(arr->m_capacity);
 }
 
 inline void CARMI::StoreData(int left, int size, const DataVectorType &dataset,

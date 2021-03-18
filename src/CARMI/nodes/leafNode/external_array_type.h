@@ -8,16 +8,17 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_LEAFNODE_YCSB_LEAF_TYPE_H_
-#define SRC_CARMI_NODES_LEAFNODE_YCSB_LEAF_TYPE_H_
+#ifndef SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
+#define SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
 
 #include <vector>
 
 #include "../../../params.h"
 #include "../../carmi.h"
-#include "./ycsb_leaf.h"
+#include "./external_array.h"
 
-inline void CARMI::Train(YCSBLeaf *ycsb, const int start_idx, const int size) {
+inline void CARMI::Train(ExternalArray *ycsb, const int start_idx,
+                         const int size) {
   if ((ycsb->flagNumber & 0x00FFFFFF) != size) ycsb->flagNumber += size;
   std::vector<double> index;
   int end = start_idx + size;
@@ -69,7 +70,7 @@ inline void CARMI::Train(YCSBLeaf *ycsb, const int start_idx, const int size) {
   }
 }
 
-inline void CARMI::initYCSB(YCSBLeaf *ycsb, const int start_idx,
+inline void CARMI::InitExternalArray(ExternalArray *ycsb, const int start_idx,
                             const int size) {
   ycsb->flagNumber += size;
   ycsb->m_left = start_idx;
@@ -78,4 +79,4 @@ inline void CARMI::initYCSB(YCSBLeaf *ycsb, const int start_idx,
   Train(ycsb, start_idx, size);
 }
 
-#endif  // SRC_CARMI_NODES_LEAFNODE_YCSB_LEAF_TYPE_H_
+#endif  // SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_

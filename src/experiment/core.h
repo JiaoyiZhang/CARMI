@@ -56,7 +56,7 @@ void Core(double initRatio, double rate, int thre,
   std::cout << "finish time: " << tmpTime1 << std::endl;
 
   std::cout << "\nprint the space:" << std::endl;
-  auto space = carmi.calculateSpace();
+  auto space = carmi.CalculateSpace();
   outRes << space << ",";
 
   std::vector<int> levelVec(20, 0);
