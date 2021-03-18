@@ -56,7 +56,7 @@ void CARMI::ChooseBetterInner(int c, NodeType type, double frequency_weight,
     RootCost += kRate * res.space + res.time;
   }
   if (RootCost <= optimalCost->cost) {
-    *optimalCost = {time_cost, space_cost, RootCost, true};
+    *optimalCost = {time_cost, space_cost, RootCost};
     *optimal_node_struct = node;
   }
 }
@@ -69,7 +69,7 @@ void CARMI::ChooseBetterInner(int c, NodeType type, double frequency_weight,
  */
 NodeCost CARMI::DPInner(const DataRange &dataRange) {
   NodeCost nodeCost;
-  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, true};
+  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct = emptyNode;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
@@ -95,7 +95,7 @@ NodeCost CARMI::DPInner(const DataRange &dataRange) {
   if (optimalCost.time < DBL_MAX)
     structMap.insert({dataRange.initRange, optimal_node_struct});
   COST.insert({dataRange.initRange, optimalCost});
-  nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost, true};
+  nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost};
   return nodeCost;
 }
 

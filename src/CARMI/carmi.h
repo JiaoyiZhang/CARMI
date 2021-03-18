@@ -275,7 +275,7 @@ class CARMI {
   BaseNode emptyNode;
   IndexPair emptyRange = IndexPair(-1, 0);
 
-  const NodeCost emptyCost = {0, 0, 0, false};
+  const NodeCost emptyCost = {0, 0, 0};
   const int kMaxKeyNum = 1024;
   const int kThreshold = 2;  // used to initialize a leaf node
 
@@ -285,6 +285,11 @@ class CARMI {
 
   int kLeafNodeID;   // for static structure
   int kInnerNodeID;  // for static structure
+
+  const double kLRRootSpace = sizeof(LRType) / 1024.0 / 1024.0;
+  const double kPLRRootSpace = sizeof(PLRType) / 1024.0 / 1024.0;
+  const double kHisRootSpace = sizeof(HisType) / 1024.0 / 1024.0;
+  const double kBSRootSpace = sizeof(BSType) / 1024.0 / 1024.0;
 
  public:
   friend class LRType;

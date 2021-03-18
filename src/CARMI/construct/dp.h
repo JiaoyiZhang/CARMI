@@ -38,7 +38,6 @@ NodeCost CARMI::DP(const DataRange &range) {
   auto it = COST.find(range.initRange);
   if (it != COST.end()) {
     nodeCost = it->second;
-    nodeCost.isInnerNode = false;
     return nodeCost;
   }
 

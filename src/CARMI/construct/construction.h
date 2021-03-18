@@ -64,7 +64,7 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
 inline void CARMI::Construction(const DataVectorType &initData,
                                 const DataVectorType &findData,
                                 const DataVectorType &insertData) {
-  NodeCost nodeCost = {0, 0, 0, true};
+  NodeCost nodeCost = emptyCost;
 #ifndef DEBUG
   RootStruct res = ChooseRoot();
 #endif  // DEBUG

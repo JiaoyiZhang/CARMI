@@ -98,7 +98,7 @@ double CARMI::CalLeafInsertTime(int actualSize, double density,
  */
 NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
   NodeCost nodeCost;
-  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, false};
+  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct;
 
   if (kPrimaryIndex) {
@@ -123,10 +123,9 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     }
 
     nodeCost.cost = nodeCost.time + nodeCost.space * kRate;  // ns + MB * kRate
-    optimalCost = {nodeCost.time, nodeCost.space, nodeCost.cost, false};
+    optimalCost = {nodeCost.time, nodeCost.space, nodeCost.cost};
     optimal_node_struct.externalArray = tmp;
 
-    nodeCost.isInnerNode = false;
     COST.insert({dataRange.initRange, optimalCost});
     structMap.insert({dataRange.initRange, optimal_node_struct});
     return nodeCost;
@@ -154,13 +153,13 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
 
   double cost = time_cost + space_cost * kRate;  // ns + MB * kRate
   if (cost <= optimalCost.cost) {
-    optimalCost = {time_cost, space_cost, cost, false};
+    optimalCost = {time_cost, space_cost, cost};
     optimal_node_struct.array = tmp;
   }
 
   // choose a gapped array node as the leaf node
   float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // data/capacity
-  for (int i = 0; i < 5; i++) { //for
+  for (int i = 0; i < 5; i++) {                  // for
     // calculate the actual space
     int actualSize = kThreshold;
     while ((static_cast<float>(dataRange.initRange.size) /
@@ -185,7 +184,7 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
         dataRange.findRange);
     cost = time_cost + space_cost * kRate;  // ns + MB * kRate
     if (cost <= optimalCost.cost) {
-      optimalCost = {time_cost, space_cost, cost, false};
+      optimalCost = {time_cost, space_cost, cost};
       optimal_node_struct.ga = tmpNode;
     }
   }

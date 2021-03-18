@@ -51,7 +51,7 @@ void CARMI::IsBetterGreedy(int c, NodeType type, double frequency_weight,
 
   if (cost <= optimalCost->cost) {
     *optimal_node_struct = node;
-    *optimalCost = {time_cost, space_cost, cost, true};
+    *optimalCost = {time_cost, space_cost, cost};
   }
 }
 /**
@@ -65,7 +65,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   if (dataRange.initRange.size == 0 && dataRange.findRange.size == 0)
     return nodeCost;
 
-  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX, true};
+  NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
@@ -112,7 +112,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   }
 
   for (int i = 0; i < childNum; i++) {
-    NodeCost res = {0, 0, 0, true};
+    NodeCost res = emptyCost;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
     if (subDataset.subInit[i].size > kAlgorithmThreshold)
@@ -124,7 +124,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   if (optimalCost.time < DBL_MAX)
     structMap.insert({dataRange.initRange, optimal_node_struct});
   COST.insert({dataRange.initRange, optimalCost});
-  nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost, true};
+  nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost};
   return nodeCost;
 }
 #endif  // SRC_CARMI_CONSTRUCT_GREEDY_H_

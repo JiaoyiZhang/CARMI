@@ -31,7 +31,6 @@ struct NodeCost {
   double time;
   double space;
   double cost;
-  bool isInnerNode;
 };
 
 class IndexPair {
