@@ -61,9 +61,10 @@ bool CARMI::Insert(DataType data) {
         if (size >= kLeafMaxCapacity) {
           DataVectorType tmpDataset;
           auto left = entireChild[idx].array.m_left;
-          auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
-          for (int i = left; i < left + size; i++)
-            tmpDataset.push_back(entireData[i]);
+          for (int i = left; i < left + size; i++) {
+            if (entireData[i].first != DBL_MIN)
+              tmpDataset.push_back(entireData[i]);
+          }
 
           auto node = LRModel();  // create a new inner node
           int childNum = kInsertNewChildNumber;
@@ -72,18 +73,18 @@ bool CARMI::Insert(DataType data) {
           Train(0, tmpDataset.size(), tmpDataset, &node);
           entireChild[idx].lr = node;
 
-          std::vector<DataVectorType> subFindData;
+          std::vector<DataVectorType> subInitData;
           DataVectorType tmp;
-          for (int i = 0; i < childNum; i++) subFindData.push_back(tmp);
+          for (int i = 0; i < childNum; i++) subInitData.push_back(tmp);
 
           for (int i = 0; i < size; i++) {
             int p = node.Predict(tmpDataset[i].first);
-            subFindData[p].push_back(tmpDataset[i]);
+            subInitData[p].push_back(tmpDataset[i]);
           }
 
           for (int i = 0; i < childNum; i++) {
             ArrayType tmpLeaf(kThreshold);
-            InitArray(kMaxKeyNum, left, 1, subFindData[i], &tmpLeaf);
+            InitArray(kMaxKeyNum, left, 1, subInitData[i], &tmpLeaf);
             entireChild[node.childLeft + i].array = tmpLeaf;
           }
           auto previousIdx = entireChild[idx].array.previousLeaf;
@@ -144,8 +145,10 @@ bool CARMI::Insert(DataType data) {
           DataVectorType tmpDataset;
           auto left = entireChild[idx].ga.m_left;
           auto size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
-          for (int i = left; i < left + size; i++)
-            tmpDataset.push_back(entireData[i]);
+          for (int i = left; i < left + size; i++) {
+            if (entireData[i].first != DBL_MIN)
+              tmpDataset.push_back(entireData[i]);
+          }
 
           auto node = LRModel();  // create a new inner node
           node.SetChildNumber(kInsertNewChildNumber);
@@ -154,18 +157,18 @@ bool CARMI::Insert(DataType data) {
           Train(0, tmpDataset.size(), tmpDataset, &node);
           entireChild[idx].lr = node;
 
-          std::vector<DataVectorType> subFindData;
+          std::vector<DataVectorType> subInitData;
           DataVectorType tmp;
-          for (int i = 0; i < childNum; i++) subFindData.push_back(tmp);
+          for (int i = 0; i < childNum; i++) subInitData.push_back(tmp);
 
           for (int i = 0; i < size; i++) {
             int p = node.Predict(tmpDataset[i].first);
-            subFindData[p].push_back(tmpDataset[i]);
+            subInitData[p].push_back(tmpDataset[i]);
           }
 
           for (int i = 0; i < childNum; i++) {
             GappedArrayType tmpLeaf(kThreshold);
-            InitGA(kMaxKeyNum, 0, subFindData[i].size(), subFindData[i],
+            InitGA(kMaxKeyNum, 0, subInitData[i].size(), subInitData[i],
                    &tmpLeaf);
             entireChild[node.childLeft + i].ga = tmpLeaf;
           }
@@ -262,7 +265,56 @@ bool CARMI::Insert(DataType data) {
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {
         // TODO(Jiaoyi): change the right bound.
+        int left = entireChild[idx].externalArray.m_left;
+        int size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
+
+        // split
+        if (size >= kLeafMaxCapacity) {
+          DataVectorType tmpDataset;
+          for (int i = left; i < left + size; i++) {
+            tmpDataset.push_back(externalData[i]);
+          }
+
+          auto node = LRModel();  // create a new inner node
+          int childNum = kInsertNewChildNumber;
+          node.SetChildNumber(kInsertNewChildNumber);
+          node.childLeft = AllocateChildMemory(childNum);
+          Train(0, tmpDataset.size(), tmpDataset, &node);
+          entireChild[idx].lr = node;
+
+          std::vector<DataVectorType> subInitData;
+          DataVectorType tmp;
+          for (int i = 0; i < childNum; i++) {
+            subInitData.push_back(tmp);
+          }
+
+          for (int i = 0; i < size; i++) {
+            int p = node.Predict(tmpDataset[i].first);
+            subInitData[p].push_back(tmpDataset[i]);
+          }
+
+          int tmpLeft = left;
+          for (int i = 0; i < childNum; i++) {
+            ExternalArray tmpLeaf;
+            InitExternalArray(left, 1, subInitData[i], &tmpLeaf);
+            tmpLeaf.m_left = tmpLeft;
+            entireChild[node.childLeft + i].externalArray = tmpLeaf;
+            tmpLeft += subInitData[i].size();
+          }
+
+          idx = entireChild[idx].lr.childLeft +
+                entireChild[idx].lr.Predict(data.first);
+          left = entireChild[idx].externalArray.m_left;
+          size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
+        }
+
         externalData[curr] = data;
+        if (size > 0) {
+          entireChild[idx].externalArray.flagNumber++;
+        } else if (size == 0) {
+          entireChild[idx].externalArray.m_left = curr;
+          entireChild[idx].externalArray.flagNumber++;
+        }
         curr++;
         return true;
       }

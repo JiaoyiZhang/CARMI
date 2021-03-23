@@ -107,10 +107,10 @@ void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
   std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
 
   for (int j = 1; j < cand_size; j++) {
-    dp[0][j].cost = cand_cost.CalculateCost(0, cand_index[j], cand_point[0],
-                                            cand_point[cand_index[j]]);
-    dp[0][j].key[0] = cand_point[cand_index[j]].first;
-    dp[0][j].idx[0] = cand_point[cand_index[j]].second;
+    dp[0][j].cost = cand_cost.CalculateCost(0, j, cand_index[j], cand_point[0],
+                                            cand_point[j]);
+    dp[0][j].key[0] = cand_point[j].first;
+    dp[0][j].idx[0] = cand_point[j].second;
   }
 
   for (int i = 1; i < 7; i++) {
@@ -121,18 +121,15 @@ void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
         float res = DBL_MAX;
         if (i < 6)
           res = dp[0][k].cost +
-                cand_cost.CalculateCost(cand_index[k], cand_index[j],
-                                        cand_point[cand_index[k]],
-                                        cand_point[cand_index[j]]);
+                cand_cost.CalculateCost(k, j, cand_index[j] - cand_index[k],
+                                        cand_point[k], cand_point[j]);
         else
-          res =
-              dp[0][k].cost +
-              cand_cost.CalculateCost(cand_index[k], cand_index[j],
-                                      cand_point[cand_index[k]],
-                                      cand_point[cand_index[j]]) +
-              cand_cost.CalculateCost(cand_index[j], cand_index[cand_size - 1],
-                                      cand_point[cand_index[j]],
-                                      cand_point[cand_index[cand_size - 1]]);
+          res = dp[0][k].cost +
+                cand_cost.CalculateCost(k, j, cand_index[j] - cand_index[k],
+                                        cand_point[k], cand_point[j]) +
+                cand_cost.CalculateCost(
+                    j, cand_size - 1, cand_index[cand_size - 1] - cand_index[j],
+                    cand_point[j], cand_point[cand_size - 1]);
 
         if (res < opt.cost) {
           opt.cost = res;
@@ -140,14 +137,14 @@ void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
             opt.idx[l] = dp[0][k].idx[l];
             opt.key[l] = dp[0][k].key[l];
           }
-          opt.key[i] = cand_point[cand_index[j]].first;
-          opt.idx[i] = cand_point[cand_index[j]].second;
+          opt.key[i] = cand_point[j].first;
+          opt.idx[i] = cand_point[j].second;
         } else if (res == opt.cost) {
           int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
           for (int l = 0; l < i; l++) {
             dp_idx[l] = dp[0][k].idx[l];
           }
-          dp_idx[i] = cand_point[cand_index[j]].second;
+          dp_idx[i] = cand_point[j].second;
 
           float var0 = Diff(i + 1, len, dp_idx);
           float var1 = Diff(i + 1, len, opt.idx);
@@ -156,8 +153,8 @@ void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
               opt.idx[l] = dp[0][k].idx[l];
               opt.key[l] = dp[0][k].key[l];
             }
-            opt.key[i] = cand_point[cand_index[j]].first;
-            opt.idx[i] = cand_point[cand_index[j]].second;
+            opt.key[i] = cand_point[j].first;
+            opt.idx[i] = cand_point[j].second;
           }
         }
       }
@@ -167,7 +164,7 @@ void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
         dp[1][j].key[l] = opt.key[l];
       }
     }
-    for (int m = i + 1; m < size - 1; m++) {
+    for (int m = i + 1; m < cand_size - 1; m++) {
       dp[0][m].cost = dp[1][m].cost;
       for (int l = 0; l <= i; l++) {
         dp[0][m].idx[l] = dp[1][m].idx[l];
@@ -178,7 +175,7 @@ void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
 
   SegmentPoint opt;
   opt.cost = DBL_MAX;
-  for (int j = 7; j < size; j++) {
+  for (int j = 7; j < cand_size; j++) {
     if (dp[1][j].cost < opt.cost) {
       opt.cost = dp[1][j].cost;
       for (int k = 0; k < 7; k++) {

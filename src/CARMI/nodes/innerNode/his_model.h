@@ -24,12 +24,16 @@ inline void CARMI::Train(const int left, const int size,
   double maxValue;
   int end = left + size;
   for (int i = left; i < end; i++) {
-    his->minValue = dataset[i].first;
-    break;
+    if (dataset[i].first != DBL_MIN) {
+      his->minValue = dataset[i].first;
+      break;
+    }
   }
   for (int i = end - 1; i >= left; i--) {
-    maxValue = dataset[i].first;
-    break;
+    if (dataset[i].first != DBL_MIN) {
+      maxValue = dataset[i].first;
+      break;
+    }
   }
   his->divisor = static_cast<float>(maxValue - his->minValue) / childNumber;
   std::vector<float> table(childNumber, 0);
@@ -41,7 +45,7 @@ inline void CARMI::Train(const int left, const int size,
     for (int i = left; i < end; i++) {
       int idx =
           static_cast<float>(dataset[i].first - his->minValue) / his->divisor;
-      idx = std::min(idx, static_cast<int>(table.size()) - 1);
+      idx = std::min(std::max(0, idx), static_cast<int>(table.size()) - 1);
       table[idx]++;
     }
     if (table[0] > 0) cnt++;
@@ -110,6 +114,13 @@ inline int HisModel::Predict(double key) const {
   tmp = (tmp & 0x0f0f0f0f) + ((tmp >> 4) & 0x0f0f0f0f);
   tmp = (tmp & 0x00ff00ff) + ((tmp >> 8) & 0x00ff00ff);
   index += tmp;
+#ifdef DEBUG
+  if (index >= childNumber) {
+    index = childNumber - 1;
+  } else if (index < 0) {
+    index = 0;
+  }
+#endif  // DEBUG
   return index;
 }
 

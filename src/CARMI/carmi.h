@@ -45,10 +45,14 @@ class CARMI {
       querySize += insertData[i].second;
     }
 
-    if (!kPrimaryIndex)
+    if (!kPrimaryIndex) {
       InitEntireData(0, initDataset.size(), false);
-    else
+    } else {
       externalData = initDataset;
+      externalData.erase(externalData.begin() + kExternalInsertLeft,
+                         externalData.end());
+      curr = kExternalInsertLeft;
+    }
     InitEntireChild(initDataset.size());
     Construction(initData, findData, insertData);
   }
@@ -192,6 +196,7 @@ class CARMI {
   void ReleaseMemory(int left, int size);
 
   int GetIndex(int size);
+  int GetActualSize(int size);
   bool AllocateEmptyBlock(int left, int len);
   int AllocateSingleMemory(int size, int *idx);
   int AllocateChildMemory(int size);
@@ -228,12 +233,14 @@ class CARMI {
                  ArrayType *arr);
   void InitGA(int cap, int left, int size, const DataVectorType &subDataset,
               GappedArrayType *ga);
-  void InitExternalArray(ExternalArray *ycsb, int start_idx, int size);
+  void InitExternalArray(int start_idx, int size, const DataVectorType &dataset,
+                         ExternalArray *ext);
   void Train(int start_idx, int size, const DataVectorType &dataset,
              ArrayType *arr);
   void Train(int start_idx, int size, const DataVectorType &dataset,
              GappedArrayType *ga);
-  void Train(ExternalArray *ycsb, int start_idx, int size);
+  void Train(int start_idx, int size, const DataVectorType &dataset,
+             ExternalArray *ext);
   void StoreData(int cap, int start_idx, int size,
                  const DataVectorType &dataset, ArrayType *arr);
   void StoreData(int cap, int start_idx, int size,
@@ -252,13 +259,13 @@ class CARMI {
   void PrintRoot(int level, int idx, std::vector<int> *levelVec,
                  std::vector<int> *nodeVec) const;
   void PrintInner(int level, int idx, std::vector<int> *levelVec,
-                 std::vector<int> *nodeVec) const;
+                  std::vector<int> *nodeVec) const;
 
  private:
   // for static RMI
   template <typename TYPE>
   void InitSRMILeaf(const IndexPair &range, TYPE *node);
-  template <typename ROOTTYPE, typename INNERTYPE>
+  template <typename ROOTTYPE, typename ROOTMODEL, typename INNERTYPE>
   ROOTTYPE InitSRMIRoot(int childNum, const IndexPair &range);
 
  public:

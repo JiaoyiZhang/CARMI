@@ -65,7 +65,9 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
   auto it = structMap.find(range.initRange);
 
 #ifdef DEBUG
-  if (it == structMap.end()) std::cout << "WRONG!" << std::endl;
+  if (it == structMap.end()) {
+    std::cout << "WRONG!" << std::endl;
+  }
 #endif  // DEBUG
 
   int type = it->second.array.flagNumber >> 24;
@@ -92,24 +94,28 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
     }
     case ARRAY_LEAF_NODE: {
       ArrayType node = it->second.array;
-      StoreData(node.m_capacity, range.initRange.left, range.initRange.size,
-                initDataset, &node);
+      StoreData(it->second.array.m_capacity, range.initRange.left,
+                range.initRange.size, initDataset, &node);
       entireChild[storeIdx].array = node;
       scanLeaf.push_back(storeIdx);
       break;
     }
     case GAPPED_ARRAY_LEAF_NODE: {
       GappedArrayType node = it->second.ga;
-      StoreData(node.capacity, range.initRange.left, range.initRange.size,
-                initDataset, &node);
+      StoreData(it->second.ga.capacity, range.initRange.left,
+                range.initRange.size, initDataset, &node);
       entireChild[storeIdx].ga = node;
       scanLeaf.push_back(storeIdx);
       break;
     }
     case EXTERNAL_ARRAY_LEAF_NODE: {
       ExternalArray node = it->second.externalArray;
-      node.flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + range.initRange.size;
-      node.m_left = range.initRange.left;
+      int size = range.initRange.size - range.insertRange.size;
+      node.flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + size;
+      if (size <= 0)
+        node.m_left = kExternalInsertLeft;
+      else
+        node.m_left = range.initRange.left;
       entireChild[storeIdx].externalArray = node;
       break;
     }

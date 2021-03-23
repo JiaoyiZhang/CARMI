@@ -76,6 +76,8 @@ void LongitudesDataset::GenerateDataset(DataVectorType *initDataset,
   }
   std::cout << "longitude size:" << ds.size() << std::endl;
 
+  ds.erase(ds.begin() + kDatasetSize + round(kTestSize * (1 - proportion)),
+           ds.end());
   int i = 0;
   int end = round(kTestSize * (1 - proportion));
   for (; i < end; i++) {
@@ -95,7 +97,8 @@ void LongitudesDataset::GenerateDataset(DataVectorType *initDataset,
               return p1.first < p2.first;
             });
 
-  trainFindQuery = initDataset;
+  trainFindQuery->insert(trainFindQuery->begin(), initDataset->begin(),
+                         initDataset->end());
 
   if (proportion != kWritePartial && proportion != kReadOnly) {
     int cnt = round(1.0 / (1.0 - proportion));

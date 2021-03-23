@@ -71,7 +71,13 @@ void LonglatDataset::GenerateDataset(DataVectorType *initDataset,
     double k = stod(key);
     double v = stod(value);
     ds.push_back({k, v});
+    // if (ds.size() == kDatasetSize + round(kTestSize * (1 - proportion))) {
+    //   break;
+    // }
   }
+
+  ds.erase(ds.begin() + kDatasetSize + round(kTestSize * (1 - proportion)),
+           ds.end());
 
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine engine(seed);
@@ -96,7 +102,8 @@ void LonglatDataset::GenerateDataset(DataVectorType *initDataset,
               return p1.first < p2.first;
             });
 
-  trainFindQuery = initDataset;
+  trainFindQuery->insert(trainFindQuery->begin(), initDataset->begin(),
+                         initDataset->end());
 
   if (proportion != kWritePartial && proportion != kReadOnly) {
     int cnt = round(1.0 / (1.0 - proportion));

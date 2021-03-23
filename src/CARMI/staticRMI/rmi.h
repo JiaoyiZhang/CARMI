@@ -29,29 +29,33 @@ CARMI::CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
 
   switch (kInnerNodeID) {
     case LR_ROOT_NODE:
-      root.lrRoot = InitSRMIRoot<LRType, LRModel>(childNum, range);
+      root.lrRoot =
+          InitSRMIRoot<LRType, LinearRegression, LRModel>(childNum, range);
       break;
     case PLR_ROOT_NODE:
-      root.plrRoot = InitSRMIRoot<PLRType, PLRModel>(childNum, range);
+      root.plrRoot =
+          InitSRMIRoot<PLRType, PiecewiseLR, PLRModel>(childNum, range);
       break;
     case HIS_ROOT_NODE:
-      root.hisRoot = InitSRMIRoot<HisType, HisModel>(childNum, range);
+      root.hisRoot =
+          InitSRMIRoot<HisType, HistogramModel, HisModel>(childNum, range);
       break;
     case BS_ROOT_NODE:
-      root.bsRoot = InitSRMIRoot<BSType, BSModel>(childNum, range);
+      root.bsRoot =
+          InitSRMIRoot<BSType, BinarySearchModel, BSModel>(childNum, range);
       break;
   }
 }
 
-template <typename ROOTTYPE, typename INNERTYPE>
+template <typename ROOTTYPE, typename ROOTMODEL, typename INNERTYPE>
 inline ROOTTYPE CARMI::InitSRMIRoot(int childNum, const IndexPair &range) {
   ROOTTYPE node(childNum);
   node.childLeft = AllocateChildMemory(childNum);
 
-  root.bsRoot.model->Train(initDataset, childNum);
+  node.model->Train(initDataset, childNum);
 
   std::vector<IndexPair> perSize(kRMIInnerChild, emptyRange);
-  NodePartition<ROOTTYPE>(node, range, initDataset, &perSize);
+  NodePartition<ROOTMODEL>(*(node.model), range, initDataset, &perSize);
 
   for (int i = 0; i < childNum; i++) {
     INNERTYPE inner;

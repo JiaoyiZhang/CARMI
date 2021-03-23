@@ -48,6 +48,9 @@ void Core(double initRatio, double rate, int thre,
 
   CARMI carmi(*initDataset, *trainFindQuery, *trainInsertQuery,
               trainInsertIndex, rate, thre);
+  if (kPrimaryIndex)
+    initDataset->erase(initDataset->begin() + kExternalInsertLeft,
+                       initDataset->end());
 
 #ifdef DEBUG
   time(&timep);

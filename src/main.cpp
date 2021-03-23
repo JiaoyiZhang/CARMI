@@ -20,7 +20,7 @@
 ofstream outRes;
 
 int main() {
-  outRes.open("res_0225.csv", ios::app);
+  outRes.open("res_0322.csv", ios::app);
 
   time_t timep;
   time(&timep);

@@ -45,6 +45,28 @@ inline bool CARMI::AllocateEmptyBlock(int left, int len) {
 }
 
 /**
+ * @brief find the actual size in emptyBlocks
+ *
+ * @param size the size of the data points
+ * @return int the index in emptyBlocks
+ */
+inline int CARMI::GetActualSize(int size) {
+#ifdef DEBUG
+  if (size > kLeafMaxCapacity || size < 1)
+    std::cout << "size: " << size
+              << ",\tsize > 4096 || size < 1, GetIndex WRONG!" << std::endl;
+#endif  // DEBUG
+  if (size == 1) return 1;
+
+  for (int j = emptyBlocks.size() - 1; j > 0; j--) {
+    if (size <= emptyBlocks[j].m_width && size > emptyBlocks[j - 1].m_width) {
+      return emptyBlocks[j].m_width;
+    }
+  }
+  return 0;
+}
+
+/**
  * @brief find the corresponding index in emptyBlocks
  *
  * @param size the size of the data points
@@ -56,6 +78,7 @@ inline int CARMI::GetIndex(int size) {
     std::cout << "size: " << size
               << ",\tsize > 4096 || size < 1, GetIndex WRONG!" << std::endl;
 #endif  // DEBUG
+  if (size == 1) return 0;
 
   for (int j = emptyBlocks.size() - 1; j > 0; j--) {
     if (size <= emptyBlocks[j].m_width && size > emptyBlocks[j - 1].m_width) {
@@ -98,7 +121,9 @@ void CARMI::InitEntireData(int left, int size, bool reinit) {
   auto res = AllocateEmptyBlock(left, len);
 
 #ifdef DEBUG
-  if (!res) std::cout << "init AllocateEmptyBlock WRONG!" << std::endl;
+  if (!res) {
+    std::cout << "init AllocateEmptyBlock WRONG!" << std::endl;
+  }
 #endif  // DEBUG
 }
 
@@ -142,12 +167,13 @@ int CARMI::AllocateSingleMemory(int size, int *idx) {
  */
 int CARMI::AllocateMemory(int size) {
   int idx = GetIndex(size);  // idx in emptyBlocks[]
-  size = emptyBlocks[idx].m_width;
-
 #ifdef DEBUG
-  if (idx == -1)
+  if (idx == -1) {
     std::cout << "GetIndex in emptyBlocks WRONG!\tsize:" << size << std::endl;
+    GetIndex(size);
+  }
 #endif  // DEBUG
+  size = emptyBlocks[idx].m_width;
 
   auto newLeft = AllocateSingleMemory(size, &idx);
   // allocation fails

@@ -57,7 +57,7 @@ void CARMI::IsBetterRoot(int c, NodeType type, double time_cost,
 RootStruct CARMI::ChooseRoot() {
   double OptimalValue = DBL_MAX;
   RootStruct rootStruct(0, 0);
-  for (int c = 2; c <= initDataset.size() * 10; c *= 2) {
+  for (int c = kMinChildNumber; c <= initDataset.size() * 10; c *= 2) {
     IsBetterRoot<LRType, LinearRegression>(c, LR_ROOT_NODE, kLRRootTime,
                                            &OptimalValue, &rootStruct);
     IsBetterRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE, kPLRRootTime,

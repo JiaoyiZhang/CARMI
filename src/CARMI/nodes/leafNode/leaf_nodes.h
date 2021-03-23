@@ -101,6 +101,7 @@ class ExternalArray {
 
   float theta1;
   float theta2;
+  
   float tmpMember;
   std::pair<float, float> tmppp[5];
 };

@@ -13,7 +13,7 @@
 
 #define ZIPFIAN 1
 #define PARAM_ZIPFIAN 0.99
-// #define DEBUG
+#define DEBUG
 
 #include <utility>
 #include <vector>
@@ -23,6 +23,7 @@ typedef std::vector<DataType> DataVectorType;
 
 // const bool kPrimaryIndex = false;
 bool kPrimaryIndex = false;
+int kExternalInsertLeft;
 
 const double kDensity = 0.5;         // the density of gap in gapped array
 const double kExpansionScale = 1.5;  // scale of array expansion
@@ -63,7 +64,13 @@ const float kRangeScan = 2;
 
 const float kSecondToNanosecond = 1000000000.0;
 
+#ifdef DEBUG
+const float Density[1] = {0.5};  // size / capacity
+#endif                           // DEBUG
+
+#ifndef DEBUG
 const float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity
+#endif                                               // !DEBUG
 
 const int kRMIInnerChild = 32;
 

@@ -106,7 +106,8 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     nodeCost.space = 0.0;
 
     ExternalArray tmp;
-    Train(&tmp, dataRange.initRange.left, dataRange.initRange.size);
+    Train(dataRange.initRange.left, dataRange.initRange.size, initDataset,
+          &tmp);
     auto error = tmp.error;
     int findEnd = dataRange.findRange.left + dataRange.findRange.size;
     for (int i = dataRange.findRange.left; i < findEnd; i++) {
@@ -131,7 +132,7 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     return nodeCost;
   }
 
-  int actualSize = GetIndex(dataRange.initRange.size);
+  int actualSize = GetActualSize(dataRange.initRange.size);
 
   // choose an array node as the leaf node
   double time_cost = 0.0;
@@ -156,7 +157,7 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     if (actualSize > kLeafMaxCapacity)
       actualSize = kLeafMaxCapacity;
     else
-      actualSize = GetIndex(actualSize);
+      actualSize = GetActualSize(actualSize);
 
     GappedArrayType tmpNode(actualSize);
     tmpNode.density = density;

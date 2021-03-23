@@ -94,7 +94,7 @@ NodeCost CARMI::DPInner(const DataRange &dataRange) {
   }
 
 #ifdef DEBUG
-  if (optimalCost.time < DBL_MAX)
+  if (optimalCost.time == DBL_MAX)
     std::cout << "wrong, dp inner time is DBL_MAX" << std::endl;
 #endif  // DEBUG
 

@@ -29,8 +29,8 @@ inline void CARMI::Train(const int left, const int size,
   plr->keys[7] = dataset[end].first;
   for (int i = left, j = 0; i < end; i++, j++) {
     data[j].first = dataset[i].first;
-    data[j].second =
-        static_cast<int>(static_cast<float>(j) / data.size() * childNumber - 1);
+    data[j].second = static_cast<int>(static_cast<float>(j) / data.size() *
+                                      (childNumber - 1));
   }
 
   int cand_size = 100;
@@ -41,6 +41,13 @@ inline void CARMI::Train(const int left, const int size,
   for (int i = 0; i < cand_size - 1; i++) {
     cand_index[i] = i * seg;
     cand_point[i] = data[i * seg];
+    if (i * seg >= size) {
+      for (; i < cand_size - 1; i++) {
+        cand_index[i] = size;
+        cand_point[i] = data[size];
+      }
+      break;
+    }
   }
   cand_index[cand_size - 1] = size - 1;
   cand_point[cand_size - 1] = data[size - 1];
@@ -52,10 +59,10 @@ inline void CARMI::Train(const int left, const int size,
   std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
 
   for (int j = 1; j < cand_size; j++) {
-    dp[0][j].cost = cand_cost.CalculateCost(0, cand_index[j], cand_point[0],
-                                            cand_point[cand_index[j]]);
-    dp[0][j].key[0] = cand_point[cand_index[j]].first;
-    dp[0][j].idx[0] = cand_point[cand_index[j]].second;
+    dp[0][j].cost = cand_cost.CalculateCost(0, j, cand_index[j], cand_point[0],
+                                            cand_point[j]);
+    dp[0][j].key[0] = cand_point[j].first;
+    dp[0][j].idx[0] = cand_point[j].second;
   }
 
   for (int i = 1; i < 6; i++) {
@@ -66,18 +73,15 @@ inline void CARMI::Train(const int left, const int size,
         float res = DBL_MAX;
         if (i < 5) {
           res = dp[0][k].cost +
-                cand_cost.CalculateCost(cand_index[k], cand_index[j],
-                                        cand_point[cand_index[k]],
-                                        cand_point[cand_index[j]]);
+                cand_cost.CalculateCost(k, j, cand_index[j] - cand_index[k],
+                                        cand_point[k], cand_point[j]);
         } else {
-          res =
-              dp[0][k].cost +
-              cand_cost.CalculateCost(cand_index[k], cand_index[j],
-                                      cand_point[cand_index[k]],
-                                      cand_point[cand_index[j]]) +
-              cand_cost.CalculateCost(cand_index[j], cand_index[cand_size - 1],
-                                      cand_point[cand_index[j]],
-                                      cand_point[cand_index[cand_size - 1]]);
+          res = dp[0][k].cost +
+                cand_cost.CalculateCost(k, j, cand_index[j] - cand_index[k],
+                                        cand_point[k], cand_point[j]) +
+                cand_cost.CalculateCost(
+                    j, cand_size - 1, cand_index[cand_size - 1] - cand_index[j],
+                    cand_point[j], cand_point[cand_size - 1]);
         }
         if (res < opt.cost) {
           opt.cost = res;
@@ -85,14 +89,14 @@ inline void CARMI::Train(const int left, const int size,
             opt.idx[l] = dp[0][k].idx[l];
             opt.key[l] = dp[0][k].key[l];
           }
-          opt.key[i] = cand_point[cand_index[j]].first;
-          opt.idx[i] = cand_point[cand_index[j]].second;
+          opt.key[i] = cand_point[j].first;
+          opt.idx[i] = cand_point[j].second;
         } else if (res == opt.cost) {
           int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
           for (int l = 0; l < i; l++) {
             dp_idx[l] = dp[0][k].idx[l];
           }
-          dp_idx[i] = cand_point[cand_index[j]].second;
+          dp_idx[i] = cand_point[j].second;
 
           float var0 = Diff(i + 1, childNumber, dp_idx);
           float var1 = Diff(i + 1, childNumber, opt.idx);
@@ -101,8 +105,8 @@ inline void CARMI::Train(const int left, const int size,
               opt.idx[l] = dp[0][k].idx[l];
               opt.key[l] = dp[0][k].key[l];
             }
-            opt.key[i] = cand_point[cand_index[j]].first;
-            opt.idx[i] = cand_point[cand_index[j]].second;
+            opt.key[i] = cand_point[j].first;
+            opt.idx[i] = cand_point[j].second;
           }
         }
       }
@@ -112,7 +116,7 @@ inline void CARMI::Train(const int left, const int size,
         dp[1][j].key[l] = opt.key[l];
       }
     }
-    for (int m = i + 1; m < size - 1; m++) {
+    for (int m = i + 1; m < cand_size - 1; m++) {
       dp[0][m].cost = dp[1][m].cost;
       for (int l = 0; l <= i; l++) {
         dp[0][m].idx[l] = dp[1][m].idx[l];
@@ -123,7 +127,7 @@ inline void CARMI::Train(const int left, const int size,
 
   SegmentPoint opt;
   opt.cost = DBL_MAX;
-  for (int j = 6; j < size; j++) {
+  for (int j = 6; j < cand_size; j++) {
     if (dp[1][j].cost < opt.cost) {
       opt.cost = dp[1][j].cost;
       for (int k = 0; k < 6; k++) {
@@ -167,18 +171,40 @@ inline int PLRModel::Predict(double key) const {
   }
   int p;
   int childNumber = flagNumber & 0x00FFFFFF;
-  if (e == 5) {
+  if (e == 7) {
     float a =
         static_cast<float>(childNumber - 1 - index[5]) / (keys[7] - keys[6]);
     float b = childNumber - 1 - a * keys[7];
     p = a * key + b;
-  } else {
-    float a =
-        static_cast<float>(index[e + 1] - index[e]) / (keys[e] - keys[e - 1]);
-    float b = index[e + 1] - a * keys[e];
+
+    if (p >= childNumber) {
+      p = childNumber - 1;
+    } else if (p < index[5]) {
+      p = index[5];
+    }
+  } else if (e == 1) {
+    float a = static_cast<float>(index[0]) / (keys[1] - keys[0]);
+    float b = -a * keys[0];
     p = a * key + b;
+
+    if (p > index[0]) {
+      p = index[0];
+    } else if (p < 0) {
+      p = 0;
+    }
+
+  } else {
+    float a = static_cast<float>(index[e - 1] - index[e - 2]) /
+              (keys[e] - keys[e - 1]);
+    float b = index[e - 1] - a * keys[e];
+    p = a * key + b;
+
+    if (p > index[e - 1]) {
+      p = index[e - 1];
+    } else if (p < index[e - 2]) {
+      p = index[e - 2];
+    }
   }
-  if (p >= childNumber) p = childNumber - 1;
 
   return p;
 }

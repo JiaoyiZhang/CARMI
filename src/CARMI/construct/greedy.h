@@ -124,7 +124,7 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
       res = DP(range);
   }
 #ifdef DEBUG
-  if (optimalCost.time < DBL_MAX)
+  if (optimalCost.time == DBL_MAX)
     std::cout << "wrong, greedy time is DBL_MAX" << std::endl;
 #endif  // DEBUG
 

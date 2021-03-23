@@ -93,7 +93,8 @@ void NormalDataset::GenerateDataset(DataVectorType *initDataset,
               return p1.first < p2.first;
             });
 
-  trainFindQuery = initDataset;
+  trainFindQuery->insert(trainFindQuery->begin(), initDataset->begin(),
+                         initDataset->end());
 
   if (proportion != kWritePartial && proportion != kReadOnly) {
     int cnt = round(1.0 / (1.0 - proportion));

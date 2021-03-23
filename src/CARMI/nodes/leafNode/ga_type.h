@@ -21,7 +21,6 @@
 
 inline int GappedArrayType::Predict(double key) const {
   // return the predicted idx in the leaf node
-  int size = (flagNumber & 0x00FFFFFF);
   int p = (theta1 * key + theta2) * maxIndex;
   if (p < 0)
     p = 0;
@@ -48,8 +47,6 @@ inline void CARMI::InitGA(int cap, int left, int size,
               << size << std::endl;
 #endif  // DEBUG
 
-  ga->flagNumber += size;
-
   Train(ga->m_left, ga->maxIndex, entireData, ga);
 }
 
@@ -64,7 +61,7 @@ inline void CARMI::StoreData(int cap, int left, int size,
   if (ga->capacity > kLeafMaxCapacity) {
     ga->capacity = kLeafMaxCapacity;
   }
-  ga->capacity = GetIndex(ga->capacity);
+  ga->capacity = GetActualSize(ga->capacity);
   ga->m_left = AllocateMemory(ga->capacity);
 
   int k = ga->density / (1 - ga->density);
@@ -91,14 +88,15 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
                          GappedArrayType *ga) {
   if ((ga->flagNumber & 0x00FFFFFF) != size) {
     ga->flagNumber = (GAPPED_ARRAY_LEAF_NODE << 24) + size;
+    ga->maxIndex = size;
   }
   int actualSize = 0;
-  std::vector<double> index;
-  for (int i = start_idx; i < start_idx + size; i++) {
+  std::vector<float> index(size, 0);
+  for (int i = start_idx, j = 0; i < start_idx + size; i++, j++) {
     if (dataset[i].first != DBL_MIN) {
       actualSize++;
     }
-    index.push_back(static_cast<float>(i - start_idx) / size);
+    index[j] = static_cast<float>(i - start_idx) / size;
   }
   if (actualSize == 0) {
     return;
@@ -106,10 +104,12 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
 
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   for (int i = start_idx; i < start_idx + size; i++) {
-    t1 += dataset[i].first * dataset[i].first;
-    t2 += dataset[i].first;
-    t3 += dataset[i].first * index[i - start_idx];
-    t4 += index[i - start_idx];
+    if (dataset[i].first != DBL_MIN) {
+      t1 += dataset[i].first * dataset[i].first;
+      t2 += dataset[i].first;
+      t3 += dataset[i].first * index[i - start_idx];
+      t4 += index[i - start_idx];
+    }
   }
   ga->theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
   ga->theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
@@ -118,7 +118,7 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
   // find: max|pi-yi|
   int maxError = 0, p, d;
   int end = start_idx + size;
-  for (int i = ga->m_left; i < end; i++) {
+  for (int i = start_idx; i < end; i++) {
     if (dataset[i].first != DBL_MIN) {
       p = ga->Predict(dataset[i].first);
       d = abs(i - start_idx - p);

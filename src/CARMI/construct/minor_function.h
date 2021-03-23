@@ -48,6 +48,12 @@ void CARMI::NodePartition(const TYPE &node, const IndexPair &range,
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = node.Predict(dataset[i].first);
+#ifdef DEBUG
+    if (p > subData->size()) {
+      std::cout << "wrong!" << std::endl;
+      node.Predict(dataset[i].first);
+    }
+#endif  // DEBUG
     if ((*subData)[p].left == -1) {
       (*subData)[p].left = i;
     }
@@ -120,7 +126,7 @@ void CARMI::ConstructEmptyNode(const DataRange &range) {
   BaseNode optimal_node_struct;
   if (kPrimaryIndex) {
     ExternalArray tmp;
-    Train(&tmp, range.initRange.left, range.initRange.size);
+    Train(range.initRange.left, range.initRange.size, initDataset, &tmp);
     optimal_node_struct.externalArray = tmp;
   } else {
     GappedArrayType tmpNode(kThreshold);

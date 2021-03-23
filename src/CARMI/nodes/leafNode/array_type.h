@@ -57,11 +57,10 @@ inline void CARMI::StoreData(int cap, int left, int size,
     ReleaseMemory(arr->m_left, arr->m_capacity);
   }
   if (cap < size) {
-    arr->m_capacity = GetIndex(size);
+    arr->m_capacity = GetActualSize(size);
   } else {
     arr->m_capacity = cap;
   }
-  arr->flagNumber += size;
 
   arr->m_left = AllocateMemory(arr->m_capacity);
 
@@ -73,15 +72,16 @@ inline void CARMI::StoreData(int cap, int left, int size,
 inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
                          ArrayType *arr) {
   int actualSize = 0;
-  std::vector<double> index;
+  std::vector<float> index(size, 0);
   int end = start_idx + size;
-  for (int i = start_idx; i < end; i++) {
+  for (int i = start_idx, j = 0; i < end; i++, j++) {
     if (dataset[i].first != DBL_MIN) {
       actualSize++;
     }
-    index.push_back(static_cast<double>(i - start_idx) / size);
+    index[j] = static_cast<float>(i - start_idx) / size;
   }
   if (actualSize == 0) return;
+  arr->flagNumber += actualSize;
 
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   for (int i = start_idx; i < end; i++) {
@@ -98,9 +98,11 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
   // find: max|pi-yi|
   int maxError = 0, p, d;
   for (int i = start_idx; i < end; i++) {
-    p = arr->Predict(dataset[i].first);
-    d = abs(i - start_idx - p);
-    if (d > maxError) maxError = d;
+    if (dataset[i].first != DBL_MIN) {
+      p = arr->Predict(dataset[i].first);
+      d = abs(i - start_idx - p);
+      if (d > maxError) maxError = d;
+    }
   }
 
   // find the optimal value of error
@@ -111,12 +113,14 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
     cntBetween = 0;
     cntOut = 0;
     for (int i = start_idx; i < start_idx + size; i++) {
-      p = arr->Predict(dataset[i].first);
-      d = abs(i - start_idx - p);
-      if (d <= e)
-        cntBetween++;
-      else
-        cntOut++;
+      if (dataset[i].first != DBL_MIN) {
+        p = arr->Predict(dataset[i].first);
+        d = abs(i - start_idx - p);
+        if (d <= e)
+          cntBetween++;
+        else
+          cntOut++;
+      }
     }
     if (e != 0)
       res = cntBetween * log2(e) + cntOut * log2(size);

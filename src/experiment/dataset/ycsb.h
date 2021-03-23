@@ -1,5 +1,15 @@
-#ifndef YCSB_H
-#define YCSB_H
+/**
+ * @file ycsb.h
+ * @author Jiaoyi
+ * @brief
+ * @version 0.1
+ * @date 2021-03-22
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+#ifndef SRC_EXPERIMENT_DATASET_YCSB_H_
+#define SRC_EXPERIMENT_DATASET_YCSB_H_
 
 #include <algorithm>
 #include <chrono>
@@ -63,7 +73,7 @@ void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
     double k = stod(key);
     double v = k / 10;
     ds.push_back({k, v});
-    if (ds.size() == kDatasetSize + kTestSize * (1 - proportion)) {
+    if (ds.size() == kDatasetSize) {
       break;
     }
   }
@@ -75,25 +85,17 @@ void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
   for (; i < end; i++) {
     initDataset->push_back(ds[i]);
   }
-  end = ds.size();
-  for (; i < end; i++) {
-    testInsertQuery->push_back(ds[i]);
+  kExternalInsertLeft = kDatasetSize - kTestSize * (1 - proportion);
+  i = kExternalInsertLeft;
+  for (; i < kDatasetSize; i++) {
+    testInsertQuery->push_back((*initDataset)[i]);
+    trainInsertIndex->push_back(i);
   }
 
-  trainFindQuery = initDataset;
-
-  if (proportion != kWritePartial && proportion != kReadOnly) {
-    int cnt = round(1.0 / (1.0 - proportion));
-    for (int j = cnt - 1; j < kDatasetSize; j += cnt) {
-      trainInsertQuery->push_back((*initDataset)[j]);
-      trainInsertIndex->push_back(j);
-    }
-  } else if (proportion == kWritePartial) {
-    for (int j = kDatasetSize * 0.6; j < kDatasetSize * 0.9; j += 2) {
-      trainInsertQuery->push_back((*initDataset)[j]);
-      trainInsertIndex->push_back(j);
-    }
-  }
+  trainFindQuery->insert(trainFindQuery->begin(), initDataset->begin(),
+                         initDataset->end());
+  trainInsertQuery->insert(trainInsertQuery->begin(), testInsertQuery->begin(),
+                           testInsertQuery->end());
 
   std::cout << "YCSB: init size:" << (*initDataset).size()
             << "\tFind size:" << (*trainFindQuery).size()
@@ -101,4 +103,4 @@ void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
             << "\tWrite size:" << (*testInsertQuery).size() << std::endl;
 }
 
-#endif
+#endif  // SRC_EXPERIMENT_DATASET_YCSB_H_

@@ -16,7 +16,7 @@
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",
-            // "preLaunchTask": "test",
+            // "preLaunchTask": "learned_index",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -24,7 +24,6 @@
                     "ignoreFailures": true
                 }
             ],
-            // 无法打开“raise.c”: 无法读取文件'/build/glibc-ZN95T4/glibc-2.31/sysdeps/unix/sysv/linux/raise.c' (Error: 无法解析不存在的文件"/build/glibc-ZN95T4/glibc-2.31/sysdeps/unix/sysv/linux/raise.c")。
             "sourceFileMap": {
                 "/build/glibc-ZN95T4": "/usr/src/glibc"
             }
