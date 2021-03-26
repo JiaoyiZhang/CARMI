@@ -49,7 +49,7 @@ void CARMI::NodePartition(const TYPE &node, const IndexPair &range,
   for (int i = range.left; i < end; i++) {
     int p = node.Predict(dataset[i].first);
 #ifdef DEBUG
-    if (p > subData->size()) {
+    if (p > subData->size() || p < 0) {
       std::cout << "wrong!" << std::endl;
       node.Predict(dataset[i].first);
     }
@@ -122,10 +122,15 @@ double CARMI::CalculateFrequencyWeight(const DataRange &dataRange) {
   return frequency_weight;
 }
 
+/**
+ * @brief construct the empty node and insert it into map
+ *
+ * @param range the left and size of data points
+ */
 void CARMI::ConstructEmptyNode(const DataRange &range) {
   BaseNode optimal_node_struct;
   if (kPrimaryIndex) {
-    ExternalArray tmp;
+    ExternalArray tmp(kThreshold);
     Train(range.initRange.left, range.initRange.size, initDataset, &tmp);
     optimal_node_struct.externalArray = tmp;
   } else {
@@ -135,5 +140,108 @@ void CARMI::ConstructEmptyNode(const DataRange &range) {
     optimal_node_struct.ga = tmpNode;
   }
   structMap.insert({range.initRange, optimal_node_struct});
+}
+
+/**
+ * @brief train the parameters of linear regression model
+ *
+ * @param left the start index of data points
+ * @param size the size of data points
+ * @param dataset
+ * @param a parameter A of LR model
+ * @param b parameter B of LR model
+ */
+void LRTrain(const int left, const int size, const DataVectorType &dataset,
+             float *a, float *b) {
+  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+  int end = left + size;
+  for (int i = left; i < end; i++) {
+    t1 += dataset[i].first * dataset[i].first;
+    t2 += dataset[i].first;
+    t3 += dataset[i].first * dataset[i].second;
+    t4 += dataset[i].second;
+  }
+  if (t1 * size - t2 * t2) {
+    *a = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+    *b = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+  } else {
+    *a = 0;
+    *b = 0;
+  }
+}
+
+DataVectorType ExtractData(const int left, const int size,
+                           const DataVectorType &dataset, int *actual) {
+  *actual = 0;
+  DataVectorType data(size, {DBL_MIN, DBL_MIN});
+  int end = left + size;
+  for (int i = left; i < end; i++) {
+    if (dataset[i].first != DBL_MIN) {
+      data[(*actual)++] = dataset[i];
+    }
+  }
+  return data;
+}
+
+DataVectorType SetY(const int left, const int size,
+                    const DataVectorType &dataset) {
+  DataVectorType data(size, {DBL_MIN, DBL_MIN});
+  int end = left + size;
+  for (int i = left, j = 0; i < end; i++, j++) {
+    data[j].first = dataset[i].first;
+    data[j].second = static_cast<double>(i) / size;
+  }
+  return data;
+}
+
+template <typename TYPE>
+void FindOptError(int start_idx, int size, const DataVectorType &dataset,
+                  TYPE *node) {
+  std::vector<int> error_count(size + 1, 0);
+
+  // record each difference
+  int p, d;
+  int end = start_idx + size;
+  for (int i = start_idx; i < end; i++) {
+    p = node->Predict(dataset[i].first);
+    d = abs(i - start_idx - p);
+
+#ifdef DEBUG
+    if (d < 0 || d > size) {
+      std::cout << "find optimal error wrong, d is: " << d << std::endl;
+    }
+#endif  // DEBUG
+
+    error_count[d]++;
+  }
+
+  // find the optimal value of error
+  int minRes = size * log2(size);
+  int res;
+  int cntBetween;
+  for (int e = 0; e <= size; e++) {
+#ifdef DEBUG
+    if (e < 0 || e > size) {
+      std::cout << "find optimal error wrong, e is: " << e << std::endl;
+    }
+#endif  // DEBUG
+    if (error_count[e] == 0) {
+      continue;
+    }
+    cntBetween += error_count[e];
+    if (e != 0)
+      res = cntBetween * log2(e) + (size - cntBetween) * log2(size);
+    else
+      res = (size - cntBetween) * log2(size);
+    if (res < minRes) {
+      minRes = res;
+      node->error = e;
+    }
+  }
+#ifdef DEBUG
+  if (node->error >= size)
+    std::cout << "find opt error wrong, error:" << node->error
+              << ",\tsize:" << size << std::endl;
+#endif  // DEBUG
 }
 #endif  // SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_

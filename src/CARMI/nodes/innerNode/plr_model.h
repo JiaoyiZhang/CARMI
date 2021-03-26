@@ -27,10 +27,16 @@ inline void CARMI::Train(const int left, const int size,
   int end = left + size;
   plr->keys[0] = dataset[left].first;
   plr->keys[7] = dataset[end].first;
+  double avg = 0.0;
   for (int i = left, j = 0; i < end; i++, j++) {
-    data[j].first = dataset[i].first;
-    data[j].second = static_cast<int>(static_cast<float>(j) / data.size() *
-                                      (childNumber - 1));
+    avg += dataset[i].first / size;
+    data[j].second =
+        static_cast<int>(static_cast<float>(j) / size * (childNumber - 1));
+  }
+
+  // normalize
+  for (int i = left, j = 0; i < end; i++, j++) {
+    data[j].first = dataset[i].first - avg;
   }
 
   int cand_size = 100;
@@ -39,15 +45,15 @@ inline void CARMI::Train(const int left, const int size,
   CandidateCost cand_cost(cand_size);
   int seg = size / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
-    cand_index[i] = i * seg;
-    cand_point[i] = data[i * seg];
     if (i * seg >= size) {
       for (; i < cand_size - 1; i++) {
-        cand_index[i] = size;
-        cand_point[i] = data[size];
+        cand_index[i] = size - 1;
+        cand_point[i] = data[size - 1];
       }
       break;
     }
+    cand_index[i] = i * seg;
+    cand_point[i] = data[i * seg];
   }
   cand_index[cand_size - 1] = size - 1;
   cand_point[cand_size - 1] = data[size - 1];
@@ -69,7 +75,7 @@ inline void CARMI::Train(const int left, const int size,
     for (int j = i + 1; j < cand_size - 1; j++) {
       SegmentPoint opt;
       opt.cost = DBL_MAX;
-      for (int k = 1; k < j; k++) {
+      for (int k = i; k < j; k++) {
         float res = DBL_MAX;
         if (i < 5) {
           res = dp[0][k].cost +
@@ -88,9 +94,17 @@ inline void CARMI::Train(const int left, const int size,
           for (int l = 0; l < i; l++) {
             opt.idx[l] = dp[0][k].idx[l];
             opt.key[l] = dp[0][k].key[l];
+#ifdef DEBUG
+            if (opt.idx[l] < 0 || opt.idx[l] >= childNumber)
+              std::cout << "wrong, opt.idx[i]:" << opt.idx[l] << std::endl;
+#endif  // DEBUG
           }
           opt.key[i] = cand_point[j].first;
           opt.idx[i] = cand_point[j].second;
+#ifdef DEBUG
+          if (opt.idx[i] < 0 || opt.idx[i] >= childNumber)
+            std::cout << "wrong, opt.idx[i]:" << opt.idx[i] << std::endl;
+#endif  // DEBUG
         } else if (res == opt.cost) {
           int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
           for (int l = 0; l < i; l++) {
@@ -114,6 +128,10 @@ inline void CARMI::Train(const int left, const int size,
       for (int l = 0; l <= i; l++) {
         dp[1][j].idx[l] = opt.idx[l];
         dp[1][j].key[l] = opt.key[l];
+#ifdef DEBUG
+        if (opt.idx[l] < 0 || opt.idx[l] >= childNumber)
+          std::cout << "wrong, opt.idx[i]:" << opt.idx[l] << std::endl;
+#endif  // DEBUG
       }
     }
     for (int m = i + 1; m < cand_size - 1; m++) {
@@ -121,6 +139,11 @@ inline void CARMI::Train(const int left, const int size,
       for (int l = 0; l <= i; l++) {
         dp[0][m].idx[l] = dp[1][m].idx[l];
         dp[0][m].key[l] = dp[1][m].key[l];
+#ifdef DEBUG
+        if (dp[0][m].idx[l] < 0 || dp[0][m].idx[l] >= childNumber)
+          std::cout << "wrong, dp[0][m].idx[l]:" << dp[0][m].idx[l]
+                    << std::endl;
+#endif  // DEBUG
       }
     }
   }
@@ -149,11 +172,21 @@ inline void CARMI::Train(const int left, const int size,
     }
   }
   for (int i = 0; i < 6; i++) {
-    plr->keys[i + 1] = opt.key[i];
+    plr->keys[i + 1] = opt.key[i] + avg;
+#ifdef DEBUG
+    if (opt.idx[i] < 0 || opt.idx[i] >= childNumber)
+      std::cout << "wrong, opt.idx[i]:" << opt.idx[i] << std::endl;
+#endif  // DEBUG
     plr->index[i] = opt.idx[i];
   }
 }
 
+/**
+ * @brief predict the index of the next branch
+ *
+ * @param key
+ * @return int index (from 0 to childNumber-1 )
+ */
 inline int PLRModel::Predict(double key) const {
   int s = 0;
   int e = 7;

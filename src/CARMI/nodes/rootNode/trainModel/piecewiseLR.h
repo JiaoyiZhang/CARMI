@@ -69,25 +69,29 @@ class PiecewiseLR {
 };
 
 void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
-  DataVectorType data;
+  int size = dataset.size();
+  if (size == 0) return;
+  DataVectorType data(size, {DBL_MIN, DBL_MIN});
   data.insert(data.begin(), dataset.begin(), dataset.end());
+
   length = len - 1;
   for (int i = 0; i < 9; i++) {
-    point[i] = {data[data.size() - 1].first, length};
+    point[i] = {data[size - 1].first, length};
   }
   point[0].first = dataset[0].first;
   point[0].second = 0;
 
-  int actualSize = 0;
-  for (int i = 0; i < data.size(); i++) {
-    if (data[i].first != -1) {
-      actualSize++;
-    }
-    data[i].second =
-        static_cast<int>(static_cast<float>(i) / data.size() * len);
+  double avg = 0.0;
+  for (int i = 0; i < size; i++) {
+    avg += dataset[i].first / size;
+    data[i].second = static_cast<int>(static_cast<float>(i) / size * len);
   }
-  if (actualSize == 0) return;
-  int size = data.size();
+
+  // normalize
+  for (int i = 0; i < size; i++) {
+    data[i].first = dataset[i].first - avg;
+  }
+
   int cand_size = 1000;
   DataVectorType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
@@ -117,7 +121,7 @@ void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
     for (int j = i + 1; j < cand_size - 1; j++) {
       SegmentPoint opt;
       opt.cost = DBL_MAX;
-      for (int k = 1; k < j; k++) {
+      for (int k = i; k < j; k++) {
         float res = DBL_MAX;
         if (i < 6)
           res = dp[0][k].cost +
@@ -197,7 +201,7 @@ void PiecewiseLR::Train(const DataVectorType &dataset, int len) {
     }
   }
   for (int i = 0; i < 7; i++) {
-    point[i + 1].first = opt.key[i];
+    point[i + 1].first = opt.key[i] + avg;
     point[i + 1].second = opt.idx[i];
   }
 }

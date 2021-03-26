@@ -41,6 +41,12 @@ inline void CARMI::Train(const int left, const int size,
   }
 }
 
+/**
+ * @brief predict the index of the next branch
+ *
+ * @param key
+ * @return int index (from 0 to childNumber-1 )
+ */
 inline int BSModel::Predict(double key) const {
   int start_idx = 0;
   int end_idx = (flagNumber & 0x00FFFFFF) - 1;

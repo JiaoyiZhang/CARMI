@@ -63,6 +63,9 @@ class CARMI {
     inline iterator(CARMI *t, BaseNode *l, int s)
         : tree(t), currnode(l), currslot(s) {}
     inline const double &key() const {
+      if (currnode == NULL) {
+        return DBL_MIN;
+      }
       int left;
       if (kPrimaryIndex) {
         left = currnode->externalArray.m_left;
@@ -73,6 +76,9 @@ class CARMI {
       }
     }
     inline const double &data() const {
+      if (currnode == NULL) {
+        return DBL_MIN;
+      }
       int left;
       if (kPrimaryIndex) {
         left = currnode->externalArray.m_left;
@@ -149,7 +155,7 @@ class CARMI {
   RootStruct ChooseRoot();
   template <typename TYPE, typename ModelType>
   TYPE ConstructRoot(const RootStruct &rootStruct, const DataRange &range,
-                     SubDataset *subDataset, int *childLeft);
+                     SubDataset *subDataset);
   SubDataset StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost);
 
   // use the constructed root to construct lower layers
@@ -229,12 +235,12 @@ class CARMI {
 
  private:
   // leaf nodes
-  void InitArray(int cap, int left, int size, const DataVectorType &dataset,
-                 ArrayType *arr);
-  void InitGA(int cap, int left, int size, const DataVectorType &subDataset,
-              GappedArrayType *ga);
-  void InitExternalArray(int start_idx, int size, const DataVectorType &dataset,
-                         ExternalArray *ext);
+  void Init(int cap, int left, int size, const DataVectorType &dataset,
+            ArrayType *arr);
+  void Init(int cap, int left, int size, const DataVectorType &subDataset,
+            GappedArrayType *ga);
+  void Init(int cap, int start_idx, int size, const DataVectorType &dataset,
+            ExternalArray *ext);
   void Train(int start_idx, int size, const DataVectorType &dataset,
              ArrayType *arr);
   void Train(int start_idx, int size, const DataVectorType &dataset,
@@ -255,6 +261,9 @@ class CARMI {
   int GASearch(double key, int preIdx, int error, int left, int maxIndex) const;
   int ExternalSearch(double key, int preIdx, int error, int left,
                      int size) const;
+
+  template <typename TYPE>
+  void Split(bool isExternal, int left, int size, int previousIdx, int idx);
 
   void PrintRoot(int level, int idx, std::vector<int> *levelVec,
                  std::vector<int> *nodeVec) const;

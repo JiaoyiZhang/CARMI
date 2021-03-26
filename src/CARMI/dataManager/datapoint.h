@@ -119,12 +119,6 @@ void CARMI::InitEntireData(int left, int size, bool reinit) {
   emptyBlocks.push_back(EmptyBlock(4096));
   if (reinit) len = size;
   auto res = AllocateEmptyBlock(left, len);
-
-#ifdef DEBUG
-  if (!res) {
-    std::cout << "init AllocateEmptyBlock WRONG!" << std::endl;
-  }
-#endif  // DEBUG
 }
 
 /**
@@ -188,7 +182,9 @@ int CARMI::AllocateMemory(int size) {
     std::vector<EmptyBlock> tmpBlocks = emptyBlocks;
 
     InitEntireData(tmpSize, tmpSize, true);
-    for (int i = 0; i < tmpSize; i++) entireData[i] = tmpData[i];
+    for (int i = 0; i < tmpSize; i++) {
+      entireData[i] = tmpData[i];
+    }
     for (int i = 0; i < emptyBlocks.size(); i++)
       emptyBlocks[i].m_block.insert(tmpBlocks[i].m_block.begin(),
                                     tmpBlocks[i].m_block.end());

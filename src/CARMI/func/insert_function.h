@@ -19,25 +19,25 @@
 #include <vector>
 
 #include "../carmi.h"
+#include "../construct/minor_function.h"
 
 bool CARMI::Insert(DataType data) {
   int idx = 0;  // idx in the INDEX
-  int content;
   int type = rootType;
   int childIdx = 0;
   while (1) {
     switch (type) {
       case LR_ROOT_NODE:
-        idx = root.lrRoot.childLeft + root.lrRoot.model->Predict(data.first);
+        idx = root.childLeft + root.LRType::model.Predict(data.first);
         break;
       case PLR_ROOT_NODE:
-        idx = root.plrRoot.childLeft + root.plrRoot.model->Predict(data.first);
+        idx = root.childLeft + root.PLRType::model.Predict(data.first);
         break;
       case HIS_ROOT_NODE:
-        idx = root.hisRoot.childLeft + root.hisRoot.model->Predict(data.first);
+        idx = root.childLeft + root.HisType::model.Predict(data.first);
         break;
       case BS_ROOT_NODE:
-        idx = root.bsRoot.childLeft + root.bsRoot.model->Predict(data.first);
+        idx = root.childLeft + root.BSType::model.Predict(data.first);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft +
@@ -56,58 +56,25 @@ bool CARMI::Insert(DataType data) {
               entireChild[idx].bs.Predict(data.first);
         break;
       case ARRAY_LEAF_NODE: {
-        auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+        int size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+        int left = entireChild[idx].array.m_left;
+
         // split
         if (size >= kLeafMaxCapacity) {
-          DataVectorType tmpDataset;
-          auto left = entireChild[idx].array.m_left;
-          for (int i = left; i < left + size; i++) {
-            if (entireData[i].first != DBL_MIN)
-              tmpDataset.push_back(entireData[i]);
-          }
-
-          auto node = LRModel();  // create a new inner node
-          int childNum = kInsertNewChildNumber;
-          node.SetChildNumber(kInsertNewChildNumber);
-          node.childLeft = AllocateChildMemory(childNum);
-          Train(0, tmpDataset.size(), tmpDataset, &node);
-          entireChild[idx].lr = node;
-
-          std::vector<DataVectorType> subInitData;
-          DataVectorType tmp;
-          for (int i = 0; i < childNum; i++) subInitData.push_back(tmp);
-
-          for (int i = 0; i < size; i++) {
-            int p = node.Predict(tmpDataset[i].first);
-            subInitData[p].push_back(tmpDataset[i]);
-          }
-
-          for (int i = 0; i < childNum; i++) {
-            ArrayType tmpLeaf(kThreshold);
-            InitArray(kMaxKeyNum, left, 1, subInitData[i], &tmpLeaf);
-            entireChild[node.childLeft + i].array = tmpLeaf;
-          }
-          auto previousIdx = entireChild[idx].array.previousLeaf;
-          entireChild[previousIdx].array.nextLeaf = node.childLeft;
-          entireChild[node.childLeft].array.previousLeaf = previousIdx;
-          for (int i = node.childLeft + 1; i < node.childLeft + childNum - 1;
-               i++) {
-            entireChild[i].array.previousLeaf = i - 1;
-            entireChild[i].array.nextLeaf = i + 1;
-          }
-          entireChild[node.childLeft + childNum - 1].array.previousLeaf =
-              node.childLeft + childNum - 2;
-
+          int previousIdx = entireChild[idx].array.previousLeaf;
+          Split<ArrayType>(false, left, size, previousIdx, idx);
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);
+          left = entireChild[idx].array.m_left;
+          size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         }
-        auto left = entireChild[idx].array.m_left;
+
         // size == 0
         if (size == 0) {
           entireData[left] = data;
           entireChild[idx].array.flagNumber++;
-          InitArray(entireChild[idx].array.m_capacity, left, 1, entireData,
-                    &entireChild[idx].array);
+          Init(entireChild[idx].array.m_capacity, left, 1, entireData,
+               &entireChild[idx].array);
           return true;
         }
         int preIdx = entireChild[idx].array.Predict(data.first);
@@ -118,8 +85,8 @@ bool CARMI::Insert(DataType data) {
         if ((size >= entireChild[idx].array.m_capacity) &&
             entireChild[idx].array.m_capacity < kLeafMaxCapacity) {
           auto diff = preIdx - left;
-          InitArray(entireChild[idx].array.m_capacity, left, 1, entireData,
-                    &entireChild[idx].array);
+          Init(entireChild[idx].array.m_capacity, left, size, entireData,
+               &entireChild[idx].array);
           left = entireChild[idx].array.m_left;
           preIdx = left + diff;
         }
@@ -138,83 +105,50 @@ bool CARMI::Insert(DataType data) {
         return true;
       }
       case GAPPED_ARRAY_LEAF_NODE: {
-        auto left = entireChild[idx].ga.m_left;
+        int left = entireChild[idx].ga.m_left;
         int size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
+
         // split
         if (size >= kLeafMaxCapacity) {
-          DataVectorType tmpDataset;
-          auto left = entireChild[idx].ga.m_left;
-          auto size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
-          for (int i = left; i < left + size; i++) {
-            if (entireData[i].first != DBL_MIN)
-              tmpDataset.push_back(entireData[i]);
-          }
-
-          auto node = LRModel();  // create a new inner node
-          node.SetChildNumber(kInsertNewChildNumber);
-          int childNum = kInsertNewChildNumber;
-          node.childLeft = AllocateChildMemory(childNum);
-          Train(0, tmpDataset.size(), tmpDataset, &node);
-          entireChild[idx].lr = node;
-
-          std::vector<DataVectorType> subInitData;
-          DataVectorType tmp;
-          for (int i = 0; i < childNum; i++) subInitData.push_back(tmp);
-
-          for (int i = 0; i < size; i++) {
-            int p = node.Predict(tmpDataset[i].first);
-            subInitData[p].push_back(tmpDataset[i]);
-          }
-
-          for (int i = 0; i < childNum; i++) {
-            GappedArrayType tmpLeaf(kThreshold);
-            InitGA(kMaxKeyNum, 0, subInitData[i].size(), subInitData[i],
-                   &tmpLeaf);
-            entireChild[node.childLeft + i].ga = tmpLeaf;
-          }
-
-          auto previousIdx = entireChild[idx].ga.previousLeaf;
-          entireChild[previousIdx].ga.nextLeaf = node.childLeft;
-          entireChild[node.childLeft].ga.previousLeaf = previousIdx;
-          for (int i = node.childLeft + 1; i < node.childLeft + childNum - 1;
-               i++) {
-            entireChild[i].ga.previousLeaf = i - 1;
-            entireChild[i].ga.nextLeaf = i + 1;
-          }
-          entireChild[node.childLeft + childNum - 1].ga.previousLeaf =
-              node.childLeft + childNum - 2;
-
+          int previousIdx = entireChild[idx].ga.previousLeaf;
+          Split<GappedArrayType>(false, left, entireChild[idx].ga.maxIndex + 1,
+                                 previousIdx, idx);
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);
+          left = entireChild[idx].ga.m_left;
+          size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
         }
+
         // expand
         if (entireChild[idx].ga.capacity < kLeafMaxCapacity &&
             (static_cast<float>(size) / entireChild[idx].ga.capacity >
              entireChild[idx].ga.density)) {
           // If an additional Insertion results in crossing the density
           // then we expand the gapped array
-          DataVectorType newDataset;
-          int right = left + (&entireChild[idx].ga)->maxIndex + 1;
-          for (int i = left; i < right; i++) {
-            newDataset.push_back(entireData[i]);
-          }
-          InitGA(entireChild[idx].ga.capacity, left, size, newDataset,
-                 &entireChild[idx].ga);
+          Init(entireChild[idx].ga.capacity, left,
+               entireChild[idx].ga.maxIndex + 1, entireData,
+               &entireChild[idx].ga);
+          left = entireChild[idx].ga.m_left;
+          size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
         }
+
         // size == 0
         if (size == 0) {
           entireData[left] = data;
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex = 0;
-          InitGA(entireChild[idx].ga.capacity, left, 1, entireData,
-                 &entireChild[idx].ga);
+          Init(entireChild[idx].ga.capacity, left, 1, entireData,
+               &entireChild[idx].ga);
+          left = entireChild[idx].ga.m_left;
+          size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
           return true;
         }
+
         // find position
         int preIdx = entireChild[idx].ga.Predict(data.first);
         preIdx =
-            ExternalSearch(data.first, preIdx,
-                           entireChild[idx].externalArray.error, left, size);
+            GASearch(data.first, preIdx, entireChild[idx].externalArray.error,
+                     left, entireChild[idx].ga.maxIndex);
 
         // if the Insertion position is a gap,
         //  then we Insert the element into the gap and are done
@@ -223,19 +157,75 @@ bool CARMI::Insert(DataType data) {
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex =
               std::max(entireChild[idx].ga.maxIndex, preIdx - left);
+#ifdef DEBUG
+          DataVectorType test(entireChild[idx].ga.flagNumber & 0x00FFFFFF,
+                              {DBL_MIN, DBL_MIN});
+          int testEnd =
+              entireChild[idx].ga.m_left + entireChild[idx].ga.maxIndex + 1;
+          int testSize = 0;
+          for (int j = entireChild[idx].ga.m_left; j < testEnd; j++) {
+            if (entireData[j].first != DBL_MIN) {
+              test[testSize++] = entireData[j];
+            }
+          }
+          for (int i = 1; i < testSize; i++) {
+            if (test[i] <= test[i - 1]) {
+              std::cout << i << ", test larger wrong, test[i]:" << test[i].first
+                        << ",\ttest[i-1]:" << test[i - 1].first << std::endl;
+            }
+          }
+#endif  // DEBUG
           return true;
         } else {
-          if (entireData[preIdx - 1].first == DBL_MIN) {
-            entireData[preIdx - 1] = data;
-            entireChild[idx].ga.flagNumber++;
-            return true;
-          }
           if (preIdx == left + entireChild[idx].ga.maxIndex &&
               entireData[left + entireChild[idx].ga.maxIndex].first <
                   data.first) {
-            entireChild[idx].ga.maxIndex = entireChild[idx].ga.maxIndex + 1;
+            entireChild[idx].ga.maxIndex++;
             entireData[entireChild[idx].ga.maxIndex + left] = data;
             entireChild[idx].ga.flagNumber++;
+#ifdef DEBUG
+            DataVectorType test(entireChild[idx].ga.flagNumber & 0x00FFFFFF,
+                                {DBL_MIN, DBL_MIN});
+            int testEnd =
+                entireChild[idx].ga.m_left + entireChild[idx].ga.maxIndex + 1;
+            int testSize = 0;
+            for (int j = entireChild[idx].ga.m_left; j < testEnd; j++) {
+              if (entireData[j].first != DBL_MIN) {
+                test[testSize++] = entireData[j];
+              }
+            }
+            for (int i = 1; i < testSize; i++) {
+              if (test[i] <= test[i - 1]) {
+                std::cout << i
+                          << ", test larger wrong, test[i]:" << test[i].first
+                          << ",\ttest[i-1]:" << test[i - 1].first << std::endl;
+              }
+            }
+#endif  // DEBUG
+            return true;
+          }
+          if (preIdx > left && entireData[preIdx - 1].first == DBL_MIN) {
+            entireData[preIdx - 1] = data;
+            entireChild[idx].ga.flagNumber++;
+#ifdef DEBUG
+            DataVectorType test(entireChild[idx].ga.flagNumber & 0x00FFFFFF,
+                                {DBL_MIN, DBL_MIN});
+            int testEnd =
+                entireChild[idx].ga.m_left + entireChild[idx].ga.maxIndex + 1;
+            int testSize = 0;
+            for (int j = entireChild[idx].ga.m_left; j < testEnd; j++) {
+              if (entireData[j].first != DBL_MIN) {
+                test[testSize++] = entireData[j];
+              }
+            }
+            for (int i = 1; i < testSize; i++) {
+              if (test[i] <= test[i - 1]) {
+                std::cout << i
+                          << ", test larger wrong, test[i]:" << test[i].first
+                          << ",\ttest[i-1]:" << test[i - 1].first << std::endl;
+              }
+            }
+#endif  // DEBUG
             return true;
           }
 
@@ -253,12 +243,32 @@ bool CARMI::Insert(DataType data) {
           } else {
             if (i > entireChild[idx].ga.maxIndex + left)
               entireChild[idx].ga.maxIndex++;
-            for (; i > preIdx; i--) entireData[i] = entireData[i - 1];
+            for (; i > preIdx; i--) {
+              entireData[i] = entireData[i - 1];
+            }
           }
           entireData[preIdx] = data;
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex =
               std::max(entireChild[idx].ga.maxIndex, preIdx - left);
+#ifdef DEBUG
+          DataVectorType test(entireChild[idx].ga.flagNumber & 0x00FFFFFF,
+                              {DBL_MIN, DBL_MIN});
+          int testEnd =
+              entireChild[idx].ga.m_left + entireChild[idx].ga.maxIndex + 1;
+          int testSize = 0;
+          for (int j = entireChild[idx].ga.m_left; j < testEnd; j++) {
+            if (entireData[j].first != DBL_MIN) {
+              test[testSize++] = entireData[j];
+            }
+          }
+          for (int i = 1; i < testSize; i++) {
+            if (test[i] <= test[i - 1]) {
+              std::cout << i << ", test larger wrong, test[i]:" << test[i].first
+                        << ",\ttest[i-1]:" << test[i - 1].first << std::endl;
+            }
+          }
+#endif  // DEBUG
           return true;
         }
         return false;
@@ -270,38 +280,8 @@ bool CARMI::Insert(DataType data) {
 
         // split
         if (size >= kLeafMaxCapacity) {
-          DataVectorType tmpDataset;
-          for (int i = left; i < left + size; i++) {
-            tmpDataset.push_back(externalData[i]);
-          }
-
-          auto node = LRModel();  // create a new inner node
-          int childNum = kInsertNewChildNumber;
-          node.SetChildNumber(kInsertNewChildNumber);
-          node.childLeft = AllocateChildMemory(childNum);
-          Train(0, tmpDataset.size(), tmpDataset, &node);
-          entireChild[idx].lr = node;
-
-          std::vector<DataVectorType> subInitData;
-          DataVectorType tmp;
-          for (int i = 0; i < childNum; i++) {
-            subInitData.push_back(tmp);
-          }
-
-          for (int i = 0; i < size; i++) {
-            int p = node.Predict(tmpDataset[i].first);
-            subInitData[p].push_back(tmpDataset[i]);
-          }
-
-          int tmpLeft = left;
-          for (int i = 0; i < childNum; i++) {
-            ExternalArray tmpLeaf;
-            InitExternalArray(left, 1, subInitData[i], &tmpLeaf);
-            tmpLeaf.m_left = tmpLeft;
-            entireChild[node.childLeft + i].externalArray = tmpLeaf;
-            tmpLeft += subInitData[i].size();
-          }
-
+          // int previousIdx = entireChild[idx].ga.previousLeaf;
+          Split<ExternalArray>(true, left, size, 0, idx);
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);
           left = entireChild[idx].externalArray.m_left;
@@ -314,6 +294,8 @@ bool CARMI::Insert(DataType data) {
         } else if (size == 0) {
           entireChild[idx].externalArray.m_left = curr;
           entireChild[idx].externalArray.flagNumber++;
+          Train(entireChild[idx].externalArray.m_left, 1, externalData,
+                &entireChild[idx].externalArray);
         }
         curr++;
         return true;

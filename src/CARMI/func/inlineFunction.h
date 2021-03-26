@@ -18,6 +18,7 @@
 
 #include "../../params.h"
 #include "../carmi.h"
+#include "../construct/minor_function.h"
 
 // search a key-value through binary search
 inline int CARMI::ArrayBinarySearch(double key, int start, int end) const {
@@ -60,7 +61,7 @@ inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx) const {
 inline int CARMI::ExternalBinarySearch(double key, int start, int end) const {
   while (start < end) {
     int mid = (start + end) / 2;
-    if (entireData[mid].first < key)
+    if (externalData[mid].first < key)
       start = mid + 1;
     else
       end = mid;
@@ -115,4 +116,48 @@ inline int CARMI::ExternalSearch(double key, int preIdx, int error, int left,
     res = ExternalBinarySearch(key, end, left + size - 1);
   return res;
 }
+
+template <typename TYPE>
+inline void CARMI::Split(bool isExternal, int left, int size, int previousIdx,
+                         int idx) {
+  int actualSize = 0;
+  DataVectorType tmpDataset = ExtractData(left, size, entireData, &actualSize);
+
+  // create a new inner node
+  auto node = LRModel();
+  int childNum = kInsertNewChildNumber;
+  node.SetChildNumber(childNum);
+  node.childLeft = AllocateChildMemory(childNum);
+  Train(0, actualSize, tmpDataset, &node);
+  entireChild[idx].lr = node;
+
+  std::vector<IndexPair> perSize(childNum, emptyRange);
+  IndexPair range(0, actualSize);
+  NodePartition<LRModel>(node, range, tmpDataset, &perSize);
+
+  int tmpLeft = left;
+  for (int i = 0; i < childNum; i++) {
+    TYPE tmpLeaf(kThreshold);
+    Init(kMaxKeyNum, perSize[i].left, perSize[i].size, tmpDataset, &tmpLeaf);
+    if (isExternal) {
+      tmpLeaf.m_left = tmpLeft;
+      tmpLeft += perSize[i].size;
+    }
+    entireChild[node.childLeft + i].array =
+        *(reinterpret_cast<ArrayType*>(&tmpLeaf));
+  }
+
+  if (!isExternal) {
+    if (previousIdx >= 0)
+      entireChild[previousIdx].array.nextLeaf = node.childLeft;
+    entireChild[node.childLeft].array.previousLeaf = previousIdx;
+    int end = node.childLeft + childNum - 1;
+    for (int i = node.childLeft + 1; i < end; i++) {
+      entireChild[i].array.previousLeaf = i - 1;
+      entireChild[i].array.nextLeaf = i + 1;
+    }
+    entireChild[end].array.previousLeaf = end - 1;
+  }
+}
+
 #endif  // SRC_CARMI_FUNC_INLINEFUNCTION_H_

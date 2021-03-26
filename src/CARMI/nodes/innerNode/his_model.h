@@ -20,59 +20,63 @@
 inline void CARMI::Train(const int left, const int size,
                          const DataVectorType &dataset, HisModel *his) {
   if (size == 0) return;
-  int childNumber = his->flagNumber & 0x00FFFFFF;
-  double maxValue;
+
+  // calculate divisor
   int end = left + size;
+  int childNumber = his->flagNumber & 0x00FFFFFF;
+  double maxValue = dataset[end - 1].first;
+  his->minValue = dataset[left].first;
+  his->divisor = (maxValue - his->minValue) / childNumber;
+
+  // count the number of data points in each child
+  std::vector<int> table(childNumber, 0);
   for (int i = left; i < end; i++) {
-    if (dataset[i].first != DBL_MIN) {
-      his->minValue = dataset[i].first;
-      break;
-    }
+    int idx = (dataset[i].first - his->minValue) / his->divisor;
+    idx = std::min(std::max(0, idx), childNumber - 1);
+    table[idx]++;
   }
-  for (int i = end - 1; i >= left; i--) {
-    if (dataset[i].first != DBL_MIN) {
-      maxValue = dataset[i].first;
-      break;
-    }
+
+#ifdef DEBUG
+  // check cnt
+  int cntt = 0;
+  for (int i = 0; i < childNumber; i++) {
+    if (table[i] > 0) cntt++;
   }
-  his->divisor = static_cast<float>(maxValue - his->minValue) / childNumber;
-  std::vector<float> table(childNumber, 0);
-  int cnt = 0;
-  while (cnt <= 1) {
-    if (cnt == 1) his->divisor /= 10;
-    cnt = 0;
-    table = std::vector<float>(childNumber, 0);
-    for (int i = left; i < end; i++) {
-      int idx =
-          static_cast<float>(dataset[i].first - his->minValue) / his->divisor;
-      idx = std::min(std::max(0, idx), static_cast<int>(table.size()) - 1);
-      table[idx]++;
-    }
-    if (table[0] > 0) cnt++;
-    table[0] = table[0] / size * childNumber;
-    for (int i = 1; i < table.size(); i++) {
-      if (table[i] > 0) cnt++;
-      table[i] = table[i] / size * childNumber + table[i - 1];
-    }
-  }
-  table[0] = std::max(0, static_cast<int>(round(table[0]) - 1));
+#endif  // DEBUG
+
+  // normalize table
+  std::vector<double> index(childNumber, 0);
+  index[0] = static_cast<double>(table[0]) / size * (childNumber - 1);
   for (int i = 1; i < childNumber; i++) {
-    table[i] = std::max(0, static_cast<int>(round(table[i]) - 1));
+    index[i] =
+        static_cast<double>(table[i]) / size * (childNumber - 1) + index[i - 1];
+  }
+
+  table[0] = round(index[0]);
+  for (int i = 1; i < childNumber; i++) {
+    table[i] = round(index[i]);
     if (table[i] - table[i - 1] > 1) {
       table[i] = table[i - 1] + 1;
     }
+  }
+
 #ifdef DEBUG
+  // check table[i]
+  for (int i = 0; i < childNumber; i++) {
     if (table[i] >= childNumber) {
-      table[i] = childNumber - 1;
       std::cout << "table " << i << ": " << table[i]
                 << ", >= childNumber:" << childNumber << std::endl;
     }
-#endif  // DEBUG
+    if (table[i] < 0) {
+      std::cout << "table " << i << ": " << table[i] << " < 0" << std::endl;
+    }
   }
+#endif  // DEBUG
 
-  cnt = 0;
+  // calculate the value of base and offset
+  int cnt = 0;
   for (int i = 0; i < childNumber; i += 16) {
-    unsigned short start_idx = static_cast<int>(table[i]);
+    unsigned short start_idx = table[i];
     unsigned short tmp = 0;
     for (int j = i; j < i + 16; j++) {
       if (j >= childNumber) {
@@ -84,20 +88,30 @@ inline void CARMI::Train(const int left, const int size,
         his->offset[cnt] = tmp;
         return;
       }
-      unsigned short diff = static_cast<int>(table[j]) - start_idx;
+      unsigned short diff = table[j] - start_idx;
       tmp = (tmp << 1) + diff;
+
 #ifdef DEBUG
       if (diff > 1) {
         std::cout << "diff wrong, diff:" << diff << std::endl;
       }
 #endif  // DEBUG
-      if (diff > 0) start_idx += diff;
+
+      if (diff > 0) {
+        start_idx += diff;
+      }
     }
     his->base[cnt] = table[i];
     his->offset[cnt++] = tmp;
   }
 }
 
+/**
+ * @brief predict the index of the next branch
+ *
+ * @param key
+ * @return int index (from 0 to childNumber-1 )
+ */
 inline int HisModel::Predict(double key) const {
   // return the idx in children
   int childNumber = flagNumber & 0x00FFFFFF;

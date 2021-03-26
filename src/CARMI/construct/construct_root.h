@@ -36,9 +36,9 @@ void CARMI::IsBetterRoot(int c, NodeType type, double time_cost,
   double space_cost = kBaseNodeSpace * c;
 
   TYPE root(c);
-  root.model->Train(initDataset, c);
+  root.model.Train(initDataset, c);
   IndexPair range(0, initDataset.size());
-  NodePartition<ModelType>(*(root.model), range, initDataset, &perSize);
+  NodePartition<ModelType>(root.model, range, initDataset, &perSize);
   double entropy = CalculateEntropy(initDataset.size(), c, perSize);
   double cost = (time_cost + static_cast<float>(kRate * space_cost)) / entropy;
 
@@ -89,15 +89,15 @@ RootStruct CARMI::ChooseRoot() {
  */
 template <typename TYPE, typename ModelType>
 TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const DataRange &range,
-                          SubDataset *subDataset, int *childLeft) {
+                          SubDataset *subDataset) {
   TYPE root(rootStruct.rootChildNum);
-  *childLeft = AllocateChildMemory(rootStruct.rootChildNum);
-  root.model->Train(initDataset, rootStruct.rootChildNum);
+  root.childLeft = AllocateChildMemory(rootStruct.rootChildNum);
+  root.model.Train(initDataset, rootStruct.rootChildNum);
 
-  NodePartition<ModelType>(*(root.model), range.initRange, initDataset,
+  NodePartition<ModelType>(root.model, range.initRange, initDataset,
                            &(subDataset->subInit));
   subDataset->subFind = subDataset->subInit;
-  NodePartition<ModelType>(*(root.model), range.insertRange, insertQuery,
+  NodePartition<ModelType>(root.model, range.insertRange, insertQuery,
                            &(subDataset->subInsert));
   return root;
 }
@@ -114,34 +114,33 @@ SubDataset CARMI::StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost) {
                       {0, static_cast<int>(findQuery.size())},
                       {0, static_cast<int>(insertQuery.size())});
   SubDataset subDataset(rootStruct.rootChildNum);
-  int childLeft;
   switch (rootStruct.rootType) {
     case LR_ROOT_NODE: {
       nodeCost->time = kLRRootTime;
       nodeCost->space += sizeof(LRType);
-      root.lrRoot = ConstructRoot<LRType, LinearRegression>(
-          rootStruct, dataRange, &subDataset, &childLeft);
+      root = ConstructRoot<LRType, LinearRegression>(rootStruct, dataRange,
+                                                     &subDataset);
       break;
     }
     case PLR_ROOT_NODE: {
       nodeCost->time = kPLRRootTime;
       nodeCost->space += sizeof(PLRType);
-      root.plrRoot = ConstructRoot<PLRType, PiecewiseLR>(
-          rootStruct, dataRange, &subDataset, &childLeft);
+      root = ConstructRoot<PLRType, PiecewiseLR>(rootStruct, dataRange,
+                                                 &subDataset);
       break;
     }
     case HIS_ROOT_NODE: {
       nodeCost->time = kHisRootTime;
       nodeCost->space += sizeof(HisType);
-      root.hisRoot = ConstructRoot<HisType, HistogramModel>(
-          rootStruct, dataRange, &subDataset, &childLeft);
+      root = ConstructRoot<HisType, HistogramModel>(rootStruct, dataRange,
+                                                    &subDataset);
       break;
     }
     case BS_ROOT_NODE: {
       nodeCost->time = kCostBSTime * log2(rootStruct.rootChildNum);
       nodeCost->space += sizeof(BSType);
-      root.bsRoot = ConstructRoot<BSType, BinarySearchModel>(
-          rootStruct, dataRange, &subDataset, &childLeft);
+      root = ConstructRoot<BSType, BinarySearchModel>(rootStruct, dataRange,
+                                                      &subDataset);
       break;
     }
   }

@@ -17,8 +17,9 @@
 void CARMI::PrintRoot(int level, int idx, std::vector<int> *levelVec,
                       std::vector<int> *nodeVec) const {
   std::vector<int> tree(11, 0);
-  for (int i = 0; i < (root.lrRoot.flagNumber & 0x00FFFFFF); i++) {
-    auto childIdx = root.lrRoot.childLeft + i;
+  int childNum = root.flagNumber & 0x00FFFFFF;
+  for (int i = 0; i < childNum; i++) {
+    auto childIdx = root.childLeft + i;
     int t = (entireChild[childIdx].lr.flagNumber >> 24);
     tree[t]++;
     (*nodeVec)[t]++;
@@ -32,8 +33,8 @@ void CARMI::PrintRoot(int level, int idx, std::vector<int> *levelVec,
   if (tree[GAPPED_ARRAY_LEAF_NODE]) std::cout << "\tga:" << tree[9];
   if (tree[EXTERNAL_ARRAY_LEAF_NODE]) std::cout << "\tycsb:" << tree[10];
   std::cout << std::endl;
-  for (int i = 0; i < (root.lrRoot.flagNumber & 0x00FFFFFF); i++) {
-    auto childIdx = root.lrRoot.childLeft + i;
+  for (int i = 0; i < (root.flagNumber & 0x00FFFFFF); i++) {
+    auto childIdx = root.childLeft + i;
     NodeType t = NodeType(entireChild[childIdx].lr.flagNumber >> 24);
     if (t >= LR_INNER_NODE && t <= BS_INNER_NODE)
       PrintStructure(level + 1, t, childIdx, levelVec, nodeVec);
@@ -64,25 +65,25 @@ void CARMI::PrintStructure(int level, NodeType type, int idx,
   switch (type) {
     case LR_ROOT_NODE: {
       std::cout << "level " << level << ": now root is lr, idx:" << idx
-                << ", number:" << (root.lrRoot.flagNumber & 0x00FFFFFF);
+                << ", number:" << (root.flagNumber & 0x00FFFFFF);
       PrintRoot(level, idx, levelVec, nodeVec);
       break;
     }
     case PLR_ROOT_NODE: {
       std::cout << "level " << level << ": now root is plr, idx:" << idx
-                << ", number:" << (root.plrRoot.flagNumber & 0x00FFFFFF);
+                << ", number:" << (root.flagNumber & 0x00FFFFFF);
       PrintRoot(level, idx, levelVec, nodeVec);
       break;
     }
     case HIS_ROOT_NODE: {
       std::cout << "level " << level << ": now root is his, idx:" << idx
-                << ", number:" << (root.hisRoot.flagNumber & 0x00FFFFFF);
+                << ", number:" << (root.flagNumber & 0x00FFFFFF);
       PrintRoot(level, idx, levelVec, nodeVec);
       break;
     }
     case BS_ROOT_NODE: {
       std::cout << "level " << level << ": now root is bin, idx:" << idx
-                << ", number:" << (root.bsRoot.flagNumber & 0x00FFFFFF);
+                << ", number:" << (root.flagNumber & 0x00FFFFFF);
       PrintRoot(level, idx, levelVec, nodeVec);
       break;
     }

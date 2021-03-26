@@ -44,29 +44,22 @@ class LinearRegression {
 
 void LinearRegression::Train(const DataVectorType &dataset, int len) {
   length = len - 1;
-  int actualSize = 0;
   int idx = 0;
-  std::vector<double> index(dataset.size(), 0);
-  for (int i = 0; i < dataset.size(); i++) {
-    if (dataset[i].first != -1) {
-      actualSize++;
-    }
-    index[idx++] = static_cast<double>(i) / static_cast<double>(dataset.size());
+  int size = dataset.size();
+  std::vector<double> index(size, 0);
+  for (int i = 0; i < size; i++) {
+    index[idx++] = static_cast<double>(i) / size * length;
   }
-  if (actualSize == 0) return;
+  if (size == 0) return;
 
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-  for (int i = 0; i < dataset.size(); i++) {
-    if (dataset[i].first != -1) {
-      t1 += dataset[i].first * dataset[i].first;
-      t2 += dataset[i].first;
-      t3 += dataset[i].first * index[i];
-      t4 += index[i];
-    }
+  for (int i = 0; i < size; i++) {
+    t1 += dataset[i].first * dataset[i].first;
+    t2 += dataset[i].first;
+    t3 += dataset[i].first * index[i];
+    t4 += index[i];
   }
-  theta1 = (t3 * actualSize - t2 * t4) / (t1 * actualSize - t2 * t2);
-  theta2 = (t1 * t4 - t2 * t3) / (t1 * actualSize - t2 * t2);
-  theta1 *= len;
-  theta2 *= len;
+  theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+  theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
 }
 #endif  // SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_

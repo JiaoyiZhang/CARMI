@@ -29,20 +29,16 @@ CARMI::CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
 
   switch (kInnerNodeID) {
     case LR_ROOT_NODE:
-      root.lrRoot =
-          InitSRMIRoot<LRType, LinearRegression, LRModel>(childNum, range);
+      root = InitSRMIRoot<LRType, LinearRegression, LRModel>(childNum, range);
       break;
     case PLR_ROOT_NODE:
-      root.plrRoot =
-          InitSRMIRoot<PLRType, PiecewiseLR, PLRModel>(childNum, range);
+      root = InitSRMIRoot<PLRType, PiecewiseLR, PLRModel>(childNum, range);
       break;
     case HIS_ROOT_NODE:
-      root.hisRoot =
-          InitSRMIRoot<HisType, HistogramModel, HisModel>(childNum, range);
+      root = InitSRMIRoot<HisType, HistogramModel, HisModel>(childNum, range);
       break;
     case BS_ROOT_NODE:
-      root.bsRoot =
-          InitSRMIRoot<BSType, BinarySearchModel, BSModel>(childNum, range);
+      root = InitSRMIRoot<BSType, BinarySearchModel, BSModel>(childNum, range);
       break;
   }
 }
@@ -52,16 +48,17 @@ inline ROOTTYPE CARMI::InitSRMIRoot(int childNum, const IndexPair &range) {
   ROOTTYPE node(childNum);
   node.childLeft = AllocateChildMemory(childNum);
 
-  node.model->Train(initDataset, childNum);
+  node.model.Train(initDataset, childNum);
 
   std::vector<IndexPair> perSize(kRMIInnerChild, emptyRange);
-  NodePartition<ROOTMODEL>(*(node.model), range, initDataset, &perSize);
+  NodePartition<ROOTMODEL>(node.model, range, initDataset, &perSize);
 
   for (int i = 0; i < childNum; i++) {
     INNERTYPE inner;
     inner.SetChildNumber(32);
     InitSRMILeaf<INNERTYPE>(perSize[i], &inner);
-    entireChild[node.childLeft + i] = *(reinterpret_cast<BaseNode *>(&inner));
+    entireChild[node.childLeft + i] = *(reinterpret_cast<BaseNode
+    *>(&inner));
   }
   return node;
 }
@@ -82,15 +79,14 @@ inline void CARMI::InitSRMILeaf(const IndexPair &range, TYPE *node) {
     case ARRAY_LEAF_NODE:
       for (int i = 0; i < childNumber; i++) {
         ArrayType tmp(kThreshold);
-        InitArray(kMaxKeyNum, perSize[i].left, perSize[i].size, initDataset,
-                  &tmp);
+        Init(kMaxKeyNum, perSize[i].left, perSize[i].size, initDataset, &tmp);
         entireChild[node->childLeft + i].array = tmp;
       }
       break;
     case GAPPED_ARRAY_LEAF_NODE:
       for (int i = 0; i < childNumber; i++) {
         GappedArrayType tmp(kThreshold);
-        InitGA(kMaxKeyNum, perSize[i].left, perSize[i].size, initDataset, &tmp);
+        Init(kMaxKeyNum, perSize[i].left, perSize[i].size, initDataset, &tmp);
         entireChild[node->childLeft + i].ga = tmp;
       }
       break;

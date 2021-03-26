@@ -15,77 +15,23 @@
 
 #include "../../../params.h"
 #include "../../carmi.h"
+#include "../../construct/minor_function.h"
 #include "./leaf_nodes.h"
 
 inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
                          ExternalArray *ext) {
-  int actualSize = 0;
-  std::vector<float> index(size, 0);
-  int end = start_idx + size;
-  for (int i = start_idx, j = 0; i < end; i++, j++) {
-    if (dataset[i].first != DBL_MIN) {
-      actualSize++;
-    }
-    index[j] = static_cast<float>(i - start_idx) / size;
-  }
-  if (actualSize == 0) return;
-  if ((ext->flagNumber & 0x00FFFFFF) != actualSize) {
-    ext->flagNumber += actualSize;
-  }
+  DataVectorType data = SetY(start_idx, size, dataset);
+  if (size == 0) return;
 
-  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-  for (int i = start_idx; i < end; i++) {
-    if (dataset[i].first != DBL_MIN) {
-      t1 += dataset[i].first * dataset[i].first;
-      t2 += dataset[i].first;
-      t3 += dataset[i].first * index[i - start_idx];
-      t4 += index[i - start_idx];
-    }
+  if ((ext->flagNumber & 0x00FFFFFF) != size) {
+    ext->flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + size;
   }
-  ext->theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
-  ext->theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
-
-  // find: max|pi-yi|
-  int maxError = 0, p, d;
-  for (int i = start_idx; i < start_idx + size; i++) {
-    if (dataset[i].first != DBL_MIN) {
-      p = ext->Predict(dataset[i].first);
-      d = abs(i - start_idx - p);
-      if (d > maxError) maxError = d;
-    }
-  }
-
-  // find the optimal value of error
-  int minRes = size * log2(size);
-  int res;
-  int cntBetween, cntOut;
-  for (int e = 0; e <= maxError; e++) {
-    cntBetween = 0;
-    cntOut = 0;
-    for (int i = start_idx; i < start_idx + size; i++) {
-      if (dataset[i].first != DBL_MIN) {
-        p = ext->Predict(dataset[i].first);
-        d = abs(i - start_idx - p);
-        if (d <= e)
-          cntBetween++;
-        else
-          cntOut++;
-      }
-    }
-    if (e != 0)
-      res = cntBetween * log2(e) + cntOut * log2(size);
-    else
-      res = cntOut * log2(size);
-    if (res < minRes) {
-      minRes = res;
-      ext->error = e;
-    }
-  }
+  LRTrain(0, size, data, &(ext->theta1), &(ext->theta2));
+  FindOptError<ExternalArray>(0, size, data, ext);
 }
 
-inline void CARMI::InitExternalArray(int start_idx, int size,
-                                     const DataVectorType &dataset,
-                                     ExternalArray *ext) {
+inline void CARMI::Init(int cap, int start_idx, int size,
+                        const DataVectorType &dataset, ExternalArray *ext) {
   ext->m_left = start_idx;
   if (size == 0) return;
 

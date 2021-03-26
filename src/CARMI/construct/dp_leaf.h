@@ -105,8 +105,9 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     nodeCost.time = 0.0;
     nodeCost.space = 0.0;
 
-    ExternalArray tmp;
-    Train(dataRange.initRange.left, dataRange.initRange.size, initDataset,
+    ExternalArray tmp(kThreshold);
+    Train(dataRange.initRange.left,
+          dataRange.initRange.size - dataRange.insertRange.size, initDataset,
           &tmp);
     auto error = tmp.error;
     int findEnd = dataRange.findRange.left + dataRange.findRange.size;
@@ -127,13 +128,28 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     optimalCost = {nodeCost.time, nodeCost.space, nodeCost.cost};
     optimal_node_struct.externalArray = tmp;
 
+    auto it = COST.find(dataRange.initRange);
+    if (it != COST.end()) {
+      if (it->second.cost < optimalCost.cost) {
+        return it->second;
+      } else {
+        COST.erase(dataRange.initRange);
+        structMap.erase(dataRange.initRange);
+      }
+    }
     COST.insert({dataRange.initRange, optimalCost});
     structMap.insert({dataRange.initRange, optimal_node_struct});
     return nodeCost;
   }
 
-  int actualSize = GetActualSize(dataRange.initRange.size);
-
+  int actualSize = dataRange.initRange.size;
+  if (actualSize > kLeafMaxCapacity)
+    actualSize = kLeafMaxCapacity;
+  else
+    actualSize = GetActualSize(actualSize);
+  if (kIsWriteHeavy && actualSize == dataRange.initRange.size)
+    actualSize = GetActualSize(
+        std::min(actualSize * kExpansionScale, kLeafMaxCapacity * 1.0));
   // choose an array node as the leaf node
   double time_cost = 0.0;
   double space_cost = kDataPointSize * actualSize;
@@ -158,6 +174,9 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
       actualSize = kLeafMaxCapacity;
     else
       actualSize = GetActualSize(actualSize);
+  if (kIsWriteHeavy && actualSize == dataRange.initRange.size)
+    actualSize = GetActualSize(
+        std::min(actualSize * kExpansionScale, kLeafMaxCapacity * 1.0));
 
     GappedArrayType tmpNode(actualSize);
     tmpNode.density = density;

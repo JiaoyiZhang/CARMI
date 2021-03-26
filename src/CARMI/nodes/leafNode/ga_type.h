@@ -13,10 +13,12 @@
 
 #include <float.h>
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
 #include "../../carmi.h"
+#include "../../construct/minor_function.h"
 #include "./leaf_nodes.h"
 
 inline int GappedArrayType::Predict(double key) const {
@@ -29,25 +31,14 @@ inline int GappedArrayType::Predict(double key) const {
   return p;
 }
 
-inline void CARMI::InitGA(int cap, int left, int size,
-                          const DataVectorType &subDataset,
-                          GappedArrayType *ga) {
-  DataVectorType newDataset(size, {DBL_MIN, DBL_MIN});
+inline void CARMI::Init(int cap, int left, int size,
+                        const DataVectorType &subDataset, GappedArrayType *ga) {
+  if (size == 0) return;
   int actualSize = 0;
-  for (int i = left; i < left + size; i++) {
-    if (subDataset[i].second != DBL_MIN) {
-      newDataset[actualSize++] = subDataset[i];
-    }
-  }
-  StoreData(cap, left, size, newDataset, ga);
+  DataVectorType newDataset = ExtractData(left, size, subDataset, &actualSize);
 
-#ifdef DEBUG
-  if (size > kLeafMaxCapacity)
-    std::cout << "Gapped Array setDataset WRONG! datasetSize > 4096, size is:"
-              << size << std::endl;
-#endif  // DEBUG
-
-  Train(ga->m_left, ga->maxIndex, entireData, ga);
+  Train(0, actualSize, newDataset, ga);
+  StoreData(cap, 0, actualSize, newDataset, ga);
 }
 
 inline void CARMI::StoreData(int cap, int left, int size,
@@ -64,19 +55,30 @@ inline void CARMI::StoreData(int cap, int left, int size,
   ga->capacity = GetActualSize(ga->capacity);
   ga->m_left = AllocateMemory(ga->capacity);
 
+  int end = left + size;
+
+  if (size > kLeafMaxCapacity * 0.95) {
+    for (int i = left, j = ga->m_left; i < end; i++) {
+      entireData[j++] = dataset[i];
+    }
+    ga->maxIndex = size - 1;
+    return;
+  }
+
   int k = ga->density / (1 - ga->density);
-  float rate = static_cast<float>(dataset.size()) / ga->capacity;
+  float rate = static_cast<float>(size) / ga->capacity;
   if (rate > ga->density) {
     k = rate / (1 - rate);
   }
   int cnt = 0;
   int j = ga->m_left;
-  int end = left + size;
   for (int i = left; i < end; i++) {
     if (cnt >= k) {
-      j++;
+      entireData[j++] = {DBL_MIN, DBL_MIN};
       cnt = 0;
-      if (j > 2048) k += 2;
+      if (j > ga->m_left + 2048) {
+        k += 2;
+      }
     }
     cnt++;
     entireData[j++] = dataset[i];
@@ -88,70 +90,16 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
                          GappedArrayType *ga) {
   if ((ga->flagNumber & 0x00FFFFFF) != size) {
     ga->flagNumber = (GAPPED_ARRAY_LEAF_NODE << 24) + size;
-    ga->maxIndex = size;
-  }
-  int actualSize = 0;
-  std::vector<float> index(size, 0);
-  for (int i = start_idx, j = 0; i < start_idx + size; i++, j++) {
-    if (dataset[i].first != DBL_MIN) {
-      actualSize++;
-    }
-    index[j] = static_cast<float>(i - start_idx) / size;
-  }
-  if (actualSize == 0) {
-    return;
   }
 
-  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-  for (int i = start_idx; i < start_idx + size; i++) {
-    if (dataset[i].first != DBL_MIN) {
-      t1 += dataset[i].first * dataset[i].first;
-      t2 += dataset[i].first;
-      t3 += dataset[i].first * index[i - start_idx];
-      t4 += index[i - start_idx];
-    }
-  }
-  ga->theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
-  ga->theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+  if (size == 0) return;
+
   ga->maxIndex = size;
 
-  // find: max|pi-yi|
-  int maxError = 0, p, d;
-  int end = start_idx + size;
-  for (int i = start_idx; i < end; i++) {
-    if (dataset[i].first != DBL_MIN) {
-      p = ga->Predict(dataset[i].first);
-      d = abs(i - start_idx - p);
-      if (d > maxError) maxError = d;
-    }
-  }
+  DataVectorType data = SetY(start_idx, size, dataset);
+  LRTrain(0, size, data, &(ga->theta1), &(ga->theta2));
 
-  // find the optimal value of ga->error
-  int minRes = size * log2(size);
-  int res;
-  int cntBetween, cntOut;
-  for (int e = 0; e <= maxError; e++) {
-    cntBetween = 0;
-    cntOut = 0;
-    for (int i = start_idx; i < end; i++) {
-      if (dataset[i].first != DBL_MIN) {
-        p = ga->Predict(dataset[i].first);
-        d = abs(i - p - start_idx);
-        if (d <= e)
-          cntBetween++;
-        else
-          cntOut++;
-      }
-    }
-    if (e != 0)
-      res = cntBetween * log2(e) + cntOut * log2(size);
-    else
-      res = cntOut * log2(size);
-    if (res < minRes) {
-      minRes = res;
-      ga->error = e;
-    }
-  }
+  FindOptError<GappedArrayType>(0, size, data, ga);
 }
 
 #endif  // SRC_CARMI_NODES_LEAFNODE_GA_TYPE_H_

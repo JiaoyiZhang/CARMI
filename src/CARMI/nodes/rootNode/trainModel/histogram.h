@@ -20,6 +20,7 @@
 #include "../../../../params.h"
 class HistogramModel {
  public:
+  HistogramModel() {}
   explicit HistogramModel(int childNum)
       : base(ceil(childNum * 2 / 16.0), 0),
         offset(ceil(childNum * 2 / 16.0), 0) {
@@ -64,44 +65,34 @@ class HistogramModel {
 void HistogramModel::Train(const DataVectorType &dataset, int len) {
   int actualChildNumber = childNumber / 2;
   if (dataset.size() == 0) return;
-  double maxValue;
-  for (int i = 0; i < dataset.size(); i++) {
-    if (dataset[i].first != -1) {
-      minValue = dataset[i].first;
-      break;
-    }
-  }
-  for (int i = dataset.size() - 1; i >= 0; i--) {
-    if (dataset[i].first != -1) {
-      maxValue = dataset[i].first;
-      break;
-    }
-  }
+  double maxValue = dataset[dataset.size() - 1].first;
+  minValue = dataset[0].first;
   value = static_cast<float>(maxValue - minValue) / childNumber;
-  std::vector<float> table(childNumber, 0);
-  int cnt = 0;
-  while (cnt <= 1) {
-    if (cnt == 1) value /= 10;
-    cnt = 0;
-    table = std::vector<float>(childNumber, 0);
-    for (int i = 0; i < dataset.size(); i++) {
-      if (dataset[i].first != -1) {
-        int idx = static_cast<float>(dataset[i].first - minValue) / value;
-        idx = std::min(idx, static_cast<int>(table.size()) - 1);
-        table[idx]++;
-      }
-    }
-    if (table[0] > 0) cnt++;
-    table[0] = table[0] / dataset.size() * actualChildNumber;
-    for (int i = 1; i < table.size(); i++) {
-      if (table[i] > 0) cnt++;
-      table[i] = table[i] / dataset.size() * actualChildNumber + table[i - 1];
-    }
+
+  // count the number of data points in each child
+  std::vector<int> table(childNumber, 0);
+  for (int i = 0; i < dataset.size(); i++) {
+    int idx = (dataset[i].first - minValue) / value;
+    idx = std::min(std::max(0, idx), childNumber - 1);
+    table[idx]++;
   }
-  table[0] = std::max(0, static_cast<int>(round(table[0]) - 1));
+
+  // normalize table
+  std::vector<double> tmpIdx(childNumber, 0);
+  tmpIdx[0] =
+      static_cast<double>(table[0]) / dataset.size() * (actualChildNumber - 1);
   for (int i = 1; i < childNumber; i++) {
-    table[i] = std::max(0, static_cast<int>(round(table[i]) - 1));
-    if (table[i] - table[i - 1] > 1) table[i] = table[i - 1] + 1;
+    tmpIdx[i] = static_cast<double>(table[i]) / dataset.size() *
+                    (actualChildNumber - 1) +
+                tmpIdx[i - 1];
+  }
+
+  table[0] = round(tmpIdx[0]);
+  for (int i = 1; i < childNumber; i++) {
+    table[i] = round(tmpIdx[i]);
+    if (table[i] - table[i - 1] > 1) {
+      table[i] = table[i - 1] + 1;
+    }
   }
 
   int index = 0;

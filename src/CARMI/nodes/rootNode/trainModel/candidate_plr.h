@@ -8,6 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
+#include <math.h>
+
 #include <vector>
 
 #include "../../../../params.h"
@@ -57,8 +59,7 @@ class CandidateCost {
     double b = p1.second - a * p1.first;
     double res = b * b * size;
     res += a * a * (xx[right] - xx[left]);
-    res += 2.0 * a * b * (x[right] - x[left]);
-    res -= 2.0 * a * (px[right] - px[left]);
+    res += 2.0 * a * (b * (x[right] - x[left]) - (px[right] - px[left]));
     res += pp[right] - pp[left];
     res -= 2.0 * b * (p[right] - p[left]);
     return res;
@@ -76,7 +77,7 @@ class CandidateCost {
 float Diff(int n, int len, const int idx[]) {
   int opt[8];
   for (int i = 0; i < n; i++) {
-    opt[i] = abs(static_cast<float>(len) / 8.0 * i - idx[i]);
+    opt[i] = fabs(static_cast<float>(len) / 8.0 * i - idx[i]);
   }
   float diff = 0.0;
   for (int i = 0; i < n; i++) {

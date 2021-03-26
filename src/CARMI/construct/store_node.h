@@ -111,7 +111,6 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
     case EXTERNAL_ARRAY_LEAF_NODE: {
       ExternalArray node = it->second.externalArray;
       int size = range.initRange.size - range.insertRange.size;
-      node.flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + size;
       if (size <= 0)
         node.m_left = kExternalInsertLeft;
       else
@@ -120,6 +119,13 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
       break;
     }
   }
+
+#ifdef DEBUG
+  int testType = entireChild[storeIdx].array.flagNumber >> 24;
+  if (testType < LR_INNER_NODE) {
+    std::cout << "type: " << testType << std::endl;
+  }
+#endif  // DEBUG
 }
 
 #endif  // SRC_CARMI_CONSTRUCT_STORE_NODE_H_

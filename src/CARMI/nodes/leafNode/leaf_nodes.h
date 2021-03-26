@@ -77,8 +77,8 @@ class GappedArrayType {
 
 class ExternalArray {
  public:
-  // ExternalArray() = default;
-  ExternalArray() {
+  ExternalArray() = default;
+  explicit ExternalArray(int cap) {
     flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + 0;
     error = 0;
     m_left = -1;
@@ -101,7 +101,7 @@ class ExternalArray {
 
   float theta1;
   float theta2;
-  
+
   float tmpMember;
   std::pair<float, float> tmppp[5];
 };

@@ -16,13 +16,35 @@
 #include "nodes/leafNode/leaf_nodes.h"
 #include "nodes/rootNode/root_nodes.h"
 
-union CARMIRoot {
-  LRType lrRoot;
-  PLRType plrRoot;
-  HisType hisRoot;
-  BSType bsRoot;
-  CARMIRoot() {}
-  ~CARMIRoot() {}
+class CARMIRoot : public LRType, public PLRType, public HisType, public BSType {
+ public:
+  CARMIRoot() = default;
+  explicit CARMIRoot(int t) { type = t; }
+  int type;
+  CARMIRoot& operator=(const LRType& node) {
+    this->LRType::model = node.model;
+    this->flagNumber = node.flagNumber;
+    this->childLeft = node.childLeft;
+    return *this;
+  }
+  CARMIRoot& operator=(const PLRType& node) {
+    this->PLRType::model = node.model;
+    this->flagNumber = node.flagNumber;
+    this->childLeft = node.childLeft;
+    return *this;
+  }
+  CARMIRoot& operator=(const HisType& node) {
+    this->HisType::model = node.model;
+    this->flagNumber = node.flagNumber;
+    this->childLeft = node.childLeft;
+    return *this;
+  }
+  CARMIRoot& operator=(const BSType& node) {
+    this->BSType::model = node.model;
+    this->flagNumber = node.flagNumber;
+    this->childLeft = node.childLeft;
+    return *this;
+  }
 };
 
 union BaseNode {
