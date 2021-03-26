@@ -195,7 +195,6 @@ void WorkloadC(const DataVectorType &findDataset, CARMI *carmi) {
       std::chrono::nanoseconds::period::den;
 
   s = std::chrono::system_clock::now();
-
   if (kZipfian) {
     for (int i = 0; i < end; i++) {
     }

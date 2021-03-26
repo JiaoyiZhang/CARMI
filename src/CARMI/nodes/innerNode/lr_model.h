@@ -54,7 +54,8 @@ inline void CARMI::Train(const int left, const int size,
   for (int k = 0; k < 6; k++) {
     float a, b;
     LRTrain(start_idx, segCnt[k], dataset, &a, &b);
-    lr->theta[k] = {a, b};
+    int bound = childNumber / 6 * (k + 1);
+    lr->theta[k] = {a * bound, b * bound};
     start_idx += segCnt[k];
   }
 }

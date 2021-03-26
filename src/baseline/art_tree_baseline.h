@@ -20,6 +20,7 @@
 
 #include "../../art_tree/art.cpp"
 #include "../../art_tree/art.h"
+#include "../experiment/workload/workloads.h"
 #include "../experiment/workload/zipfian.h"
 #include "../params.h"
 #include "iostream"

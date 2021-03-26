@@ -183,7 +183,7 @@ DataVectorType SetY(const int left, const int size,
   int end = left + size;
   for (int i = left, j = 0; i < end; i++, j++) {
     data[j].first = dataset[i].first;
-    data[j].second = static_cast<double>(i) / size;
+    data[j].second = static_cast<double>(j) / size;
   }
   return data;
 }

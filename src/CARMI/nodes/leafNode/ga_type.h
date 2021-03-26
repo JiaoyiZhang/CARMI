@@ -100,6 +100,7 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
   LRTrain(0, size, data, &(ga->theta1), &(ga->theta2));
 
   FindOptError<GappedArrayType>(0, size, data, ga);
+  ga->error /= ga->density;
 }
 
 #endif  // SRC_CARMI_NODES_LEAFNODE_GA_TYPE_H_
