@@ -14,11 +14,7 @@
 
 #include "../CARMI/carmi.h"
 #include "../CARMI/staticRMI/rmi.h"
-#include "workload/workloada.h"
-#include "workload/workloadb.h"
-#include "workload/workloadc.h"
-#include "workload/workloadd.h"
-#include "workload/workloade.h"
+#include "workload/workloads.h"
 
 extern int childNum;
 extern std::ofstream outRes;

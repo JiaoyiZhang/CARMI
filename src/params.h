@@ -11,9 +11,9 @@
 #ifndef SRC_PARAMS_H_
 #define SRC_PARAMS_H_
 
-#define ZIPFIAN 1
 #define PARAM_ZIPFIAN 0.99
 #define DEBUG
+// #define BASELINE
 
 #include <utility>
 #include <vector>
@@ -21,8 +21,10 @@
 typedef std::pair<double, double> DataType;
 typedef std::vector<DataType> DataVectorType;
 
-// const bool kPrimaryIndex = false;
+const bool kZipfian = false;
+
 bool kPrimaryIndex = false;
+bool kIsWriteHeavy = false;
 int kExternalInsertLeft;
 
 const double kDensity = 0.5;         // the density of gap in gapped array

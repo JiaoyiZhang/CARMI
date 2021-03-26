@@ -17,22 +17,21 @@
 #include "./experiment/fixed_experiment.h"
 #include "./experiment/main_experiment.h"
 
-ofstream outRes;
+std::ofstream outRes;
 
 int main() {
-  outRes.open("res_0322.csv", ios::app);
+  outRes.open("res_0322.csv", std::ios::app);
 
   time_t timep;
   time(&timep);
   char tmpTime[64];
   strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
-  cout << "\nTest time: " << tmpTime << endl;
-  outRes << "\nTest time: " << tmpTime << endl;
+  std::cout << "\nTest time: " << tmpTime << std::endl;
+  outRes << "\nTest time: " << tmpTime << std::endl;
 
   mainExperiment(kAlgorithmThre);
-  fixedExperiment();
 
-  outRes << "----------------------------------------------" << endl;
+  outRes << "----------------------------------------------" << std::endl;
 
   return 0;
 }

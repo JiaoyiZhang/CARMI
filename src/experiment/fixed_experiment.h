@@ -50,7 +50,9 @@ void fixedSynthetic(double initRatio, int kLeafID,
   std::cout << "initRatio is: " << initRatio << std::endl;
   outRes << "initRatio," << initRatio << std::endl;
   double init = initRatio;
-  if (init == 2) init = 0.95;
+  if (init == kRangeScan) {
+    init = kReadHeavy;
+  }
   LongitudesDataset longData = LongitudesDataset(init);
   UniformDataset uniData = UniformDataset(init);
   NormalDataset norData = NormalDataset(init);
