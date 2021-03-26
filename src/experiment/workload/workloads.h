@@ -173,8 +173,8 @@ void WorkloadC(const DataVectorType &findDataset, CARMI *carmi) {
   DataVectorType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kReadOnly;
-  InitTestSet(end, findDataset, DataVectorType(), &findQuery, &insertQuery,
-              &index);
+  InitTestSet(kReadOnly, findDataset, DataVectorType(), &findQuery,
+              &insertQuery, &index);
 
   std::chrono::_V2::system_clock::time_point s, e;
   double tmp;

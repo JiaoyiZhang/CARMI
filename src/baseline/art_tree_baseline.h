@@ -31,42 +31,26 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
                   const std::vector<int> &length) {
   outRes << "artTree,";
   std::cout << "artTree,";
-  auto findData = findDataset;
-  auto insertData = insertDataset;
   art_tree t;
   art_tree_init(&t);
   std::cout << "start" << std::endl;
-  for (int i = 0; i < findData.size(); i++) {
+  for (int i = 0; i < findDataset.size(); i++) {
     char key[64] = {0};
-    sprintf(key, "%f", findData[i].first);
+    sprintf(key, "%f", findDataset[i].first);
     art_insert(&t, (const unsigned char *)key, strlen((const char *)key) + 1,
-               findData[i].second);
+               findDataset[i].second);
   }
   std::cout << "init over" << std::endl;
 
-  std::default_random_engine engine;
-
-  if (initRatio != 2) {
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    engine = std::default_random_engine(seed);
-    shuffle(findData.begin(), findData.end(), engine);
-
-    unsigned seed1 =
-        std::chrono::system_clock::now().time_since_epoch().count();
-    engine = std::default_random_engine(seed1);
-    shuffle(insertData.begin(), insertData.end(), engine);
-  }
-
-  Zipfian zipFind;
-  zipFind.InitZipfian(PARAM_ZIPFIAN, findData.size());
+  DataVectorType findQuery;
+  DataVectorType insertQuery;
   std::vector<int> index;
-  for (int i = 0; i < findData.size(); i++) {
-    int idx = zipFind.GenerateNextIndex();
-    index.push_back(idx);
-  }
+  double tmp;
 
-  if (initRatio == 0.5) {
-    int end = 50000;
+  if (initRatio == kWriteHeavy) {
+    int end = kTestSize * kWriteHeavy;
+    InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
     double tmp;
@@ -75,23 +59,23 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
         char key[64] = {0};
-        sprintf(key, "%f", findData[index[i]].first);
+        sprintf(key, "%f", findQuery[index[i]].first);
         art_search(&t, (const unsigned char *)key,
                    strlen((const char *)key) + 1, rets);
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
         art_insert(&t, (const unsigned char *)key,
-                   strlen((const char *)key) + 1, insertData[i].second);
+                   strlen((const char *)key) + 1, insertQuery[i].second);
       }
     } else {
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
         char key[64] = {0};
-        sprintf(key, "%f", findData[i].first);
+        sprintf(key, "%f", findQuery[i].first);
         art_search(&t, (const unsigned char *)key,
                    strlen((const char *)key) + 1, rets);
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
         art_insert(&t, (const unsigned char *)key,
-                   strlen((const char *)key) + 1, insertData[i].second);
+                   strlen((const char *)key) + 1, insertQuery[i].second);
       }
     }
     e = std::chrono::system_clock::now();
@@ -105,15 +89,15 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
         char key[64] = {0};
-        sprintf(key, "%f", findData[index[i]].first);
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", findQuery[index[i]].first);
+        sprintf(key, "%f", insertQuery[i].first);
       }
     } else {
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
         char key[64] = {0};
-        sprintf(key, "%f", findData[i].first);
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", findQuery[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
       }
     }
     e = std::chrono::system_clock::now();
@@ -123,45 +107,45 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
-
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
-  } else if (initRatio == 0.95) {
-    int end = 5000;
+  } else if (initRatio == kReadHeavy) {
+    int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
+
+    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
     double tmp;
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[index[findCnt]].first);
+          sprintf(key, "%f", findQuery[index[findCnt]].first);
           art_search(&t, (const unsigned char *)key,
                      strlen((const char *)key) + 1, rets);
           findCnt++;
         }
         char key[64] = {0};
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
         art_insert(&t, (const unsigned char *)key,
-                   strlen((const char *)key) + 1, insertData[i].second);
+                   strlen((const char *)key) + 1, insertQuery[i].second);
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[findCnt].first);
+          sprintf(key, "%f", findQuery[findCnt].first);
           art_search(&t, (const unsigned char *)key,
                      strlen((const char *)key) + 1, rets);
           findCnt++;
         }
         char key[64] = {0};
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
         art_insert(&t, (const unsigned char *)key,
-                   strlen((const char *)key) + 1, insertData[i].second);
+                   strlen((const char *)key) + 1, insertQuery[i].second);
       }
     }
     e = std::chrono::system_clock::now();
@@ -174,25 +158,25 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[index[findCnt]].first);
+          sprintf(key, "%f", findQuery[index[findCnt]].first);
           findCnt++;
         }
         char key[64] = {0};
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[findCnt].first);
+          sprintf(key, "%f", findQuery[findCnt].first);
           findCnt++;
         }
         char key[64] = {0};
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
       }
     }
     e = std::chrono::system_clock::now();
@@ -202,11 +186,10 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
-
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
-  } else if (initRatio == 1) {
-    int end = 100000;
+  } else if (initRatio == kReadOnly) {
+    int end = kTestSize * kReadOnly;
+    InitTestSet(kReadOnly, findDataset, DataVectorType(), &findQuery,
+                &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
     double tmp;
@@ -215,7 +198,7 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
         char key[64] = {0};
-        sprintf(key, "%f", findData[index[i]].first);
+        sprintf(key, "%f", findQuery[index[i]].first);
         art_search(&t, (const unsigned char *)key,
                    strlen((const char *)key) + 1, rets);
       }
@@ -223,7 +206,7 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
         char key[64] = {0};
-        sprintf(key, "%f", findData[i].first);
+        sprintf(key, "%f", findQuery[i].first);
         art_search(&t, (const unsigned char *)key,
                    strlen((const char *)key) + 1, rets);
       }
@@ -239,13 +222,13 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
         char key[64] = {0};
-        sprintf(key, "%f", findData[index[i]].first);
+        sprintf(key, "%f", findQuery[index[i]].first);
       }
     } else {
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
         char key[64] = {0};
-        sprintf(key, "%f", findData[i].first);
+        sprintf(key, "%f", findQuery[i].first);
       }
     }
     e = std::chrono::system_clock::now();
@@ -255,52 +238,52 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
+  } else if (initRatio == kWritePartial) {
+    int length = round(kTestSize * kWritePartial);
+    int insert_length = round(kTestSize * (1 - kWritePartial));
+    InitTestSet(kWritePartial, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
-  } else if (initRatio == 0) {
-    int end = 5000;
-    int findCnt = 0;
-    int insertCnt = 0;
+    int findCnt = 0, insertCnt = 0;
 
     std::chrono::_V2::system_clock::time_point s, e;
     double tmp;
     s = std::chrono::system_clock::now();
     if (kZipfian) {
-      for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 17 && findCnt < findData.size(); j++) {
+      for (int i = 0; i < insert_length; i++) {
+        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[index[findCnt]].first);
+          sprintf(key, "%f", findQuery[index[findCnt]].first);
           art_search(&t, (const unsigned char *)key,
                      strlen((const char *)key) + 1, rets);
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertData.size(); j++) {
+        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
           char key[64] = {0};
-          sprintf(key, "%f", insertData[insertCnt].first);
+          sprintf(key, "%f", insertQuery[insertCnt].first);
           art_insert(&t, (const unsigned char *)key,
                      strlen((const char *)key) + 1,
-                     insertData[insertCnt].second);
+                     insertQuery[insertCnt].second);
           insertCnt++;
         }
       }
     } else {
-      for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 17 && findCnt < findData.size(); j++) {
+      for (int i = 0; i < insert_length; i++) {
+        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[findCnt].first);
+          sprintf(key, "%f", findQuery[findCnt].first);
           art_search(&t, (const unsigned char *)key,
                      strlen((const char *)key) + 1, rets);
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertData.size(); j++) {
+        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
           char key[64] = {0};
-          sprintf(key, "%f", insertData[insertCnt].first);
+          sprintf(key, "%f", insertQuery[insertCnt].first);
           art_insert(&t, (const unsigned char *)key,
                      strlen((const char *)key) + 1,
-                     insertData[insertCnt].second);
+                     insertQuery[insertCnt].second);
           insertCnt++;
         }
       }
@@ -315,30 +298,30 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
     insertCnt = 0;
     s = std::chrono::system_clock::now();
     if (kZipfian) {
-      for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 17 && findCnt < findData.size(); j++) {
+      for (int i = 0; i < insert_length; i++) {
+        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[index[findCnt]].first);
+          sprintf(key, "%f", findQuery[index[findCnt]].first);
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertData.size(); j++) {
+        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
           char key[64] = {0};
-          sprintf(key, "%f", insertData[insertCnt].first);
+          sprintf(key, "%f", insertQuery[insertCnt].first);
           insertCnt++;
         }
       }
     } else {
-      for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 17 && findCnt < findData.size(); j++) {
+      for (int i = 0; i < insert_length; i++) {
+        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[findCnt].first);
+          sprintf(key, "%f", findQuery[findCnt].first);
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertData.size(); j++) {
+        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
           char key[64] = {0};
-          sprintf(key, "%f", insertData[insertCnt].first);
+          sprintf(key, "%f", insertQuery[insertCnt].first);
           insertCnt++;
         }
       }
@@ -350,37 +333,27 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
-
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
-  } else if (initRatio == 2) {
-    int end = 5000;
+  } else if (initRatio == kRangeScan) {
+    int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
-
-    for (int i = 0; i < findData.size(); i++) {
-      int len = std::min(i + length[i], static_cast<int>(findData.size() - 1));
-      findData[i].second = findData[len].first;
+    for (int i = 0; i < findQuery.size(); i++) {
+      int len = std::min(i + length[i], static_cast<int>(findQuery.size() - 1));
+      findQuery[i].second = findQuery[len].first;
     }
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    engine = std::default_random_engine(seed);
-    shuffle(findData.begin(), findData.end(), engine);
-
-    unsigned seed1 =
-        std::chrono::system_clock::now().time_since_epoch().count();
-    engine = std::default_random_engine(seed1);
-    shuffle(insertData.begin(), insertData.end(), engine);
+    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
     double tmp;
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[index[findCnt]].first);
+          sprintf(key, "%f", findQuery[index[findCnt]].first);
           char rightKey[64] = {0};
-          sprintf(rightKey, "%f", findData[index[findCnt]].second);
+          sprintf(rightKey, "%f", findQuery[index[findCnt]].second);
 
           art_range_scan(
               &t, (const unsigned char *)key, strlen((const char *)key) + 1,
@@ -389,18 +362,18 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
           findCnt++;
         }
         char key[64] = {0};
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
         art_insert(&t, (const unsigned char *)key,
-                   strlen((const char *)key) + 1, insertData[i].second);
+                   strlen((const char *)key) + 1, insertQuery[i].second);
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[findCnt].first);
+          sprintf(key, "%f", findQuery[findCnt].first);
           char rightKey[64] = {0};
-          sprintf(rightKey, "%f", findData[findCnt].second);
+          sprintf(rightKey, "%f", findQuery[findCnt].second);
 
           art_range_scan(
               &t, (const unsigned char *)key, strlen((const char *)key) + 1,
@@ -409,9 +382,9 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
           findCnt++;
         }
         char key[64] = {0};
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
         art_insert(&t, (const unsigned char *)key,
-                   strlen((const char *)key) + 1, insertData[i].second);
+                   strlen((const char *)key) + 1, insertQuery[i].second);
       }
     }
     e = std::chrono::system_clock::now();
@@ -423,29 +396,29 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[index[findCnt]].first);
+          sprintf(key, "%f", findQuery[index[findCnt]].first);
           char rightKey[64] = {0};
-          sprintf(rightKey, "%f", findData[index[findCnt]].second);
+          sprintf(rightKey, "%f", findQuery[index[findCnt]].second);
           findCnt++;
         }
         char key[64] = {0};
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           std::vector<double> rets;
           char key[64] = {0};
-          sprintf(key, "%f", findData[findCnt].first);
+          sprintf(key, "%f", findQuery[findCnt].first);
           char rightKey[64] = {0};
-          sprintf(rightKey, "%f", findData[findCnt].second);
+          sprintf(rightKey, "%f", findQuery[findCnt].second);
           findCnt++;
         }
         char key[64] = {0};
-        sprintf(key, "%f", insertData[i].first);
+        sprintf(key, "%f", insertQuery[i].first);
       }
     }
     e = std::chrono::system_clock::now();
@@ -455,10 +428,9 @@ void artTree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
-
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
   }
+
+  PrintAvgTime(tmp);
 
   outRes << std::endl;
 }

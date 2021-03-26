@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "../../stx_btree/btree_map.h"
+#include "../experiment/workload/workloads.h"
 #include "../experiment/workload/zipfian.h"
 #include "../params.h"
 
@@ -29,9 +30,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
                 const std::vector<int> &length) {
   std::cout << "btree,";
   outRes << "btree,";
-  auto findData = findDataset;
-  auto insertData = insertDataset;
-  stx::btree_map<double, double> btree(findData.begin(), findData.end());
+  stx::btree_map<double, double> btree(findDataset.begin(), findDataset.end());
 
   auto stat = btree.get_stats();
   std::cout << "btree : innernodes" << stat.innernodes
@@ -42,38 +41,28 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
   std::cout << "btree space:" << space << std::endl;
   outRes << space << std::endl;
 
-  std::default_random_engine engine;
-
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  engine = std::default_random_engine(seed);
-  shuffle(findData.begin(), findData.end(), engine);
-
-  unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
-  engine = std::default_random_engine(seed1);
-  shuffle(insertData.begin(), insertData.end(), engine);
-
-  Zipfian zipFind;
-  zipFind.InitZipfian(PARAM_ZIPFIAN, findData.size());
+  DataVectorType findQuery;
+  DataVectorType insertQuery;
   std::vector<int> index;
-  for (int i = 0; i < findData.size(); i++) {
-    int idx = zipFind.GenerateNextIndex();
-    index.push_back(idx);
-  }
+  double tmp;
 
   if (initRatio == kWriteHeavy) {
-    int end = kTestSize * kWriteHeavy;  // 50000
+    int end = kTestSize * kWriteHeavy;
+    InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
+
     std::chrono::_V2::system_clock::time_point s, e;
-    double tmp;
+
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        btree.find(findData[index[i]].first);
-        btree.insert(insertData[i]);
+        btree.find(findQuery[index[i]].first);
+        btree.insert(insertQuery[i]);
       }
     } else {
       for (int i = 0; i < end; i++) {
-        btree.find(findData[i].first);
-        btree.insert(insertData[i]);
+        btree.find(findQuery[i].first);
+        btree.insert(insertQuery[i]);
       }
     }
     e = std::chrono::system_clock::now();
@@ -98,32 +87,31 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
 
-    std::cout << "total time:" << tmp * kSecondToNanosecond / kTestSize
-              << std::endl;
-    outRes << tmp * kSecondToNanosecond / kTestSize << ",";
-
-  } else if (initRatio == 0.95) {
-    int end = 5000;
+  } else if (initRatio == kReadHeavy) {
+    int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
 
+    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
+
     std::chrono::_V2::system_clock::time_point s, e;
-    double tmp;
+
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
-          btree.find(findData[index[findCnt]].first);
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+          btree.find(findQuery[index[findCnt]].first);
           findCnt++;
         }
-        btree.insert(insertData[i]);
+        btree.insert(insertQuery[i]);
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
-          btree.find(findData[findCnt].first);
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+          btree.find(findQuery[findCnt].first);
           findCnt++;
         }
-        btree.insert(insertData[i]);
+        btree.insert(insertQuery[i]);
       }
     }
     e = std::chrono::system_clock::now();
@@ -136,13 +124,13 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           findCnt++;
         }
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           findCnt++;
         }
       }
@@ -155,21 +143,21 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
 
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
-  } else if (initRatio == 1) {
-    int end = 100000;
+  } else if (initRatio == kReadOnly) {
+    int end = kTestSize * kReadOnly;
+    InitTestSet(kReadOnly, findDataset, DataVectorType(), &findQuery,
+                &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
-    double tmp;
+
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        btree.find(findData[index[i]].first);
+        btree.find(findQuery[index[i]].first);
       }
     } else {
       for (int i = 0; i < end; i++) {
-        btree.find(findData[i].first);
+        btree.find(findQuery[i].first);
       }
     }
     e = std::chrono::system_clock::now();
@@ -193,36 +181,36 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
+  } else if (initRatio == kWritePartial) {
+    int length = round(kTestSize * kWritePartial);
+    int insert_length = round(kTestSize * (1 - kWritePartial));
+    InitTestSet(kWritePartial, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
-  } else if (initRatio == 0) {
-    int end = 5000;
-    int findCnt = 0;
-    int insertCnt = 0;
+    int findCnt = 0, insertCnt = 0;
 
     std::chrono::_V2::system_clock::time_point s, e;
-    double tmp;
+
     s = std::chrono::system_clock::now();
     if (kZipfian) {
-      for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 17 && findCnt < findData.size(); j++) {
-          btree.find(findData[index[findCnt]].first);
+      for (int i = 0; i < insert_length; i++) {
+        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
+          btree.find(findQuery[index[findCnt]].first);
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertData.size(); j++) {
-          btree.insert(insertData[insertCnt]);
+        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+          btree.insert(insertQuery[insertCnt]);
           insertCnt++;
         }
       }
     } else {
-      for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 17 && findCnt < findData.size(); j++) {
-          btree.find(findData[findCnt].first);
+      for (int i = 0; i < insert_length; i++) {
+        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
+          btree.find(findQuery[findCnt].first);
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertData.size(); j++) {
-          btree.insert(insertData[insertCnt]);
+        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+          btree.insert(insertQuery[insertCnt]);
           insertCnt++;
         }
       }
@@ -237,20 +225,20 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
     insertCnt = 0;
     s = std::chrono::system_clock::now();
     if (kZipfian) {
-      for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 17 && findCnt < findData.size(); j++) {
+      for (int i = 0; i < insert_length; i++) {
+        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertData.size(); j++) {
+        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
           insertCnt++;
         }
       }
     } else {
-      for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 17 && findCnt < findData.size(); j++) {
+      for (int i = 0; i < insert_length; i++) {
+        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertData.size(); j++) {
+        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
           insertCnt++;
         }
       }
@@ -262,41 +250,40 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
-
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
-  } else if (initRatio == 2) {
-    int end = 5000;
+  } else if (initRatio == kRangeScan) {
+    int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
+    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
-    double tmp;
+
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           DataVectorType ret(length[index[findCnt]], {-1, -1});
-          auto it = btree.find(findData[index[findCnt]].first);
+          auto it = btree.find(findQuery[index[findCnt]].first);
           for (int l = 0; l < length[index[findCnt]]; l++) {
             ret[l] = {it->first, it->second};
             it++;
           }
           findCnt++;
         }
-        btree.insert(insertData[i]);
+        btree.insert(insertQuery[i]);
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           DataVectorType ret(length[findCnt], {-1, -1});
-          auto it = btree.find(findData[findCnt].first);
+          auto it = btree.find(findQuery[findCnt].first);
           for (int l = 0; l < length[findCnt]; l++) {
             ret[l] = {it->first, it->second};
             it++;
           }
           findCnt++;
         }
-        btree.insert(insertData[i]);
+        btree.insert(insertQuery[i]);
       }
     }
     e = std::chrono::system_clock::now();
@@ -309,7 +296,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
     s = std::chrono::system_clock::now();
     if (kZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           DataVectorType ret(length[index[findCnt]], {-1, -1});
           stx::btree<double, double>::iterator it;
           for (int l = 0; l < length[index[findCnt]]; l++) {
@@ -319,7 +306,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findData.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           DataVectorType ret(length[findCnt], {-1, -1});
           stx::btree<double, double>::iterator it;
           for (int l = 0; l < length[findCnt]; l++) {
@@ -335,10 +322,9 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
-
-    std::cout << "total time:" << tmp / 100000.0 * 1000000000 << std::endl;
-    outRes << tmp / 100000.0 * 1000000000 << ",";
   }
+
+  PrintAvgTime(tmp);
 }
 
 #endif  // SRC_BASELINE_BTREE_BASELINE_H_
