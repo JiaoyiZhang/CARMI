@@ -157,24 +157,6 @@ bool CARMI::Insert(DataType data) {
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex =
               std::max(entireChild[idx].ga.maxIndex, preIdx - left);
-#ifdef DEBUG
-          DataVectorType test(entireChild[idx].ga.flagNumber & 0x00FFFFFF,
-                              {DBL_MIN, DBL_MIN});
-          int testEnd =
-              entireChild[idx].ga.m_left + entireChild[idx].ga.maxIndex + 1;
-          int testSize = 0;
-          for (int j = entireChild[idx].ga.m_left; j < testEnd; j++) {
-            if (entireData[j].first != DBL_MIN) {
-              test[testSize++] = entireData[j];
-            }
-          }
-          for (int i = 1; i < testSize; i++) {
-            if (test[i] <= test[i - 1]) {
-              std::cout << i << ", test larger wrong, test[i]:" << test[i].first
-                        << ",\ttest[i-1]:" << test[i - 1].first << std::endl;
-            }
-          }
-#endif  // DEBUG
           return true;
         } else {
           if (preIdx == left + entireChild[idx].ga.maxIndex &&
@@ -183,49 +165,11 @@ bool CARMI::Insert(DataType data) {
             entireChild[idx].ga.maxIndex++;
             entireData[entireChild[idx].ga.maxIndex + left] = data;
             entireChild[idx].ga.flagNumber++;
-#ifdef DEBUG
-            DataVectorType test(entireChild[idx].ga.flagNumber & 0x00FFFFFF,
-                                {DBL_MIN, DBL_MIN});
-            int testEnd =
-                entireChild[idx].ga.m_left + entireChild[idx].ga.maxIndex + 1;
-            int testSize = 0;
-            for (int j = entireChild[idx].ga.m_left; j < testEnd; j++) {
-              if (entireData[j].first != DBL_MIN) {
-                test[testSize++] = entireData[j];
-              }
-            }
-            for (int i = 1; i < testSize; i++) {
-              if (test[i] <= test[i - 1]) {
-                std::cout << i
-                          << ", test larger wrong, test[i]:" << test[i].first
-                          << ",\ttest[i-1]:" << test[i - 1].first << std::endl;
-              }
-            }
-#endif  // DEBUG
             return true;
           }
           if (preIdx > left && entireData[preIdx - 1].first == DBL_MIN) {
             entireData[preIdx - 1] = data;
             entireChild[idx].ga.flagNumber++;
-#ifdef DEBUG
-            DataVectorType test(entireChild[idx].ga.flagNumber & 0x00FFFFFF,
-                                {DBL_MIN, DBL_MIN});
-            int testEnd =
-                entireChild[idx].ga.m_left + entireChild[idx].ga.maxIndex + 1;
-            int testSize = 0;
-            for (int j = entireChild[idx].ga.m_left; j < testEnd; j++) {
-              if (entireData[j].first != DBL_MIN) {
-                test[testSize++] = entireData[j];
-              }
-            }
-            for (int i = 1; i < testSize; i++) {
-              if (test[i] <= test[i - 1]) {
-                std::cout << i
-                          << ", test larger wrong, test[i]:" << test[i].first
-                          << ",\ttest[i-1]:" << test[i - 1].first << std::endl;
-              }
-            }
-#endif  // DEBUG
             return true;
           }
 
@@ -251,24 +195,6 @@ bool CARMI::Insert(DataType data) {
           entireChild[idx].ga.flagNumber++;
           entireChild[idx].ga.maxIndex =
               std::max(entireChild[idx].ga.maxIndex, preIdx - left);
-#ifdef DEBUG
-          DataVectorType test(entireChild[idx].ga.flagNumber & 0x00FFFFFF,
-                              {DBL_MIN, DBL_MIN});
-          int testEnd =
-              entireChild[idx].ga.m_left + entireChild[idx].ga.maxIndex + 1;
-          int testSize = 0;
-          for (int j = entireChild[idx].ga.m_left; j < testEnd; j++) {
-            if (entireData[j].first != DBL_MIN) {
-              test[testSize++] = entireData[j];
-            }
-          }
-          for (int i = 1; i < testSize; i++) {
-            if (test[i] <= test[i - 1]) {
-              std::cout << i << ", test larger wrong, test[i]:" << test[i].first
-                        << ",\ttest[i-1]:" << test[i - 1].first << std::endl;
-            }
-          }
-#endif  // DEBUG
           return true;
         }
         return false;

@@ -94,17 +94,9 @@ inline void CARMI::Train(const int left, const int size,
           for (int l = 0; l < i; l++) {
             opt.idx[l] = dp[0][k].idx[l];
             opt.key[l] = dp[0][k].key[l];
-#ifdef DEBUG
-            if (opt.idx[l] < 0 || opt.idx[l] >= childNumber)
-              std::cout << "wrong, opt.idx[i]:" << opt.idx[l] << std::endl;
-#endif  // DEBUG
           }
           opt.key[i] = cand_point[j].first;
           opt.idx[i] = cand_point[j].second;
-#ifdef DEBUG
-          if (opt.idx[i] < 0 || opt.idx[i] >= childNumber)
-            std::cout << "wrong, opt.idx[i]:" << opt.idx[i] << std::endl;
-#endif  // DEBUG
         } else if (res == opt.cost) {
           int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
           for (int l = 0; l < i; l++) {
@@ -128,10 +120,6 @@ inline void CARMI::Train(const int left, const int size,
       for (int l = 0; l <= i; l++) {
         dp[1][j].idx[l] = opt.idx[l];
         dp[1][j].key[l] = opt.key[l];
-#ifdef DEBUG
-        if (opt.idx[l] < 0 || opt.idx[l] >= childNumber)
-          std::cout << "wrong, opt.idx[i]:" << opt.idx[l] << std::endl;
-#endif  // DEBUG
       }
     }
     for (int m = i + 1; m < cand_size - 1; m++) {
@@ -139,11 +127,6 @@ inline void CARMI::Train(const int left, const int size,
       for (int l = 0; l <= i; l++) {
         dp[0][m].idx[l] = dp[1][m].idx[l];
         dp[0][m].key[l] = dp[1][m].key[l];
-#ifdef DEBUG
-        if (dp[0][m].idx[l] < 0 || dp[0][m].idx[l] >= childNumber)
-          std::cout << "wrong, dp[0][m].idx[l]:" << dp[0][m].idx[l]
-                    << std::endl;
-#endif  // DEBUG
       }
     }
   }
@@ -173,10 +156,6 @@ inline void CARMI::Train(const int left, const int size,
   }
   for (int i = 0; i < 6; i++) {
     plr->keys[i + 1] = opt.key[i] + avg;
-#ifdef DEBUG
-    if (opt.idx[i] < 0 || opt.idx[i] >= childNumber)
-      std::cout << "wrong, opt.idx[i]:" << opt.idx[i] << std::endl;
-#endif  // DEBUG
     plr->index[i] = opt.idx[i];
   }
 }

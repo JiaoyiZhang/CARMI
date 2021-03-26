@@ -191,9 +191,6 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
       kRate = rate[r];
     outRes << "kRate:" << kRate << std::endl;
 
-    std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
-              << std::endl;
-
     std::cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++"
               << std::endl;
     latData.GenerateDataset(&initData, &trainFind, &trainInsert,

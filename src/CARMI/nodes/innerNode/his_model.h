@@ -60,19 +60,6 @@ inline void CARMI::Train(const int left, const int size,
     }
   }
 
-#ifdef DEBUG
-  // check table[i]
-  for (int i = 0; i < childNumber; i++) {
-    if (table[i] >= childNumber) {
-      std::cout << "table " << i << ": " << table[i]
-                << ", >= childNumber:" << childNumber << std::endl;
-    }
-    if (table[i] < 0) {
-      std::cout << "table " << i << ": " << table[i] << " < 0" << std::endl;
-    }
-  }
-#endif  // DEBUG
-
   // calculate the value of base and offset
   int cnt = 0;
   for (int i = 0; i < childNumber; i += 16) {
@@ -90,12 +77,6 @@ inline void CARMI::Train(const int left, const int size,
       }
       unsigned short diff = table[j] - start_idx;
       tmp = (tmp << 1) + diff;
-
-#ifdef DEBUG
-      if (diff > 1) {
-        std::cout << "diff wrong, diff:" << diff << std::endl;
-      }
-#endif  // DEBUG
 
       if (diff > 0) {
         start_idx += diff;

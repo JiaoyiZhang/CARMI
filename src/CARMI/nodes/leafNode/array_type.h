@@ -41,12 +41,6 @@ inline void CARMI::Init(int cap, int left, int size,
 
   Train(0, actualSize, newDataset, arr);
   StoreData(cap, 0, actualSize, newDataset, arr);
-
-#ifdef DEBUG
-  if (size > kLeafMaxCapacity)
-    std::cout << "Array setDataset WRONG! datasetSize > 4096, size is:" << size
-              << std::endl;
-#endif  // DEBUG
 }
 
 inline void CARMI::StoreData(int cap, int left, int size,

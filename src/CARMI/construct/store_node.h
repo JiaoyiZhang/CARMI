@@ -64,12 +64,6 @@ TYPE CARMI::StoreInnerNode(const IndexPair &range, TYPE *node) {
 void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
   auto it = structMap.find(range.initRange);
 
-#ifdef DEBUG
-  if (it == structMap.end()) {
-    std::cout << "WRONG!" << std::endl;
-  }
-#endif  // DEBUG
-
   int type = it->second.array.flagNumber >> 24;
   switch (type) {
     case LR_INNER_NODE: {
@@ -119,13 +113,6 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
       break;
     }
   }
-
-#ifdef DEBUG
-  int testType = entireChild[storeIdx].array.flagNumber >> 24;
-  if (testType < LR_INNER_NODE) {
-    std::cout << "type: " << testType << std::endl;
-  }
-#endif  // DEBUG
 }
 
 #endif  // SRC_CARMI_CONSTRUCT_STORE_NODE_H_

@@ -48,12 +48,6 @@ void CARMI::NodePartition(const TYPE &node, const IndexPair &range,
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = node.Predict(dataset[i].first);
-#ifdef DEBUG
-    if (p > subData->size() || p < 0) {
-      std::cout << "wrong!" << std::endl;
-      node.Predict(dataset[i].first);
-    }
-#endif  // DEBUG
     if ((*subData)[p].left == -1) {
       (*subData)[p].left = i;
     }
@@ -206,12 +200,6 @@ void FindOptError(int start_idx, int size, const DataVectorType &dataset,
     p = node->Predict(dataset[i].first);
     d = abs(i - start_idx - p);
 
-#ifdef DEBUG
-    if (d < 0 || d > size) {
-      std::cout << "find optimal error wrong, d is: " << d << std::endl;
-    }
-#endif  // DEBUG
-
     error_count[d]++;
   }
 
@@ -220,11 +208,6 @@ void FindOptError(int start_idx, int size, const DataVectorType &dataset,
   int res;
   int cntBetween;
   for (int e = 0; e <= size; e++) {
-#ifdef DEBUG
-    if (e < 0 || e > size) {
-      std::cout << "find optimal error wrong, e is: " << e << std::endl;
-    }
-#endif  // DEBUG
     if (error_count[e] == 0) {
       continue;
     }
@@ -238,10 +221,5 @@ void FindOptError(int start_idx, int size, const DataVectorType &dataset,
       node->error = e;
     }
   }
-#ifdef DEBUG
-  if (node->error >= size)
-    std::cout << "find opt error wrong, error:" << node->error
-              << ",\tsize:" << size << std::endl;
-#endif  // DEBUG
 }
 #endif  // SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_
