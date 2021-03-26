@@ -21,26 +21,19 @@
 #include <string>
 #include <vector>
 
-#include "../../params.h"
+#include "./base_dataset.h"
+
 extern bool kPrimaryIndex;
 
-class YCSBDataset {
+class YCSBDataset : public BaseDataset {
  public:
-  explicit YCSBDataset(float initRatio) {
-    proportion = initRatio;
-    if (proportion == kRangeScan) {
-      proportion = kReadHeavy;
-    }
-  }
+  explicit YCSBDataset(float initRatio) : BaseDataset(initRatio) {}
 
   void GenerateDataset(DataVectorType *initDataset,
                        DataVectorType *trainFindQuery,
                        DataVectorType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
                        DataVectorType *testInsertQuery);
-
- private:
-  float proportion;
 };
 
 void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
