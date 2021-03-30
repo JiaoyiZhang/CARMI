@@ -1,7 +1,7 @@
 /**
  * @file construct_root.h
  * @author Jiaoyi
- * @brief
+ * @brief functions for constructing the root
  * @version 0.1
  * @date 2021-03-11
  *

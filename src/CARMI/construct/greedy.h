@@ -1,7 +1,7 @@
 /**
  * @file greedy.h
  * @author Jiaoyi
- * @brief
+ * @brief use greedy algorithm to construct inner nodes
  * @version 0.1
  * @date 2021-03-11
  *

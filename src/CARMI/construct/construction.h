@@ -1,7 +1,7 @@
 /**
  * @file construction.h
  * @author Jiaoyi
- * @brief
+ * @brief main functions for CARMI
  * @version 0.1
  * @date 2021-03-11
  *

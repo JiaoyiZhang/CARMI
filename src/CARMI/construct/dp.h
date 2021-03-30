@@ -1,7 +1,7 @@
 /**
  * @file dp.h
  * @author Jiaoyi
- * @brief
+ * @brief the main function of dynamic programming algorithm
  * @version 0.1
  * @date 2021-03-11
  *

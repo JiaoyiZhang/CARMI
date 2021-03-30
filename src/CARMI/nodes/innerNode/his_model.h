@@ -17,6 +17,14 @@
 
 #include "../../carmi.h"
 
+/**
+ * @brief train the histogram model
+ * 
+ * @param left the start index of data points
+ * @param size  the size of data points
+ * @param dataset
+ * @param his model
+ */
 inline void CARMI::Train(const int left, const int size,
                          const DataVectorType &dataset, HisModel *his) {
   if (size == 0) return;

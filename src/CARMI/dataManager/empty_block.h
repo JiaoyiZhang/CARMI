@@ -1,7 +1,7 @@
 /**
  * @file empty_block.h
  * @author Jiaoyi
- * @brief
+ * @brief the class of empty blocks
  * @version 0.1
  * @date 2021-03-11
  *
@@ -19,7 +19,7 @@ class EmptyBlock {
 
   /**
    * @brief allocate a block and erase the corresponding key
-   * 
+   *
    * @param size the size that needs to be allocated
    * @return int return the key
    */
@@ -31,8 +31,13 @@ class EmptyBlock {
     return res;
   }
 
-  // add the corresponding empty blocks
-  // return the size of the empty block after this action
+  /**
+   * @brief add the corresponding empty blocks
+   *
+   * @param idx the index of blocks
+   * @param size the size of blocks
+   * @return int return the size of the empty block after this action
+   */
   int addBlock(int idx, int size) {
     if (size < m_width) return -1;
     int newIdx = idx + size - m_width;
@@ -40,6 +45,13 @@ class EmptyBlock {
     return size - m_width;
   }
 
+  /**
+   * @brief find whether the block of this index is empty
+   *
+   * @param idx the index of this block
+   * @return true this block is empty
+   * @return false this block is not empty and has been allocated
+   */
   bool find(int idx) {
     if (m_block.find(idx) == m_block.end())
       return false;

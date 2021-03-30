@@ -1,7 +1,7 @@
 /**
  * @file inlineFunction.h
  * @author Jiaoyi
- * @brief
+ * @brief the inline functions for public functions
  * @version 0.1
  * @date 2021-03-11
  *
@@ -20,7 +20,14 @@
 #include "../carmi.h"
 #include "../construct/minor_function.h"
 
-// search a key-value through binary search
+/**
+ * @brief search a key-value through binary search
+ *
+ * @param key
+ * @param start
+ * @param end
+ * @return int the index of the key
+ */
 inline int CARMI::ArrayBinarySearch(double key, int start, int end) const {
   while (start < end) {
     int mid = (start + end) / 2;
@@ -32,9 +39,14 @@ inline int CARMI::ArrayBinarySearch(double key, int start, int end) const {
   return start;
 }
 
-// search a key-value through binary search
-// in the gapped array
-// return the idx of the first element >= key
+/**
+ * @brief search a key-value through binary search in the gapped array
+ *
+ * @param key
+ * @param start_idx
+ * @param end_idx
+ * @return int the idx of the first element >= key
+ */
 inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx) const {
   while (end_idx - start_idx >= 2) {
     int mid = (start_idx + end_idx) >> 1;
@@ -56,8 +68,14 @@ inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx) const {
     return end_idx;
 }
 
-// search a key-value through binary search in
-// the YCSB leaf node
+/**
+ * @brief search a key-value through binary search in the external leaf node
+ *
+ * @param key
+ * @param start
+ * @param end
+ * @return int the idx of the first element >= key
+ */
 inline int CARMI::ExternalBinarySearch(double key, int start, int end) const {
   while (start < end) {
     int mid = (start + end) / 2;
@@ -69,6 +87,16 @@ inline int CARMI::ExternalBinarySearch(double key, int start, int end) const {
   return start;
 }
 
+/**
+ * @brief the main function of search a record in array
+ *
+ * @param key the key value
+ * @param preIdx the predicted index of this node
+ * @param error the error bound of this node
+ * @param left the left index of this node in the entireData
+ * @param size the size of this node
+ * @return int the index of the record
+ */
 inline int CARMI::ArraySearch(double key, int preIdx, int error, int left,
                               int size) const {
   int start = std::max(0, preIdx - error) + left;
@@ -84,6 +112,16 @@ inline int CARMI::ArraySearch(double key, int preIdx, int error, int left,
   return res;
 }
 
+/**
+ * @brief the main function of search a record in gapped array
+ *
+ * @param key the key value
+ * @param preIdx the predicted index of this node
+ * @param error the error bound of this node
+ * @param left the left index of this node in the entireData
+ * @param maxIndex the max index of this node
+ * @return int the index of the record
+ */
 inline int CARMI::GASearch(double key, int preIdx, int error, int left,
                            int maxIndex) const {
   int start = std::max(0, preIdx - error) + left;
@@ -102,6 +140,16 @@ inline int CARMI::GASearch(double key, int preIdx, int error, int left,
   return res;
 }
 
+/**
+ * @brief the main function of search a record in external array
+ *
+ * @param key the key value
+ * @param preIdx the predicted index of this node
+ * @param error the error bound of this node
+ * @param left the left index of this node in the entireData
+ * @param size the size of this node
+ * @return int the index of the record
+ */
 inline int CARMI::ExternalSearch(double key, int preIdx, int error, int left,
                                  int size) const {
   int start = std::max(0, preIdx - error) + left;
@@ -117,6 +165,16 @@ inline int CARMI::ExternalSearch(double key, int preIdx, int error, int left,
   return res;
 }
 
+/**
+ * @brief split the current leaf node into an inner node and several leaf nodes
+ *
+ * @tparam TYPE the type of the current leaf node
+ * @param isExternal check whether the current node is the external array
+ * @param left the left index of this node in the entireData
+ * @param size the size of this node
+ * @param previousIdx the index of the previous leaf node
+ * @param idx the index of the current leaf node
+ */
 template <typename TYPE>
 inline void CARMI::Split(bool isExternal, int left, int size, int previousIdx,
                          int idx) {

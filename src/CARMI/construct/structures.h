@@ -1,7 +1,7 @@
 /**
  * @file structures.h
  * @author Jiaoyi
- * @brief
+ * @brief structures for CARMI
  * @version 0.1
  * @date 2021-03-11
  *
@@ -10,10 +10,6 @@
  */
 #ifndef SRC_CARMI_CONSTRUCT_STRUCTURES_H_
 #define SRC_CARMI_CONSTRUCT_STRUCTURES_H_
-
-/**
- * structures for CARMI
- */
 
 #include <iostream>
 #include <vector>

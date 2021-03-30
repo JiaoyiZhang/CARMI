@@ -1,7 +1,7 @@
 /**
  * @file store_node.h
  * @author Jiaoyi
- * @brief
+ * @brief store inner and leaf nodes
  * @version 0.1
  * @date 2021-03-11
  *

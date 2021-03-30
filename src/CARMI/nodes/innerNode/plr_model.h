@@ -19,6 +19,15 @@
 #include "../../carmi.h"
 #include "../rootNode/trainModel/candidate_plr.h"
 
+/**
+ * @brief train PLR model
+ *
+ * @param left the start index of data points
+ * @param size  the size of data points
+ * @param dataset
+ * @param plr model
+ */
+
 inline void CARMI::Train(const int left, const int size,
                          const DataVectorType &dataset, PLRModel *plr) {
   int childNumber = plr->flagNumber & 0x00FFFFFF;

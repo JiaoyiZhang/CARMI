@@ -1,7 +1,7 @@
 /**
  * @file dp_inner.h
  * @author Jiaoyi
- * @brief
+ * @brief use dynamic programming algorithm to construct inner nodes
  * @version 0.1
  * @date 2021-03-11
  *

@@ -1,7 +1,7 @@
 /**
  * @file child_array.h
  * @author Jiaoyi
- * @brief
+ * @brief manage the entireChild array
  * @version 0.1
  * @date 2021-03-11
  *
@@ -15,7 +15,11 @@
 
 #include "../carmi.h"
 
-// initialize entireChild
+/**
+ * @brief initialize entireChild
+ *
+ * @param size the size of datasets
+ */
 void CARMI::InitEntireChild(int size) {
   unsigned int len = 4096;
   while (len < size) len *= 2;
@@ -26,10 +30,12 @@ void CARMI::InitEntireChild(int size) {
   entireChild = std::vector<BaseNode>(len, BaseNode());
 }
 
-// allocate a block to the current inner node
-// size: the size of the inner node needs to be allocated
-// return the starting position of the allocation
-// return -1, if it fails
+/**
+ * @brief allocate a block to the current inner node
+ *
+ * @param size the size of the inner node needs to be allocated
+ * @return int the starting position of the allocation, return -1, if it fails
+ */
 int CARMI::AllocateChildMemory(int size) {
   int newLeft = -1;
   if (nowChildNumber + size <= entireChildNumber) {

@@ -30,6 +30,15 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
   FindOptError<ExternalArray>(0, size, data, ext);
 }
 
+/**
+ * @brief initialize external array node
+ *
+ * @param cap the capacity of this leaf node
+ * @param start_idx the start index of data points
+ * @param size the size of data points
+ * @param dataset
+ * @param ext leaf node
+ */
 inline void CARMI::Init(int cap, int start_idx, int size,
                         const DataVectorType &dataset, ExternalArray *ext) {
   ext->m_left = start_idx;

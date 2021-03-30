@@ -1,7 +1,7 @@
 /**
  * @file update_function.h
  * @author Jiaoyi
- * @brief
+ * @brief update a record
  * @version 0.1
  * @date 2021-03-11
  *
@@ -16,7 +16,13 @@
 
 #include "../carmi.h"
 #include "inlineFunction.h"
-
+/**
+ * @brief update a record of the given key
+ * 
+ * @param data 
+ * @return true if the operation succeeds
+ * @return false if the operation fails
+ */
 bool CARMI::Update(DataType data) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;

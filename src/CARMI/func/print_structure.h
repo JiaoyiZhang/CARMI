@@ -1,7 +1,7 @@
 /**
  * @file print_structure.h
  * @author Jiaoyi
- * @brief
+ * @brief print the structure of CARMI
  * @version 0.1
  * @date 2021-03-11
  *
@@ -13,7 +13,14 @@
 #include <vector>
 
 #include "../carmi.h"
-
+/**
+ * @brief print the root node
+ *
+ * @param level the current level
+ * @param idx  the index of the node
+ * @param levelVec used to record the level of CARMI
+ * @param nodeVec used to record the number of each type of CARMI's node
+ */
 void CARMI::PrintRoot(int level, int idx, std::vector<int> *levelVec,
                       std::vector<int> *nodeVec) const {
   std::vector<int> tree(11, 0);
@@ -41,6 +48,14 @@ void CARMI::PrintRoot(int level, int idx, std::vector<int> *levelVec,
   }
 }
 
+/**
+ * @brief print the inner node
+ *
+ * @param level the current level
+ * @param idx  the index of the node
+ * @param levelVec used to record the level of CARMI
+ * @param nodeVec used to record the number of each type of CARMI's node
+ */
 void CARMI::PrintInner(int level, int idx, std::vector<int> *levelVec,
                        std::vector<int> *nodeVec) const {
   std::vector<int> tree(11, 0);
@@ -58,6 +73,15 @@ void CARMI::PrintInner(int level, int idx, std::vector<int> *levelVec,
   }
 }
 
+/**
+ * @brief print the structure of CARMI
+ *
+ * @param level the current level
+ * @param type the type of root node
+ * @param idx  the index of the node
+ * @param levelVec used to record the level of CARMI
+ * @param nodeVec used to record the number of each type of CARMI's node
+ */
 void CARMI::PrintStructure(int level, NodeType type, int idx,
                            std::vector<int> *levelVec,
                            std::vector<int> *nodeVec) const {

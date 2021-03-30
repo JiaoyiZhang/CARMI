@@ -22,6 +22,12 @@
 #include "../../construct/minor_function.h"
 #include "./leaf_nodes.h"
 
+/**
+ * @brief predict the position of the given key
+ *
+ * @param key
+ * @return int the predicted index in the leaf node
+ */
 inline int ArrayType::Predict(double key) const {
   // return the predicted idx in the leaf node
   int size = (flagNumber & 0x00FFFFFF);
@@ -33,6 +39,15 @@ inline int ArrayType::Predict(double key) const {
   return p;
 }
 
+/**
+ * @brief initialize array node
+ *
+ * @param cap the capacity of this leaf node
+ * @param left the start index of data points
+ * @param size  the size of data points
+ * @param dataset
+ * @param arr leaf node
+ */
 inline void CARMI::Init(int cap, int left, int size,
                         const DataVectorType &dataset, ArrayType *arr) {
   if (size == 0) return;
@@ -43,6 +58,15 @@ inline void CARMI::Init(int cap, int left, int size,
   StoreData(cap, 0, actualSize, newDataset, arr);
 }
 
+/**
+ * @brief store data points into the entireData
+ *
+ * @param cap the capacity of this leaf node
+ * @param left the start index of data points
+ * @param size  the size of data points
+ * @param dataset
+ * @param arr leaf node
+ */
 inline void CARMI::StoreData(int cap, int left, int size,
                              const DataVectorType &dataset, ArrayType *arr) {
   if (arr->m_left != -1) {
@@ -63,6 +87,14 @@ inline void CARMI::StoreData(int cap, int left, int size,
     entireData[i] = dataset[j];
 }
 
+/**
+ * @brief train the array node
+ *
+ * @param start_idx the start index of data points
+ * @param size the size of data points
+ * @param dataset
+ * @param arr leaf node
+ */
 inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
                          ArrayType *arr) {
   if (size == 0) return;

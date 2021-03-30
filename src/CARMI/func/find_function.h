@@ -1,7 +1,7 @@
 /**
  * @file find_function.h
  * @author Jiaoyi
- * @brief
+ * @brief find a record
  * @version 0.1
  * @date 2021-03-11
  *
@@ -17,6 +17,12 @@
 
 #include "../carmi.h"
 
+/**
+ * @brief find a record of the given key
+ * 
+ * @param key 
+ * @return CARMI::iterator of a node
+ */
 CARMI::iterator CARMI::Find(double key) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;

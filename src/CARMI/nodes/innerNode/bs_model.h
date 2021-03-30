@@ -17,6 +17,14 @@
 
 #include "../../carmi.h"
 
+/**
+ * @brief train the bs model
+ *
+ * @param left the start index of data points
+ * @param size  the size of data points
+ * @param dataset
+ * @param bs model
+ */
 inline void CARMI::Train(const int left, const int size,
                          const DataVectorType &dataset, BSModel *bs) {
   if (size == 0) return;

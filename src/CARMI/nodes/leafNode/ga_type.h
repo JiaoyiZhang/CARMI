@@ -21,6 +21,12 @@
 #include "../../construct/minor_function.h"
 #include "./leaf_nodes.h"
 
+/**
+ * @brief predict the position of the given key
+ *
+ * @param key
+ * @return int the predicted index in the leaf node
+ */
 inline int GappedArrayType::Predict(double key) const {
   // return the predicted idx in the leaf node
   int p = (theta1 * key + theta2) * maxIndex;
@@ -31,6 +37,15 @@ inline int GappedArrayType::Predict(double key) const {
   return p;
 }
 
+/**
+ * @brief initialize gapped array node
+ *
+ * @param cap the capacity of this leaf node
+ * @param left the start index of data points
+ * @param size  the size of data points
+ * @param subDataset
+ * @param ga leaf node
+ */
 inline void CARMI::Init(int cap, int left, int size,
                         const DataVectorType &subDataset, GappedArrayType *ga) {
   if (size == 0) return;
@@ -41,6 +56,15 @@ inline void CARMI::Init(int cap, int left, int size,
   StoreData(cap, 0, actualSize, newDataset, ga);
 }
 
+/**
+ * @brief store data points into the entireData
+ *
+ * @param cap the capacity of this leaf node
+ * @param left the start index of data points
+ * @param size  the size of data points
+ * @param subDataset
+ * @param ga leaf node
+ */
 inline void CARMI::StoreData(int cap, int left, int size,
                              const DataVectorType &dataset,
                              GappedArrayType *ga) {
@@ -86,6 +110,14 @@ inline void CARMI::StoreData(int cap, int left, int size,
   }
 }
 
+/**
+ * @brief train the ga node
+ *
+ * @param start_idx the start index of data points
+ * @param size the size of data points
+ * @param dataset
+ * @param ga leaf node
+ */
 inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
                          GappedArrayType *ga) {
   if ((ga->flagNumber & 0x00FFFFFF) != size) {

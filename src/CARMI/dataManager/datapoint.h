@@ -1,7 +1,7 @@
 /**
  * @file datapoint.h
  * @author Jiaoyi
- * @brief
+ * @brief manage the entireData array
  * @version 0.1
  * @date 2021-03-11
  *

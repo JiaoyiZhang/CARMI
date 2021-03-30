@@ -1,7 +1,7 @@
 /**
  * @file calculate_space.h
  * @author Jiaoyi
- * @brief
+ * @brief calculate the space of CARMI
  * @version 0.1
  * @date 2021-03-11
  *
@@ -15,6 +15,11 @@
 
 #include "../carmi.h"
 
+/**
+ * @brief calculate the space of CARMI
+ * 
+ * @return long double the space
+ */
 long double CARMI::CalculateSpace() const {
   long double space_cost = 0;
 

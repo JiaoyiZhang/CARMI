@@ -1,7 +1,7 @@
 /**
  * @file minor_function.h
  * @author Jiaoyi
- * @brief
+ * @brief the minor functions for constructing CARMI
  * @version 0.1
  * @date 2021-03-11
  *
@@ -164,6 +164,15 @@ void LRTrain(const int left, const int size, const DataVectorType &dataset,
   }
 }
 
+/**
+ * @brief extract data points (delete useless gaps and deleted data points)
+ *
+ * @param left the left index of the data points
+ * @param size the size of the entire data points
+ * @param dataset
+ * @param actual the actual size of these data points
+ * @return DataVectorType pure data points
+ */
 DataVectorType ExtractData(const int left, const int size,
                            const DataVectorType &dataset, int *actual) {
   *actual = 0;
@@ -177,6 +186,16 @@ DataVectorType ExtractData(const int left, const int size,
   return data;
 }
 
+/**
+ * @brief set the y of each data point as a precentage of
+ * the entire dataset size (index / size),
+ * prepare for the linear regression
+ *
+ * @param left the left index of the data points
+ * @param size the size of the entire data points
+ * @param dataset
+ * @return DataVectorType dataset used for training
+ */
 DataVectorType SetY(const int left, const int size,
                     const DataVectorType &dataset) {
   DataVectorType data(size, {DBL_MIN, DBL_MIN});
@@ -188,6 +207,15 @@ DataVectorType SetY(const int left, const int size,
   return data;
 }
 
+/**
+ * @brief find the optimal error value from 0 to size
+ *
+ * @tparam TYPE the typename of this node
+ * @param start_idx the start index of the data points
+ * @param size the size of the data points
+ * @param dataset
+ * @param node used to predict the position of each data point
+ */
 template <typename TYPE>
 void FindOptError(int start_idx, int size, const DataVectorType &dataset,
                   TYPE *node) {

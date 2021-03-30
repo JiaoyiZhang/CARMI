@@ -1,7 +1,7 @@
 /**
  * @file insert_function.h
  * @author Jiaoyi
- * @brief
+ * @brief insert a record
  * @version 0.1
  * @date 2021-03-11
  *
@@ -21,6 +21,13 @@
 #include "../carmi.h"
 #include "../construct/minor_function.h"
 
+/**
+ * @brief insert a data point
+ * 
+ * @param data
+ * @return true if the insertion is successful
+ * @return false if the operation fails
+ */
 bool CARMI::Insert(DataType data) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;

@@ -1,7 +1,7 @@
 /**
  * @file delete_function.h
  * @author Jiaoyi
- * @brief
+ * @brief delete a record
  * @version 0.1
  * @date 2021-03-11
  *
@@ -16,6 +16,13 @@
 #include "../carmi.h"
 #include "inlineFunction.h"
 
+/**
+ * @brief delete the record of the given key
+ *
+ * @param key
+ * @return true deletion is successful
+ * @return false the operation fails
+ */
 bool CARMI::Delete(double key) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
