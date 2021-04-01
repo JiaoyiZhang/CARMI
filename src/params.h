@@ -29,7 +29,7 @@ int kExternalInsertLeft;
 
 const double kDensity = 0.5;         // the density of gap in gapped array
 const double kExpansionScale = 1.5;  // scale of array expansion
-
+// -------------------------
 const int kLeafMaxCapacity = 4096;
 const int kAlgorithmThre = 4096;
 const int kReservedSpace = 1024 * 512;

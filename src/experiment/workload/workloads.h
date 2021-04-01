@@ -15,9 +15,9 @@
 #include <chrono>
 #include <vector>
 
-#include "../../CARMI/carmi.h"
-#include "../../CARMI/func/find_function.h"
-#include "../../CARMI/func/insert_function.h"
+#include "../../include/carmi.h"
+#include "../../include/func/find_function.h"
+#include "../../include/func/insert_function.h"
 #include "./zipfian.h"
 
 extern std::ofstream outRes;
@@ -133,8 +133,7 @@ void WorkloadB(const DataVectorType &findDataset,
   } else {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        carmi->Find(findQuery[findCnt].first);
-        findCnt++;
+        carmi->Find(findQuery[findCnt++].first);
       }
       carmi->Insert(insertQuery[i]);
     }

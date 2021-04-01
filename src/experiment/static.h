@@ -12,8 +12,8 @@
 #define SRC_EXPERIMENT_STATIC_H_
 #include <vector>
 
-#include "../CARMI/carmi.h"
-#include "../CARMI/staticRMI/rmi.h"
+#include "../include/carmi.h"
+#include "../include/staticRMI/rmi.h"
 #include "workload/workloads.h"
 
 extern int childNum;

@@ -28,34 +28,7 @@ class CARMI {
         int kLeafID);  // for static structure
   CARMI(const DataVectorType &initData, const DataVectorType &findData,
         const DataVectorType &insertData, const std::vector<int> &insertIndex,
-        double rate, int thre) {
-    emptyNode.ga = GappedArrayType(kThreshold);
-    kAlgorithmThreshold = thre;
-    kRate = rate;
-    nowDataSize = 0;
-    initDataset = initData;
-    findQuery = findData;
-    insertQuery = insertData;
-    insertQueryIndex = insertIndex;
-    querySize = 0;
-    for (int i = 0; i < findData.size(); i++) {
-      querySize += findData[i].second;
-    }
-    for (int i = 0; i < insertData.size(); i++) {
-      querySize += insertData[i].second;
-    }
-
-    if (!kPrimaryIndex) {
-      InitEntireData(0, initDataset.size(), false);
-    } else {
-      externalData = initDataset;
-      externalData.erase(externalData.begin() + kExternalInsertLeft,
-                         externalData.end());
-      curr = kExternalInsertLeft;
-    }
-    InitEntireChild(initDataset.size());
-    Construction(initData, findData, insertData);
-  }
+        double rate, int thre);
 
   class iterator {
    public:
@@ -335,4 +308,35 @@ class CARMI {
   friend class GappedArrayType;
   friend class ExternalArray;
 };
+
+CARMI::CARMI(const DataVectorType &initData, const DataVectorType &findData,
+             const DataVectorType &insertData,
+             const std::vector<int> &insertIndex, double rate, int thre) {
+  emptyNode.ga = GappedArrayType(kThreshold);
+  kAlgorithmThreshold = thre;
+  kRate = rate;
+  nowDataSize = 0;
+  initDataset = initData;
+  findQuery = findData;
+  insertQuery = insertData;
+  insertQueryIndex = insertIndex;
+  querySize = 0;
+  for (int i = 0; i < findData.size(); i++) {
+    querySize += findData[i].second;
+  }
+  for (int i = 0; i < insertData.size(); i++) {
+    querySize += insertData[i].second;
+  }
+
+  if (!kPrimaryIndex) {
+    InitEntireData(0, initDataset.size(), false);
+  } else {
+    externalData = initDataset;
+    externalData.erase(externalData.begin() + kExternalInsertLeft,
+                       externalData.end());
+    curr = kExternalInsertLeft;
+  }
+  InitEntireChild(initDataset.size());
+  Construction(initData, findData, insertData);
+}
 #endif  // SRC_CARMI_CARMI_H_

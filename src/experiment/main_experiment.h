@@ -112,8 +112,8 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
     btree_test(initRatio, initData, testInsert, length);
     artTree_test(initRatio, initData, testInsert, length);
 #endif  // BASELINE
-    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
-         &trainFind, &trainInsert, &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, initData, trainFind,
+         trainInsert, testInsert);
 
     std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
               << std::endl;
@@ -123,8 +123,8 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
     btree_test(initRatio, initData, testInsert, length);
     artTree_test(initRatio, initData, testInsert, length);
 #endif  // BASELINE
-    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
-         &trainFind, &trainInsert, &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, initData, trainFind,
+         trainInsert, testInsert);
 
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
               << std::endl;
@@ -134,8 +134,8 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
     btree_test(initRatio, initData, testInsert, length);
     artTree_test(initRatio, initData, testInsert, length);
 #endif  // BASELINE
-    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
-         &trainFind, &trainInsert, &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, initData, trainFind,
+         trainInsert, testInsert);
 
     std::cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++"
               << std::endl;
@@ -145,8 +145,8 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
     btree_test(initRatio, initData, testInsert, length);
     artTree_test(initRatio, initData, testInsert, length);
 #endif  // BASELINE
-    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
-         &trainFind, &trainInsert, &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, initData, trainFind,
+         trainInsert, testInsert);
 
     outRes << std::endl;
   }
@@ -199,8 +199,8 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
     btree_test(initRatio, initData, testInsert, length);
     artTree_test(initRatio, initData, testInsert, length);
 #endif  // BASELINE
-    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
-         &trainFind, &trainInsert, &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, initData, trainFind,
+         trainInsert, testInsert);
 
     std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
               << std::endl;
@@ -210,8 +210,8 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
     btree_test(initRatio, initData, testInsert, length);
     artTree_test(initRatio, initData, testInsert, length);
 #endif  // BASELINE
-    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
-         &trainFind, &trainInsert, &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, initData, trainFind,
+         trainInsert, testInsert);
 
     outRes << std::endl;
   }
@@ -262,8 +262,8 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
     btree_test(initRatio, initData, testInsert, length);
     artTree_test(initRatio, initData, testInsert, length);
 #endif  // BASELINE
-    Core(initRatio, kRate, thre, length, trainInsertIndex, &initData,
-         &trainFind, &trainInsert, &testInsert);
+    Core(initRatio, kRate, thre, length, trainInsertIndex, initData, trainFind,
+         trainInsert, testInsert);
 
     outRes << std::endl;
   }

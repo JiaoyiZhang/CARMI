@@ -14,6 +14,10 @@
 #include <iostream>
 #include <vector>
 
+/**
+ * @brief 
+ * 
+ */
 struct RootStruct {
   int rootType;
   int rootChildNum;

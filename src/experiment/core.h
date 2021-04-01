@@ -12,23 +12,30 @@
 #define SRC_EXPERIMENT_CORE_H_
 #include <vector>
 
-#include "../CARMI/carmi.h"
-#include "../CARMI/construct/construction.h"
-#include "../CARMI/func/calculate_space.h"
-#include "../CARMI/func/print_structure.h"
+#include "../include/carmi.h"
+#include "../include/construct/construction.h"
+#include "../include/func/calculate_space.h"
+#include "../include/func/print_structure.h"
 #include "workload/workloads.h"
 
 extern std::ofstream outRes;
 
 void Core(double initRatio, double rate, int thre,
           const std::vector<int> &length,
-          const std::vector<int> &trainInsertIndex, DataVectorType *initDataset,
-          DataVectorType *trainFindQuery, DataVectorType *trainInsertQuery,
-          DataVectorType *testInsertQuery) {
-  for (int i = 0; i < trainFindQuery->size(); i++)
-    (*trainFindQuery)[i].second = 1;
-  for (int i = 0; i < trainInsertQuery->size(); i++)
-    (*trainInsertQuery)[i].second = 1;
+          const std::vector<int> &trainInsertIndex,
+          const DataVectorType &initDataset,
+          const DataVectorType &trainFindQuery,
+          const DataVectorType &trainInsertQuery,
+          const DataVectorType &testInsertQuery) {
+  DataVectorType init = initDataset;
+  DataVectorType trainFind = trainFindQuery;
+  DataVectorType trainInsert = trainInsertQuery;
+  for (int i = 0; i < trainFind.size(); i++) {
+    trainFind[i].second = 1;
+  }
+  for (int i = 0; i < trainInsert.size(); i++) {
+    trainInsert[i].second = 1;
+  }
 
 #ifdef DEBUG
   std::cout << std::endl;
@@ -42,11 +49,11 @@ void Core(double initRatio, double rate, int thre,
   std::cout << "\nTEST time: " << tmpTime << std::endl;
 #endif
 
-  CARMI carmi(*initDataset, *trainFindQuery, *trainInsertQuery,
-              trainInsertIndex, rate, thre);
-  if (kPrimaryIndex)
-    initDataset->erase(initDataset->begin() + kExternalInsertLeft,
-                       initDataset->end());
+  CARMI carmi(initDataset, trainFind, trainInsert, trainInsertIndex, rate,
+              thre);
+  if (kPrimaryIndex) {
+    init.erase(init.begin() + kExternalInsertLeft, init.end());
+  }
 
 #ifdef DEBUG
   time(&timep);
@@ -78,15 +85,15 @@ void Core(double initRatio, double rate, int thre,
 #endif
 
   if (initRatio == kWriteHeavy)
-    WorkloadA(*initDataset, *testInsertQuery, &carmi);  // write-heavy
+    WorkloadA(init, testInsertQuery, &carmi);  // write-heavy
   else if (initRatio == kReadHeavy)
-    WorkloadB(*initDataset, *testInsertQuery, &carmi);  // read-heavy
+    WorkloadB(init, testInsertQuery, &carmi);  // read-heavy
   else if (initRatio == kReadOnly)
-    WorkloadC(*initDataset, &carmi);  // read-only
+    WorkloadC(init, &carmi);  // read-only
   else if (initRatio == kWritePartial)
-    WorkloadD(*initDataset, *testInsertQuery, &carmi);  // write-partial
+    WorkloadD(init, testInsertQuery, &carmi);  // write-partial
   else if (initRatio == kRangeScan)
-    WorkloadE(*initDataset, *testInsertQuery, length, &carmi);  // range scan
+    WorkloadE(init, testInsertQuery, length, &carmi);  // range scan
 }
 
 #endif  // SRC_EXPERIMENT_CORE_H_
