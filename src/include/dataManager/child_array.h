@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_DATAMANAGER_CHILD_ARRAY_H_
-#define SRC_CARMI_DATAMANAGER_CHILD_ARRAY_H_
+#ifndef SRC_INCLUDE_DATAMANAGER_CHILD_ARRAY_H_
+#define SRC_INCLUDE_DATAMANAGER_CHILD_ARRAY_H_
 #include <iostream>
 #include <vector>
 
@@ -45,7 +45,7 @@ int CARMI::AllocateChildMemory(int size) {
 #ifdef DEBUG
     std::cout << "need expand the entireChild!" << std::endl;
 #endif  // DEBUG
-    entireChildNumber *= kExpansionScale;
+    entireChildNumber *= 2;
     BaseNode t;
     for (int i = nowChildNumber; i < entireChildNumber; i++)
       entireChild.push_back(t);
@@ -56,4 +56,4 @@ int CARMI::AllocateChildMemory(int size) {
   return newLeft;
 }
 
-#endif  // SRC_CARMI_DATAMANAGER_CHILD_ARRAY_H_
+#endif  // SRC_INCLUDE_DATAMANAGER_CHILD_ARRAY_H_

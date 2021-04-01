@@ -15,8 +15,8 @@
 #include "../../../../params.h"
 #include "../../../construct/structures.h"
 
-#ifndef SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
-#define SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
+#ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
+#define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
 
 struct SegmentPoint {
   float cost;
@@ -31,7 +31,7 @@ class CandidateCost {
     size = s;
   }
 
-  void StoreValue(const DataVectorType &dataset,
+  void StoreValue(const carmi_params::DataVectorType &dataset,
                   const std::vector<int> &index) {
     xx[0] = 0.0;
     x[0] = 0.0;
@@ -54,7 +54,7 @@ class CandidateCost {
     }
   }
 
-  float CalculateCost(int left, int right, int size, DataType p1, DataType p2) {
+  float CalculateCost(int left, int right, int size, carmi_params::DataType p1, carmi_params::DataType p2) {
     double a = (p2.second - p1.second) / (p2.first - p1.first);
     double b = p1.second - a * p1.first;
     double res = b * b * size;
@@ -86,4 +86,4 @@ float Diff(int n, int len, const int idx[]) {
   return diff;
 }
 
-#endif  // SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
+#endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_

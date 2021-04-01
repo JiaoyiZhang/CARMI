@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CONSTRUCT_DP_LEAF_H_
-#define SRC_CARMI_CONSTRUCT_DP_LEAF_H_
+#ifndef SRC_INCLUDE_CONSTRUCT_DP_LEAF_H_
+#define SRC_INCLUDE_CONSTRUCT_DP_LEAF_H_
 
 #include <float.h>
 
@@ -38,13 +38,15 @@ double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
   for (int i = range.left; i < range.left + range.size; i++) {
     auto predict = node.Predict(findQuery[i].first) + range.left;
     auto d = abs(i - predict);
-    time_cost += (kLeafBaseTime * findQuery[i].second) / querySize;
+    time_cost +=
+        (carmi_params::kLeafBaseTime * findQuery[i].second) / querySize;
     if (d <= node.error)
-      time_cost += (log2(node.error + 1) * findQuery[i].second * kCostBSTime) *
+      time_cost += (log2(node.error + 1) * findQuery[i].second *
+                    carmi_params::kCostBSTime) *
                    (2 - density) / querySize;
     else
-      time_cost += (log2(actualSize) * findQuery[i].second * kCostBSTime *
-                    (2 - density)) /
+      time_cost += (log2(actualSize) * findQuery[i].second *
+                    carmi_params::kCostBSTime * (2 - density)) /
                    querySize;
   }
   return time_cost;
@@ -69,22 +71,23 @@ double CARMI::CalLeafInsertTime(int actualSize, double density,
   for (int i = range.left; i < range.left + range.size; i++) {
     int predict = node.Predict(insertQuery[i].first) + findRange.left;
     int d = abs(insertQueryIndex[i] - predict);
-    time_cost += (kLeafBaseTime * insertQuery[i].second) / querySize;
+    time_cost +=
+        (carmi_params::kLeafBaseTime * insertQuery[i].second) / querySize;
     // add the cost of binary search between error or the entire node
     if (d <= node.error)
-      time_cost +=
-          (log2(node.error + 1) * insertQuery[i].second * kCostBSTime) *
-          (2 - density) / querySize;
+      time_cost += (log2(node.error + 1) * insertQuery[i].second *
+                    carmi_params::kCostBSTime) *
+                   (2 - density) / querySize;
     else
-      time_cost += (log2(actualSize) * insertQuery[i].second * kCostBSTime *
-                    (2 - density)) /
+      time_cost += (log2(actualSize) * insertQuery[i].second *
+                    carmi_params::kCostBSTime * (2 - density)) /
                    querySize;
     // add the cost of moving data points
     if (density == 1)
-      time_cost += kCostMoveTime * findRange.size / 2 * insertQuery[i].second /
-                   querySize;
+      time_cost += carmi_params::kCostMoveTime * findRange.size / 2 *
+                   insertQuery[i].second / querySize;
     else
-      time_cost += kCostMoveTime * density / (1 - density) *
+      time_cost += carmi_params::kCostMoveTime * density / (1 - density) *
                    insertQuery[i].second / querySize;
   }
   return time_cost;
@@ -101,7 +104,7 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct;
 
-  if (kPrimaryIndex) {
+  if (carmi_params::kPrimaryIndex) {
     nodeCost.time = 0.0;
     nodeCost.space = 0.0;
 
@@ -114,13 +117,15 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     for (int i = dataRange.findRange.left; i < findEnd; i++) {
       auto predict = tmp.Predict(findQuery[i].first) + dataRange.findRange.left;
       auto d = abs(i - predict);
-      nodeCost.time += (kLeafBaseTime * findQuery[i].second) / querySize;
+      nodeCost.time +=
+          (carmi_params::kLeafBaseTime * findQuery[i].second) / querySize;
       if (d <= error)
-        nodeCost.time +=
-            (log2(error + 1) * findQuery[i].second * kCostBSTime) / querySize;
+        nodeCost.time += (log2(error + 1) * findQuery[i].second *
+                          carmi_params::kCostBSTime) /
+                         querySize;
       else
         nodeCost.time += (log2(dataRange.initRange.size) * findQuery[i].second *
-                          kCostBSTime) /
+                          carmi_params::kCostBSTime) /
                          querySize;
     }
 
@@ -143,16 +148,16 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
   }
 
   int actualSize = dataRange.initRange.size;
-  if (actualSize > kLeafMaxCapacity)
-    actualSize = kLeafMaxCapacity;
+  if (actualSize > carmi_params::kLeafMaxCapacity)
+    actualSize = carmi_params::kLeafMaxCapacity;
   else
     actualSize = GetActualSize(actualSize);
-  if (kIsWriteHeavy && actualSize == dataRange.initRange.size)
-    actualSize = GetActualSize(
-        std::min(actualSize * kExpansionScale, kLeafMaxCapacity * 1.0));
+  if (carmi_params::kIsWriteHeavy && actualSize == dataRange.initRange.size)
+    actualSize =
+        GetActualSize(std::min(actualSize + 1, carmi_params::kLeafMaxCapacity));
   // choose an array node as the leaf node
   double time_cost = 0.0;
-  double space_cost = kDataPointSize * actualSize;
+  double space_cost = carmi_params::kDataPointSize * actualSize;
 
   ArrayType tmp(actualSize);
   Train(dataRange.initRange.left, dataRange.initRange.size, initDataset, &tmp);
@@ -168,21 +173,21 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
   }
 
   // choose a gapped array node as the leaf node
-  for (auto density : Density) {  // for
+  for (auto density : carmi_params::Density) {  // for
     int actualSize = dataRange.initRange.size / density;
-    if (actualSize > kLeafMaxCapacity)
-      actualSize = kLeafMaxCapacity;
+    if (actualSize > carmi_params::kLeafMaxCapacity)
+      actualSize = carmi_params::kLeafMaxCapacity;
     else
       actualSize = GetActualSize(actualSize);
-  if (kIsWriteHeavy && actualSize == dataRange.initRange.size)
-    actualSize = GetActualSize(
-        std::min(actualSize * kExpansionScale, kLeafMaxCapacity * 1.0));
+    if (carmi_params::kIsWriteHeavy && actualSize == dataRange.initRange.size)
+      actualSize = GetActualSize(
+          std::min(actualSize + 1, carmi_params::kLeafMaxCapacity));
 
     GappedArrayType tmpNode(actualSize);
     tmpNode.density = density;
 
     time_cost = 0.0;
-    space_cost = kDataPointSize * actualSize;
+    space_cost = carmi_params::kDataPointSize * actualSize;
 
     Train(dataRange.initRange.left, dataRange.initRange.size, initDataset,
           &tmpNode);
@@ -211,4 +216,4 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
   return optimalCost;
 }
 
-#endif  // SRC_CARMI_CONSTRUCT_DP_LEAF_H_
+#endif  // SRC_INCLUDE_CONSTRUCT_DP_LEAF_H_

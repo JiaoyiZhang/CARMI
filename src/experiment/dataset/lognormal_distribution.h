@@ -24,22 +24,25 @@ class LognormalDataset : public BaseDataset {
  public:
   explicit LognormalDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVectorType *initDataset,
-                       DataVectorType *trainFindQuery,
-                       DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::DataVectorType *initDataset,
+                       carmi_params::DataVectorType *trainFindQuery,
+                       carmi_params::DataVectorType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       DataVectorType *testInsertQuery);
+                       carmi_params::DataVectorType *testInsertQuery);
 };
 
-void LognormalDataset::GenerateDataset(DataVectorType *initDataset,
-                                       DataVectorType *trainFindQuery,
-                                       DataVectorType *trainInsertQuery,
-                                       std::vector<int> *trainInsertIndex,
-                                       DataVectorType *testInsertQuery) {
+void LognormalDataset::GenerateDataset(
+    carmi_params::DataVectorType *initDataset,
+    carmi_params::DataVectorType *trainFindQuery,
+    carmi_params::DataVectorType *trainInsertQuery,
+    std::vector<int> *trainInsertIndex,
+    carmi_params::DataVectorType *testInsertQuery) {
   // create dataset randomly
   std::default_random_engine generator;
   std::lognormal_distribution<double> distribution(0.0, 2.0);
-  DataVectorType dataset(kDatasetSize + kTestSize * (1 - proportion), {0, 0});
+  carmi_params::DataVectorType dataset(
+      carmi_params::kDatasetSize + carmi_params::kTestSize * (1 - proportion),
+      {0, 0});
 
   for (int i = 0; i < dataset.size(); i++) {
     double tmp = distribution(generator);

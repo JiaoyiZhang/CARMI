@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_FUNC_INLINEFUNCTION_H_
-#define SRC_CARMI_FUNC_INLINEFUNCTION_H_
+#ifndef SRC_INCLUDE_FUNC_INLINEFUNCTION_H_
+#define SRC_INCLUDE_FUNC_INLINEFUNCTION_H_
 
 #include <float.h>
 
@@ -179,11 +179,11 @@ template <typename TYPE>
 inline void CARMI::Split(bool isExternal, int left, int size, int previousIdx,
                          int idx) {
   int actualSize = 0;
-  DataVectorType tmpDataset = ExtractData(left, size, entireData, &actualSize);
+  carmi_params::DataVectorType tmpDataset = ExtractData(left, size, entireData, &actualSize);
 
   // create a new inner node
   auto node = LRModel();
-  int childNum = kInsertNewChildNumber;
+  int childNum = carmi_params::kInsertNewChildNumber;
   node.SetChildNumber(childNum);
   node.childLeft = AllocateChildMemory(childNum);
   Train(0, actualSize, tmpDataset, &node);
@@ -218,4 +218,4 @@ inline void CARMI::Split(bool isExternal, int left, int size, int previousIdx,
   }
 }
 
-#endif  // SRC_CARMI_FUNC_INLINEFUNCTION_H_
+#endif  // SRC_INCLUDE_FUNC_INLINEFUNCTION_H_

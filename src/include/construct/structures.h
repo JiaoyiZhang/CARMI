@@ -8,35 +8,44 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CONSTRUCT_STRUCTURES_H_
-#define SRC_CARMI_CONSTRUCT_STRUCTURES_H_
+#ifndef SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_
+#define SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_
 
 #include <iostream>
 #include <vector>
 
 /**
- * @brief 
- * 
+ * @brief the structure of the information
+ * of the root node
+ *
  */
 struct RootStruct {
-  int rootType;
-  int rootChildNum;
+  int rootType;      // the type of the root node
+  int rootChildNum;  // the number of the root node's children
   RootStruct(int t, int c) {
     rootType = t;
     rootChildNum = c;
   }
 };
 
+/**
+ * @brief the structure of cost model
+ *
+ */
 struct NodeCost {
-  double time;
-  double space;
-  double cost;
+  double time;   // the time cost of tree
+  double space;  // the space cost of tree
+  double cost;   // the total cost of tree
 };
 
+/**
+ * @brief the index range of data points
+ *
+ */
 class IndexPair {
  public:
-  int left;
-  int size;
+  int left;  // the start index of data points
+  int size;  // the size of data points
   IndexPair() { left = -1, size = 0; }
   IndexPair(int l, int s) {
     left = l;
@@ -91,4 +100,4 @@ enum NodeType {
   EXTERNAL_ARRAY_LEAF_NODE
 };
 
-#endif  // SRC_CARMI_CONSTRUCT_STRUCTURES_H_
+#endif  // SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_

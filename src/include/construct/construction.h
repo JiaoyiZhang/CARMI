@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CONSTRUCT_CONSTRUCTION_H_
-#define SRC_CARMI_CONSTRUCT_CONSTRUCTION_H_
+#ifndef SRC_INCLUDE_CONSTRUCT_CONSTRUCTION_H_
+#define SRC_INCLUDE_CONSTRUCT_CONSTRUCTION_H_
 
 #include <map>
 #include <utility>
@@ -61,9 +61,10 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
  * @param findData the find queries used to training CARMI
  * @param insertData the insert queries used to training CARMI
  */
-inline void CARMI::Construction(const DataVectorType &initData,
-                                const DataVectorType &findData,
-                                const DataVectorType &insertData) {
+inline void CARMI::Construction(
+    const carmi_params::DataVectorType &initData,
+    const carmi_params::DataVectorType &findData,
+    const carmi_params::DataVectorType &insertData) {
   NodeCost nodeCost = emptyCost;
 #ifndef DEBUG
   RootStruct res = ChooseRoot();
@@ -77,18 +78,19 @@ inline void CARMI::Construction(const DataVectorType &initData,
   ConstructSubTree(res, subDataset, &nodeCost);
   UpdateLeaf();
 
-  if (kPrimaryIndex) {
-    DataVectorType tmp(100000, {DBL_MIN, DBL_MIN});
+  if (carmi_params::kPrimaryIndex) {
+    carmi_params::DataVectorType tmp(100000, {DBL_MIN, DBL_MIN});
     externalData.insert(externalData.end(), tmp.begin(), tmp.end());
     nowDataSize += 100000;
-    DataVectorType().swap(entireData);
+    carmi_params::DataVectorType().swap(entireData);
   } else {
-    entireData.erase(entireData.begin() + nowDataSize + kReservedSpace,
-                     entireData.end());
+    entireData.erase(
+        entireData.begin() + nowDataSize + carmi_params::kReservedSpace,
+        entireData.end());
   }
-  DataVectorType().swap(initDataset);
-  DataVectorType().swap(findQuery);
-  DataVectorType().swap(insertQuery);
+  carmi_params::DataVectorType().swap(initDataset);
+  carmi_params::DataVectorType().swap(findQuery);
+  carmi_params::DataVectorType().swap(insertQuery);
   std::vector<int>().swap(insertQueryIndex);
 
 #ifdef DEBUG
@@ -99,4 +101,4 @@ inline void CARMI::Construction(const DataVectorType &initData,
 #endif
 }
 
-#endif  // SRC_CARMI_CONSTRUCT_CONSTRUCTION_H_
+#endif  // SRC_INCLUDE_CONSTRUCT_CONSTRUCTION_H_

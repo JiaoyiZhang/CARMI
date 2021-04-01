@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_BINARY_SEARCH_MODEL_H_
-#define SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_BINARY_SEARCH_MODEL_H_
+#ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_BINARY_SEARCH_MODEL_H_
+#define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_BINARY_SEARCH_MODEL_H_
 
 #include <algorithm>
 #include <iostream>
@@ -29,7 +29,7 @@ class BinarySearchModel {
     childNumber = node.childNumber;
     index = node.index;
   }
-  void Train(const DataVectorType &dataset, int len);
+  void Train(const carmi_params::DataVectorType &dataset, int len);
   int Predict(double key) const {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -49,7 +49,7 @@ class BinarySearchModel {
   int childNumber;  // 4
 };
 
-void BinarySearchModel::Train(const DataVectorType &dataset, int len) {
+void BinarySearchModel::Train(const carmi_params::DataVectorType &dataset, int len) {
   if (dataset.size() == 0) return;
   int tmp = 0;
   childNumber = len;
@@ -69,4 +69,4 @@ void BinarySearchModel::Train(const DataVectorType &dataset, int len) {
   }
 }
 
-#endif  // SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_BINARY_SEARCH_MODEL_H_
+#endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_BINARY_SEARCH_MODEL_H_

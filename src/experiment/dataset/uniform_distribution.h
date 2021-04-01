@@ -24,19 +24,22 @@ class UniformDataset : public BaseDataset {
  public:
   explicit UniformDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVectorType *initDataset,
-                       DataVectorType *trainFindQuery,
-                       DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::DataVectorType *initDataset,
+                       carmi_params::DataVectorType *trainFindQuery,
+                       carmi_params::DataVectorType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       DataVectorType *testInsertQuery);
+                       carmi_params::DataVectorType *testInsertQuery);
 };
 
-void UniformDataset::GenerateDataset(DataVectorType *initDataset,
-                                     DataVectorType *trainFindQuery,
-                                     DataVectorType *trainInsertQuery,
-                                     std::vector<int> *trainInsertIndex,
-                                     DataVectorType *testInsertQuery) {
-  DataVectorType dataset(kDatasetSize + kTestSize * (1 - proportion), {0, 0});
+void UniformDataset::GenerateDataset(
+    carmi_params::DataVectorType *initDataset,
+    carmi_params::DataVectorType *trainFindQuery,
+    carmi_params::DataVectorType *trainInsertQuery,
+    std::vector<int> *trainInsertIndex,
+    carmi_params::DataVectorType *testInsertQuery) {
+  carmi_params::DataVectorType dataset(
+      carmi_params::kDatasetSize + carmi_params::kTestSize * (1 - proportion),
+      {0, 0});
 
   for (int i = 0; i < dataset.size(); i++) {
     dataset[i] = {i, i};

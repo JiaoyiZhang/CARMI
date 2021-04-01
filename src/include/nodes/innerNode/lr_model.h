@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_INNERNODE_LR_MODEL_H_
-#define SRC_CARMI_NODES_INNERNODE_LR_MODEL_H_
+#ifndef SRC_INCLUDE_NODES_INNERNODE_LR_MODEL_H_
+#define SRC_INCLUDE_NODES_INNERNODE_LR_MODEL_H_
 
 #include <algorithm>
 #include <utility>
@@ -27,7 +27,7 @@
  * @param lr model
  */
 inline void CARMI::Train(const int left, const int size,
-                         const DataVectorType &dataset, LRModel *lr) {
+                         const carmi_params::DataVectorType &dataset, LRModel *lr) {
   if (size == 0) return;
 
   // calculate divisor
@@ -39,7 +39,7 @@ inline void CARMI::Train(const int left, const int size,
 
   // extract data points and their index
   std::vector<int> segCnt(6, 0);
-  DataVectorType data(size, {DBL_MIN, DBL_MIN});
+  carmi_params::DataVectorType data(size, {DBL_MIN, DBL_MIN});
   for (int i = left, j = 0; i < end; i++, j++) {
     data[j].first = dataset[i].first;
     data[j].second = static_cast<double>(j) / size * childNumber;
@@ -83,4 +83,4 @@ inline int LRModel::Predict(double key) const {
     p = left + bound - 1;
   return p;
 }
-#endif  // SRC_CARMI_NODES_INNERNODE_LR_MODEL_H_
+#endif  // SRC_INCLUDE_NODES_INNERNODE_LR_MODEL_H_

@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_FUNC_CALCULATE_SPACE_H_
-#define SRC_CARMI_FUNC_CALCULATE_SPACE_H_
+#ifndef SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_
+#define SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_
 
 #include <vector>
 
@@ -38,9 +38,9 @@ long double CARMI::CalculateSpace() const {
       break;
   }
 
-  space_cost += kBaseNodeSpace * nowChildNumber;
-  if (!kPrimaryIndex) {
-    space_cost += entireData.size() * kDataPointSize;
+  space_cost += carmi_params::kBaseNodeSpace * nowChildNumber;
+  if (!carmi_params::kPrimaryIndex) {
+    space_cost += entireData.size() * carmi_params::kDataPointSize;
   }
 
 #ifdef DEBUG
@@ -52,4 +52,4 @@ long double CARMI::CalculateSpace() const {
   return space_cost;
 }
 
-#endif  // SRC_CARMI_FUNC_CALCULATE_SPACE_H_
+#endif  // SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_

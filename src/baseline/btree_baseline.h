@@ -25,8 +25,9 @@
 
 extern std::ofstream outRes;
 
-void btree_test(double initRatio, const DataVectorType &findDataset,
-                const DataVectorType &insertDataset,
+void btree_test(bool isZipfian, double initRatio,
+                const carmi_params::DataVectorType &findDataset,
+                const carmi_params::DataVectorType &insertDataset,
                 const std::vector<int> &length) {
   std::cout << "btree,";
   outRes << "btree,";
@@ -41,20 +42,20 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
   std::cout << "btree space:" << space << std::endl;
   outRes << space << std::endl;
 
-  DataVectorType findQuery;
-  DataVectorType insertQuery;
+  carmi_params::DataVectorType findQuery;
+  carmi_params::DataVectorType insertQuery;
   std::vector<int> index;
   double tmp;
 
-  if (initRatio == kWriteHeavy) {
-    int end = kTestSize * kWriteHeavy;
-    InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+  if (initRatio == carmi_params::kWriteHeavy) {
+    int end = carmi_params::kTestSize * carmi_params::kWriteHeavy;
+    InitTestSet(carmi_params::kWriteHeavy, findDataset, insertDataset,
+                &findQuery, &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
 
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < end; i++) {
         btree.find(findQuery[index[i]].first);
         btree.insert(insertQuery[i]);
@@ -72,7 +73,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
           std::chrono::nanoseconds::period::den;
 
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < end; i++) {
       }
     } else {
@@ -87,17 +88,17 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
 
-  } else if (initRatio == kReadHeavy) {
-    int end = round(kTestSize * (1 - kReadHeavy));
+  } else if (initRatio == carmi_params::kReadHeavy) {
+    int end = round(carmi_params::kTestSize * (1 - carmi_params::kReadHeavy));
     int findCnt = 0;
 
-    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(carmi_params::kReadHeavy, findDataset, insertDataset,
+                &findQuery, &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
 
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           btree.find(findQuery[index[findCnt]].first);
@@ -122,7 +123,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
 
     findCnt = 0;
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
           findCnt++;
@@ -143,15 +144,16 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
 
-  } else if (initRatio == kReadOnly) {
-    int end = kTestSize * kReadOnly;
-    InitTestSet(kReadOnly, findDataset, DataVectorType(), &findQuery,
-                &insertQuery, &index);
+  } else if (initRatio == carmi_params::kReadOnly) {
+    int end = carmi_params::kTestSize * carmi_params::kReadOnly;
+    InitTestSet(carmi_params::kReadOnly, findDataset,
+                carmi_params::DataVectorType(), &findQuery, &insertQuery,
+                &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
 
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < end; i++) {
         btree.find(findQuery[index[i]].first);
       }
@@ -167,7 +169,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
           std::chrono::nanoseconds::period::den;
 
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < end; i++) {
       }
     } else {
@@ -181,18 +183,19 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
-  } else if (initRatio == kWritePartial) {
-    int length = round(kTestSize * kWritePartial);
-    int insert_length = round(kTestSize * (1 - kWritePartial));
-    InitTestSet(kWritePartial, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+  } else if (initRatio == carmi_params::kWritePartial) {
+    int length = round(carmi_params::kTestSize * carmi_params::kWritePartial);
+    int insert_length =
+        round(carmi_params::kTestSize * (1 - carmi_params::kWritePartial));
+    InitTestSet(carmi_params::kWritePartial, findDataset, insertDataset,
+                &findQuery, &insertQuery, &index);
 
     int findCnt = 0, insertCnt = 0;
 
     std::chrono::_V2::system_clock::time_point s, e;
 
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < insert_length; i++) {
         for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
           btree.find(findQuery[index[findCnt]].first);
@@ -224,7 +227,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
     findCnt = 0;
     insertCnt = 0;
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < insert_length; i++) {
         for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
           findCnt++;
@@ -250,19 +253,19 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
                 .count()) /
         std::chrono::nanoseconds::period::den;
     tmp -= tmp0;
-  } else if (initRatio == kRangeScan) {
-    int end = round(kTestSize * (1 - kReadHeavy));
+  } else if (initRatio == carmi_params::kRangeScan) {
+    int end = round(carmi_params::kTestSize * (1 - carmi_params::kReadHeavy));
     int findCnt = 0;
-    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(carmi_params::kReadHeavy, findDataset, insertDataset,
+                &findQuery, &insertQuery, &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
 
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-          DataVectorType ret(length[index[findCnt]], {-1, -1});
+          carmi_params::DataVectorType ret(length[index[findCnt]], {-1, -1});
           auto it = btree.find(findQuery[index[findCnt]].first);
           for (int l = 0; l < length[index[findCnt]]; l++) {
             ret[l] = {it->first, it->second};
@@ -275,7 +278,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
     } else {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-          DataVectorType ret(length[findCnt], {-1, -1});
+          carmi_params::DataVectorType ret(length[findCnt], {-1, -1});
           auto it = btree.find(findQuery[findCnt].first);
           for (int l = 0; l < length[findCnt]; l++) {
             ret[l] = {it->first, it->second};
@@ -294,10 +297,10 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
 
     findCnt = 0;
     s = std::chrono::system_clock::now();
-    if (kZipfian) {
+    if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-          DataVectorType ret(length[index[findCnt]], {-1, -1});
+          carmi_params::DataVectorType ret(length[index[findCnt]], {-1, -1});
           stx::btree<double, double>::iterator it;
           for (int l = 0; l < length[index[findCnt]]; l++) {
           }
@@ -307,7 +310,7 @@ void btree_test(double initRatio, const DataVectorType &findDataset,
     } else {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-          DataVectorType ret(length[findCnt], {-1, -1});
+          carmi_params::DataVectorType ret(length[findCnt], {-1, -1});
           stx::btree<double, double>::iterator it;
           for (int l = 0; l < length[findCnt]; l++) {
           }

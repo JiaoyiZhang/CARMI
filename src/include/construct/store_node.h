@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CONSTRUCT_STORE_NODE_H_
-#define SRC_CARMI_CONSTRUCT_STORE_NODE_H_
+#ifndef SRC_INCLUDE_CONSTRUCT_STORE_NODE_H_
+#define SRC_INCLUDE_CONSTRUCT_STORE_NODE_H_
 
 #include <float.h>
 
@@ -106,7 +106,7 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
       ExternalArray node = it->second.externalArray;
       int size = range.initRange.size - range.insertRange.size;
       if (size <= 0)
-        node.m_left = kExternalInsertLeft;
+        node.m_left = carmi_params::kExternalInsertLeft;
       else
         node.m_left = range.initRange.left;
       entireChild[storeIdx].externalArray = node;
@@ -115,4 +115,4 @@ void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
   }
 }
 
-#endif  // SRC_CARMI_CONSTRUCT_STORE_NODE_H_
+#endif  // SRC_INCLUDE_CONSTRUCT_STORE_NODE_H_

@@ -29,25 +29,26 @@ class YCSBDataset : public BaseDataset {
  public:
   explicit YCSBDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVectorType *initDataset,
-                       DataVectorType *trainFindQuery,
-                       DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::DataVectorType *initDataset,
+                       carmi_params::DataVectorType *trainFindQuery,
+                       carmi_params::DataVectorType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       DataVectorType *testInsertQuery);
+                       carmi_params::DataVectorType *testInsertQuery);
 };
 
-void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
-                                  DataVectorType *trainFindQuery,
-                                  DataVectorType *trainInsertQuery,
-                                  std::vector<int> *trainInsertIndex,
-                                  DataVectorType *testInsertQuery) {
-  DataVectorType().swap((*initDataset));
-  DataVectorType().swap((*trainFindQuery));
-  DataVectorType().swap((*trainInsertQuery));
-  DataVectorType().swap((*testInsertQuery));
+void YCSBDataset::GenerateDataset(
+    carmi_params::DataVectorType *initDataset,
+    carmi_params::DataVectorType *trainFindQuery,
+    carmi_params::DataVectorType *trainInsertQuery,
+    std::vector<int> *trainInsertIndex,
+    carmi_params::DataVectorType *testInsertQuery) {
+  carmi_params::DataVectorType().swap((*initDataset));
+  carmi_params::DataVectorType().swap((*trainFindQuery));
+  carmi_params::DataVectorType().swap((*trainInsertQuery));
+  carmi_params::DataVectorType().swap((*testInsertQuery));
   std::vector<int>().swap(*trainInsertIndex);
 
-  DataVectorType ds;
+  carmi_params::DataVectorType ds;
   std::ifstream inFile("..//src//experiment//dataset//newycsbdata.csv",
                        std::ios::in);
   if (!inFile) {
@@ -66,7 +67,7 @@ void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
     double k = stod(key);
     double v = k / 10;
     ds.push_back({k, v});
-    if (ds.size() == kDatasetSize) {
+    if (ds.size() == carmi_params::kDatasetSize) {
       break;
     }
   }
@@ -74,13 +75,14 @@ void YCSBDataset::GenerateDataset(DataVectorType *initDataset,
   std::sort(ds.begin(), ds.end());
 
   int i = 0;
-  int end = kDatasetSize;
+  int end = carmi_params::kDatasetSize;
   for (; i < end; i++) {
     initDataset->push_back(ds[i]);
   }
-  kExternalInsertLeft = kDatasetSize - kTestSize * (1 - proportion);
-  i = kExternalInsertLeft;
-  for (; i < kDatasetSize; i++) {
+  carmi_params::kExternalInsertLeft =
+      carmi_params::kDatasetSize - carmi_params::kTestSize * (1 - proportion);
+  i = carmi_params::kExternalInsertLeft;
+  for (; i < carmi_params::kDatasetSize; i++) {
     testInsertQuery->push_back((*initDataset)[i]);
     trainInsertIndex->push_back(i);
   }

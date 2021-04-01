@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_FUNC_UPDATE_FUNCTION_H_
-#define SRC_CARMI_FUNC_UPDATE_FUNCTION_H_
+#ifndef SRC_INCLUDE_FUNC_UPDATE_FUNCTION_H_
+#define SRC_INCLUDE_FUNC_UPDATE_FUNCTION_H_
 
 #include <algorithm>
 #include <utility>
@@ -23,7 +23,7 @@
  * @return true if the operation succeeds
  * @return false if the operation fails
  */
-bool CARMI::Update(DataType data) {
+bool CARMI::Update(carmi_params::DataType data) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {
@@ -115,4 +115,4 @@ bool CARMI::Update(DataType data) {
   }
 }
 
-#endif  // SRC_CARMI_FUNC_UPDATE_FUNCTION_H_
+#endif  // SRC_INCLUDE_FUNC_UPDATE_FUNCTION_H_

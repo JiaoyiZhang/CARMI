@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_LEAFNODE_GA_TYPE_H_
-#define SRC_CARMI_NODES_LEAFNODE_GA_TYPE_H_
+#ifndef SRC_INCLUDE_NODES_LEAFNODE_GA_TYPE_H_
+#define SRC_INCLUDE_NODES_LEAFNODE_GA_TYPE_H_
 
 #include <float.h>
 
@@ -47,10 +47,10 @@ inline int GappedArrayType::Predict(double key) const {
  * @param ga leaf node
  */
 inline void CARMI::Init(int cap, int left, int size,
-                        const DataVectorType &subDataset, GappedArrayType *ga) {
+                        const carmi_params::DataVectorType &subDataset, GappedArrayType *ga) {
   if (size == 0) return;
   int actualSize = 0;
-  DataVectorType newDataset = ExtractData(left, size, subDataset, &actualSize);
+  carmi_params::DataVectorType newDataset = ExtractData(left, size, subDataset, &actualSize);
 
   Train(0, actualSize, newDataset, ga);
   StoreData(cap, 0, actualSize, newDataset, ga);
@@ -66,22 +66,22 @@ inline void CARMI::Init(int cap, int left, int size,
  * @param ga leaf node
  */
 inline void CARMI::StoreData(int cap, int left, int size,
-                             const DataVectorType &dataset,
+                             const carmi_params::DataVectorType &dataset,
                              GappedArrayType *ga) {
   if (ga->m_left != -1) {
     ReleaseMemory(ga->m_left, ga->capacity);
   }
   if ((static_cast<float>(size) / cap > ga->density))
     ga->capacity = static_cast<float>(cap) / ga->density;
-  if (ga->capacity > kLeafMaxCapacity) {
-    ga->capacity = kLeafMaxCapacity;
+  if (ga->capacity > carmi_params::kLeafMaxCapacity) {
+    ga->capacity = carmi_params::kLeafMaxCapacity;
   }
   ga->capacity = GetActualSize(ga->capacity);
   ga->m_left = AllocateMemory(ga->capacity);
 
   int end = left + size;
 
-  if (size > kLeafMaxCapacity * 0.95) {
+  if (size > carmi_params::kLeafMaxCapacity * 0.95) {
     for (int i = left, j = ga->m_left; i < end; i++) {
       entireData[j++] = dataset[i];
     }
@@ -118,7 +118,7 @@ inline void CARMI::StoreData(int cap, int left, int size,
  * @param dataset
  * @param ga leaf node
  */
-inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
+inline void CARMI::Train(int start_idx, int size, const carmi_params::DataVectorType &dataset,
                          GappedArrayType *ga) {
   if ((ga->flagNumber & 0x00FFFFFF) != size) {
     ga->flagNumber = (GAPPED_ARRAY_LEAF_NODE << 24) + size;
@@ -128,11 +128,11 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
 
   ga->maxIndex = size;
 
-  DataVectorType data = SetY(start_idx, size, dataset);
+  carmi_params::DataVectorType data = SetY(start_idx, size, dataset);
   LRTrain(0, size, data, &(ga->theta1), &(ga->theta2));
 
   FindOptError<GappedArrayType>(0, size, data, ga);
   ga->error /= ga->density;
 }
 
-#endif  // SRC_CARMI_NODES_LEAFNODE_GA_TYPE_H_
+#endif  // SRC_INCLUDE_NODES_LEAFNODE_GA_TYPE_H_

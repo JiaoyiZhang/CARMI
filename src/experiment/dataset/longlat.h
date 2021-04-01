@@ -27,19 +27,19 @@ class LonglatDataset : public BaseDataset {
  public:
   explicit LonglatDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVectorType *initDataset,
-                       DataVectorType *trainFindQuery,
-                       DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::DataVectorType *initDataset,
+                       carmi_params::DataVectorType *trainFindQuery,
+                       carmi_params::DataVectorType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       DataVectorType *testInsertQuery);
+                       carmi_params::DataVectorType *testInsertQuery);
 };
 
-void LonglatDataset::GenerateDataset(DataVectorType *initDataset,
-                                     DataVectorType *trainFindQuery,
-                                     DataVectorType *trainInsertQuery,
+void LonglatDataset::GenerateDataset(carmi_params::DataVectorType *initDataset,
+                                     carmi_params::DataVectorType *trainFindQuery,
+                                     carmi_params::DataVectorType *trainInsertQuery,
                                      std::vector<int> *trainInsertIndex,
-                                     DataVectorType *testInsertQuery) {
-  DataVectorType ds;
+                                     carmi_params::DataVectorType *testInsertQuery) {
+  carmi_params::DataVectorType ds;
   std::ifstream inFile("../src/experiment/dataset/longlat.csv", std::ios::in);
   if (!inFile) {
     std::cout << "打开文件失败！" << std::endl;
@@ -59,7 +59,7 @@ void LonglatDataset::GenerateDataset(DataVectorType *initDataset,
     ds.push_back({k, v});
   }
 
-  ds.erase(ds.begin() + kDatasetSize + round(kTestSize * (1 - proportion)),
+  ds.erase(ds.begin() + carmi_params::kDatasetSize + round(carmi_params::kTestSize * (1 - proportion)),
            ds.end());
   SplitInitTest(false, initDataset, trainFindQuery, trainInsertQuery,
                 trainInsertIndex, testInsertQuery, &ds);

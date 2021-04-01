@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_ROOTNODE_ROOT_NODES_H_
-#define SRC_CARMI_NODES_ROOTNODE_ROOT_NODES_H_
+#ifndef SRC_INCLUDE_NODES_ROOTNODE_ROOT_NODES_H_
+#define SRC_INCLUDE_NODES_ROOTNODE_ROOT_NODES_H_
 
 #include <fstream>
 #include <vector>
@@ -57,4 +57,4 @@ class BSType : virtual public BaseRoot {
   }
   BinarySearchModel model;  // 8c + 4
 };
-#endif  // SRC_CARMI_NODES_ROOTNODE_ROOT_NODES_H_
+#endif  // SRC_INCLUDE_NODES_ROOTNODE_ROOT_NODES_H_

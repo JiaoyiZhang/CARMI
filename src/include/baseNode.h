@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_BASENODE_H_
-#define SRC_CARMI_BASENODE_H_
+#ifndef SRC_INCLUDE_BASENODE_H_
+#define SRC_INCLUDE_BASENODE_H_
 #include <iostream>
 
 #include "nodes/innerNode/inner_nodes.h"
@@ -67,4 +67,4 @@ union BaseNode {
   }
 };
 
-#endif  // SRC_CARMI_BASENODE_H_
+#endif  // SRC_INCLUDE_BASENODE_H_

@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_LEAFNODE_ARRAY_TYPE_H_
-#define SRC_CARMI_NODES_LEAFNODE_ARRAY_TYPE_H_
+#ifndef SRC_INCLUDE_NODES_LEAFNODE_ARRAY_TYPE_H_
+#define SRC_INCLUDE_NODES_LEAFNODE_ARRAY_TYPE_H_
 
 #include <float.h>
 
@@ -49,10 +49,10 @@ inline int ArrayType::Predict(double key) const {
  * @param arr leaf node
  */
 inline void CARMI::Init(int cap, int left, int size,
-                        const DataVectorType &dataset, ArrayType *arr) {
+                        const carmi_params::DataVectorType &dataset, ArrayType *arr) {
   if (size == 0) return;
   int actualSize = 0;
-  DataVectorType newDataset = ExtractData(left, size, dataset, &actualSize);
+  carmi_params::DataVectorType newDataset = ExtractData(left, size, dataset, &actualSize);
 
   Train(0, actualSize, newDataset, arr);
   StoreData(cap, 0, actualSize, newDataset, arr);
@@ -68,7 +68,7 @@ inline void CARMI::Init(int cap, int left, int size,
  * @param arr leaf node
  */
 inline void CARMI::StoreData(int cap, int left, int size,
-                             const DataVectorType &dataset, ArrayType *arr) {
+                             const carmi_params::DataVectorType &dataset, ArrayType *arr) {
   if (arr->m_left != -1) {
     ReleaseMemory(arr->m_left, arr->m_capacity);
   }
@@ -78,7 +78,7 @@ inline void CARMI::StoreData(int cap, int left, int size,
     arr->m_capacity = cap;
   }
   if (arr->m_capacity == size) {
-    arr->m_capacity = GetActualSize(std::min(size + 1, kLeafMaxCapacity));
+    arr->m_capacity = GetActualSize(std::min(size + 1, carmi_params::kLeafMaxCapacity));
   }
   arr->m_left = AllocateMemory(arr->m_capacity);
 
@@ -95,14 +95,14 @@ inline void CARMI::StoreData(int cap, int left, int size,
  * @param dataset
  * @param arr leaf node
  */
-inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
+inline void CARMI::Train(int start_idx, int size, const carmi_params::DataVectorType &dataset,
                          ArrayType *arr) {
   if (size == 0) return;
 
-  DataVectorType data = SetY(start_idx, size, dataset);
+  carmi_params::DataVectorType data = SetY(start_idx, size, dataset);
   arr->flagNumber = (ARRAY_LEAF_NODE << 24) + size;
   LRTrain(0, size, data, &(arr->theta1), &(arr->theta2));
   FindOptError<ArrayType>(0, size, data, arr);
 }
 
-#endif  // SRC_CARMI_NODES_LEAFNODE_ARRAY_TYPE_H_
+#endif  // SRC_INCLUDE_NODES_LEAFNODE_ARRAY_TYPE_H_

@@ -24,24 +24,26 @@
 class BaseDataset {
  public:
   explicit BaseDataset(float init) { proportion = init; }
-  virtual void GenerateDataset(DataVectorType *initDataset,
-                               DataVectorType *trainFindQuery,
-                               DataVectorType *trainInsertQuery,
-                               std::vector<int> *trainInsertIndex,
-                               DataVectorType *testInsertQuery) = 0;
-  void SplitInitTest(bool NeedScale, DataVectorType *initDataset,
-                     DataVectorType *trainFindQuery,
-                     DataVectorType *trainInsertQuery,
+  virtual void GenerateDataset(
+      carmi_params::DataVectorType *initDataset,
+      carmi_params::DataVectorType *trainFindQuery,
+      carmi_params::DataVectorType *trainInsertQuery,
+      std::vector<int> *trainInsertIndex,
+      carmi_params::DataVectorType *testInsertQuery) = 0;
+  void SplitInitTest(bool NeedScale, carmi_params::DataVectorType *initDataset,
+                     carmi_params::DataVectorType *trainFindQuery,
+                     carmi_params::DataVectorType *trainInsertQuery,
                      std::vector<int> *trainInsertIndex,
-                     DataVectorType *testInsertQuery, DataVectorType *dataset);
-  void ScaleDataset(DataVectorType *dataset) {
+                     carmi_params::DataVectorType *testInsertQuery,
+                     carmi_params::DataVectorType *dataset);
+  void ScaleDataset(carmi_params::DataVectorType *dataset) {
     double diff = 0;
     double maxV = (*dataset)[(*dataset).size() - 1].first;
     if ((*dataset)[0].first < 0) {
       diff = -(*dataset)[0].first;
       maxV += diff;
     }
-    double factor = kMaxValue / maxV;
+    double factor = carmi_params::kMaxValue / maxV;
     for (int j = 0; j < (*dataset).size(); j++) {
       (*dataset)[j].first = ((*dataset)[j].first + diff) * factor;
       (*dataset)[j].second = ((*dataset)[j].second + diff) * factor * 10;
@@ -51,16 +53,17 @@ class BaseDataset {
   float proportion;
 };
 
-void BaseDataset::SplitInitTest(bool NeedScale, DataVectorType *initDataset,
-                                DataVectorType *trainFindQuery,
-                                DataVectorType *trainInsertQuery,
+void BaseDataset::SplitInitTest(bool NeedScale,
+                                carmi_params::DataVectorType *initDataset,
+                                carmi_params::DataVectorType *trainFindQuery,
+                                carmi_params::DataVectorType *trainInsertQuery,
                                 std::vector<int> *trainInsertIndex,
-                                DataVectorType *testInsertQuery,
-                                DataVectorType *dataset) {
-  DataVectorType().swap(*initDataset);
-  DataVectorType().swap(*trainFindQuery);
-  DataVectorType().swap(*trainInsertQuery);
-  DataVectorType().swap(*testInsertQuery);
+                                carmi_params::DataVectorType *testInsertQuery,
+                                carmi_params::DataVectorType *dataset) {
+  carmi_params::DataVectorType().swap(*initDataset);
+  carmi_params::DataVectorType().swap(*trainFindQuery);
+  carmi_params::DataVectorType().swap(*trainInsertQuery);
+  carmi_params::DataVectorType().swap(*testInsertQuery);
   std::vector<int>().swap(*trainInsertIndex);
 
   if (NeedScale) {
@@ -74,9 +77,9 @@ void BaseDataset::SplitInitTest(bool NeedScale, DataVectorType *initDataset,
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine engine(seed);
   shuffle((*dataset).begin(), (*dataset).end(), engine);
-  
+
   int i = 0;
-  int end = round(kTestSize * (1 - proportion));
+  int end = round(carmi_params::kTestSize * (1 - proportion));
   for (; i < end; i++) {
     testInsertQuery->push_back((*dataset)[i]);
   }
@@ -93,14 +96,16 @@ void BaseDataset::SplitInitTest(bool NeedScale, DataVectorType *initDataset,
   trainFindQuery->insert(trainFindQuery->begin(), initDataset->begin(),
                          initDataset->end());
 
-  if (proportion != kWritePartial && proportion != kReadOnly) {
+  if (proportion != carmi_params::kWritePartial &&
+      proportion != carmi_params::kReadOnly) {
     int cnt = round(1.0 / (1.0 - proportion));
-    for (int j = cnt - 1; j < kDatasetSize; j += cnt) {
+    for (int j = cnt - 1; j < carmi_params::kDatasetSize; j += cnt) {
       trainInsertQuery->push_back((*initDataset)[j]);
       trainInsertIndex->push_back(j);
     }
-  } else if (proportion == kWritePartial) {
-    for (int j = kDatasetSize * 0.6; j < kDatasetSize * 0.9; j += 2) {
+  } else if (proportion == carmi_params::kWritePartial) {
+    for (int j = carmi_params::kDatasetSize * 0.6;
+         j < carmi_params::kDatasetSize * 0.9; j += 2) {
       trainInsertQuery->push_back((*initDataset)[j]);
       trainInsertIndex->push_back(j);
     }

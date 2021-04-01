@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_
-#define SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_
+#ifndef SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_
+#define SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_
 #include <utility>
 #include <vector>
 
@@ -43,7 +43,7 @@ double CARMI::CalculateEntropy(int size, int childNum,
  */
 template <typename TYPE>
 void CARMI::NodePartition(const TYPE &node, const IndexPair &range,
-                          const DataVectorType &dataset,
+                          const carmi_params::DataVectorType &dataset,
                           std::vector<IndexPair> *subData) const {
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
@@ -85,7 +85,7 @@ TYPE CARMI::InnerDivideAll(int c, const DataRange &range,
  *
  */
 void CARMI::UpdateLeaf() {
-  if (kPrimaryIndex) return;
+  if (carmi_params::kPrimaryIndex) return;
   entireChild[scanLeaf[0]].array.nextLeaf = scanLeaf[1];
   int end = scanLeaf.size() - 1;
   entireChild[end].array.nextLeaf = -1;
@@ -123,7 +123,7 @@ double CARMI::CalculateFrequencyWeight(const DataRange &dataRange) {
  */
 void CARMI::ConstructEmptyNode(const DataRange &range) {
   BaseNode optimal_node_struct;
-  if (kPrimaryIndex) {
+  if (carmi_params::kPrimaryIndex) {
     ExternalArray tmp(kThreshold);
     Train(range.initRange.left, range.initRange.size, initDataset, &tmp);
     optimal_node_struct.externalArray = tmp;
@@ -145,8 +145,8 @@ void CARMI::ConstructEmptyNode(const DataRange &range) {
  * @param a parameter A of LR model
  * @param b parameter B of LR model
  */
-void LRTrain(const int left, const int size, const DataVectorType &dataset,
-             float *a, float *b) {
+void LRTrain(const int left, const int size,
+             const carmi_params::DataVectorType &dataset, float *a, float *b) {
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   int end = left + size;
   for (int i = left; i < end; i++) {
@@ -171,12 +171,13 @@ void LRTrain(const int left, const int size, const DataVectorType &dataset,
  * @param size the size of the entire data points
  * @param dataset
  * @param actual the actual size of these data points
- * @return DataVectorType pure data points
+ * @return carmi_params::DataVectorType pure data points
  */
-DataVectorType ExtractData(const int left, const int size,
-                           const DataVectorType &dataset, int *actual) {
+carmi_params::DataVectorType ExtractData(
+    const int left, const int size, const carmi_params::DataVectorType &dataset,
+    int *actual) {
   *actual = 0;
-  DataVectorType data(size, {DBL_MIN, DBL_MIN});
+  carmi_params::DataVectorType data(size, {DBL_MIN, DBL_MIN});
   int end = left + size;
   for (int i = left; i < end; i++) {
     if (dataset[i].first != DBL_MIN) {
@@ -194,11 +195,11 @@ DataVectorType ExtractData(const int left, const int size,
  * @param left the left index of the data points
  * @param size the size of the entire data points
  * @param dataset
- * @return DataVectorType dataset used for training
+ * @return carmi_params::DataVectorType dataset used for training
  */
-DataVectorType SetY(const int left, const int size,
-                    const DataVectorType &dataset) {
-  DataVectorType data(size, {DBL_MIN, DBL_MIN});
+carmi_params::DataVectorType SetY(const int left, const int size,
+                                  const carmi_params::DataVectorType &dataset) {
+  carmi_params::DataVectorType data(size, {DBL_MIN, DBL_MIN});
   int end = left + size;
   for (int i = left, j = 0; i < end; i++, j++) {
     data[j].first = dataset[i].first;
@@ -217,8 +218,8 @@ DataVectorType SetY(const int left, const int size,
  * @param node used to predict the position of each data point
  */
 template <typename TYPE>
-void FindOptError(int start_idx, int size, const DataVectorType &dataset,
-                  TYPE *node) {
+void FindOptError(int start_idx, int size,
+                  const carmi_params::DataVectorType &dataset, TYPE *node) {
   std::vector<int> error_count(size + 1, 0);
 
   // record each difference
@@ -250,4 +251,4 @@ void FindOptError(int start_idx, int size, const DataVectorType &dataset,
     }
   }
 }
-#endif  // SRC_CARMI_CONSTRUCT_MINOR_FUNCTION_H_
+#endif  // SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_

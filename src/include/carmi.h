@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CARMI_H_
-#define SRC_CARMI_CARMI_H_
+#ifndef SRC_INCLUDE_CARMI_H_
+#define SRC_INCLUDE_CARMI_H_
 
 #include <float.h>
 
@@ -24,11 +24,12 @@
 
 class CARMI {
  public:
-  CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
+  CARMI(const carmi_params::DataVectorType &dataset, int childNum, int kInnerID,
         int kLeafID);  // for static structure
-  CARMI(const DataVectorType &initData, const DataVectorType &findData,
-        const DataVectorType &insertData, const std::vector<int> &insertIndex,
-        double rate, int thre);
+  CARMI(const carmi_params::DataVectorType &initData,
+        const carmi_params::DataVectorType &findData,
+        const carmi_params::DataVectorType &insertData,
+        const std::vector<int> &insertIndex, double rate, int thre);
 
   class iterator {
    public:
@@ -40,7 +41,7 @@ class CARMI {
         return DBL_MIN;
       }
       int left;
-      if (kPrimaryIndex) {
+      if (carmi_params::kPrimaryIndex) {
         left = currnode->externalArray.m_left;
         return tree->externalData[left + currslot].first;
       } else {
@@ -53,7 +54,7 @@ class CARMI {
         return DBL_MIN;
       }
       int left;
-      if (kPrimaryIndex) {
+      if (carmi_params::kPrimaryIndex) {
         left = currnode->externalArray.m_left;
         return tree->externalData[left + currslot].second;
       } else {
@@ -75,7 +76,7 @@ class CARMI {
     }
 
     inline iterator &operator++() {
-      if (!kPrimaryIndex) {
+      if (!carmi_params::kPrimaryIndex) {
         int left = currnode->array.m_left;
         while (currslot < (currnode->array.flagNumber & 0x00FFFFFF) ||
                currnode->array.nextLeaf != -1) {
@@ -105,8 +106,8 @@ class CARMI {
   // main functions
  public:
   iterator Find(double key);
-  bool Insert(DataType data);
-  bool Update(DataType data);
+  bool Insert(carmi_params::DataType data);
+  bool Update(carmi_params::DataType data);
   bool Delete(double key);
 
   long double CalculateSpace() const;
@@ -117,9 +118,9 @@ class CARMI {
  private:
   // construction algorithms
   // main function
-  void Construction(const DataVectorType &initData,
-                    const DataVectorType &findData,
-                    const DataVectorType &insertData);
+  void Construction(const carmi_params::DataVectorType &initData,
+                    const carmi_params::DataVectorType &findData,
+                    const carmi_params::DataVectorType &insertData);
 
   // root
   template <typename TYPE, typename ModelType>
@@ -187,7 +188,7 @@ class CARMI {
                           const std::vector<IndexPair> &perSize) const;
   template <typename TYPE>
   void NodePartition(const TYPE &node, const IndexPair &range,
-                     const DataVectorType &dataset,
+                     const carmi_params::DataVectorType &dataset,
                      std::vector<IndexPair> *subData) const;
   template <typename TYPE>
   TYPE InnerDivideAll(int c, const DataRange &range, SubDataset *subDataset);
@@ -197,33 +198,39 @@ class CARMI {
 
  private:
   // inner nodes
-  void InitLR(const DataVectorType &dataset, LRModel *lr);
-  void InitPLR(const DataVectorType &dataset, PLRModel *plr);
-  void InitHis(const DataVectorType &dataset, HisModel *his);
-  void InitBS(const DataVectorType &dataset, BSModel *bs);
-  void Train(int left, int size, const DataVectorType &dataset, LRModel *lr);
-  void Train(int left, int size, const DataVectorType &dataset, PLRModel *plr);
-  void Train(int left, int size, const DataVectorType &dataset, HisModel *his);
-  void Train(int left, int size, const DataVectorType &dataset, BSModel *bs);
+  void InitLR(const carmi_params::DataVectorType &dataset, LRModel *lr);
+  void InitPLR(const carmi_params::DataVectorType &dataset, PLRModel *plr);
+  void InitHis(const carmi_params::DataVectorType &dataset, HisModel *his);
+  void InitBS(const carmi_params::DataVectorType &dataset, BSModel *bs);
+  void Train(int left, int size, const carmi_params::DataVectorType &dataset,
+             LRModel *lr);
+  void Train(int left, int size, const carmi_params::DataVectorType &dataset,
+             PLRModel *plr);
+  void Train(int left, int size, const carmi_params::DataVectorType &dataset,
+             HisModel *his);
+  void Train(int left, int size, const carmi_params::DataVectorType &dataset,
+             BSModel *bs);
 
  private:
   // leaf nodes
-  void Init(int cap, int left, int size, const DataVectorType &dataset,
-            ArrayType *arr);
-  void Init(int cap, int left, int size, const DataVectorType &subDataset,
+  void Init(int cap, int left, int size,
+            const carmi_params::DataVectorType &dataset, ArrayType *arr);
+  void Init(int cap, int left, int size,
+            const carmi_params::DataVectorType &subDataset,
             GappedArrayType *ga);
-  void Init(int cap, int start_idx, int size, const DataVectorType &dataset,
-            ExternalArray *ext);
-  void Train(int start_idx, int size, const DataVectorType &dataset,
-             ArrayType *arr);
-  void Train(int start_idx, int size, const DataVectorType &dataset,
-             GappedArrayType *ga);
-  void Train(int start_idx, int size, const DataVectorType &dataset,
-             ExternalArray *ext);
+  void Init(int cap, int start_idx, int size,
+            const carmi_params::DataVectorType &dataset, ExternalArray *ext);
+  void Train(int start_idx, int size,
+             const carmi_params::DataVectorType &dataset, ArrayType *arr);
+  void Train(int start_idx, int size,
+             const carmi_params::DataVectorType &dataset, GappedArrayType *ga);
+  void Train(int start_idx, int size,
+             const carmi_params::DataVectorType &dataset, ExternalArray *ext);
   void StoreData(int cap, int start_idx, int size,
-                 const DataVectorType &dataset, ArrayType *arr);
+                 const carmi_params::DataVectorType &dataset, ArrayType *arr);
   void StoreData(int cap, int start_idx, int size,
-                 const DataVectorType &dataset, GappedArrayType *ga);
+                 const carmi_params::DataVectorType &dataset,
+                 GappedArrayType *ga);
 
  private:
   // for public functions
@@ -254,8 +261,8 @@ class CARMI {
   CARMIRoot root;
   int rootType;
   std::vector<BaseNode> entireChild;
-  DataVectorType entireData;
-  DataVectorType externalData;
+  carmi_params::DataVectorType entireData;
+  carmi_params::DataVectorType externalData;
 
   int curr;  // the current insert index for external array
 
@@ -266,9 +273,9 @@ class CARMI {
   unsigned int entireDataSize;
   std::vector<EmptyBlock> emptyBlocks;
 
-  DataVectorType initDataset;
-  DataVectorType findQuery;
-  DataVectorType insertQuery;
+  carmi_params::DataVectorType initDataset;
+  carmi_params::DataVectorType findQuery;
+  carmi_params::DataVectorType insertQuery;
   std::vector<int> insertQueryIndex;
 
   std::map<IndexPair, NodeCost> COST;
@@ -309,8 +316,9 @@ class CARMI {
   friend class ExternalArray;
 };
 
-CARMI::CARMI(const DataVectorType &initData, const DataVectorType &findData,
-             const DataVectorType &insertData,
+CARMI::CARMI(const carmi_params::DataVectorType &initData,
+             const carmi_params::DataVectorType &findData,
+             const carmi_params::DataVectorType &insertData,
              const std::vector<int> &insertIndex, double rate, int thre) {
   emptyNode.ga = GappedArrayType(kThreshold);
   kAlgorithmThreshold = thre;
@@ -328,15 +336,15 @@ CARMI::CARMI(const DataVectorType &initData, const DataVectorType &findData,
     querySize += insertData[i].second;
   }
 
-  if (!kPrimaryIndex) {
+  if (!carmi_params::kPrimaryIndex) {
     InitEntireData(0, initDataset.size(), false);
   } else {
     externalData = initDataset;
-    externalData.erase(externalData.begin() + kExternalInsertLeft,
+    externalData.erase(externalData.begin() + carmi_params::kExternalInsertLeft,
                        externalData.end());
-    curr = kExternalInsertLeft;
+    curr = carmi_params::kExternalInsertLeft;
   }
   InitEntireChild(initDataset.size());
   Construction(initData, findData, insertData);
 }
-#endif  // SRC_CARMI_CARMI_H_
+#endif  // SRC_INCLUDE_CARMI_H_

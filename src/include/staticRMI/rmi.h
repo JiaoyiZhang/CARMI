@@ -9,15 +9,15 @@
  *
  */
 
-#ifndef SRC_CARMI_STATICRMI_RMI_H_
-#define SRC_CARMI_STATICRMI_RMI_H_
+#ifndef SRC_INCLUDE_STATICRMI_RMI_H_
+#define SRC_INCLUDE_STATICRMI_RMI_H_
 #include <vector>
 
 #include "../carmi.h"
 
 // RMI
-CARMI::CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
-             int kLeafID) {
+CARMI::CARMI(const carmi_params::DataVectorType &dataset, int childNum,
+             int kInnerID, int kLeafID) {
   nowDataSize = 0;
   kLeafNodeID = kLeafID;
   kInnerNodeID = kInnerID;
@@ -50,29 +50,28 @@ inline ROOTTYPE CARMI::InitSRMIRoot(int childNum, const IndexPair &range) {
 
   node.model.Train(initDataset, childNum);
 
-  std::vector<IndexPair> perSize(kRMIInnerChild, emptyRange);
+  std::vector<IndexPair> perSize(carmi_params::kRMIInnerChild, emptyRange);
   NodePartition<ROOTMODEL>(node.model, range, initDataset, &perSize);
 
   for (int i = 0; i < childNum; i++) {
     INNERTYPE inner;
     inner.SetChildNumber(32);
     InitSRMILeaf<INNERTYPE>(perSize[i], &inner);
-    entireChild[node.childLeft + i] = *(reinterpret_cast<BaseNode
-    *>(&inner));
+    entireChild[node.childLeft + i] = *(reinterpret_cast<BaseNode *>(&inner));
   }
   return node;
 }
 
 template <typename TYPE>
 inline void CARMI::InitSRMILeaf(const IndexPair &range, TYPE *node) {
-  node->SetChildNumber(kRMIInnerChild);
+  node->SetChildNumber(carmi_params::kRMIInnerChild);
   int childNumber = node->flagNumber & 0x00FFFFFF;
   node->childLeft = AllocateChildMemory(childNumber);
   if (range.size == 0) return;
 
   Train(range.left, range.size, initDataset, node);
 
-  std::vector<IndexPair> perSize(kRMIInnerChild, emptyRange);
+  std::vector<IndexPair> perSize(carmi_params::kRMIInnerChild, emptyRange);
   NodePartition<TYPE>(*node, range, initDataset, &perSize);
 
   switch (kLeafNodeID) {
@@ -93,4 +92,4 @@ inline void CARMI::InitSRMILeaf(const IndexPair &range, TYPE *node) {
   }
 }
 
-#endif  // SRC_CARMI_STATICRMI_RMI_H_
+#endif  // SRC_INCLUDE_STATICRMI_RMI_H_

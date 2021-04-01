@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CONSTRUCT_GREEDY_H_
-#define SRC_CARMI_CONSTRUCT_GREEDY_H_
+#ifndef SRC_INCLUDE_CONSTRUCT_GREEDY_H_
+#define SRC_INCLUDE_CONSTRUCT_GREEDY_H_
 
 #include <float.h>
 
@@ -39,7 +39,7 @@ void CARMI::IsBetterGreedy(int c, NodeType type, double frequency_weight,
                            double time_cost, const IndexPair &range,
                            TYPE *optimal_node_struct, NodeCost *optimalCost) {
   std::vector<IndexPair> perSize(c, emptyRange);
-  double space_cost = kBaseNodeSpace * c;
+  double space_cost = carmi_params::kBaseNodeSpace * c;
 
   TYPE node;
   node.SetChildNumber(c);
@@ -73,22 +73,22 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
   IndexPair singleRange(dataRange.initRange.left, dataRange.initRange.size);
-  for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
+  for (int c = carmi_params::kMinChildNumber; c < tmpEnd; c *= 2) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
 #endif  // DEBUG
-    IsBetterGreedy<LRModel>(c, LR_INNER_NODE, frequency_weight, kLRInnerTime,
-                            dataRange.initRange, &(optimal_node_struct.lr),
-                            &optimalCost);
-    IsBetterGreedy<PLRModel>(c, PLR_INNER_NODE, frequency_weight, kPLRInnerTime,
-                             dataRange.initRange, &(optimal_node_struct.plr),
-                             &optimalCost);
-    IsBetterGreedy<HisModel>(c, HIS_INNER_NODE, frequency_weight, kHisInnerTime,
-                             dataRange.initRange, &(optimal_node_struct.his),
-                             &optimalCost);
-    IsBetterGreedy<BSModel>(c, BS_INNER_NODE, frequency_weight, kBSInnerTime,
-                            dataRange.initRange, &(optimal_node_struct.bs),
-                            &optimalCost);
+    IsBetterGreedy<LRModel>(c, LR_INNER_NODE, frequency_weight,
+                            carmi_params::kLRInnerTime, dataRange.initRange,
+                            &(optimal_node_struct.lr), &optimalCost);
+    IsBetterGreedy<PLRModel>(c, PLR_INNER_NODE, frequency_weight,
+                             carmi_params::kPLRInnerTime, dataRange.initRange,
+                             &(optimal_node_struct.plr), &optimalCost);
+    IsBetterGreedy<HisModel>(c, HIS_INNER_NODE, frequency_weight,
+                             carmi_params::kHisInnerTime, dataRange.initRange,
+                             &(optimal_node_struct.his), &optimalCost);
+    IsBetterGreedy<BSModel>(c, BS_INNER_NODE, frequency_weight,
+                            carmi_params::kBSInnerTime, dataRange.initRange,
+                            &(optimal_node_struct.bs), &optimalCost);
   }
 
   // construct child
@@ -133,4 +133,4 @@ NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
   nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost};
   return nodeCost;
 }
-#endif  // SRC_CARMI_CONSTRUCT_GREEDY_H_
+#endif  // SRC_INCLUDE_CONSTRUCT_GREEDY_H_

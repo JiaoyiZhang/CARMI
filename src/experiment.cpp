@@ -29,7 +29,7 @@ int main() {
   std::cout << "\nTest time: " << tmpTime << std::endl;
   outRes << "\nTest time: " << tmpTime << std::endl;
 
-  mainExperiment(kAlgorithmThre);
+  mainExperiment(carmi_params::kAlgorithmThre);
 
   outRes << "----------------------------------------------" << std::endl;
 

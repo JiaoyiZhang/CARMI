@@ -24,22 +24,25 @@ class ExponentialDataset : public BaseDataset {
  public:
   explicit ExponentialDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVectorType *initDataset,
-                       DataVectorType *trainFindQuery,
-                       DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::DataVectorType *initDataset,
+                       carmi_params::DataVectorType *trainFindQuery,
+                       carmi_params::DataVectorType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       DataVectorType *testInsertQuery);
+                       carmi_params::DataVectorType *testInsertQuery);
 };
 
-void ExponentialDataset::GenerateDataset(DataVectorType *initDataset,
-                                         DataVectorType *trainFindQuery,
-                                         DataVectorType *trainInsertQuery,
-                                         std::vector<int> *trainInsertIndex,
-                                         DataVectorType *testInsertQuery) {
+void ExponentialDataset::GenerateDataset(
+    carmi_params::DataVectorType *initDataset,
+    carmi_params::DataVectorType *trainFindQuery,
+    carmi_params::DataVectorType *trainInsertQuery,
+    std::vector<int> *trainInsertIndex,
+    carmi_params::DataVectorType *testInsertQuery) {
   // create dataset randomly
   std::default_random_engine generator;
   std::exponential_distribution<double> distribution(0.25);
-  DataVectorType dataset(kDatasetSize + kTestSize * (1 - proportion), {0, 0});
+  carmi_params::DataVectorType dataset(
+      carmi_params::kDatasetSize + carmi_params::kTestSize * (1 - proportion),
+      {0, 0});
 
   for (int i = 0; i < dataset.size(); i++) {
     double tmp = distribution(generator);

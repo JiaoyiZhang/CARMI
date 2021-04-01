@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_FUNC_INSERT_FUNCTION_H_
-#define SRC_CARMI_FUNC_INSERT_FUNCTION_H_
+#ifndef SRC_INCLUDE_FUNC_INSERT_FUNCTION_H_
+#define SRC_INCLUDE_FUNC_INSERT_FUNCTION_H_
 
 #include <float.h>
 
@@ -28,7 +28,7 @@
  * @return true if the insertion is successful
  * @return false if the operation fails
  */
-bool CARMI::Insert(DataType data) {
+bool CARMI::Insert(carmi_params::DataType data) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   int childIdx = 0;
@@ -67,7 +67,7 @@ bool CARMI::Insert(DataType data) {
         int left = entireChild[idx].array.m_left;
 
         // split
-        if (size >= kLeafMaxCapacity) {
+        if (size >= carmi_params::kLeafMaxCapacity) {
           int previousIdx = entireChild[idx].array.previousLeaf;
           Split<ArrayType>(false, left, size, previousIdx, idx);
           idx = entireChild[idx].lr.childLeft +
@@ -90,7 +90,7 @@ bool CARMI::Insert(DataType data) {
 
         // expand
         if ((size >= entireChild[idx].array.m_capacity) &&
-            entireChild[idx].array.m_capacity < kLeafMaxCapacity) {
+            entireChild[idx].array.m_capacity < carmi_params::kLeafMaxCapacity) {
           auto diff = preIdx - left;
           Init(entireChild[idx].array.m_capacity, left, size, entireData,
                &entireChild[idx].array);
@@ -116,7 +116,7 @@ bool CARMI::Insert(DataType data) {
         int size = entireChild[idx].ga.flagNumber & 0x00FFFFFF;
 
         // split
-        if (size >= kLeafMaxCapacity) {
+        if (size >= carmi_params::kLeafMaxCapacity) {
           int previousIdx = entireChild[idx].ga.previousLeaf;
           Split<GappedArrayType>(false, left, entireChild[idx].ga.maxIndex + 1,
                                  previousIdx, idx);
@@ -127,7 +127,7 @@ bool CARMI::Insert(DataType data) {
         }
 
         // expand
-        if (entireChild[idx].ga.capacity < kLeafMaxCapacity &&
+        if (entireChild[idx].ga.capacity < carmi_params::kLeafMaxCapacity &&
             (static_cast<float>(size) / entireChild[idx].ga.capacity >
              entireChild[idx].ga.density)) {
           // If an additional Insertion results in crossing the density
@@ -212,7 +212,7 @@ bool CARMI::Insert(DataType data) {
         int size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
 
         // split
-        if (size >= kLeafMaxCapacity) {
+        if (size >= carmi_params::kLeafMaxCapacity) {
           // int previousIdx = entireChild[idx].ga.previousLeaf;
           Split<ExternalArray>(true, left, size, 0, idx);
           idx = entireChild[idx].lr.childLeft +
@@ -239,4 +239,4 @@ bool CARMI::Insert(DataType data) {
   }
 }
 
-#endif  // SRC_CARMI_FUNC_INSERT_FUNCTION_H_
+#endif  // SRC_INCLUDE_FUNC_INSERT_FUNCTION_H_

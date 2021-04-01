@@ -23,13 +23,13 @@ extern std::ofstream outRes;
 void Core(double initRatio, double rate, int thre,
           const std::vector<int> &length,
           const std::vector<int> &trainInsertIndex,
-          const DataVectorType &initDataset,
-          const DataVectorType &trainFindQuery,
-          const DataVectorType &trainInsertQuery,
-          const DataVectorType &testInsertQuery) {
-  DataVectorType init = initDataset;
-  DataVectorType trainFind = trainFindQuery;
-  DataVectorType trainInsert = trainInsertQuery;
+          const carmi_params::DataVectorType &initDataset,
+          const carmi_params::DataVectorType &trainFindQuery,
+          const carmi_params::DataVectorType &trainInsertQuery,
+          const carmi_params::DataVectorType &testInsertQuery) {
+  carmi_params::DataVectorType init = initDataset;
+  carmi_params::DataVectorType trainFind = trainFindQuery;
+  carmi_params::DataVectorType trainInsert = trainInsertQuery;
   for (int i = 0; i < trainFind.size(); i++) {
     trainFind[i].second = 1;
   }
@@ -51,8 +51,8 @@ void Core(double initRatio, double rate, int thre,
 
   CARMI carmi(initDataset, trainFind, trainInsert, trainInsertIndex, rate,
               thre);
-  if (kPrimaryIndex) {
-    init.erase(init.begin() + kExternalInsertLeft, init.end());
+  if (carmi_params::kPrimaryIndex) {
+    init.erase(init.begin() + carmi_params::kExternalInsertLeft, init.end());
   }
 
 #ifdef DEBUG
@@ -84,16 +84,29 @@ void Core(double initRatio, double rate, int thre,
   }
 #endif
 
-  if (initRatio == kWriteHeavy)
-    WorkloadA(init, testInsertQuery, &carmi);  // write-heavy
-  else if (initRatio == kReadHeavy)
-    WorkloadB(init, testInsertQuery, &carmi);  // read-heavy
-  else if (initRatio == kReadOnly)
-    WorkloadC(init, &carmi);  // read-only
-  else if (initRatio == kWritePartial)
-    WorkloadD(init, testInsertQuery, &carmi);  // write-partial
-  else if (initRatio == kRangeScan)
-    WorkloadE(init, testInsertQuery, length, &carmi);  // range scan
+  // zipfian
+  if (initRatio ==carmi_params::kWriteHeavy)
+    WorkloadA(true, init, testInsertQuery, &carmi);  // write-heavy
+  else if (initRatio == carmi_params::kReadHeavy)
+    WorkloadB(true, init, testInsertQuery, &carmi);  // read-heavy
+  else if (initRatio == carmi_params::kReadOnly)
+    WorkloadC(true, init, &carmi);  // read-only
+  else if (initRatio == carmi_params::kWritePartial)
+    WorkloadD(true, init, testInsertQuery, &carmi);  // write-partial
+  else if (initRatio == carmi_params::kRangeScan)
+    WorkloadE(true, init, testInsertQuery, length, &carmi);  // range scan
+
+  // uniform
+  if (initRatio ==carmi_params::kWriteHeavy)
+    WorkloadA(false, init, testInsertQuery, &carmi);  // write-heavy
+  else if (initRatio == carmi_params::kReadHeavy)
+    WorkloadB(false, init, testInsertQuery, &carmi);  // read-heavy
+  else if (initRatio == carmi_params::kReadOnly)
+    WorkloadC(false, init, &carmi);  // read-only
+  else if (initRatio == carmi_params::kWritePartial)
+    WorkloadD(false, init, testInsertQuery, &carmi);  // write-partial
+  else if (initRatio == carmi_params::kRangeScan)
+    WorkloadE(false, init, testInsertQuery, length, &carmi);  // range scan
 }
 
 #endif  // SRC_EXPERIMENT_CORE_H_

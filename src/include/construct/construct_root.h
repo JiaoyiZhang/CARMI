@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CONSTRUCT_CONSTRUCT_ROOT_H_
-#define SRC_CARMI_CONSTRUCT_CONSTRUCT_ROOT_H_
+#ifndef SRC_INCLUDE_CONSTRUCT_CONSTRUCT_ROOT_H_
+#define SRC_INCLUDE_CONSTRUCT_CONSTRUCT_ROOT_H_
 #include <vector>
 
 #include "../carmi.h"
@@ -33,7 +33,7 @@ template <typename TYPE, typename ModelType>
 void CARMI::IsBetterRoot(int c, NodeType type, double time_cost,
                          double *optimalCost, RootStruct *rootStruct) {
   std::vector<IndexPair> perSize(c, emptyRange);
-  double space_cost = kBaseNodeSpace * c;
+  double space_cost = carmi_params::kBaseNodeSpace * c;
 
   TYPE root(c);
   root.model.Train(initDataset, c);
@@ -57,15 +57,19 @@ void CARMI::IsBetterRoot(int c, NodeType type, double time_cost,
 RootStruct CARMI::ChooseRoot() {
   double OptimalValue = DBL_MAX;
   RootStruct rootStruct(0, 0);
-  for (int c = kMinChildNumber; c <= initDataset.size() * 10; c *= 2) {
-    IsBetterRoot<LRType, LinearRegression>(c, LR_ROOT_NODE, kLRRootTime,
-                                           &OptimalValue, &rootStruct);
-    IsBetterRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE, kPLRRootTime,
+  for (int c = carmi_params::kMinChildNumber; c <= initDataset.size() * 10;
+       c *= 2) {
+    IsBetterRoot<LRType, LinearRegression>(
+        c, LR_ROOT_NODE, carmi_params::kLRRootTime, &OptimalValue, &rootStruct);
+    IsBetterRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE,
+                                       carmi_params::kPLRRootTime,
                                        &OptimalValue, &rootStruct);
-    IsBetterRoot<HisType, HistogramModel>(c, HIS_ROOT_NODE, kHisRootTime,
+    IsBetterRoot<HisType, HistogramModel>(c, HIS_ROOT_NODE,
+                                          carmi_params::kHisRootTime,
                                           &OptimalValue, &rootStruct);
-    IsBetterRoot<BSType, BinarySearchModel>(
-        c, BS_ROOT_NODE, kCostBSTime * log2(c), &OptimalValue, &rootStruct);
+    IsBetterRoot<BSType, BinarySearchModel>(c, BS_ROOT_NODE,
+                                            carmi_params::kCostBSTime * log2(c),
+                                            &OptimalValue, &rootStruct);
   }
 #ifdef DEBUG
   std::cout << "Best type is: " << rootStruct.rootType
@@ -116,28 +120,29 @@ SubDataset CARMI::StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost) {
   SubDataset subDataset(rootStruct.rootChildNum);
   switch (rootStruct.rootType) {
     case LR_ROOT_NODE: {
-      nodeCost->time = kLRRootTime;
+      nodeCost->time = carmi_params::kLRRootTime;
       nodeCost->space += sizeof(LRType);
       root = ConstructRoot<LRType, LinearRegression>(rootStruct, dataRange,
                                                      &subDataset);
       break;
     }
     case PLR_ROOT_NODE: {
-      nodeCost->time = kPLRRootTime;
+      nodeCost->time = carmi_params::kPLRRootTime;
       nodeCost->space += sizeof(PLRType);
       root = ConstructRoot<PLRType, PiecewiseLR>(rootStruct, dataRange,
                                                  &subDataset);
       break;
     }
     case HIS_ROOT_NODE: {
-      nodeCost->time = kHisRootTime;
+      nodeCost->time = carmi_params::kHisRootTime;
       nodeCost->space += sizeof(HisType);
       root = ConstructRoot<HisType, HistogramModel>(rootStruct, dataRange,
                                                     &subDataset);
       break;
     }
     case BS_ROOT_NODE: {
-      nodeCost->time = kCostBSTime * log2(rootStruct.rootChildNum);
+      nodeCost->time =
+          carmi_params::kCostBSTime * log2(rootStruct.rootChildNum);
       nodeCost->space += sizeof(BSType);
       root = ConstructRoot<BSType, BinarySearchModel>(rootStruct, dataRange,
                                                       &subDataset);
@@ -146,4 +151,4 @@ SubDataset CARMI::StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost) {
   }
   return subDataset;
 }
-#endif  // SRC_CARMI_CONSTRUCT_CONSTRUCT_ROOT_H_
+#endif  // SRC_INCLUDE_CONSTRUCT_CONSTRUCT_ROOT_H_

@@ -36,35 +36,36 @@ void mainExperiment(int thre) {
   std::vector<int> length;
 
   // read-only
-  mainSynthetic(kReadOnly, thre, length);
-  mainYCSB(kReadOnly, thre, length);
-  mainMap(kReadOnly, thre, length);
+  mainSynthetic(carmi_params::kReadOnly, thre, length);
+  mainYCSB(carmi_params::kReadOnly, thre, length);
+  mainMap(carmi_params::kReadOnly, thre, length);
 
   // write-heavy
-  kIsWriteHeavy = true;
-  mainSynthetic(kWriteHeavy, thre, length);
-  mainYCSB(kWriteHeavy, thre, length);
-  mainMap(kWriteHeavy, thre, length);
-  kIsWriteHeavy = false;
+  carmi_params::kIsWriteHeavy = true;
+  mainSynthetic(carmi_params::kWriteHeavy, thre, length);
+  mainYCSB(carmi_params::kWriteHeavy, thre, length);
+  mainMap(carmi_params::kWriteHeavy, thre, length);
+  carmi_params::kIsWriteHeavy = false;
 
   // read-heavy
-  mainSynthetic(kReadHeavy, thre, length);
-  mainYCSB(kReadHeavy, thre, length);
-  mainMap(kReadHeavy, thre, length);
+  mainSynthetic(carmi_params::kReadHeavy, thre, length);
+  mainYCSB(carmi_params::kReadHeavy, thre, length);
+  mainMap(carmi_params::kReadHeavy, thre, length);
 
   // write-partial
-  mainSynthetic(kWritePartial, thre, length);
-  mainYCSB(kWritePartial, thre, length);
-  mainMap(kWritePartial, thre, length);
+  mainSynthetic(carmi_params::kWritePartial, thre, length);
+  mainYCSB(carmi_params::kWritePartial, thre, length);
+  mainMap(carmi_params::kWritePartial, thre, length);
 
   // range scan
   srand(time(0));
-  for (int i = 0; i < kDatasetSize; i++) {
-    length.push_back(std::min(i + rand() % 100 + 1, kDatasetSize) - i);
+  for (int i = 0; i < carmi_params::kDatasetSize; i++) {
+    length.push_back(
+        std::min(i + rand() % 100 + 1, carmi_params::kDatasetSize) - i);
   }
-  mainSynthetic(kRangeScan, thre, length);
-  mainYCSB(kRangeScan, thre, length);
-  mainMap(kRangeScan, thre, length);
+  mainSynthetic(carmi_params::kRangeScan, thre, length);
+  mainYCSB(carmi_params::kRangeScan, thre, length);
+  mainMap(carmi_params::kRangeScan, thre, length);
 }
 
 void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
@@ -74,18 +75,18 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
   std::cout << "initRatio is: " << initRatio << std::endl;
   outRes << "initRatio," << initRatio << std::endl;
   double init = initRatio;
-  if (init == kRangeScan) {
-    init = kReadHeavy;
+  if (init == carmi_params::kRangeScan) {
+    init = carmi_params::kReadHeavy;
   }
   LognormalDataset logData = LognormalDataset(init);
   UniformDataset uniData = UniformDataset(init);
   NormalDataset norData = NormalDataset(init);
   ExponentialDataset expData = ExponentialDataset(init);
 
-  DataVectorType initData;
-  DataVectorType trainFind;
-  DataVectorType trainInsert;
-  DataVectorType testInsert;
+  carmi_params::DataVectorType initData;
+  carmi_params::DataVectorType trainFind;
+  carmi_params::DataVectorType trainInsert;
+  carmi_params::DataVectorType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG
@@ -99,7 +100,7 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
 
   for (int r = 0; r < rate.size(); r++) {
     double kRate;
-    if (initRatio == kWriteHeavy)
+    if (initRatio == carmi_params::kWriteHeavy)
       kRate = rate1[r];
     else
       kRate = rate[r];
@@ -162,16 +163,16 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
   outRes << "construct map" << std::endl;
   std::cout << "kAlgThre:" << thre << std::endl;
   double init = initRatio;
-  if (init == kRangeScan) {
-    init = kReadHeavy;
+  if (init == carmi_params::kRangeScan) {
+    init = carmi_params::kReadHeavy;
   }
   LongitudesDataset longData = LongitudesDataset(init);
   LonglatDataset latData = LonglatDataset(init);
 
-  DataVectorType initData;
-  DataVectorType trainFind;
-  DataVectorType trainInsert;
-  DataVectorType testInsert;
+  carmi_params::DataVectorType initData;
+  carmi_params::DataVectorType trainFind;
+  carmi_params::DataVectorType trainInsert;
+  carmi_params::DataVectorType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG
@@ -185,7 +186,7 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
 
   for (int r = 0; r < rate.size(); r++) {
     double kRate;
-    if (initRatio == kWriteHeavy)
+    if (initRatio == carmi_params::kWriteHeavy)
       kRate = rate1[r];
     else
       kRate = rate[r];
@@ -218,7 +219,7 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
 }
 
 void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
-  kPrimaryIndex = true;
+  carmi_params::kPrimaryIndex = true;
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                "&&&&&&&"
             << std::endl;
@@ -227,15 +228,15 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
   std::cout << "construct ycsb" << std::endl;
   outRes << "construct ycsb" << std::endl;
   double init = initRatio;
-  if (init == kRangeScan) {
-    init = kReadHeavy;
+  if (init == carmi_params::kRangeScan) {
+    init = carmi_params::kReadHeavy;
   }
   YCSBDataset ycsbData = YCSBDataset(init);
 
-  DataVectorType initData;
-  DataVectorType trainFind;
-  DataVectorType trainInsert;
-  DataVectorType testInsert;
+  carmi_params::DataVectorType initData;
+  carmi_params::DataVectorType trainFind;
+  carmi_params::DataVectorType trainInsert;
+  carmi_params::DataVectorType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG
@@ -249,7 +250,7 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
 
   for (int r = 0; r < rate.size(); r++) {
     double kRate;
-    if (initRatio == kWriteHeavy)
+    if (initRatio == carmi_params::kWriteHeavy)
       kRate = rate1[r];
     else
       kRate = rate[r];
@@ -267,7 +268,7 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
 
     outRes << std::endl;
   }
-  kPrimaryIndex = false;
+  carmi_params::kPrimaryIndex = false;
 }
 
 #endif  // SRC_EXPERIMENT_MAIN_EXPERIMENT_H_

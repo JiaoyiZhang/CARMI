@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_CONSTRUCT_DP_INNER_H_
-#define SRC_CARMI_CONSTRUCT_DP_INNER_H_
+#ifndef SRC_INCLUDE_CONSTRUCT_DP_INNER_H_
+#define SRC_INCLUDE_CONSTRUCT_DP_INNER_H_
 #include <float.h>
 
 #include <vector>
@@ -34,7 +34,7 @@ void CARMI::ChooseBetterInner(int c, NodeType type, double frequency_weight,
                               double time_cost, const DataRange &dataRange,
                               NodeCost *optimalCost,
                               TYPE *optimal_node_struct) {
-  double space_cost = kBaseNodeSpace * c;  // MB
+  double space_cost = carmi_params::kBaseNodeSpace * c;  // MB
   time_cost = time_cost * frequency_weight;
   double RootCost = time_cost + kRate * space_cost;
   if (RootCost > optimalCost->cost) return;
@@ -73,24 +73,24 @@ NodeCost CARMI::DPInner(const DataRange &dataRange) {
   BaseNode optimal_node_struct = emptyNode;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
-  for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
+  for (int c = carmi_params::kMinChildNumber; c < tmpEnd; c *= 2) {
 #ifdef DEBUG
     if (c * 512 < dataRange.initRange.size) continue;
 #endif  // DEBUG
-    ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight, kLRInnerTime,
-                               dataRange, &optimalCost,
-                               &(optimal_node_struct.lr));
+    ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight,
+                               carmi_params::kLRInnerTime, dataRange,
+                               &optimalCost, &(optimal_node_struct.lr));
     ChooseBetterInner<PLRModel>(c, PLR_INNER_NODE, frequency_weight,
-                                kPLRInnerTime, dataRange, &optimalCost,
-                                &(optimal_node_struct.plr));
-    if (c <= kHisMaxChildNumber)
+                                carmi_params::kPLRInnerTime, dataRange,
+                                &optimalCost, &(optimal_node_struct.plr));
+    if (c <= carmi_params::kHisMaxChildNumber)
       ChooseBetterInner<HisModel>(c, HIS_INNER_NODE, frequency_weight,
-                                  kHisInnerTime, dataRange, &optimalCost,
-                                  &(optimal_node_struct.his));
-    if (c <= kBSMaxChildNumber)
+                                  carmi_params::kHisInnerTime, dataRange,
+                                  &optimalCost, &(optimal_node_struct.his));
+    if (c <= carmi_params::kBSMaxChildNumber)
       ChooseBetterInner<BSModel>(c, BS_INNER_NODE, frequency_weight,
-                                 kBSInnerTime, dataRange, &optimalCost,
-                                 &(optimal_node_struct.bs));
+                                 carmi_params::kBSInnerTime, dataRange,
+                                 &optimalCost, &(optimal_node_struct.bs));
   }
 
 #ifdef DEBUG
@@ -104,4 +104,4 @@ NodeCost CARMI::DPInner(const DataRange &dataRange) {
   return nodeCost;
 }
 
-#endif  // SRC_CARMI_CONSTRUCT_DP_INNER_H_
+#endif  // SRC_INCLUDE_CONSTRUCT_DP_INNER_H_

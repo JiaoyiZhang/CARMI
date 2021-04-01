@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_HISTOGRAM_H_
-#define SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_HISTOGRAM_H_
+#ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_HISTOGRAM_H_
+#define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_HISTOGRAM_H_
 
 #include <algorithm>
 #include <iostream>
@@ -35,7 +35,7 @@ class HistogramModel {
     offset = his.offset;
     base = his.base;
   }
-  void Train(const DataVectorType &dataset, int len);
+  void Train(const carmi_params::DataVectorType &dataset, int len);
   int Predict(double key) const {
     // return the idx in children
     int idx = static_cast<float>(key - minValue) / value;
@@ -62,7 +62,7 @@ class HistogramModel {
   float minValue;   // 8B
 };
 
-void HistogramModel::Train(const DataVectorType &dataset, int len) {
+void HistogramModel::Train(const carmi_params::DataVectorType &dataset, int len) {
   int actualChildNumber = childNumber / 2;
   if (dataset.size() == 0) return;
   double maxValue = dataset[dataset.size() - 1].first;
@@ -118,4 +118,4 @@ void HistogramModel::Train(const DataVectorType &dataset, int len) {
   }
 }
 
-#endif  // SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_HISTOGRAM_H_
+#endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_HISTOGRAM_H_

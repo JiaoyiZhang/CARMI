@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_LEAFNODE_LEAF_NODES_H_
-#define SRC_CARMI_NODES_LEAFNODE_LEAF_NODES_H_
+#ifndef SRC_INCLUDE_NODES_LEAFNODE_LEAF_NODES_H_
+#define SRC_INCLUDE_NODES_LEAFNODE_LEAF_NODES_H_
 
 #include <iostream>
 #include <utility>
@@ -50,7 +50,7 @@ class GappedArrayType {
   explicit GappedArrayType(int cap) {
     flagNumber = (GAPPED_ARRAY_LEAF_NODE << 24) + 0;
     error = 0;
-    density = kDensity;
+    density = 0.5;
     capacity = cap;
     maxIndex = -2;
     m_left = -1;
@@ -105,4 +105,4 @@ class ExternalArray {
   float tmpMember;
   std::pair<float, float> tmppp[5];
 };
-#endif  // SRC_CARMI_NODES_LEAFNODE_LEAF_NODES_H_
+#endif  // SRC_INCLUDE_NODES_LEAFNODE_LEAF_NODES_H_

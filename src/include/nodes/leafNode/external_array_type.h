@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
-#define SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
+#ifndef SRC_INCLUDE_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
+#define SRC_INCLUDE_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
 
 #include <vector>
 
@@ -18,9 +18,9 @@
 #include "../../construct/minor_function.h"
 #include "./leaf_nodes.h"
 
-inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
+inline void CARMI::Train(int start_idx, int size, const carmi_params::DataVectorType &dataset,
                          ExternalArray *ext) {
-  DataVectorType data = SetY(start_idx, size, dataset);
+  carmi_params::DataVectorType data = SetY(start_idx, size, dataset);
   if (size == 0) return;
 
   if ((ext->flagNumber & 0x00FFFFFF) != size) {
@@ -40,11 +40,11 @@ inline void CARMI::Train(int start_idx, int size, const DataVectorType &dataset,
  * @param ext leaf node
  */
 inline void CARMI::Init(int cap, int start_idx, int size,
-                        const DataVectorType &dataset, ExternalArray *ext) {
+                        const carmi_params::DataVectorType &dataset, ExternalArray *ext) {
   ext->m_left = start_idx;
   if (size == 0) return;
 
   Train(start_idx, size, dataset, ext);
 }
 
-#endif  // SRC_CARMI_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
+#endif  // SRC_INCLUDE_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_

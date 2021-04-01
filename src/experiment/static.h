@@ -19,8 +19,8 @@
 extern int childNum;
 extern std::ofstream outRes;
 
-void RunStatic(double initRatio, int kLeafID, const DataVectorType &initDataset,
-               const DataVectorType &testInsertQuery,
+void RunStatic(double initRatio, int kLeafID, const carmi_params::DataVectorType &initDataset,
+               const carmi_params::DataVectorType &testInsertQuery,
                const std::vector<int> &length) {
   for (int j = 2; j < 3; j++) {
     std::cout << "root type:" << j << std::endl;
@@ -41,16 +41,17 @@ void RunStatic(double initRatio, int kLeafID, const DataVectorType &initDataset,
         break;
     }
 
-    if (initRatio == kWriteHeavy)
-      WorkloadA(initDataset, testInsertQuery, &carmi);  // write-heavy
-    else if (initRatio == kReadHeavy)
-      WorkloadB(initDataset, testInsertQuery, &carmi);  // read-heavy
-    else if (initRatio == kReadOnly)
-      WorkloadC(initDataset, &carmi);  // read-only
-    else if (initRatio == kWritePartial)
-      WorkloadD(initDataset, testInsertQuery, &carmi);  // write-partial
-    else if (initRatio == kRangeScan)
-      WorkloadE(initDataset, testInsertQuery, length, &carmi);  // range scan
+    if (initRatio == carmi_params::kWriteHeavy)
+      WorkloadA(false, initDataset, testInsertQuery, &carmi);  // write-heavy
+    else if (initRatio == carmi_params::kReadHeavy)
+      WorkloadB(false, initDataset, testInsertQuery, &carmi);  // read-heavy
+    else if (initRatio == carmi_params::kReadOnly)
+      WorkloadC(false, initDataset, &carmi);  // read-only
+    else if (initRatio == carmi_params::kWritePartial)
+      WorkloadD(false, initDataset, testInsertQuery, &carmi);  // write-partial
+    else if (initRatio == carmi_params::kRangeScan)
+      WorkloadE(false, initDataset, testInsertQuery, length,
+                &carmi);  // range scan
   }
   outRes << std::endl;
 }

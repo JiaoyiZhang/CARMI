@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_INNERNODE_PLR_MODEL_H_
-#define SRC_CARMI_NODES_INNERNODE_PLR_MODEL_H_
+#ifndef SRC_INCLUDE_NODES_INNERNODE_PLR_MODEL_H_
+#define SRC_INCLUDE_NODES_INNERNODE_PLR_MODEL_H_
 
 #include <float.h>
 
@@ -29,9 +29,9 @@
  */
 
 inline void CARMI::Train(const int left, const int size,
-                         const DataVectorType &dataset, PLRModel *plr) {
+                         const carmi_params::DataVectorType &dataset, PLRModel *plr) {
   int childNumber = plr->flagNumber & 0x00FFFFFF;
-  DataVectorType data(size, {-1, 0});
+  carmi_params::DataVectorType data(size, {-1, 0});
 
   int end = left + size;
   plr->keys[0] = dataset[left].first;
@@ -49,7 +49,7 @@ inline void CARMI::Train(const int left, const int size,
   }
 
   int cand_size = 100;
-  DataVectorType cand_point(cand_size, {0, 0});
+  carmi_params::DataVectorType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost cand_cost(cand_size);
   int seg = size / cand_size;
@@ -230,4 +230,4 @@ inline int PLRModel::Predict(double key) const {
   return p;
 }
 
-#endif  // SRC_CARMI_NODES_INNERNODE_PLR_MODEL_H_
+#endif  // SRC_INCLUDE_NODES_INNERNODE_PLR_MODEL_H_

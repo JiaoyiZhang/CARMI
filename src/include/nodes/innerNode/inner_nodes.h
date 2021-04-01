@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef SRC_CARMI_NODES_INNERNODE_INNER_NODES_H_
-#define SRC_CARMI_NODES_INNERNODE_INNER_NODES_H_
+#ifndef SRC_INCLUDE_NODES_INNERNODE_INNER_NODES_H_
+#define SRC_INCLUDE_NODES_INNERNODE_INNER_NODES_H_
 
 #include <algorithm>
 #include <utility>
@@ -23,7 +23,7 @@ class LRModel {
  public:
   LRModel() = default;
   void SetChildNumber(int c) { flagNumber = (LR_INNER_NODE << 24) + c; }
-  void Train(const DataVectorType &dataset);
+  void Train(const carmi_params::DataVectorType &dataset);
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + childNumber)
@@ -79,4 +79,4 @@ class BSModel {
   int childLeft;    // 4 Byte
   float index[14];  // 56 Byte (childNumber = 15)
 };
-#endif  // SRC_CARMI_NODES_INNERNODE_INNER_NODES_H_
+#endif  // SRC_INCLUDE_NODES_INNERNODE_INNER_NODES_H_

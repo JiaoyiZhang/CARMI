@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
-#define SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
+#ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
+#define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
 
 #include <algorithm>
 #include <iostream>
@@ -25,7 +25,7 @@ class LinearRegression {
     theta1 = 0.0001;
     theta2 = 0.666;
   }
-  void Train(const DataVectorType &dataset, int len);
+  void Train(const carmi_params::DataVectorType &dataset, int len);
   int Predict(double key) const {
     // return the predicted idx in the children
     int p = theta1 * key + theta2;
@@ -42,7 +42,7 @@ class LinearRegression {
   double theta2;
 };
 
-void LinearRegression::Train(const DataVectorType &dataset, int len) {
+void LinearRegression::Train(const carmi_params::DataVectorType &dataset, int len) {
   length = len - 1;
   int idx = 0;
   int size = dataset.size();
@@ -62,4 +62,4 @@ void LinearRegression::Train(const DataVectorType &dataset, int len) {
   theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
   theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
 }
-#endif  // SRC_CARMI_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
+#endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_

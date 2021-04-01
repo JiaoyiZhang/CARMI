@@ -29,17 +29,18 @@ void fixedExperiment() {
   // static structure
   for (int i = 0; i < 2; i++) {
     std::cout << "kleafnode:" << i << std::endl;
-    fixedSynthetic(kReadOnly, i, length);
-    if (i == 1) fixedSynthetic(kWriteHeavy, i, length);
+    fixedSynthetic(carmi_params::kReadOnly, i, length);
+    if (i == 1) fixedSynthetic(carmi_params::kWriteHeavy, i, length);
   }
-  fixedSynthetic(kReadHeavy, 0, length);
-  fixedSynthetic(kWritePartial, 0, length);
+  fixedSynthetic(carmi_params::kReadHeavy, 0, length);
+  fixedSynthetic(carmi_params::kWritePartial, 0, length);
 
   srand(time(0));
-  for (int i = 0; i < kDatasetSize; i++) {
-    length.push_back(std::min(i + rand() % 100 + 1, kDatasetSize) - i);
+  for (int i = 0; i < carmi_params::kDatasetSize; i++) {
+    length.push_back(
+        std::min(i + rand() % 100 + 1, carmi_params::kDatasetSize) - i);
   }
-  fixedSynthetic(kRangeScan, 0, length);
+  fixedSynthetic(carmi_params::kRangeScan, 0, length);
 }
 
 void fixedSynthetic(double initRatio, int kLeafID,
@@ -50,18 +51,18 @@ void fixedSynthetic(double initRatio, int kLeafID,
   std::cout << "initRatio is: " << initRatio << std::endl;
   outRes << "initRatio," << initRatio << std::endl;
   double init = initRatio;
-  if (init == kRangeScan) {
-    init = kReadHeavy;
+  if (init == carmi_params::kRangeScan) {
+    init = carmi_params::kReadHeavy;
   }
   LongitudesDataset longData = LongitudesDataset(init);
   UniformDataset uniData = UniformDataset(init);
   NormalDataset norData = NormalDataset(init);
   ExponentialDataset expData = ExponentialDataset(init);
 
-  DataVectorType initData;
-  DataVectorType trainFind;
-  DataVectorType trainInsert;
-  DataVectorType testInsert;
+  carmi_params::DataVectorType initData;
+  carmi_params::DataVectorType trainFind;
+  carmi_params::DataVectorType trainInsert;
+  carmi_params::DataVectorType testInsert;
   std::vector<int> trainInsertIndex;
 
   for (int i = 0; i < 1; i++) {

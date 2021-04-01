@@ -17,18 +17,15 @@
 
 #include <utility>
 #include <vector>
+namespace carmi_params {
 
 typedef std::pair<double, double> DataType;
 typedef std::vector<DataType> DataVectorType;
-
-const bool kZipfian = false;
 
 bool kPrimaryIndex = false;
 bool kIsWriteHeavy = false;
 int kExternalInsertLeft;
 
-const double kDensity = 0.5;         // the density of gap in gapped array
-const double kExpansionScale = 1.5;  // scale of array expansion
 // -------------------------
 const int kLeafMaxCapacity = 4096;
 const int kAlgorithmThre = 4096;
@@ -76,4 +73,5 @@ const float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity
 
 const int kRMIInnerChild = 32;
 
+}  // namespace carmi_params
 #endif  // SRC_PARAMS_H_

@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_NODES_INNERNODE_BS_MODEL_H_
-#define SRC_CARMI_NODES_INNERNODE_BS_MODEL_H_
+#ifndef SRC_INCLUDE_NODES_INNERNODE_BS_MODEL_H_
+#define SRC_INCLUDE_NODES_INNERNODE_BS_MODEL_H_
 
 #include <algorithm>
 #include <utility>
@@ -26,7 +26,7 @@
  * @param bs model
  */
 inline void CARMI::Train(const int left, const int size,
-                         const DataVectorType &dataset, BSModel *bs) {
+                         const carmi_params::DataVectorType &dataset, BSModel *bs) {
   if (size == 0) return;
   int childNumber = bs->flagNumber & 0x00FFFFFF;
   float value = static_cast<float>(size) / childNumber;
@@ -69,4 +69,4 @@ inline int BSModel::Predict(double key) const {
   return start_idx;
 }
 
-#endif  // SRC_CARMI_NODES_INNERNODE_BS_MODEL_H_
+#endif  // SRC_INCLUDE_NODES_INNERNODE_BS_MODEL_H_

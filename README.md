@@ -31,13 +31,13 @@ CARMI::iterator CARMI::Find(double key);
 2. **Insert**: insert a data point
 
 ```[C++]
-bool CARMI::Insert(DataType data);
+bool CARMI::Insert(carmi_params::DataType data);
 ```
 
 3. **Update**: update a record ( find the record according to given key, then update the value)
 
 ```[C++]
-bool CARMI::Update(DataType data);
+bool CARMI::Update(carmi_params::DataType data);
 ```
 
 4. **Delete**: delete the record of the given key

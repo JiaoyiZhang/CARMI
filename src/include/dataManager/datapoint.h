@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_CARMI_DATAMANAGER_DATAPOINT_H_
-#define SRC_CARMI_DATAMANAGER_DATAPOINT_H_
+#ifndef SRC_INCLUDE_DATAMANAGER_DATAPOINT_H_
+#define SRC_INCLUDE_DATAMANAGER_DATAPOINT_H_
 #include <float.h>
 #include <math.h>
 
@@ -52,7 +52,7 @@ inline bool CARMI::AllocateEmptyBlock(int left, int len) {
  */
 inline int CARMI::GetActualSize(int size) {
 #ifdef DEBUG
-  if (size > kLeafMaxCapacity || size < 1)
+  if (size > carmi_params::kLeafMaxCapacity || size < 1)
     std::cout << "size: " << size
               << ",\tsize > 4096 || size < 1, GetIndex WRONG!" << std::endl;
 #endif  // DEBUG
@@ -74,7 +74,7 @@ inline int CARMI::GetActualSize(int size) {
  */
 inline int CARMI::GetIndex(int size) {
 #ifdef DEBUG
-  if (size > kLeafMaxCapacity || size < 1)
+  if (size > carmi_params::kLeafMaxCapacity || size < 1)
     std::cout << "size: " << size
               << ",\tsize > 4096 || size < 1, GetIndex WRONG!" << std::endl;
 #endif  // DEBUG
@@ -107,8 +107,8 @@ void CARMI::InitEntireData(int left, int size, bool reinit) {
 #endif  // DEBUG
 
   std::vector<EmptyBlock>().swap(emptyBlocks);
-  DataVectorType().swap(entireData);
-  entireData = DataVectorType(len, {DBL_MIN, DBL_MIN});
+  carmi_params::DataVectorType().swap(entireData);
+  entireData = carmi_params::DataVectorType(len, {DBL_MIN, DBL_MIN});
   emptyBlocks.push_back(EmptyBlock(1));
   emptyBlocks.push_back(EmptyBlock(2));
   emptyBlocks.push_back(EmptyBlock(3));
@@ -178,7 +178,7 @@ int CARMI::AllocateMemory(int size) {
 #endif  // DEBUG
 
     unsigned int tmpSize = entireDataSize;
-    DataVectorType tmpData = entireData;
+    carmi_params::DataVectorType tmpData = entireData;
     std::vector<EmptyBlock> tmpBlocks = emptyBlocks;
 
     InitEntireData(tmpSize, tmpSize, true);
@@ -216,4 +216,4 @@ void CARMI::ReleaseMemory(int left, int size) {
   }
 }
 
-#endif  // SRC_CARMI_DATAMANAGER_DATAPOINT_H_
+#endif  // SRC_INCLUDE_DATAMANAGER_DATAPOINT_H_

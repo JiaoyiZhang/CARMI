@@ -27,19 +27,19 @@ class LongitudesDataset : public BaseDataset {
  public:
   explicit LongitudesDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVectorType *initDataset,
-                       DataVectorType *trainFindQuery,
-                       DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::DataVectorType *initDataset,
+                       carmi_params::DataVectorType *trainFindQuery,
+                       carmi_params::DataVectorType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       DataVectorType *testInsertQuery);
+                       carmi_params::DataVectorType *testInsertQuery);
 };
 
-void LongitudesDataset::GenerateDataset(DataVectorType *initDataset,
-                                        DataVectorType *trainFindQuery,
-                                        DataVectorType *trainInsertQuery,
+void LongitudesDataset::GenerateDataset(carmi_params::DataVectorType *initDataset,
+                                        carmi_params::DataVectorType *trainFindQuery,
+                                        carmi_params::DataVectorType *trainInsertQuery,
                                         std::vector<int> *trainInsertIndex,
-                                        DataVectorType *testInsertQuery) {
-  DataVectorType ds;
+                                        carmi_params::DataVectorType *testInsertQuery) {
+  carmi_params::DataVectorType ds;
   std::ifstream inFile("../src/experiment/dataset/longitude.csv", std::ios::in);
   if (!inFile) {
     std::cout << "打开文件失败！" << std::endl;
@@ -60,7 +60,7 @@ void LongitudesDataset::GenerateDataset(DataVectorType *initDataset,
   }
   std::cout << "longitude size:" << ds.size() << std::endl;
 
-  ds.erase(ds.begin() + kDatasetSize + round(kTestSize * (1 - proportion)),
+  ds.erase(ds.begin() + carmi_params::kDatasetSize + round(carmi_params::kTestSize * (1 - proportion)),
            ds.end());
   SplitInitTest(false, initDataset, trainFindQuery, trainInsertQuery,
                 trainInsertIndex, testInsertQuery, &ds);
