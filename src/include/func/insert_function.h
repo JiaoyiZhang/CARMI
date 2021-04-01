@@ -209,7 +209,8 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
         return false;
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {
-        // TODO(Jiaoyi): change the right bound.
+        if (curr >= entireDataSize) return false;
+
         int left = entireChild[idx].externalArray.m_left;
         int size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
 
@@ -222,17 +223,16 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
           left = entireChild[idx].externalArray.m_left;
           size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
         }
-
-        externalData[curr] = data;
         if (size > 0) {
           entireChild[idx].externalArray.flagNumber++;
         } else if (size == 0) {
           entireChild[idx].externalArray.m_left = curr;
           entireChild[idx].externalArray.flagNumber++;
-          Train(entireChild[idx].externalArray.m_left, 1, externalData,
+          DataVectorType trainData;
+          trainData.push_back(data);
+          Train(entireChild[idx].externalArray.m_left, 1, trainData,
                 &entireChild[idx].externalArray);
         }
-        curr++;
         return true;
       }
     }

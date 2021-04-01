@@ -14,6 +14,7 @@
 #define PARAM_ZIPFIAN 0.99
 #define DEBUG
 // #define BASELINE
+// #define EXTERNAL
 
 #include <utility>
 #include <vector>

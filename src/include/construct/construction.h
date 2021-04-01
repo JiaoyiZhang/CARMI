@@ -79,12 +79,7 @@ inline void CARMI<KeyType, ValueType>::Construction(
   ConstructSubTree(res, subDataset, &nodeCost);
   UpdateLeaf();
 
-  if (carmi_params::kPrimaryIndex) {
-    DataVectorType tmp(100000, {DBL_MIN, DBL_MIN});
-    externalData.insert(externalData.end(), tmp.begin(), tmp.end());
-    nowDataSize += 100000;
-    DataVectorType().swap(entireData);
-  } else {
+  if (!carmi_params::kPrimaryIndex) {
     entireData.erase(
         entireData.begin() + nowDataSize + carmi_params::kReservedSpace,
         entireData.end());

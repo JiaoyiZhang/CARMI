@@ -13,6 +13,7 @@
 #define SRC_EXPERIMENT_WORKLOAD_WORKLOADS_H_
 
 #include <chrono>
+#include <utility>
 #include <vector>
 
 #include "../../include/carmi.h"
@@ -64,10 +65,10 @@ void PrintAvgTime(double time) {
 
 // write heavy workload
 // a mix of 50/50 reads and writes
-template <typename KeyType, typename ValueType>
+template <typename CarmiType, typename KeyType, typename ValueType>
 void WorkloadA(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
                const carmi_params::TestDataVecType &insertDataset,
-               CARMI<KeyType, ValueType> *carmi) {
+               CarmiType *carmi) {
   carmi_params::TestDataVecType findQuery;
   carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
@@ -81,12 +82,24 @@ void WorkloadA(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
       carmi->Find(findQuery[index[i]].first);
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+      carmi->Insert(data);
+#else
       carmi->Insert(insertQuery[i]);
+#endif  // EXTERNAL
     }
   } else {
     for (int i = 0; i < end; i++) {
       carmi->Find(findQuery[i].first);
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+      carmi->Insert(data);
+#else
       carmi->Insert(insertQuery[i]);
+#endif  // EXTERNAL
     }
   }
   e = std::chrono::system_clock::now();
@@ -98,9 +111,19 @@ void WorkloadA(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
   s = std::chrono::system_clock::now();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+#else
+#endif  // EXTERNAL
     }
   } else {
     for (int i = 0; i < end; i++) {
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+#else
+#endif  // EXTERNAL
     }
   }
   e = std::chrono::system_clock::now();
@@ -115,10 +138,10 @@ void WorkloadA(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
 
 // read heavy workload
 // a mix of 95/5 reads and writes
-template <typename KeyType, typename ValueType>
+template <typename CarmiType, typename KeyType, typename ValueType>
 void WorkloadB(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
                const carmi_params::TestDataVecType &insertDataset,
-               CARMI<KeyType, ValueType> *carmi) {
+               CarmiType *carmi) {
   carmi_params::TestDataVecType findQuery;
   carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
@@ -137,14 +160,26 @@ void WorkloadB(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
         carmi->Find(findQuery[index[findCnt]].first);
         findCnt++;
       }
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+      carmi->Insert(data);
+#else
       carmi->Insert(insertQuery[i]);
+#endif  // EXTERNAL
     }
   } else {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
         carmi->Find(findQuery[findCnt++].first);
       }
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+      carmi->Insert(data);
+#else
       carmi->Insert(insertQuery[i]);
+#endif  // EXTERNAL
     }
   }
   e = std::chrono::system_clock::now();
@@ -158,10 +193,18 @@ void WorkloadB(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19; j++) findCnt++;
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+#endif  // EXTERNAL
     }
   } else {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) findCnt++;
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+#endif  // EXTERNAL
     }
   }
   e = std::chrono::system_clock::now();
@@ -176,9 +219,9 @@ void WorkloadB(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
 
 // read only workload
 // 100% read
-template <typename KeyType, typename ValueType>
+template <typename CarmiType, typename KeyType, typename ValueType>
 void WorkloadC(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
-               CARMI<KeyType, ValueType> *carmi) {
+               CarmiType *carmi) {
   carmi_params::TestDataVecType findQuery;
   carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
@@ -225,10 +268,10 @@ void WorkloadC(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
 
 // write partial workload
 // a mix of 85/15 reads and writes
-template <typename KeyType, typename ValueType>
+template <typename CarmiType, typename KeyType, typename ValueType>
 void WorkloadD(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
                const carmi_params::TestDataVecType &insertDataset,
-               CARMI<KeyType, ValueType> *carmi) {
+               CarmiType *carmi) {
   carmi_params::TestDataVecType findQuery;
   carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
@@ -251,7 +294,14 @@ void WorkloadD(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
         findCnt++;
       }
       for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+#ifdef EXTERNAL
+        std::pair<KeyType, std::vector<KeyType>> data = {
+            insertQuery[insertCnt].first,
+            std::vector<KeyType>(1, insertQuery[i].second)};
+        carmi->Insert(data);
+#else
         carmi->Insert(insertQuery[insertCnt]);
+#endif  // EXTERNAL
         insertCnt++;
       }
     }
@@ -262,7 +312,14 @@ void WorkloadD(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
         findCnt++;
       }
       for (int j = 0; j < 3 && insertCnt < insert_length; j++) {
+#ifdef EXTERNAL
+        std::pair<KeyType, std::vector<KeyType>> data = {
+            insertQuery[insertCnt].first,
+            std::vector<KeyType>(1, insertQuery[i].second)};
+        carmi->Insert(data);
+#else
         carmi->Insert(insertQuery[insertCnt]);
+#endif  // EXTERNAL
         insertCnt++;
       }
     }
@@ -279,7 +336,14 @@ void WorkloadD(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
   if (isZipfian) {
     for (int i = 0; i < insert_length; i++) {
       for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) findCnt++;
-      for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) insertCnt++;
+      for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+#ifdef EXTERNAL
+        std::pair<KeyType, std::vector<KeyType>> data = {
+            insertQuery[insertCnt].first,
+            std::vector<KeyType>(1, insertQuery[i].second)};
+#endif  // EXTERNAL
+        insertCnt++;
+      }
     }
   } else {
     for (int i = 0; i < insert_length; i++) {
@@ -287,6 +351,11 @@ void WorkloadD(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
         findCnt++;
       }
       for (int j = 0; j < 3 && insertCnt < insert_length; j++) {
+#ifdef EXTERNAL
+        std::pair<KeyType, std::vector<KeyType>> data = {
+            insertQuery[insertCnt].first,
+            std::vector<KeyType>(1, insertQuery[i].second)};
+#endif  // EXTERNAL
         insertCnt++;
       }
     }
@@ -303,11 +372,10 @@ void WorkloadD(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
 
 // read mostly workload (range scan)
 // a mix of 95/5 reads and writes
-template <typename KeyType, typename ValueType>
+template <typename CarmiType, typename KeyType, typename ValueType>
 void WorkloadE(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
                const carmi_params::TestDataVecType &insertDataset,
-               const std::vector<int> &length,
-               CARMI<KeyType, ValueType> *carmi) {
+               const std::vector<int> &length, CarmiType *carmi) {
   carmi_params::TestDataVecType findQuery;
   carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
@@ -326,24 +394,36 @@ void WorkloadE(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
         auto it = carmi->Find(findQuery[index[findCnt]].first);
         for (int l = 0; l < length[index[findCnt]] && it != it.end(); l++) {
-          ret[l] = {it.key(), it.data()};
+          ret[l] = {it.key(), it.key()};
           ++it;
         }
         findCnt++;
       }
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+      carmi->Insert(data);
+#else
       carmi->Insert(insertQuery[i]);
+#endif  // EXTERNAL
     }
   } else {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
         auto it = carmi->Find(findQuery[findCnt].first);
         for (int l = 0; l < length[findCnt] && it != it.end(); l++) {
-          ret[l] = {it.key(), it.data()};
+          ret[l] = {it.key(), it.key()};
           ++it;
         }
         findCnt++;
       }
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+      carmi->Insert(data);
+#else
       carmi->Insert(insertQuery[i]);
+#endif  // EXTERNAL
     }
   }
   e = std::chrono::system_clock::now();
@@ -357,20 +437,28 @@ void WorkloadE(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        typename CARMI<KeyType, ValueType>::iterator it;
+        typename CarmiType::iterator it;
         for (int l = 0; l < length[index[findCnt]]; l++) {
         }
         findCnt++;
       }
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+#endif  // EXTERNAL
     }
   } else {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        typename CARMI<KeyType, ValueType>::iterator it;
+        typename CarmiType::iterator it;
         for (int l = 0; l < length[findCnt]; l++) {
         }
         findCnt++;
       }
+#ifdef EXTERNAL
+      std::pair<KeyType, std::vector<KeyType>> data = {
+          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
+#endif  // EXTERNAL
     }
   }
   e = std::chrono::system_clock::now();

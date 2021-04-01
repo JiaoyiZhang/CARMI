@@ -29,87 +29,30 @@ class CARMI {
   typedef std::vector<DataType> DataVectorType;
 
  public:
+  CARMI() {}
   CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
         int kLeafID);  // for static structure
   CARMI(const DataVectorType &initData, const DataVectorType &findData,
         const DataVectorType &insertData, const std::vector<int> &insertIndex,
         double rate, int thre);
-
-  class iterator {
-   public:
-    inline iterator() : currnode(NULL), currslot(0) {}
-    inline iterator(CARMI *t, BaseNode *l, int s)
-        : tree(t), currnode(l), currslot(s) {}
-    inline const double key() const {
-      if (currnode == NULL) {
-        return DBL_MIN;
-      }
-      int left;
-      if (carmi_params::kPrimaryIndex) {
-        left = currnode->externalArray.m_left;
-        return tree->externalData[left + currslot].first;
-      } else {
-        left = currnode->array.m_left;
-        return tree->entireData[left + currslot].first;
-      }
-    }
-    inline const double data() const {
-      if (currnode == NULL) {
-        return DBL_MIN;
-      }
-      int left;
-      if (carmi_params::kPrimaryIndex) {
-        left = currnode->externalArray.m_left;
-        return tree->externalData[left + currslot].second;
-      } else {
-        left = currnode->array.m_left;
-        return tree->entireData[left + currslot].second;
-      }
-    }
-    inline iterator &end() const {
-      static iterator it;
-      it.currnode = NULL;
-      it.currslot = -1;
-      return it;
-    }
-    inline bool operator==(const iterator &x) const {
-      return (x.currnode == currnode) && (x.currslot == currslot);
-    }
-    inline bool operator!=(const iterator &x) const {
-      return (x.currnode != currnode) || (x.currslot != currslot);
-    }
-
-    inline iterator &operator++() {
-      if (!carmi_params::kPrimaryIndex) {
-        int left = currnode->array.m_left;
-        while (currslot < (currnode->array.flagNumber & 0x00FFFFFF) ||
-               currnode->array.nextLeaf != -1) {
-          currslot++;
-          if (tree->entireData[left + currslot].first != DBL_MIN) return *this;
-          if (currslot == (currnode->array.flagNumber & 0x00FFFFFF))
-            currnode = &(tree->entireChild[currnode->array.nextLeaf]);
-        }
-        return end();
-      } else {
-        int left = currnode->externalArray.m_left;
-        if (tree->externalData[left + currslot].first != DBL_MIN) {
-          currslot++;
-          return *this;
-        } else {
-          return end();
-        }
-      }
-    }
-
-   private:
-    CARMI *tree;
-    BaseNode *currnode;
-    int currslot;
-  };
+  CARMI &operator=(const CARMI &p) {
+    firstLeaf = p.firstLeaf;
+    emptyNode.ga = p.emptyNode.ga;
+    kAlgorithmThreshold = p.kAlgorithmThreshold;
+    kRate = p.kRate;
+    nowDataSize = p.nowDataSize;
+    initDataset = p.initDataset;
+    findQuery = p.findQuery;
+    insertQuery = p.insertQuery;
+    insertQueryIndex = p.insertQueryIndex;
+    querySize = p.querySize;
+    entireChild = p.entireChild;
+    return *this;
+  }
 
   // main functions
  public:
-  iterator Find(double key);
+  BaseNode *Find(double key, int *currslot);
   bool Insert(DataType data);
   bool Update(DataType data);
   bool Delete(double key);
@@ -119,13 +62,16 @@ class CARMI {
                       std::vector<int> *levelVec,
                       std::vector<int> *nodeVec) const;
 
- private:
   // construction algorithms
   // main function
   void Construction(const DataVectorType &initData,
                     const DataVectorType &findData,
                     const DataVectorType &insertData);
 
+  void InitEntireData(int left, int size, bool reinit);
+  void InitEntireChild(int size);
+
+ private:
   // root
   template <typename TYPE, typename ModelType>
   void IsBetterRoot(int c, NodeType type, double time_cost, double *optimalCost,
@@ -173,9 +119,6 @@ class CARMI {
 
  private:
   // manage entireData and entireChild
-  void InitEntireData(int left, int size, bool reinit);
-  void InitEntireChild(int size);
-
   int AllocateMemory(int size);
   void ReleaseMemory(int left, int size);
 
@@ -269,15 +212,20 @@ class CARMI {
   int rootType;
   std::vector<BaseNode> entireChild;
   DataVectorType entireData;
-  DataVectorType externalData;
+  KeyType *external_data;
+  int kRecordLen;
 
   int curr;  // the current insert index for external array
+
+ public:
+  bool kIsWriteHeavy;
+  int firstLeaf;
+  unsigned int nowDataSize;
+  unsigned int entireDataSize;
 
  private:
   unsigned int entireChildNumber;
   unsigned int nowChildNumber;
-  unsigned int nowDataSize;
-  unsigned int entireDataSize;
   std::vector<EmptyBlock> emptyBlocks;
 
   DataVectorType initDataset;
@@ -298,7 +246,6 @@ class CARMI {
   int querySize;
   double kRate;
   int kAlgorithmThreshold;
-  bool kIsWriteHeavy;  // TODO
 
   int kLeafNodeID;   // for static structure
   int kInnerNodeID;  // for static structure
@@ -330,6 +277,7 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
                                  const DataVectorType &insertData,
                                  const std::vector<int> &insertIndex,
                                  double rate, int thre) {
+  firstLeaf = -1;
   emptyNode.ga = GappedArrayType(kThreshold);
   kAlgorithmThreshold = thre;
   kRate = rate;
@@ -346,15 +294,6 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
     querySize += insertData[i].second;
   }
 
-  if (!carmi_params::kPrimaryIndex) {
-    InitEntireData(0, initDataset.size(), false);
-  } else {
-    externalData = initDataset;
-    externalData.erase(externalData.begin() + carmi_params::kExternalInsertLeft,
-                       externalData.end());
-    curr = carmi_params::kExternalInsertLeft;
-  }
   InitEntireChild(initDataset.size());
-  Construction(initData, findData, insertData);
 }
 #endif  // SRC_INCLUDE_CARMI_H_

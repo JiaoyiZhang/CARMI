@@ -43,22 +43,22 @@ void RunStatic(double initRatio, int kLeafID,
         break;
     }
 
-    if (initRatio == carmi_params::kWriteHeavy)
-      WorkloadA<carmi_params::TestKeyType, carmi_params::TestValueType>(
-          false, initDataset, testInsertQuery, &carmi);  // write-heavy
-    else if (initRatio == carmi_params::kReadHeavy)
-      WorkloadB<carmi_params::TestKeyType, carmi_params::TestValueType>(
-          false, initDataset, testInsertQuery, &carmi);  // read-heavy
-    else if (initRatio == carmi_params::kReadOnly)
-      WorkloadC<carmi_params::TestKeyType, carmi_params::TestValueType>(
-          false, initDataset, &carmi);  // read-only
-    else if (initRatio == carmi_params::kWritePartial)
-      WorkloadD<carmi_params::TestKeyType, carmi_params::TestValueType>(
-          false, initDataset, testInsertQuery, &carmi);  // write-partial
-    else if (initRatio == carmi_params::kRangeScan)
-      WorkloadE<carmi_params::TestKeyType, carmi_params::TestValueType>(
-          false, initDataset, testInsertQuery, length,
-          &carmi);  // range scan
+    // if (initRatio == carmi_params::kWriteHeavy)
+    //   WorkloadA<carmi_params::TestKeyType, carmi_params::TestValueType>(
+    //       false, initDataset, testInsertQuery, &carmi);  // write-heavy
+    // else if (initRatio == carmi_params::kReadHeavy)
+    //   WorkloadB<carmi_params::TestKeyType, carmi_params::TestValueType>(
+    //       false, initDataset, testInsertQuery, &carmi);  // read-heavy
+    // else if (initRatio == carmi_params::kReadOnly)
+    //   WorkloadC<carmi_params::TestKeyType, carmi_params::TestValueType>(
+    //       false, initDataset, &carmi);  // read-only
+    // else if (initRatio == carmi_params::kWritePartial)
+    //   WorkloadD<carmi_params::TestKeyType, carmi_params::TestValueType>(
+    //       false, initDataset, testInsertQuery, &carmi);  // write-partial
+    // else if (initRatio == carmi_params::kRangeScan)
+    //   WorkloadE<carmi_params::TestKeyType, carmi_params::TestValueType>(
+    //       false, initDataset, testInsertQuery, length,
+    //       &carmi);  // range scan
   }
   outRes << std::endl;
 }

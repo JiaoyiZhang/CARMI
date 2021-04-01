@@ -117,6 +117,9 @@ void CARMI<KeyType, ValueType>::StoreOptimalNode(int storeIdx,
       break;
     }
   }
+  if (type >= ARRAY_LEAF_NODE && firstLeaf == -1) {
+    firstLeaf = storeIdx;
+  }
 }
 
 #endif  // SRC_INCLUDE_CONSTRUCT_STORE_NODE_H_

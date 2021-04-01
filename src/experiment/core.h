@@ -12,7 +12,8 @@
 #define SRC_EXPERIMENT_CORE_H_
 #include <vector>
 
-#include "../include/carmi.h"
+#include "../include/carmi_common.h"
+#include "../include/carmi_external.h"
 #include "../include/construct/construction.h"
 #include "../include/func/calculate_space.h"
 #include "../include/func/print_structure.h"
@@ -48,9 +49,35 @@ void Core(double initRatio, double rate, int thre,
   strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
   std::cout << "\nTEST time: " << tmpTime << std::endl;
 #endif
+  double l = 0, r = 1;
+  if (initRatio == carmi_params::kWritePartial) {
+    l = 0.6;
+    r = 0.9;
+  }
+  int record_size =
+      sizeof(carmi_params::TestKeyType) + sizeof(carmi_params::TestValueType);
+  carmi_params::TestKeyType *externalDataset;
+  if (carmi_params::kPrimaryIndex) {
+    int extLen =
+        initDataset.size() * record_size / sizeof(carmi_params::TestKeyType);
+    externalDataset = new carmi_params::TestKeyType[extLen];
+    for (int i = 0, j = 0; i < initDataset.size(); i++) {
+      *(externalDataset + j) = initDataset[i].first;
+      *(externalDataset + j + 1) = initDataset[i].second;
+      j += 2;  // due to <double, double>
+    }
+  }
 
-  CARMI<carmi_params::TestKeyType, carmi_params::TestValueType> carmi(
-      initDataset, trainFind, trainInsert, trainInsertIndex, rate, thre);
+#ifdef EXTERNAL
+  CARMIExternal<carmi_params::TestKeyType> carmi(
+      externalDataset, initDataset.size(), record_size, initRatio, rate, thre);
+#else
+  CARMICommon<carmi_params::TestKeyType, carmi_params::TestValueType> carmi(
+      initDataset, initDataset.size(), initRatio, rate, thre, l, r);
+#endif
+
+  // CARMI<carmi_params::TestKeyType, carmi_params::TestValueType> carmi(
+  //     initDataset, trainFind, trainInsert, trainInsertIndex, rate, thre);
   if (carmi_params::kPrimaryIndex) {
     init.erase(init.begin() + carmi_params::kExternalInsertLeft, init.end());
   }
@@ -69,7 +96,7 @@ void Core(double initRatio, double rate, int thre,
   std::vector<int> nodeVec(11, 0);
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
   std::cout << "print structure:" << std::endl;
-  carmi.PrintStructure(1, NodeType(carmi.rootType), 0, &levelVec, &nodeVec);
+  carmi.PrintStructure(1, NodeType(carmi.RootType()), 0, &levelVec, &nodeVec);
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 
   for (int i = 0; i < 20; i++) {
@@ -83,40 +110,53 @@ void Core(double initRatio, double rate, int thre,
     nodeVec[i] = 0;
   }
 #endif
-
+#ifdef EXTERNAL
+  typedef CARMIExternal<carmi_params::TestKeyType> CarmiType;
+#else
+  typedef CARMICommon<carmi_params::TestKeyType, carmi_params::TestValueType>
+      CarmiType;
+#endif
   // zipfian
   if (initRatio == carmi_params::kWriteHeavy)
-    WorkloadA<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        true, init, testInsertQuery, &carmi);  // write-heavy
+    WorkloadA<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(true, init, testInsertQuery,
+                                           &carmi);  // write-heavy
   else if (initRatio == carmi_params::kReadHeavy)
-    WorkloadB<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        true, init, testInsertQuery, &carmi);  // read-heavy
+    WorkloadB<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(true, init, testInsertQuery,
+                                           &carmi);  // read-heavy
   else if (initRatio == carmi_params::kReadOnly)
-    WorkloadC<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        true, init, &carmi);  // read-only
+    WorkloadC<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(true, init, &carmi);  // read-only
   else if (initRatio == carmi_params::kWritePartial)
-    WorkloadD<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        true, init, testInsertQuery, &carmi);  // write-partial
+    WorkloadD<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(true, init, testInsertQuery,
+                                           &carmi);  // write-partial
   else if (initRatio == carmi_params::kRangeScan)
-    WorkloadE<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        true, init, testInsertQuery, length, &carmi);  // range scan
+    WorkloadE<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(true, init, testInsertQuery, length,
+                                           &carmi);  // range scan
 
   // uniform
   if (initRatio == carmi_params::kWriteHeavy)
-    WorkloadA<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        false, init, testInsertQuery, &carmi);  // write-heavy
+    WorkloadA<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(false, init, testInsertQuery,
+                                           &carmi);  // write-heavy
   else if (initRatio == carmi_params::kReadHeavy)
-    WorkloadB<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        false, init, testInsertQuery, &carmi);  // read-heavy
+    WorkloadB<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(false, init, testInsertQuery,
+                                           &carmi);  // read-heavy
   else if (initRatio == carmi_params::kReadOnly)
-    WorkloadC<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        false, init, &carmi);  // read-only
+    WorkloadC<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(false, init, &carmi);  // read-only
   else if (initRatio == carmi_params::kWritePartial)
-    WorkloadD<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        false, init, testInsertQuery, &carmi);  // write-partial
+    WorkloadD<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(false, init, testInsertQuery,
+                                           &carmi);  // write-partial
   else if (initRatio == carmi_params::kRangeScan)
-    WorkloadE<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        false, init, testInsertQuery, length, &carmi);  // range scan
+    WorkloadE<CarmiType, carmi_params::TestKeyType,
+              carmi_params::TestValueType>(false, init, testInsertQuery, length,
+                                           &carmi);  // range scan
 }
 
 #endif  // SRC_EXPERIMENT_CORE_H_

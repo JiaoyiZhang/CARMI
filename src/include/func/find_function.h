@@ -21,11 +21,10 @@
  * @brief find a record of the given key
  *
  * @param key
- * @return CARMI<KeyType, ValueType>::iterator of a node
+ * @return CARMI<KeyType, ValueType>::DataType of a node
  */
 template <typename KeyType, typename ValueType>
-typename CARMI<KeyType, ValueType>::iterator CARMI<KeyType, ValueType>::Find(
-    double key) {
+BaseNode* CARMI<KeyType, ValueType>::Find(double key, int* currslot) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {
@@ -61,54 +60,59 @@ typename CARMI<KeyType, ValueType>::iterator CARMI<KeyType, ValueType>::Find(
         int preIdx = entireChild[idx].array.Predict(key);
         int left = entireChild[idx].array.m_left;
 
-        if (entireData[left + preIdx].first == key)
-          return CARMI<KeyType, ValueType>::iterator(this, &entireChild[idx],
-                                                     preIdx);
+        if (entireData[left + preIdx].first == key) {
+          *currslot = preIdx;
+          return &entireChild[idx];
+        }
 
         preIdx =
             ArraySearch(key, preIdx, entireChild[idx].array.error, left, size);
         if (preIdx >= left + size || entireData[preIdx].first != key) {
-          CARMI<KeyType, ValueType>::iterator it;
-          return it.end();
+          *currslot = 0;
+          return NULL;
         }
-        return CARMI<KeyType, ValueType>::iterator(this, &entireChild[idx],
-                                                   preIdx - left);
+        *currslot = preIdx - left;
+        return &entireChild[idx];
       }
       case GAPPED_ARRAY_LEAF_NODE: {
         int left = entireChild[idx].ga.m_left;
         int maxIndex = entireChild[idx].ga.maxIndex;
         int preIdx = entireChild[idx].ga.Predict(key);
 
-        if (entireData[left + preIdx].first == key)
-          return CARMI<KeyType, ValueType>::iterator(this, &entireChild[idx],
-                                                     preIdx);
+        if (entireData[left + preIdx].first == key) {
+          *currslot = preIdx;
+          return &entireChild[idx];
+        }
 
         preIdx =
             GASearch(key, preIdx, entireChild[idx].ga.error, left, maxIndex);
         if (preIdx > left + maxIndex || entireData[preIdx].first != key) {
-          CARMI<KeyType, ValueType>::iterator it;
-          return it.end();
+          *currslot = 0;
+          return NULL;
         }
-        return CARMI<KeyType, ValueType>::iterator(this, &entireChild[idx],
-                                                   preIdx - left);
+        *currslot = preIdx - left;
+        return &entireChild[idx];
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
         int preIdx = entireChild[idx].externalArray.Predict(key);
         auto left = entireChild[idx].externalArray.m_left;
-        if (externalData[left + preIdx].first == key)
-          return CARMI<KeyType, ValueType>::iterator(this, &entireChild[idx],
-                                                     preIdx);
+
+        if (*(external_data + (left + preIdx) * kRecordLen) == key) {
+          *currslot = preIdx;
+          return &entireChild[idx];
+        }
 
         preIdx = ExternalSearch(
             key, preIdx, entireChild[idx].externalArray.error, left, size);
 
-        if (preIdx >= left + size || externalData[preIdx].first != key) {
-          CARMI<KeyType, ValueType>::iterator it;
-          return it.end();
+        if (preIdx >= left + size ||
+            *(external_data + preIdx * kRecordLen) != key) {
+          *currslot = 0;
+          return NULL;
         }
-        return CARMI<KeyType, ValueType>::iterator(this, &entireChild[idx],
-                                                   preIdx - left);
+        *currslot = preIdx - left;
+        return &entireChild[idx];
       }
     }
 

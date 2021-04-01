@@ -86,7 +86,7 @@ inline int CARMI<KeyType, ValueType>::ExternalBinarySearch(double key,
                                                            int end) const {
   while (start < end) {
     int mid = (start + end) / 2;
-    if (externalData[mid].first < key)
+    if (*(external_data + mid * kRecordLen) < key)
       start = mid + 1;
     else
       end = mid;
@@ -169,9 +169,9 @@ inline int CARMI<KeyType, ValueType>::ExternalSearch(double key, int preIdx,
   int end = std::min(size - 1, preIdx + error) + left;
   start = std::min(start, end);
   int res;
-  if (key <= externalData[start].first)
+  if (key <= *(external_data + start * kRecordLen))
     res = ExternalBinarySearch(key, left, start);
-  else if (key <= externalData[end].first)
+  else if (key <= *(external_data + end * kRecordLen))
     res = ExternalBinarySearch(key, start, end);
   else
     res = ExternalBinarySearch(key, end, left + size - 1);

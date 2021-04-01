@@ -67,6 +67,7 @@ void mainExperiment(int thre) {
 }
 
 void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
+#ifndef EXTERNAL
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                "&&&&&&&"
             << std::endl;
@@ -111,6 +112,7 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
     btree_test(initRatio, initData, testInsert, length);
     artTree_test(initRatio, initData, testInsert, length);
 #endif  // BASELINE
+
     Core(initRatio, kRate, thre, length, trainInsertIndex, initData, trainFind,
          trainInsert, testInsert);
 
@@ -149,9 +151,11 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
 
     outRes << std::endl;
   }
+#endif
 }
 
 void mainMap(double initRatio, int thre, const std::vector<int> &length) {
+#ifndef EXTERNAL
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                "&&&&&&&"
             << std::endl;
@@ -214,9 +218,11 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
 
     outRes << std::endl;
   }
+#endif
 }
 
 void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
+#ifdef EXTERNAL
   carmi_params::kPrimaryIndex = true;
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                "&&&&&&&"
@@ -267,6 +273,7 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
     outRes << std::endl;
   }
   carmi_params::kPrimaryIndex = false;
+#endif
 }
 
 #endif  // SRC_EXPERIMENT_MAIN_EXPERIMENT_H_
