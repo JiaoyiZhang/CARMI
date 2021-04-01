@@ -17,10 +17,11 @@
 
 /**
  * @brief calculate the space of CARMI
- * 
+ *
  * @return long double the space
  */
-long double CARMI::CalculateSpace() const {
+template <typename KeyType, typename ValueType>
+long double CARMI<KeyType, ValueType>::CalculateSpace() const {
   long double space_cost = 0;
 
   switch (rootType) {

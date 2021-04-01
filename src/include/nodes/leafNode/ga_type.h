@@ -46,11 +46,13 @@ inline int GappedArrayType::Predict(double key) const {
  * @param subDataset
  * @param ga leaf node
  */
-inline void CARMI::Init(int cap, int left, int size,
-                        const carmi_params::DataVectorType &subDataset, GappedArrayType *ga) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Init(int cap, int left, int size,
+                                            const DataVectorType &subDataset,
+                                            GappedArrayType *ga) {
   if (size == 0) return;
   int actualSize = 0;
-  carmi_params::DataVectorType newDataset = ExtractData(left, size, subDataset, &actualSize);
+  DataVectorType newDataset = ExtractData(left, size, subDataset, &actualSize);
 
   Train(0, actualSize, newDataset, ga);
   StoreData(cap, 0, actualSize, newDataset, ga);
@@ -65,9 +67,10 @@ inline void CARMI::Init(int cap, int left, int size,
  * @param subDataset
  * @param ga leaf node
  */
-inline void CARMI::StoreData(int cap, int left, int size,
-                             const carmi_params::DataVectorType &dataset,
-                             GappedArrayType *ga) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::StoreData(int cap, int left, int size,
+                                                 const DataVectorType &dataset,
+                                                 GappedArrayType *ga) {
   if (ga->m_left != -1) {
     ReleaseMemory(ga->m_left, ga->capacity);
   }
@@ -118,8 +121,10 @@ inline void CARMI::StoreData(int cap, int left, int size,
  * @param dataset
  * @param ga leaf node
  */
-inline void CARMI::Train(int start_idx, int size, const carmi_params::DataVectorType &dataset,
-                         GappedArrayType *ga) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Train(int start_idx, int size,
+                                             const DataVectorType &dataset,
+                                             GappedArrayType *ga) {
   if ((ga->flagNumber & 0x00FFFFFF) != size) {
     ga->flagNumber = (GAPPED_ARRAY_LEAF_NODE << 24) + size;
   }
@@ -128,7 +133,7 @@ inline void CARMI::Train(int start_idx, int size, const carmi_params::DataVector
 
   ga->maxIndex = size;
 
-  carmi_params::DataVectorType data = SetY(start_idx, size, dataset);
+  DataVectorType data = SetY(start_idx, size, dataset);
   LRTrain(0, size, data, &(ga->theta1), &(ga->theta2));
 
   FindOptError<GappedArrayType>(0, size, data, ga);

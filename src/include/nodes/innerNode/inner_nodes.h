@@ -23,7 +23,6 @@ class LRModel {
  public:
   LRModel() = default;
   void SetChildNumber(int c) { flagNumber = (LR_INNER_NODE << 24) + c; }
-  void Train(const carmi_params::DataVectorType &dataset);
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + childNumber)

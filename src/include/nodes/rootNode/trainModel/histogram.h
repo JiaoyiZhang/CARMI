@@ -35,7 +35,7 @@ class HistogramModel {
     offset = his.offset;
     base = his.base;
   }
-  void Train(const carmi_params::DataVectorType &dataset, int len);
+  void Train(const carmi_params::TestDataVecType &dataset, int len);
   int Predict(double key) const {
     // return the idx in children
     int idx = static_cast<float>(key - minValue) / value;
@@ -62,7 +62,8 @@ class HistogramModel {
   float minValue;   // 8B
 };
 
-void HistogramModel::Train(const carmi_params::DataVectorType &dataset, int len) {
+void HistogramModel::Train(const carmi_params::TestDataVecType &dataset,
+                           int len) {
   int actualChildNumber = childNumber / 2;
   if (dataset.size() == 0) return;
   double maxValue = dataset[dataset.size() - 1].first;

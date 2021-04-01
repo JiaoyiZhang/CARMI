@@ -28,8 +28,8 @@
 extern std::ofstream outRes;
 
 void artTree_test(bool isZipfian, double initRatio,
-                  const carmi_params::DataVectorType &findDataset,
-                  const carmi_params::DataVectorType &insertDataset,
+                  const carmi_params::TestDataVecType &findDataset,
+                  const carmi_params::TestDataVecType &insertDataset,
                   const std::vector<int> &length) {
   outRes << "artTree,";
   std::cout << "artTree,";
@@ -44,8 +44,8 @@ void artTree_test(bool isZipfian, double initRatio,
   }
   std::cout << "init over" << std::endl;
 
-  carmi_params::DataVectorType findQuery;
-  carmi_params::DataVectorType insertQuery;
+  carmi_params::TestDataVecType findQuery;
+  carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
   double tmp;
 
@@ -191,7 +191,7 @@ void artTree_test(bool isZipfian, double initRatio,
   } else if (initRatio == carmi_params::kReadOnly) {
     int end = carmi_params::kTestSize * carmi_params::kReadOnly;
     InitTestSet(carmi_params::kReadOnly, findDataset,
-                carmi_params::DataVectorType(), &findQuery, &insertQuery,
+                carmi_params::TestDataVecType(), &findQuery, &insertQuery,
                 &index);
 
     std::chrono::_V2::system_clock::time_point s, e;

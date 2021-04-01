@@ -18,12 +18,13 @@
 #include "inlineFunction.h"
 /**
  * @brief update a record of the given key
- * 
- * @param data 
+ *
+ * @param data
  * @return true if the operation succeeds
  * @return false if the operation fails
  */
-bool CARMI::Update(carmi_params::DataType data) {
+template <typename KeyType, typename ValueType>
+bool CARMI<KeyType, ValueType>::Update(DataType data) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {

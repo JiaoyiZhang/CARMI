@@ -25,8 +25,10 @@
  * @param dataset
  * @param bs model
  */
-inline void CARMI::Train(const int left, const int size,
-                         const carmi_params::DataVectorType &dataset, BSModel *bs) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
+                                             const DataVectorType &dataset,
+                                             BSModel *bs) {
   if (size == 0) return;
   int childNumber = bs->flagNumber & 0x00FFFFFF;
   float value = static_cast<float>(size) / childNumber;

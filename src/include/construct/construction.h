@@ -26,9 +26,10 @@
  * @param subDataset the left and size of data points in each child node
  * @param nodeCost the space, time, cost of the index (is added ...)
  */
-inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
-                                    const SubDataset &subDataset,
-                                    NodeCost *nodeCost) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::ConstructSubTree(
+    const RootStruct &rootStruct, const SubDataset &subDataset,
+    NodeCost *nodeCost) {
   for (int i = 0; i < rootStruct.rootChildNum; i++) {
     COST.insert({emptyRange, emptyCost});
     structMap.insert({emptyRange, emptyNode});
@@ -61,10 +62,10 @@ inline void CARMI::ConstructSubTree(const RootStruct &rootStruct,
  * @param findData the find queries used to training CARMI
  * @param insertData the insert queries used to training CARMI
  */
-inline void CARMI::Construction(
-    const carmi_params::DataVectorType &initData,
-    const carmi_params::DataVectorType &findData,
-    const carmi_params::DataVectorType &insertData) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Construction(
+    const DataVectorType &initData, const DataVectorType &findData,
+    const DataVectorType &insertData) {
   NodeCost nodeCost = emptyCost;
 #ifndef DEBUG
   RootStruct res = ChooseRoot();
@@ -79,18 +80,18 @@ inline void CARMI::Construction(
   UpdateLeaf();
 
   if (carmi_params::kPrimaryIndex) {
-    carmi_params::DataVectorType tmp(100000, {DBL_MIN, DBL_MIN});
+    DataVectorType tmp(100000, {DBL_MIN, DBL_MIN});
     externalData.insert(externalData.end(), tmp.begin(), tmp.end());
     nowDataSize += 100000;
-    carmi_params::DataVectorType().swap(entireData);
+    DataVectorType().swap(entireData);
   } else {
     entireData.erase(
         entireData.begin() + nowDataSize + carmi_params::kReservedSpace,
         entireData.end());
   }
-  carmi_params::DataVectorType().swap(initDataset);
-  carmi_params::DataVectorType().swap(findQuery);
-  carmi_params::DataVectorType().swap(insertQuery);
+  DataVectorType().swap(initDataset);
+  DataVectorType().swap(findQuery);
+  DataVectorType().swap(insertQuery);
   std::vector<int>().swap(insertQueryIndex);
 
 #ifdef DEBUG

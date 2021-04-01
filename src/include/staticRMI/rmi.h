@@ -16,8 +16,9 @@
 #include "../carmi.h"
 
 // RMI
-CARMI::CARMI(const carmi_params::DataVectorType &dataset, int childNum,
-             int kInnerID, int kLeafID) {
+template <typename KeyType, typename ValueType>
+CARMI<KeyType, ValueType>::CARMI(const DataVectorType &dataset, int childNum,
+                                 int kInnerID, int kLeafID) {
   nowDataSize = 0;
   kLeafNodeID = kLeafID;
   kInnerNodeID = kInnerID;
@@ -43,8 +44,10 @@ CARMI::CARMI(const carmi_params::DataVectorType &dataset, int childNum,
   }
 }
 
+template <typename KeyType, typename ValueType>
 template <typename ROOTTYPE, typename ROOTMODEL, typename INNERTYPE>
-inline ROOTTYPE CARMI::InitSRMIRoot(int childNum, const IndexPair &range) {
+inline ROOTTYPE CARMI<KeyType, ValueType>::InitSRMIRoot(
+    int childNum, const IndexPair &range) {
   ROOTTYPE node(childNum);
   node.childLeft = AllocateChildMemory(childNum);
 
@@ -62,8 +65,10 @@ inline ROOTTYPE CARMI::InitSRMIRoot(int childNum, const IndexPair &range) {
   return node;
 }
 
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-inline void CARMI::InitSRMILeaf(const IndexPair &range, TYPE *node) {
+inline void CARMI<KeyType, ValueType>::InitSRMILeaf(const IndexPair &range,
+                                                    TYPE *node) {
   node->SetChildNumber(carmi_params::kRMIInnerChild);
   int childNumber = node->flagNumber & 0x00FFFFFF;
   node->childLeft = AllocateChildMemory(childNumber);

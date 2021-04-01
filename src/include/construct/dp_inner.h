@@ -29,11 +29,14 @@
  * @param optimalCost the optimal cost of the previous setting
  * @param optimal_node_struct the optimal setting
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-void CARMI::ChooseBetterInner(int c, NodeType type, double frequency_weight,
-                              double time_cost, const DataRange &dataRange,
-                              NodeCost *optimalCost,
-                              TYPE *optimal_node_struct) {
+void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
+                                                  double frequency_weight,
+                                                  double time_cost,
+                                                  const DataRange &dataRange,
+                                                  NodeCost *optimalCost,
+                                                  TYPE *optimal_node_struct) {
   double space_cost = carmi_params::kBaseNodeSpace * c;  // MB
   time_cost = time_cost * frequency_weight;
   double RootCost = time_cost + kRate * space_cost;
@@ -67,7 +70,8 @@ void CARMI::ChooseBetterInner(int c, NodeType type, double frequency_weight,
  * @param dataRange the range of data points in this node
  * @return NodeCost the optimal cost of this subtree
  */
-NodeCost CARMI::DPInner(const DataRange &dataRange) {
+template <typename KeyType, typename ValueType>
+NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct = emptyNode;

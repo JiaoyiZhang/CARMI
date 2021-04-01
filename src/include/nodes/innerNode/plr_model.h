@@ -28,10 +28,12 @@
  * @param plr model
  */
 
-inline void CARMI::Train(const int left, const int size,
-                         const carmi_params::DataVectorType &dataset, PLRModel *plr) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
+                                             const DataVectorType &dataset,
+                                             PLRModel *plr) {
   int childNumber = plr->flagNumber & 0x00FFFFFF;
-  carmi_params::DataVectorType data(size, {-1, 0});
+  DataVectorType data(size, {-1, 0});
 
   int end = left + size;
   plr->keys[0] = dataset[left].first;
@@ -49,7 +51,7 @@ inline void CARMI::Train(const int left, const int size,
   }
 
   int cand_size = 100;
-  carmi_params::DataVectorType cand_point(cand_size, {0, 0});
+  DataVectorType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost cand_cost(cand_size);
   int seg = size / cand_size;

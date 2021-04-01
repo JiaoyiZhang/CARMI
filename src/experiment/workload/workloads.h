@@ -22,10 +22,10 @@
 
 extern std::ofstream outRes;
 
-void InitTestSet(int Ratio, const carmi_params::DataVectorType &findQueryset,
-                 const carmi_params::DataVectorType &insertDataset,
-                 carmi_params::DataVectorType *findQuery,
-                 carmi_params::DataVectorType *insertQuery,
+void InitTestSet(int Ratio, const carmi_params::TestDataVecType &findQueryset,
+                 const carmi_params::TestDataVecType &insertDataset,
+                 carmi_params::TestDataVecType *findQuery,
+                 carmi_params::TestDataVecType *insertQuery,
                  std::vector<int> *index) {
   (*findQuery) = findQueryset;  // -> findQueryset
   (*insertQuery) = insertDataset;
@@ -64,11 +64,12 @@ void PrintAvgTime(double time) {
 
 // write heavy workload
 // a mix of 50/50 reads and writes
-void WorkloadA(bool isZipfian, const carmi_params::DataVectorType &findDataset,
-               const carmi_params::DataVectorType &insertDataset,
-               CARMI *carmi) {
-  carmi_params::DataVectorType findQuery;
-  carmi_params::DataVectorType insertQuery;
+template <typename KeyType, typename ValueType>
+void WorkloadA(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
+               const carmi_params::TestDataVecType &insertDataset,
+               CARMI<KeyType, ValueType> *carmi) {
+  carmi_params::TestDataVecType findQuery;
+  carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
   int end = carmi_params::kTestSize * carmi_params::kWriteHeavy;
   InitTestSet(carmi_params::kWriteHeavy, findDataset, insertDataset, &findQuery,
@@ -114,11 +115,12 @@ void WorkloadA(bool isZipfian, const carmi_params::DataVectorType &findDataset,
 
 // read heavy workload
 // a mix of 95/5 reads and writes
-void WorkloadB(bool isZipfian, const carmi_params::DataVectorType &findDataset,
-               const carmi_params::DataVectorType &insertDataset,
-               CARMI *carmi) {
-  carmi_params::DataVectorType findQuery;
-  carmi_params::DataVectorType insertQuery;
+template <typename KeyType, typename ValueType>
+void WorkloadB(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
+               const carmi_params::TestDataVecType &insertDataset,
+               CARMI<KeyType, ValueType> *carmi) {
+  carmi_params::TestDataVecType findQuery;
+  carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
   InitTestSet(carmi_params::kReadHeavy, findDataset, insertDataset, &findQuery,
               &insertQuery, &index);
@@ -174,14 +176,16 @@ void WorkloadB(bool isZipfian, const carmi_params::DataVectorType &findDataset,
 
 // read only workload
 // 100% read
-void WorkloadC(bool isZipfian, const carmi_params::DataVectorType &findDataset,
-               CARMI *carmi) {
-  carmi_params::DataVectorType findQuery;
-  carmi_params::DataVectorType insertQuery;
+template <typename KeyType, typename ValueType>
+void WorkloadC(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
+               CARMI<KeyType, ValueType> *carmi) {
+  carmi_params::TestDataVecType findQuery;
+  carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
   int end = carmi_params::kTestSize * carmi_params::kReadOnly;
   InitTestSet(carmi_params::kReadOnly, findDataset,
-              carmi_params::DataVectorType(), &findQuery, &insertQuery, &index);
+              carmi_params::TestDataVecType(), &findQuery, &insertQuery,
+              &index);
 
   std::chrono::_V2::system_clock::time_point s, e;
   double tmp;
@@ -221,11 +225,12 @@ void WorkloadC(bool isZipfian, const carmi_params::DataVectorType &findDataset,
 
 // write partial workload
 // a mix of 85/15 reads and writes
-void WorkloadD(bool isZipfian, const carmi_params::DataVectorType &findDataset,
-               const carmi_params::DataVectorType &insertDataset,
-               CARMI *carmi) {
-  carmi_params::DataVectorType findQuery;
-  carmi_params::DataVectorType insertQuery;
+template <typename KeyType, typename ValueType>
+void WorkloadD(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
+               const carmi_params::TestDataVecType &insertDataset,
+               CARMI<KeyType, ValueType> *carmi) {
+  carmi_params::TestDataVecType findQuery;
+  carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
   InitTestSet(carmi_params::kWritePartial, findDataset, insertDataset,
               &findQuery, &insertQuery, &index);
@@ -298,11 +303,13 @@ void WorkloadD(bool isZipfian, const carmi_params::DataVectorType &findDataset,
 
 // read mostly workload (range scan)
 // a mix of 95/5 reads and writes
-void WorkloadE(bool isZipfian, const carmi_params::DataVectorType &findDataset,
-               const carmi_params::DataVectorType &insertDataset,
-               const std::vector<int> &length, CARMI *carmi) {
-  carmi_params::DataVectorType findQuery;
-  carmi_params::DataVectorType insertQuery;
+template <typename KeyType, typename ValueType>
+void WorkloadE(bool isZipfian, const carmi_params::TestDataVecType &findDataset,
+               const carmi_params::TestDataVecType &insertDataset,
+               const std::vector<int> &length,
+               CARMI<KeyType, ValueType> *carmi) {
+  carmi_params::TestDataVecType findQuery;
+  carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
   InitTestSet(carmi_params::kReadHeavy, findDataset, insertDataset, &findQuery,
               &insertQuery, &index);
@@ -310,7 +317,7 @@ void WorkloadE(bool isZipfian, const carmi_params::DataVectorType &findDataset,
   int end = round(carmi_params::kTestSize * (1 - carmi_params::kReadHeavy));
   int findCnt = 0;
 
-  carmi_params::DataVectorType ret(100, {-1, -1});
+  carmi_params::TestDataVecType ret(100, {-1, -1});
   std::chrono::_V2::system_clock::time_point s, e;
   double tmp;
   s = std::chrono::system_clock::now();
@@ -350,7 +357,7 @@ void WorkloadE(bool isZipfian, const carmi_params::DataVectorType &findDataset,
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        CARMI::iterator it;
+        typename CARMI<KeyType, ValueType>::iterator it;
         for (int l = 0; l < length[index[findCnt]]; l++) {
         }
         findCnt++;
@@ -359,7 +366,7 @@ void WorkloadE(bool isZipfian, const carmi_params::DataVectorType &findDataset,
   } else {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        CARMI::iterator it;
+        typename CARMI<KeyType, ValueType>::iterator it;
         for (int l = 0; l < length[findCnt]; l++) {
         }
         findCnt++;

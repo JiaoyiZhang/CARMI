@@ -38,8 +38,10 @@
  * @param range the left and size of the data points in initDataset
  * @return TYPE trained node
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-TYPE CARMI::StoreInnerNode(const IndexPair &range, TYPE *node) {
+TYPE CARMI<KeyType, ValueType>::StoreInnerNode(const IndexPair &range,
+                                               TYPE *node) {
   int optimalChildNumber = node->flagNumber & 0x00FFFFFF;
   SubDataset subDataset(optimalChildNumber);
 
@@ -61,7 +63,9 @@ TYPE CARMI::StoreInnerNode(const IndexPair &range, TYPE *node) {
  * @param optimalType the type of this node
  * @param range the left and size of the data points in initDataset
  */
-void CARMI::StoreOptimalNode(int storeIdx, const DataRange &range) {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::StoreOptimalNode(int storeIdx,
+                                                 const DataRange &range) {
   auto it = structMap.find(range.initRange);
 
   int type = it->second.array.flagNumber >> 24;

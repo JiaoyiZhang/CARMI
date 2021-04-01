@@ -36,7 +36,7 @@ class PiecewiseLR {
     point = node.point;
   }
 
-  void Train(const carmi_params::DataVectorType &dataset, int len);
+  void Train(const carmi_params::TestDataVecType &dataset, int len);
   int Predict(double key) const {
     int s = 0;
     int e = 8;
@@ -68,10 +68,10 @@ class PiecewiseLR {
   std::vector<std::pair<float, int>> point;  // <point.first, boundary>
 };
 
-void PiecewiseLR::Train(const carmi_params::DataVectorType &dataset, int len) {
+void PiecewiseLR::Train(const carmi_params::TestDataVecType &dataset, int len) {
   int size = dataset.size();
   if (size == 0) return;
-  carmi_params::DataVectorType data(size, {DBL_MIN, DBL_MIN});
+  carmi_params::TestDataVecType data(size, {DBL_MIN, DBL_MIN});
   data.insert(data.begin(), dataset.begin(), dataset.end());
 
   length = len - 1;
@@ -93,7 +93,7 @@ void PiecewiseLR::Train(const carmi_params::DataVectorType &dataset, int len) {
   }
 
   int cand_size = 1000;
-  carmi_params::DataVectorType cand_point(cand_size, {0, 0});
+  carmi_params::TestDataVecType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost cand_cost(cand_size);
   int seg = size / cand_size;

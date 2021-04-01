@@ -23,12 +23,13 @@
 
 /**
  * @brief insert a data point
- * 
+ *
  * @param data
  * @return true if the insertion is successful
  * @return false if the operation fails
  */
-bool CARMI::Insert(carmi_params::DataType data) {
+template <typename KeyType, typename ValueType>
+bool CARMI<KeyType, ValueType>::Insert(DataType data) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   int childIdx = 0;
@@ -90,7 +91,8 @@ bool CARMI::Insert(carmi_params::DataType data) {
 
         // expand
         if ((size >= entireChild[idx].array.m_capacity) &&
-            entireChild[idx].array.m_capacity < carmi_params::kLeafMaxCapacity) {
+            entireChild[idx].array.m_capacity <
+                carmi_params::kLeafMaxCapacity) {
           auto diff = preIdx - left;
           Init(entireChild[idx].array.m_capacity, left, size, entireData,
                &entireChild[idx].array);

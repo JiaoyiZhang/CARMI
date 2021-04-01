@@ -29,7 +29,8 @@
  * @param range the range of data points
  * @return NodeCost the cost of the subtree
  */
-NodeCost CARMI::DP(const DataRange &range) {
+template <typename KeyType, typename ValueType>
+NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
   NodeCost nodeCost;
   if (range.initRange.size == 0) {
     nodeCost = emptyCost;

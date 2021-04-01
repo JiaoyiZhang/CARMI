@@ -25,18 +25,18 @@ class BaseDataset {
  public:
   explicit BaseDataset(float init) { proportion = init; }
   virtual void GenerateDataset(
-      carmi_params::DataVectorType *initDataset,
-      carmi_params::DataVectorType *trainFindQuery,
-      carmi_params::DataVectorType *trainInsertQuery,
+      carmi_params::TestDataVecType *initDataset,
+      carmi_params::TestDataVecType *trainFindQuery,
+      carmi_params::TestDataVecType *trainInsertQuery,
       std::vector<int> *trainInsertIndex,
-      carmi_params::DataVectorType *testInsertQuery) = 0;
-  void SplitInitTest(bool NeedScale, carmi_params::DataVectorType *initDataset,
-                     carmi_params::DataVectorType *trainFindQuery,
-                     carmi_params::DataVectorType *trainInsertQuery,
+      carmi_params::TestDataVecType *testInsertQuery) = 0;
+  void SplitInitTest(bool NeedScale, carmi_params::TestDataVecType *initDataset,
+                     carmi_params::TestDataVecType *trainFindQuery,
+                     carmi_params::TestDataVecType *trainInsertQuery,
                      std::vector<int> *trainInsertIndex,
-                     carmi_params::DataVectorType *testInsertQuery,
-                     carmi_params::DataVectorType *dataset);
-  void ScaleDataset(carmi_params::DataVectorType *dataset) {
+                     carmi_params::TestDataVecType *testInsertQuery,
+                     carmi_params::TestDataVecType *dataset);
+  void ScaleDataset(carmi_params::TestDataVecType *dataset) {
     double diff = 0;
     double maxV = (*dataset)[(*dataset).size() - 1].first;
     if ((*dataset)[0].first < 0) {
@@ -54,16 +54,16 @@ class BaseDataset {
 };
 
 void BaseDataset::SplitInitTest(bool NeedScale,
-                                carmi_params::DataVectorType *initDataset,
-                                carmi_params::DataVectorType *trainFindQuery,
-                                carmi_params::DataVectorType *trainInsertQuery,
+                                carmi_params::TestDataVecType *initDataset,
+                                carmi_params::TestDataVecType *trainFindQuery,
+                                carmi_params::TestDataVecType *trainInsertQuery,
                                 std::vector<int> *trainInsertIndex,
-                                carmi_params::DataVectorType *testInsertQuery,
-                                carmi_params::DataVectorType *dataset) {
-  carmi_params::DataVectorType().swap(*initDataset);
-  carmi_params::DataVectorType().swap(*trainFindQuery);
-  carmi_params::DataVectorType().swap(*trainInsertQuery);
-  carmi_params::DataVectorType().swap(*testInsertQuery);
+                                carmi_params::TestDataVecType *testInsertQuery,
+                                carmi_params::TestDataVecType *dataset) {
+  carmi_params::TestDataVecType().swap(*initDataset);
+  carmi_params::TestDataVecType().swap(*trainFindQuery);
+  carmi_params::TestDataVecType().swap(*trainInsertQuery);
+  carmi_params::TestDataVecType().swap(*testInsertQuery);
   std::vector<int>().swap(*trainInsertIndex);
 
   if (NeedScale) {

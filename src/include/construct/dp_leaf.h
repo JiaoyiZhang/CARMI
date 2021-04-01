@@ -31,9 +31,11 @@
  * @param range the range of find queries
  * @return double the time cost of this leaf node
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
-                              const IndexPair &range) const {
+double CARMI<KeyType, ValueType>::CalLeafFindTime(
+    int actualSize, double density, const TYPE &node,
+    const IndexPair &range) const {
   double time_cost = 0;
   for (int i = range.left; i < range.left + range.size; i++) {
     auto predict = node.Predict(findQuery[i].first) + range.left;
@@ -63,10 +65,11 @@ double CARMI::CalLeafFindTime(int actualSize, double density, const TYPE &node,
  * @param findRange the range of find queries
  * @return double the time cost of this leaf node
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-double CARMI::CalLeafInsertTime(int actualSize, double density,
-                                const TYPE &node, const IndexPair &range,
-                                const IndexPair &findRange) const {
+double CARMI<KeyType, ValueType>::CalLeafInsertTime(
+    int actualSize, double density, const TYPE &node, const IndexPair &range,
+    const IndexPair &findRange) const {
   double time_cost = 0;
   for (int i = range.left; i < range.left + range.size; i++) {
     int predict = node.Predict(insertQuery[i].first) + findRange.left;
@@ -99,7 +102,8 @@ double CARMI::CalLeafInsertTime(int actualSize, double density,
  * @param dataRange the range of data points in this node
  * @return NodeCost the optimal cost of this subtree
  */
-NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
+template <typename KeyType, typename ValueType>
+NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct;
@@ -152,7 +156,7 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
     actualSize = carmi_params::kLeafMaxCapacity;
   else
     actualSize = GetActualSize(actualSize);
-  if (carmi_params::kIsWriteHeavy && actualSize == dataRange.initRange.size)
+  if (kIsWriteHeavy && actualSize == dataRange.initRange.size)
     actualSize =
         GetActualSize(std::min(actualSize + 1, carmi_params::kLeafMaxCapacity));
   // choose an array node as the leaf node
@@ -179,7 +183,7 @@ NodeCost CARMI::DPLeaf(const DataRange &dataRange) {
       actualSize = carmi_params::kLeafMaxCapacity;
     else
       actualSize = GetActualSize(actualSize);
-    if (carmi_params::kIsWriteHeavy && actualSize == dataRange.initRange.size)
+    if (kIsWriteHeavy && actualSize == dataRange.initRange.size)
       actualSize = GetActualSize(
           std::min(actualSize + 1, carmi_params::kLeafMaxCapacity));
 

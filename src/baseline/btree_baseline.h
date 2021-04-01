@@ -26,8 +26,8 @@
 extern std::ofstream outRes;
 
 void btree_test(bool isZipfian, double initRatio,
-                const carmi_params::DataVectorType &findDataset,
-                const carmi_params::DataVectorType &insertDataset,
+                const carmi_params::TestDataVecType &findDataset,
+                const carmi_params::TestDataVecType &insertDataset,
                 const std::vector<int> &length) {
   std::cout << "btree,";
   outRes << "btree,";
@@ -42,8 +42,8 @@ void btree_test(bool isZipfian, double initRatio,
   std::cout << "btree space:" << space << std::endl;
   outRes << space << std::endl;
 
-  carmi_params::DataVectorType findQuery;
-  carmi_params::DataVectorType insertQuery;
+  carmi_params::TestDataVecType findQuery;
+  carmi_params::TestDataVecType insertQuery;
   std::vector<int> index;
   double tmp;
 
@@ -147,7 +147,7 @@ void btree_test(bool isZipfian, double initRatio,
   } else if (initRatio == carmi_params::kReadOnly) {
     int end = carmi_params::kTestSize * carmi_params::kReadOnly;
     InitTestSet(carmi_params::kReadOnly, findDataset,
-                carmi_params::DataVectorType(), &findQuery, &insertQuery,
+                carmi_params::TestDataVecType(), &findQuery, &insertQuery,
                 &index);
 
     std::chrono::_V2::system_clock::time_point s, e;
@@ -265,7 +265,7 @@ void btree_test(bool isZipfian, double initRatio,
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-          carmi_params::DataVectorType ret(length[index[findCnt]], {-1, -1});
+          carmi_params::TestDataVecType ret(length[index[findCnt]], {-1, -1});
           auto it = btree.find(findQuery[index[findCnt]].first);
           for (int l = 0; l < length[index[findCnt]]; l++) {
             ret[l] = {it->first, it->second};
@@ -278,7 +278,7 @@ void btree_test(bool isZipfian, double initRatio,
     } else {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-          carmi_params::DataVectorType ret(length[findCnt], {-1, -1});
+          carmi_params::TestDataVecType ret(length[findCnt], {-1, -1});
           auto it = btree.find(findQuery[findCnt].first);
           for (int l = 0; l < length[findCnt]; l++) {
             ret[l] = {it->first, it->second};
@@ -300,7 +300,7 @@ void btree_test(bool isZipfian, double initRatio,
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-          carmi_params::DataVectorType ret(length[index[findCnt]], {-1, -1});
+          carmi_params::TestDataVecType ret(length[index[findCnt]], {-1, -1});
           stx::btree<double, double>::iterator it;
           for (int l = 0; l < length[index[findCnt]]; l++) {
           }
@@ -310,7 +310,7 @@ void btree_test(bool isZipfian, double initRatio,
     } else {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-          carmi_params::DataVectorType ret(length[findCnt], {-1, -1});
+          carmi_params::TestDataVecType ret(length[findCnt], {-1, -1});
           stx::btree<double, double>::iterator it;
           for (int l = 0; l < length[findCnt]; l++) {
           }

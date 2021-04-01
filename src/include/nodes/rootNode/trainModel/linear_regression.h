@@ -25,7 +25,7 @@ class LinearRegression {
     theta1 = 0.0001;
     theta2 = 0.666;
   }
-  void Train(const carmi_params::DataVectorType &dataset, int len);
+  void Train(const carmi_params::TestDataVecType &dataset, int len);
   int Predict(double key) const {
     // return the predicted idx in the children
     int p = theta1 * key + theta2;
@@ -42,7 +42,8 @@ class LinearRegression {
   double theta2;
 };
 
-void LinearRegression::Train(const carmi_params::DataVectorType &dataset, int len) {
+void LinearRegression::Train(const carmi_params::TestDataVecType &dataset,
+                             int len) {
   length = len - 1;
   int idx = 0;
   int size = dataset.size();

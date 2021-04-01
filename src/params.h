@@ -18,15 +18,18 @@
 #include <utility>
 #include <vector>
 namespace carmi_params {
+typedef double TestKeyType;
+typedef double TestValueType;
 
-typedef std::pair<double, double> DataType;
-typedef std::vector<DataType> DataVectorType;
+typedef std::pair<TestKeyType, TestValueType> TestDataType;
+typedef std::vector<TestDataType> TestDataVecType;
 
+// TODO(jiaoyi): delete
 bool kPrimaryIndex = false;
-bool kIsWriteHeavy = false;
 int kExternalInsertLeft;
 
 // -------------------------
+
 const int kLeafMaxCapacity = 4096;
 const int kAlgorithmThre = 4096;
 const int kReservedSpace = 1024 * 512;

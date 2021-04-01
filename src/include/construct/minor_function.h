@@ -22,8 +22,9 @@
  * @param perSize the size of each child
  * @return double entropy
  */
-double CARMI::CalculateEntropy(int size, int childNum,
-                               const std::vector<IndexPair> &perSize) const {
+template <typename KeyType, typename ValueType>
+double CARMI<KeyType, ValueType>::CalculateEntropy(
+    int size, int childNum, const std::vector<IndexPair> &perSize) const {
   double entropy = 0.0;
   for (int i = 0; i < childNum; i++) {
     auto p = static_cast<float>(perSize[i].size) / size;
@@ -41,10 +42,11 @@ double CARMI::CalculateEntropy(int size, int childNum,
  * @param dataset partitioned dataset
  * @param subData the left and size of each sub dataset after being split
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-void CARMI::NodePartition(const TYPE &node, const IndexPair &range,
-                          const carmi_params::DataVectorType &dataset,
-                          std::vector<IndexPair> *subData) const {
+void CARMI<KeyType, ValueType>::NodePartition(
+    const TYPE &node, const IndexPair &range, const DataVectorType &dataset,
+    std::vector<IndexPair> *subData) const {
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = node.Predict(dataset[i].first);
@@ -65,9 +67,10 @@ void CARMI::NodePartition(const TYPE &node, const IndexPair &range,
  * @param subDataset the left and size of each sub dataset after being split
  * @return TYPE node
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-TYPE CARMI::InnerDivideAll(int c, const DataRange &range,
-                           SubDataset *subDataset) {
+TYPE CARMI<KeyType, ValueType>::InnerDivideAll(int c, const DataRange &range,
+                                               SubDataset *subDataset) {
   TYPE node;
   node.SetChildNumber(c);
   Train(range.initRange.left, range.initRange.size, initDataset, &node);
@@ -84,7 +87,8 @@ TYPE CARMI::InnerDivideAll(int c, const DataRange &range,
  * @brief update the previousLeaf and nextLeaf of each leaf nodes
  *
  */
-void CARMI::UpdateLeaf() {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::UpdateLeaf() {
   if (carmi_params::kPrimaryIndex) return;
   entireChild[scanLeaf[0]].array.nextLeaf = scanLeaf[1];
   int end = scanLeaf.size() - 1;
@@ -104,7 +108,9 @@ void CARMI::UpdateLeaf() {
  * @param dataRange the left and size of data points
  * @return double frequency weight
  */
-double CARMI::CalculateFrequencyWeight(const DataRange &dataRange) {
+template <typename KeyType, typename ValueType>
+double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
+    const DataRange &dataRange) {
   float frequency = 0.0;
   int findEnd = dataRange.findRange.left + dataRange.findRange.size;
   for (int l = dataRange.findRange.left; l < findEnd; l++)
@@ -121,7 +127,8 @@ double CARMI::CalculateFrequencyWeight(const DataRange &dataRange) {
  *
  * @param range the left and size of data points
  */
-void CARMI::ConstructEmptyNode(const DataRange &range) {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::ConstructEmptyNode(const DataRange &range) {
   BaseNode optimal_node_struct;
   if (carmi_params::kPrimaryIndex) {
     ExternalArray tmp(kThreshold);
@@ -145,8 +152,10 @@ void CARMI::ConstructEmptyNode(const DataRange &range) {
  * @param a parameter A of LR model
  * @param b parameter B of LR model
  */
-void LRTrain(const int left, const int size,
-             const carmi_params::DataVectorType &dataset, float *a, float *b) {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::LRTrain(const int left, const int size,
+                                        const DataVectorType &dataset, float *a,
+                                        float *b) {
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   int end = left + size;
   for (int i = left; i < end; i++) {
@@ -171,13 +180,15 @@ void LRTrain(const int left, const int size,
  * @param size the size of the entire data points
  * @param dataset
  * @param actual the actual size of these data points
- * @return carmi_params::DataVectorType pure data points
+ * @return DataVectorType pure data points
  */
-carmi_params::DataVectorType ExtractData(
-    const int left, const int size, const carmi_params::DataVectorType &dataset,
-    int *actual) {
+template <typename KeyType, typename ValueType>
+typename CARMI<KeyType, ValueType>::DataVectorType
+CARMI<KeyType, ValueType>::ExtractData(const int left, const int size,
+                                       const DataVectorType &dataset,
+                                       int *actual) {
   *actual = 0;
-  carmi_params::DataVectorType data(size, {DBL_MIN, DBL_MIN});
+  DataVectorType data(size, {DBL_MIN, DBL_MIN});
   int end = left + size;
   for (int i = left; i < end; i++) {
     if (dataset[i].first != DBL_MIN) {
@@ -195,11 +206,13 @@ carmi_params::DataVectorType ExtractData(
  * @param left the left index of the data points
  * @param size the size of the entire data points
  * @param dataset
- * @return carmi_params::DataVectorType dataset used for training
+ * @return DataVectorType dataset used for training
  */
-carmi_params::DataVectorType SetY(const int left, const int size,
-                                  const carmi_params::DataVectorType &dataset) {
-  carmi_params::DataVectorType data(size, {DBL_MIN, DBL_MIN});
+template <typename KeyType, typename ValueType>
+typename CARMI<KeyType, ValueType>::DataVectorType
+CARMI<KeyType, ValueType>::SetY(const int left, const int size,
+                                const DataVectorType &dataset) {
+  DataVectorType data(size, {DBL_MIN, DBL_MIN});
   int end = left + size;
   for (int i = left, j = 0; i < end; i++, j++) {
     data[j].first = dataset[i].first;
@@ -217,9 +230,11 @@ carmi_params::DataVectorType SetY(const int left, const int size,
  * @param dataset
  * @param node used to predict the position of each data point
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-void FindOptError(int start_idx, int size,
-                  const carmi_params::DataVectorType &dataset, TYPE *node) {
+void CARMI<KeyType, ValueType>::FindOptError(int start_idx, int size,
+                                             const DataVectorType &dataset,
+                                             TYPE *node) {
   std::vector<int> error_count(size + 1, 0);
 
   // record each difference

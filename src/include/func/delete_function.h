@@ -23,7 +23,8 @@
  * @return true deletion is successful
  * @return false the operation fails
  */
-bool CARMI::Delete(double key) {
+template <typename KeyType, typename ValueType>
+bool CARMI<KeyType, ValueType>::Delete(double key) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {

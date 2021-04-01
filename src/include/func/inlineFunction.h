@@ -28,7 +28,9 @@
  * @param end
  * @return int the index of the key
  */
-inline int CARMI::ArrayBinarySearch(double key, int start, int end) const {
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::ArrayBinarySearch(double key, int start,
+                                                        int end) const {
   while (start < end) {
     int mid = (start + end) / 2;
     if (entireData[mid].first < key)
@@ -47,7 +49,9 @@ inline int CARMI::ArrayBinarySearch(double key, int start, int end) const {
  * @param end_idx
  * @return int the idx of the first element >= key
  */
-inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx) const {
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::GABinarySearch(double key, int start_idx,
+                                                     int end_idx) const {
   while (end_idx - start_idx >= 2) {
     int mid = (start_idx + end_idx) >> 1;
     if (entireData[mid].first == DBL_MIN) {
@@ -76,7 +80,10 @@ inline int CARMI::GABinarySearch(double key, int start_idx, int end_idx) const {
  * @param end
  * @return int the idx of the first element >= key
  */
-inline int CARMI::ExternalBinarySearch(double key, int start, int end) const {
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::ExternalBinarySearch(double key,
+                                                           int start,
+                                                           int end) const {
   while (start < end) {
     int mid = (start + end) / 2;
     if (externalData[mid].first < key)
@@ -97,8 +104,10 @@ inline int CARMI::ExternalBinarySearch(double key, int start, int end) const {
  * @param size the size of this node
  * @return int the index of the record
  */
-inline int CARMI::ArraySearch(double key, int preIdx, int error, int left,
-                              int size) const {
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::ArraySearch(double key, int preIdx,
+                                                  int error, int left,
+                                                  int size) const {
   int start = std::max(0, preIdx - error) + left;
   int end = std::min(size - 1, preIdx + error) + left;
   start = std::min(start, end);
@@ -122,8 +131,10 @@ inline int CARMI::ArraySearch(double key, int preIdx, int error, int left,
  * @param maxIndex the max index of this node
  * @return int the index of the record
  */
-inline int CARMI::GASearch(double key, int preIdx, int error, int left,
-                           int maxIndex) const {
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::GASearch(double key, int preIdx,
+                                               int error, int left,
+                                               int maxIndex) const {
   int start = std::max(0, preIdx - error) + left;
   int end = std::min(maxIndex, preIdx + error) + left;
   start = std::min(start, end);
@@ -150,8 +161,10 @@ inline int CARMI::GASearch(double key, int preIdx, int error, int left,
  * @param size the size of this node
  * @return int the index of the record
  */
-inline int CARMI::ExternalSearch(double key, int preIdx, int error, int left,
-                                 int size) const {
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::ExternalSearch(double key, int preIdx,
+                                                     int error, int left,
+                                                     int size) const {
   int start = std::max(0, preIdx - error) + left;
   int end = std::min(size - 1, preIdx + error) + left;
   start = std::min(start, end);
@@ -175,11 +188,13 @@ inline int CARMI::ExternalSearch(double key, int preIdx, int error, int left,
  * @param previousIdx the index of the previous leaf node
  * @param idx the index of the current leaf node
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-inline void CARMI::Split(bool isExternal, int left, int size, int previousIdx,
-                         int idx) {
+inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
+                                             int size, int previousIdx,
+                                             int idx) {
   int actualSize = 0;
-  carmi_params::DataVectorType tmpDataset = ExtractData(left, size, entireData, &actualSize);
+  DataVectorType tmpDataset = ExtractData(left, size, entireData, &actualSize);
 
   // create a new inner node
   auto node = LRModel();

@@ -59,10 +59,10 @@ void fixedSynthetic(double initRatio, int kLeafID,
   NormalDataset norData = NormalDataset(init);
   ExponentialDataset expData = ExponentialDataset(init);
 
-  carmi_params::DataVectorType initData;
-  carmi_params::DataVectorType trainFind;
-  carmi_params::DataVectorType trainInsert;
-  carmi_params::DataVectorType testInsert;
+  carmi_params::TestDataVecType initData;
+  carmi_params::TestDataVecType trainFind;
+  carmi_params::TestDataVecType trainInsert;
+  carmi_params::TestDataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
   for (int i = 0; i < 1; i++) {

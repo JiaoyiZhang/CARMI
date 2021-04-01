@@ -48,11 +48,13 @@ inline int ArrayType::Predict(double key) const {
  * @param dataset
  * @param arr leaf node
  */
-inline void CARMI::Init(int cap, int left, int size,
-                        const carmi_params::DataVectorType &dataset, ArrayType *arr) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Init(int cap, int left, int size,
+                                            const DataVectorType &dataset,
+                                            ArrayType *arr) {
   if (size == 0) return;
   int actualSize = 0;
-  carmi_params::DataVectorType newDataset = ExtractData(left, size, dataset, &actualSize);
+  DataVectorType newDataset = ExtractData(left, size, dataset, &actualSize);
 
   Train(0, actualSize, newDataset, arr);
   StoreData(cap, 0, actualSize, newDataset, arr);
@@ -67,8 +69,10 @@ inline void CARMI::Init(int cap, int left, int size,
  * @param dataset
  * @param arr leaf node
  */
-inline void CARMI::StoreData(int cap, int left, int size,
-                             const carmi_params::DataVectorType &dataset, ArrayType *arr) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::StoreData(int cap, int left, int size,
+                                                 const DataVectorType &dataset,
+                                                 ArrayType *arr) {
   if (arr->m_left != -1) {
     ReleaseMemory(arr->m_left, arr->m_capacity);
   }
@@ -78,7 +82,8 @@ inline void CARMI::StoreData(int cap, int left, int size,
     arr->m_capacity = cap;
   }
   if (arr->m_capacity == size) {
-    arr->m_capacity = GetActualSize(std::min(size + 1, carmi_params::kLeafMaxCapacity));
+    arr->m_capacity =
+        GetActualSize(std::min(size + 1, carmi_params::kLeafMaxCapacity));
   }
   arr->m_left = AllocateMemory(arr->m_capacity);
 
@@ -95,11 +100,13 @@ inline void CARMI::StoreData(int cap, int left, int size,
  * @param dataset
  * @param arr leaf node
  */
-inline void CARMI::Train(int start_idx, int size, const carmi_params::DataVectorType &dataset,
-                         ArrayType *arr) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Train(int start_idx, int size,
+                                             const DataVectorType &dataset,
+                                             ArrayType *arr) {
   if (size == 0) return;
 
-  carmi_params::DataVectorType data = SetY(start_idx, size, dataset);
+  DataVectorType data = SetY(start_idx, size, dataset);
   arr->flagNumber = (ARRAY_LEAF_NODE << 24) + size;
   LRTrain(0, size, data, &(arr->theta1), &(arr->theta2));
   FindOptError<ArrayType>(0, size, data, arr);

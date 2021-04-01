@@ -26,8 +26,10 @@
  * @param dataset
  * @param lr model
  */
-inline void CARMI::Train(const int left, const int size,
-                         const carmi_params::DataVectorType &dataset, LRModel *lr) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
+                                             const DataVectorType &dataset,
+                                             LRModel *lr) {
   if (size == 0) return;
 
   // calculate divisor
@@ -39,7 +41,7 @@ inline void CARMI::Train(const int left, const int size,
 
   // extract data points and their index
   std::vector<int> segCnt(6, 0);
-  carmi_params::DataVectorType data(size, {DBL_MIN, DBL_MIN});
+  DataVectorType data(size, {DBL_MIN, DBL_MIN});
   for (int i = left, j = 0; i < end; i++, j++) {
     data[j].first = dataset[i].first;
     data[j].second = static_cast<double>(j) / size * childNumber;

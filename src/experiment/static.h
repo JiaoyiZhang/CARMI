@@ -19,12 +19,14 @@
 extern int childNum;
 extern std::ofstream outRes;
 
-void RunStatic(double initRatio, int kLeafID, const carmi_params::DataVectorType &initDataset,
-               const carmi_params::DataVectorType &testInsertQuery,
+void RunStatic(double initRatio, int kLeafID,
+               const carmi_params::TestDataVecType &initDataset,
+               const carmi_params::TestDataVecType &testInsertQuery,
                const std::vector<int> &length) {
   for (int j = 2; j < 3; j++) {
     std::cout << "root type:" << j << std::endl;
-    CARMI carmi(initDataset, 131072, j, kLeafID);
+    CARMI<carmi_params::TestKeyType, carmi_params::TestValueType> carmi(
+        initDataset, 131072, j, kLeafID);
     std::cout << "index init over!" << std::endl;
     switch (j) {
       case LR_ROOT_NODE:
@@ -42,16 +44,21 @@ void RunStatic(double initRatio, int kLeafID, const carmi_params::DataVectorType
     }
 
     if (initRatio == carmi_params::kWriteHeavy)
-      WorkloadA(false, initDataset, testInsertQuery, &carmi);  // write-heavy
+      WorkloadA<carmi_params::TestKeyType, carmi_params::TestValueType>(
+          false, initDataset, testInsertQuery, &carmi);  // write-heavy
     else if (initRatio == carmi_params::kReadHeavy)
-      WorkloadB(false, initDataset, testInsertQuery, &carmi);  // read-heavy
+      WorkloadB<carmi_params::TestKeyType, carmi_params::TestValueType>(
+          false, initDataset, testInsertQuery, &carmi);  // read-heavy
     else if (initRatio == carmi_params::kReadOnly)
-      WorkloadC(false, initDataset, &carmi);  // read-only
+      WorkloadC<carmi_params::TestKeyType, carmi_params::TestValueType>(
+          false, initDataset, &carmi);  // read-only
     else if (initRatio == carmi_params::kWritePartial)
-      WorkloadD(false, initDataset, testInsertQuery, &carmi);  // write-partial
+      WorkloadD<carmi_params::TestKeyType, carmi_params::TestValueType>(
+          false, initDataset, testInsertQuery, &carmi);  // write-partial
     else if (initRatio == carmi_params::kRangeScan)
-      WorkloadE(false, initDataset, testInsertQuery, length,
-                &carmi);  // range scan
+      WorkloadE<carmi_params::TestKeyType, carmi_params::TestValueType>(
+          false, initDataset, testInsertQuery, length,
+          &carmi);  // range scan
   }
   outRes << std::endl;
 }

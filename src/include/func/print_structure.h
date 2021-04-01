@@ -21,8 +21,10 @@
  * @param levelVec used to record the level of CARMI
  * @param nodeVec used to record the number of each type of CARMI's node
  */
-void CARMI::PrintRoot(int level, int idx, std::vector<int> *levelVec,
-                      std::vector<int> *nodeVec) const {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::PrintRoot(int level, int idx,
+                                          std::vector<int> *levelVec,
+                                          std::vector<int> *nodeVec) const {
   std::vector<int> tree(11, 0);
   int childNum = root.flagNumber & 0x00FFFFFF;
   for (int i = 0; i < childNum; i++) {
@@ -56,8 +58,10 @@ void CARMI::PrintRoot(int level, int idx, std::vector<int> *levelVec,
  * @param levelVec used to record the level of CARMI
  * @param nodeVec used to record the number of each type of CARMI's node
  */
-void CARMI::PrintInner(int level, int idx, std::vector<int> *levelVec,
-                       std::vector<int> *nodeVec) const {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::PrintInner(int level, int idx,
+                                           std::vector<int> *levelVec,
+                                           std::vector<int> *nodeVec) const {
   std::vector<int> tree(11, 0);
   for (int i = 0; i < (entireChild[idx].lr.flagNumber & 0x00FFFFFF); i++) {
     auto childIdx = entireChild[idx].lr.childLeft + i;
@@ -82,9 +86,10 @@ void CARMI::PrintInner(int level, int idx, std::vector<int> *levelVec,
  * @param levelVec used to record the level of CARMI
  * @param nodeVec used to record the number of each type of CARMI's node
  */
-void CARMI::PrintStructure(int level, NodeType type, int idx,
-                           std::vector<int> *levelVec,
-                           std::vector<int> *nodeVec) const {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::PrintStructure(
+    int level, NodeType type, int idx, std::vector<int> *levelVec,
+    std::vector<int> *nodeVec) const {
   (*levelVec)[level]++;
   switch (type) {
     case LR_ROOT_NODE: {

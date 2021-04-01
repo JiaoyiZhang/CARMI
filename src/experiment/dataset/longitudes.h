@@ -27,19 +27,19 @@ class LongitudesDataset : public BaseDataset {
  public:
   explicit LongitudesDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(carmi_params::DataVectorType *initDataset,
-                       carmi_params::DataVectorType *trainFindQuery,
-                       carmi_params::DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::TestDataVecType *initDataset,
+                       carmi_params::TestDataVecType *trainFindQuery,
+                       carmi_params::TestDataVecType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       carmi_params::DataVectorType *testInsertQuery);
+                       carmi_params::TestDataVecType *testInsertQuery);
 };
 
-void LongitudesDataset::GenerateDataset(carmi_params::DataVectorType *initDataset,
-                                        carmi_params::DataVectorType *trainFindQuery,
-                                        carmi_params::DataVectorType *trainInsertQuery,
+void LongitudesDataset::GenerateDataset(carmi_params::TestDataVecType *initDataset,
+                                        carmi_params::TestDataVecType *trainFindQuery,
+                                        carmi_params::TestDataVecType *trainInsertQuery,
                                         std::vector<int> *trainInsertIndex,
-                                        carmi_params::DataVectorType *testInsertQuery) {
-  carmi_params::DataVectorType ds;
+                                        carmi_params::TestDataVecType *testInsertQuery) {
+  carmi_params::TestDataVecType ds;
   std::ifstream inFile("../src/experiment/dataset/longitude.csv", std::ios::in);
   if (!inFile) {
     std::cout << "打开文件失败！" << std::endl;

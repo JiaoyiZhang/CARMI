@@ -23,32 +23,30 @@
 
 #include "./base_dataset.h"
 
-extern bool kPrimaryIndex;
-
 class YCSBDataset : public BaseDataset {
  public:
   explicit YCSBDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(carmi_params::DataVectorType *initDataset,
-                       carmi_params::DataVectorType *trainFindQuery,
-                       carmi_params::DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::TestDataVecType *initDataset,
+                       carmi_params::TestDataVecType *trainFindQuery,
+                       carmi_params::TestDataVecType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       carmi_params::DataVectorType *testInsertQuery);
+                       carmi_params::TestDataVecType *testInsertQuery);
 };
 
 void YCSBDataset::GenerateDataset(
-    carmi_params::DataVectorType *initDataset,
-    carmi_params::DataVectorType *trainFindQuery,
-    carmi_params::DataVectorType *trainInsertQuery,
+    carmi_params::TestDataVecType *initDataset,
+    carmi_params::TestDataVecType *trainFindQuery,
+    carmi_params::TestDataVecType *trainInsertQuery,
     std::vector<int> *trainInsertIndex,
-    carmi_params::DataVectorType *testInsertQuery) {
-  carmi_params::DataVectorType().swap((*initDataset));
-  carmi_params::DataVectorType().swap((*trainFindQuery));
-  carmi_params::DataVectorType().swap((*trainInsertQuery));
-  carmi_params::DataVectorType().swap((*testInsertQuery));
+    carmi_params::TestDataVecType *testInsertQuery) {
+  carmi_params::TestDataVecType().swap((*initDataset));
+  carmi_params::TestDataVecType().swap((*trainFindQuery));
+  carmi_params::TestDataVecType().swap((*trainInsertQuery));
+  carmi_params::TestDataVecType().swap((*testInsertQuery));
   std::vector<int>().swap(*trainInsertIndex);
 
-  carmi_params::DataVectorType ds;
+  carmi_params::TestDataVecType ds;
   std::ifstream inFile("..//src//experiment//dataset//newycsbdata.csv",
                        std::ios::in);
   if (!inFile) {

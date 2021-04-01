@@ -18,9 +18,11 @@
 #include "../../construct/minor_function.h"
 #include "./leaf_nodes.h"
 
-inline void CARMI::Train(int start_idx, int size, const carmi_params::DataVectorType &dataset,
-                         ExternalArray *ext) {
-  carmi_params::DataVectorType data = SetY(start_idx, size, dataset);
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Train(int start_idx, int size,
+                                             const DataVectorType &dataset,
+                                             ExternalArray *ext) {
+  DataVectorType data = SetY(start_idx, size, dataset);
   if (size == 0) return;
 
   if ((ext->flagNumber & 0x00FFFFFF) != size) {
@@ -39,8 +41,10 @@ inline void CARMI::Train(int start_idx, int size, const carmi_params::DataVector
  * @param dataset
  * @param ext leaf node
  */
-inline void CARMI::Init(int cap, int start_idx, int size,
-                        const carmi_params::DataVectorType &dataset, ExternalArray *ext) {
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Init(int cap, int start_idx, int size,
+                                            const DataVectorType &dataset,
+                                            ExternalArray *ext) {
   ext->m_left = start_idx;
   if (size == 0) return;
 

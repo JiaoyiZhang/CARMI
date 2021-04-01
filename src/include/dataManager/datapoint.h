@@ -28,7 +28,8 @@
  * @return true allocation is successful
  * @return false fails to allocate all blocks
  */
-inline bool CARMI::AllocateEmptyBlock(int left, int len) {
+template <typename KeyType, typename ValueType>
+inline bool CARMI<KeyType, ValueType>::AllocateEmptyBlock(int left, int len) {
   if (len == 0) return true;
   int res = 0;
   for (int i = emptyBlocks.size() - 1; i >= 0; i--) {
@@ -50,7 +51,8 @@ inline bool CARMI::AllocateEmptyBlock(int left, int len) {
  * @param size the size of the data points
  * @return int the index in emptyBlocks
  */
-inline int CARMI::GetActualSize(int size) {
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::GetActualSize(int size) {
 #ifdef DEBUG
   if (size > carmi_params::kLeafMaxCapacity || size < 1)
     std::cout << "size: " << size
@@ -72,7 +74,8 @@ inline int CARMI::GetActualSize(int size) {
  * @param size the size of the data points
  * @return int the index in emptyBlocks
  */
-inline int CARMI::GetIndex(int size) {
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::GetIndex(int size) {
 #ifdef DEBUG
   if (size > carmi_params::kLeafMaxCapacity || size < 1)
     std::cout << "size: " << size
@@ -95,7 +98,9 @@ inline int CARMI::GetIndex(int size) {
  * @param size the size of data points
  * @param reinit whether the entireData has been initialized
  */
-void CARMI::InitEntireData(int left, int size, bool reinit) {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::InitEntireData(int left, int size,
+                                               bool reinit) {
   unsigned int len = 4096;
   while (len < size) len *= 2;
   len *= 2;
@@ -107,8 +112,8 @@ void CARMI::InitEntireData(int left, int size, bool reinit) {
 #endif  // DEBUG
 
   std::vector<EmptyBlock>().swap(emptyBlocks);
-  carmi_params::DataVectorType().swap(entireData);
-  entireData = carmi_params::DataVectorType(len, {DBL_MIN, DBL_MIN});
+  DataVectorType().swap(entireData);
+  entireData = DataVectorType(len, {DBL_MIN, DBL_MIN});
   emptyBlocks.push_back(EmptyBlock(1));
   emptyBlocks.push_back(EmptyBlock(2));
   emptyBlocks.push_back(EmptyBlock(3));
@@ -128,7 +133,8 @@ void CARMI::InitEntireData(int left, int size, bool reinit) {
  * @param idx the idx in emptyBlocks
  * @return int return idx (if it fails, return -1)
  */
-int CARMI::AllocateSingleMemory(int size, int *idx) {
+template <typename KeyType, typename ValueType>
+int CARMI<KeyType, ValueType>::AllocateSingleMemory(int size, int *idx) {
   auto newLeft = -1;
   for (int i = *idx; i < emptyBlocks.size(); i++) {
     newLeft = emptyBlocks[i].allocate(size);
@@ -159,7 +165,8 @@ int CARMI::AllocateSingleMemory(int size, int *idx) {
  * @param size the size of the leaf node needs to be allocated
  * @return int return idx (if it fails, return -1)
  */
-int CARMI::AllocateMemory(int size) {
+template <typename KeyType, typename ValueType>
+int CARMI<KeyType, ValueType>::AllocateMemory(int size) {
   int idx = GetIndex(size);  // idx in emptyBlocks[]
 #ifdef DEBUG
   if (idx == -1) {
@@ -178,7 +185,7 @@ int CARMI::AllocateMemory(int size) {
 #endif  // DEBUG
 
     unsigned int tmpSize = entireDataSize;
-    carmi_params::DataVectorType tmpData = entireData;
+    DataVectorType tmpData = entireData;
     std::vector<EmptyBlock> tmpBlocks = emptyBlocks;
 
     InitEntireData(tmpSize, tmpSize, true);
@@ -206,7 +213,8 @@ int CARMI::AllocateMemory(int size) {
  * @param left the left index
  * @param size the size
  */
-void CARMI::ReleaseMemory(int left, int size) {
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::ReleaseMemory(int left, int size) {
   int idx = GetIndex(size);
   for (int i = idx; i < emptyBlocks.size(); i++) {
     if (!emptyBlocks[i].find(left + emptyBlocks[i].m_width)) {

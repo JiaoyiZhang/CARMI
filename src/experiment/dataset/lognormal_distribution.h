@@ -24,23 +24,23 @@ class LognormalDataset : public BaseDataset {
  public:
   explicit LognormalDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(carmi_params::DataVectorType *initDataset,
-                       carmi_params::DataVectorType *trainFindQuery,
-                       carmi_params::DataVectorType *trainInsertQuery,
+  void GenerateDataset(carmi_params::TestDataVecType *initDataset,
+                       carmi_params::TestDataVecType *trainFindQuery,
+                       carmi_params::TestDataVecType *trainInsertQuery,
                        std::vector<int> *trainInsertIndex,
-                       carmi_params::DataVectorType *testInsertQuery);
+                       carmi_params::TestDataVecType *testInsertQuery);
 };
 
 void LognormalDataset::GenerateDataset(
-    carmi_params::DataVectorType *initDataset,
-    carmi_params::DataVectorType *trainFindQuery,
-    carmi_params::DataVectorType *trainInsertQuery,
+    carmi_params::TestDataVecType *initDataset,
+    carmi_params::TestDataVecType *trainFindQuery,
+    carmi_params::TestDataVecType *trainInsertQuery,
     std::vector<int> *trainInsertIndex,
-    carmi_params::DataVectorType *testInsertQuery) {
+    carmi_params::TestDataVecType *testInsertQuery) {
   // create dataset randomly
   std::default_random_engine generator;
   std::lognormal_distribution<double> distribution(0.0, 2.0);
-  carmi_params::DataVectorType dataset(
+  carmi_params::TestDataVecType dataset(
       carmi_params::kDatasetSize + carmi_params::kTestSize * (1 - proportion),
       {0, 0});
 

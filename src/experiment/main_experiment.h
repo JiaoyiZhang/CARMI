@@ -41,11 +41,9 @@ void mainExperiment(int thre) {
   mainMap(carmi_params::kReadOnly, thre, length);
 
   // write-heavy
-  carmi_params::kIsWriteHeavy = true;
   mainSynthetic(carmi_params::kWriteHeavy, thre, length);
   mainYCSB(carmi_params::kWriteHeavy, thre, length);
   mainMap(carmi_params::kWriteHeavy, thre, length);
-  carmi_params::kIsWriteHeavy = false;
 
   // read-heavy
   mainSynthetic(carmi_params::kReadHeavy, thre, length);
@@ -83,10 +81,10 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
   NormalDataset norData = NormalDataset(init);
   ExponentialDataset expData = ExponentialDataset(init);
 
-  carmi_params::DataVectorType initData;
-  carmi_params::DataVectorType trainFind;
-  carmi_params::DataVectorType trainInsert;
-  carmi_params::DataVectorType testInsert;
+  carmi_params::TestDataVecType initData;
+  carmi_params::TestDataVecType trainFind;
+  carmi_params::TestDataVecType trainInsert;
+  carmi_params::TestDataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG
@@ -169,10 +167,10 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
   LongitudesDataset longData = LongitudesDataset(init);
   LonglatDataset latData = LonglatDataset(init);
 
-  carmi_params::DataVectorType initData;
-  carmi_params::DataVectorType trainFind;
-  carmi_params::DataVectorType trainInsert;
-  carmi_params::DataVectorType testInsert;
+  carmi_params::TestDataVecType initData;
+  carmi_params::TestDataVecType trainFind;
+  carmi_params::TestDataVecType trainInsert;
+  carmi_params::TestDataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG
@@ -233,10 +231,10 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
   }
   YCSBDataset ycsbData = YCSBDataset(init);
 
-  carmi_params::DataVectorType initData;
-  carmi_params::DataVectorType trainFind;
-  carmi_params::DataVectorType trainInsert;
-  carmi_params::DataVectorType testInsert;
+  carmi_params::TestDataVecType initData;
+  carmi_params::TestDataVecType trainFind;
+  carmi_params::TestDataVecType trainInsert;
+  carmi_params::TestDataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG

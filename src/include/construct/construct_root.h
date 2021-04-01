@@ -29,9 +29,12 @@
  * @param optimalCost the previous optimal setting
  * @param rootStruct used to record the optimal setting
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE, typename ModelType>
-void CARMI::IsBetterRoot(int c, NodeType type, double time_cost,
-                         double *optimalCost, RootStruct *rootStruct) {
+void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
+                                             double time_cost,
+                                             double *optimalCost,
+                                             RootStruct *rootStruct) {
   std::vector<IndexPair> perSize(c, emptyRange);
   double space_cost = carmi_params::kBaseNodeSpace * c;
 
@@ -54,7 +57,8 @@ void CARMI::IsBetterRoot(int c, NodeType type, double time_cost,
  *
  * @return the type and childNumber of the optimal root
  */
-RootStruct CARMI::ChooseRoot() {
+template <typename KeyType, typename ValueType>
+RootStruct CARMI<KeyType, ValueType>::ChooseRoot() {
   double OptimalValue = DBL_MAX;
   RootStruct rootStruct(0, 0);
   for (int c = carmi_params::kMinChildNumber; c <= initDataset.size() * 10;
@@ -91,9 +95,11 @@ RootStruct CARMI::ChooseRoot() {
  *
  * @return TYPE return the constructed root
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE, typename ModelType>
-TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const DataRange &range,
-                          SubDataset *subDataset) {
+TYPE CARMI<KeyType, ValueType>::ConstructRoot(const RootStruct &rootStruct,
+                                              const DataRange &range,
+                                              SubDataset *subDataset) {
   TYPE root(rootStruct.rootChildNum);
   root.childLeft = AllocateChildMemory(rootStruct.rootChildNum);
   root.model.Train(initDataset, rootStruct.rootChildNum);
@@ -113,7 +119,9 @@ TYPE CARMI::ConstructRoot(const RootStruct &rootStruct, const DataRange &range,
  * @param nodeCost the cost of the index
  * @return SubDataset: the range of all child node of the root node
  */
-SubDataset CARMI::StoreRoot(const RootStruct &rootStruct, NodeCost *nodeCost) {
+template <typename KeyType, typename ValueType>
+SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct,
+                                                NodeCost *nodeCost) {
   DataRange dataRange({0, static_cast<int>(initDataset.size())},
                       {0, static_cast<int>(findQuery.size())},
                       {0, static_cast<int>(insertQuery.size())});

@@ -25,25 +25,25 @@ make
 1. **Find**: find the corresponding record of the given key, return the iterator
 
 ```[C++]
-CARMI::iterator CARMI::Find(double key);
+CARMI<KeyType, ValueType>::iterator CARMI<KeyType, ValueType>::Find(double key);
 ```
 
 2. **Insert**: insert a data point
 
 ```[C++]
-bool CARMI::Insert(carmi_params::DataType data);
+bool CARMI<KeyType, ValueType>::Insert(DataType data);
 ```
 
 3. **Update**: update a record ( find the record according to given key, then update the value)
 
 ```[C++]
-bool CARMI::Update(carmi_params::DataType data);
+bool CARMI<KeyType, ValueType>::Update(DataType data);
 ```
 
 4. **Delete**: delete the record of the given key
 
 ```[C++]
-bool CARMI::Delete(double key);
+bool CARMI<KeyType, ValueType>::Delete(double key);
 ```
 
 ## File structure of CARMI

@@ -22,21 +22,25 @@
 #include "construct/structures.h"
 #include "dataManager/empty_block.h"
 
+template <typename KeyType, typename ValueType>
 class CARMI {
  public:
-  CARMI(const carmi_params::DataVectorType &dataset, int childNum, int kInnerID,
+  typedef std::pair<KeyType, ValueType> DataType;
+  typedef std::vector<DataType> DataVectorType;
+
+ public:
+  CARMI(const DataVectorType &dataset, int childNum, int kInnerID,
         int kLeafID);  // for static structure
-  CARMI(const carmi_params::DataVectorType &initData,
-        const carmi_params::DataVectorType &findData,
-        const carmi_params::DataVectorType &insertData,
-        const std::vector<int> &insertIndex, double rate, int thre);
+  CARMI(const DataVectorType &initData, const DataVectorType &findData,
+        const DataVectorType &insertData, const std::vector<int> &insertIndex,
+        double rate, int thre);
 
   class iterator {
    public:
     inline iterator() : currnode(NULL), currslot(0) {}
     inline iterator(CARMI *t, BaseNode *l, int s)
         : tree(t), currnode(l), currslot(s) {}
-    inline const double &key() const {
+    inline const double key() const {
       if (currnode == NULL) {
         return DBL_MIN;
       }
@@ -49,7 +53,7 @@ class CARMI {
         return tree->entireData[left + currslot].first;
       }
     }
-    inline const double &data() const {
+    inline const double data() const {
       if (currnode == NULL) {
         return DBL_MIN;
       }
@@ -106,8 +110,8 @@ class CARMI {
   // main functions
  public:
   iterator Find(double key);
-  bool Insert(carmi_params::DataType data);
-  bool Update(carmi_params::DataType data);
+  bool Insert(DataType data);
+  bool Update(DataType data);
   bool Delete(double key);
 
   long double CalculateSpace() const;
@@ -118,9 +122,9 @@ class CARMI {
  private:
   // construction algorithms
   // main function
-  void Construction(const carmi_params::DataVectorType &initData,
-                    const carmi_params::DataVectorType &findData,
-                    const carmi_params::DataVectorType &insertData);
+  void Construction(const DataVectorType &initData,
+                    const DataVectorType &findData,
+                    const DataVectorType &insertData);
 
   // root
   template <typename TYPE, typename ModelType>
@@ -188,49 +192,52 @@ class CARMI {
                           const std::vector<IndexPair> &perSize) const;
   template <typename TYPE>
   void NodePartition(const TYPE &node, const IndexPair &range,
-                     const carmi_params::DataVectorType &dataset,
+                     const DataVectorType &dataset,
                      std::vector<IndexPair> *subData) const;
   template <typename TYPE>
   TYPE InnerDivideAll(int c, const DataRange &range, SubDataset *subDataset);
   void ConstructEmptyNode(const DataRange &range);
   void UpdateLeaf();
+  void LRTrain(const int left, const int size, const DataVectorType &dataset,
+               float *a, float *b);
+  DataVectorType ExtractData(const int left, const int size,
+                             const DataVectorType &dataset, int *actual);
+  DataVectorType SetY(const int left, const int size,
+                      const DataVectorType &dataset);
+  template <typename TYPE>
+  void FindOptError(int start_idx, int size, const DataVectorType &dataset,
+                    TYPE *node);
   inline float log2(double value) const { return log(value) / log(2); }
 
  private:
   // inner nodes
-  void InitLR(const carmi_params::DataVectorType &dataset, LRModel *lr);
-  void InitPLR(const carmi_params::DataVectorType &dataset, PLRModel *plr);
-  void InitHis(const carmi_params::DataVectorType &dataset, HisModel *his);
-  void InitBS(const carmi_params::DataVectorType &dataset, BSModel *bs);
-  void Train(int left, int size, const carmi_params::DataVectorType &dataset,
-             LRModel *lr);
-  void Train(int left, int size, const carmi_params::DataVectorType &dataset,
-             PLRModel *plr);
-  void Train(int left, int size, const carmi_params::DataVectorType &dataset,
-             HisModel *his);
-  void Train(int left, int size, const carmi_params::DataVectorType &dataset,
-             BSModel *bs);
+  void InitLR(const DataVectorType &dataset, LRModel *lr);
+  void InitPLR(const DataVectorType &dataset, PLRModel *plr);
+  void InitHis(const DataVectorType &dataset, HisModel *his);
+  void InitBS(const DataVectorType &dataset, BSModel *bs);
+  void Train(int left, int size, const DataVectorType &dataset, LRModel *lr);
+  void Train(int left, int size, const DataVectorType &dataset, PLRModel *plr);
+  void Train(int left, int size, const DataVectorType &dataset, HisModel *his);
+  void Train(int left, int size, const DataVectorType &dataset, BSModel *bs);
 
  private:
   // leaf nodes
-  void Init(int cap, int left, int size,
-            const carmi_params::DataVectorType &dataset, ArrayType *arr);
-  void Init(int cap, int left, int size,
-            const carmi_params::DataVectorType &subDataset,
+  void Init(int cap, int left, int size, const DataVectorType &dataset,
+            ArrayType *arr);
+  void Init(int cap, int left, int size, const DataVectorType &subDataset,
             GappedArrayType *ga);
-  void Init(int cap, int start_idx, int size,
-            const carmi_params::DataVectorType &dataset, ExternalArray *ext);
-  void Train(int start_idx, int size,
-             const carmi_params::DataVectorType &dataset, ArrayType *arr);
-  void Train(int start_idx, int size,
-             const carmi_params::DataVectorType &dataset, GappedArrayType *ga);
-  void Train(int start_idx, int size,
-             const carmi_params::DataVectorType &dataset, ExternalArray *ext);
+  void Init(int cap, int start_idx, int size, const DataVectorType &dataset,
+            ExternalArray *ext);
+  void Train(int start_idx, int size, const DataVectorType &dataset,
+             ArrayType *arr);
+  void Train(int start_idx, int size, const DataVectorType &dataset,
+             GappedArrayType *ga);
+  void Train(int start_idx, int size, const DataVectorType &dataset,
+             ExternalArray *ext);
   void StoreData(int cap, int start_idx, int size,
-                 const carmi_params::DataVectorType &dataset, ArrayType *arr);
+                 const DataVectorType &dataset, ArrayType *arr);
   void StoreData(int cap, int start_idx, int size,
-                 const carmi_params::DataVectorType &dataset,
-                 GappedArrayType *ga);
+                 const DataVectorType &dataset, GappedArrayType *ga);
 
  private:
   // for public functions
@@ -261,8 +268,8 @@ class CARMI {
   CARMIRoot root;
   int rootType;
   std::vector<BaseNode> entireChild;
-  carmi_params::DataVectorType entireData;
-  carmi_params::DataVectorType externalData;
+  DataVectorType entireData;
+  DataVectorType externalData;
 
   int curr;  // the current insert index for external array
 
@@ -273,9 +280,9 @@ class CARMI {
   unsigned int entireDataSize;
   std::vector<EmptyBlock> emptyBlocks;
 
-  carmi_params::DataVectorType initDataset;
-  carmi_params::DataVectorType findQuery;
-  carmi_params::DataVectorType insertQuery;
+  DataVectorType initDataset;
+  DataVectorType findQuery;
+  DataVectorType insertQuery;
   std::vector<int> insertQueryIndex;
 
   std::map<IndexPair, NodeCost> COST;
@@ -291,6 +298,7 @@ class CARMI {
   int querySize;
   double kRate;
   int kAlgorithmThreshold;
+  bool kIsWriteHeavy;  // TODO
 
   int kLeafNodeID;   // for static structure
   int kInnerNodeID;  // for static structure
@@ -316,10 +324,12 @@ class CARMI {
   friend class ExternalArray;
 };
 
-CARMI::CARMI(const carmi_params::DataVectorType &initData,
-             const carmi_params::DataVectorType &findData,
-             const carmi_params::DataVectorType &insertData,
-             const std::vector<int> &insertIndex, double rate, int thre) {
+template <typename KeyType, typename ValueType>
+CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
+                                 const DataVectorType &findData,
+                                 const DataVectorType &insertData,
+                                 const std::vector<int> &insertIndex,
+                                 double rate, int thre) {
   emptyNode.ga = GappedArrayType(kThreshold);
   kAlgorithmThreshold = thre;
   kRate = rate;

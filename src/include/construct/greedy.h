@@ -34,10 +34,11 @@
  * @param optimal_node_struct the optimal setting
  * @param optimalCost the optimal cost
  */
+template <typename KeyType, typename ValueType>
 template <typename TYPE>
-void CARMI::IsBetterGreedy(int c, NodeType type, double frequency_weight,
-                           double time_cost, const IndexPair &range,
-                           TYPE *optimal_node_struct, NodeCost *optimalCost) {
+void CARMI<KeyType, ValueType>::IsBetterGreedy(
+    int c, NodeType type, double frequency_weight, double time_cost,
+    const IndexPair &range, TYPE *optimal_node_struct, NodeCost *optimalCost) {
   std::vector<IndexPair> perSize(c, emptyRange);
   double space_cost = carmi_params::kBaseNodeSpace * c;
 
@@ -60,7 +61,9 @@ void CARMI::IsBetterGreedy(int c, NodeType type, double frequency_weight,
  * @param dataRange the range of these queries
  * @return NodeCost the optimal cost of the subtree
  */
-NodeCost CARMI::GreedyAlgorithm(const DataRange &dataRange) {
+template <typename KeyType, typename ValueType>
+NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
+    const DataRange &dataRange) {
   NodeCost nodeCost = emptyCost;
   if (dataRange.initRange.size == 0) {
     nodeCost = emptyCost;

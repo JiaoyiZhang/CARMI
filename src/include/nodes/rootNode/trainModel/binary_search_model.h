@@ -29,7 +29,7 @@ class BinarySearchModel {
     childNumber = node.childNumber;
     index = node.index;
   }
-  void Train(const carmi_params::DataVectorType &dataset, int len);
+  void Train(const carmi_params::TestDataVecType &dataset, int len);
   int Predict(double key) const {
     int start_idx = 0;
     int end_idx = childNumber - 1;
@@ -46,10 +46,11 @@ class BinarySearchModel {
 
  private:
   std::vector<double> index;  // 8c
-  int childNumber;  // 4
+  int childNumber;            // 4
 };
 
-void BinarySearchModel::Train(const carmi_params::DataVectorType &dataset, int len) {
+void BinarySearchModel::Train(const carmi_params::TestDataVecType &dataset,
+                              int len) {
   if (dataset.size() == 0) return;
   int tmp = 0;
   childNumber = len;

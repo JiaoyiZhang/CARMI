@@ -31,7 +31,7 @@ class CandidateCost {
     size = s;
   }
 
-  void StoreValue(const carmi_params::DataVectorType &dataset,
+  void StoreValue(const carmi_params::TestDataVecType &dataset,
                   const std::vector<int> &index) {
     xx[0] = 0.0;
     x[0] = 0.0;
@@ -54,7 +54,9 @@ class CandidateCost {
     }
   }
 
-  float CalculateCost(int left, int right, int size, carmi_params::DataType p1, carmi_params::DataType p2) {
+  float CalculateCost(int left, int right, int size,
+                      carmi_params::TestDataType p1,
+                      carmi_params::TestDataType p2) {
     double a = (p2.second - p1.second) / (p2.first - p1.first);
     double b = p1.second - a * p1.first;
     double res = b * b * size;
