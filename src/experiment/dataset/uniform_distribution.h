@@ -25,27 +25,16 @@ class UniformDataset : public BaseDataset {
   explicit UniformDataset(float initRatio) : BaseDataset(initRatio) {}
 
   void GenerateDataset(carmi_params::TestDataVecType *initDataset,
-                       carmi_params::TestDataVecType *trainFindQuery,
-                       carmi_params::TestDataVecType *trainInsertQuery,
-                       std::vector<int> *trainInsertIndex,
-                       carmi_params::TestDataVecType *testInsertQuery);
-};
+                       carmi_params::TestDataVecType *testInsertQuery) {
+    carmi_params::TestDataVecType dataset(
+        carmi_params::kDatasetSize + carmi_params::kTestSize * (1 - proportion),
+        {0, 0});
 
-void UniformDataset::GenerateDataset(
-    carmi_params::TestDataVecType *initDataset,
-    carmi_params::TestDataVecType *trainFindQuery,
-    carmi_params::TestDataVecType *trainInsertQuery,
-    std::vector<int> *trainInsertIndex,
-    carmi_params::TestDataVecType *testInsertQuery) {
-  carmi_params::TestDataVecType dataset(
-      carmi_params::kDatasetSize + carmi_params::kTestSize * (1 - proportion),
-      {0, 0});
-
-  for (int i = 0; i < dataset.size(); i++) {
-    dataset[i] = {i, i};
+    for (int i = 0; i < dataset.size(); i++) {
+      dataset[i] = {i, i};
+    }
+    SplitInitTest(false, initDataset, testInsertQuery, &dataset);
   }
-  SplitInitTest(false, initDataset, trainFindQuery, trainInsertQuery,
-                trainInsertIndex, testInsertQuery, &dataset);
-}
+};
 
 #endif  // SRC_EXPERIMENT_DATASET_UNIFORM_DISTRIBUTION_H_

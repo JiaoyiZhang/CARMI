@@ -41,64 +41,78 @@ class CARMIExternal {
 
   class iterator {
    public:
-    inline iterator() : tree(NULL), currslot(0) {}
-    inline iterator(CARMIExternal *t, int s) : tree(t), currslot(s) {}
+    inline iterator() : tree(NULL), currnode(NULL), currslot(0) {}
+    explicit inline iterator(CARMIExternal *t)
+        : tree(t), currnode(NULL), currslot(-1) {}
+    inline iterator(CARMIExternal *t, BaseNode *l, int s)
+        : tree(t), currnode(l), currslot(s) {}
     inline const KeyType key() const {
-      if (tree == NULL || currslot >= tree->carmi_tree.nowDataSize) {
+      int left = currnode->externalArray.m_left;
+      if (tree == NULL || left + currslot > tree->carmi_tree.nowDataSize) {
         return DBL_MIN;
       }
-      return *(tree->carmi_tree.external_data + currslot);
+      return *(tree->carmi_tree.external_data +
+               (left + currslot) * tree->carmi_tree.kRecordLen);
     }
     inline const std::vector<KeyType> data() const {
       std::vector<KeyType> res;
-      if (tree == NULL || currslot >= tree->carmi_tree.nowDataSize) {
+      int left = currnode->externalArray.m_left;
+      if (tree == NULL || left + currslot > tree->carmi_tree.nowDataSize) {
         return res;
       }
       int len = tree->carmi_tree.kRecordLen;
       for (int i = 1; i < len; i++) {
-        res.push_back(*(tree->carmi_tree.external_data + currslot + i));
+        res.push_back(
+            *(tree->carmi_tree.external_data + (left + currslot) * len + i));
       }
       return res;
     }
     inline iterator &begin() const {
       static iterator it;
       it.tree = this;
+      it.currnode = &tree->carmi_tree.entireChild[tree->carmi_tree.firstLeaf];
       it.currslot = 0;
       return it;
     }
     inline iterator &end() const {
       static iterator it;
+      it.tree = this->tree;
+      it.currnode = NULL;
       it.currslot = -1;
       return it;
     }
     inline bool operator==(const iterator &x) const {
-      return (x.tree == tree) && (x.currslot == currslot);
+      return (x.tree == tree && x.currnode == currnode) &&
+             (x.currslot == currslot);
     }
     inline bool operator!=(const iterator &x) const {
-      return (x.tree != tree) || (x.currslot != currslot);
+      return (x.tree != tree || x.currnode != currnode) ||
+             (x.currslot != currslot);
     }
 
     inline iterator &operator++() {
       int len = tree->carmi_tree.kRecordLen;
-      currslot += len;
-      if (currslot < tree->carmi_tree.nowDataSize &&
-          *(tree->carmi_tree.external_data + currslot) != DBL_MIN) {
-        currslot += len;
-        return *this;
-      } else {
-        return end();
+      int left = currnode->externalArray.m_left;
+      while (currslot + left < tree->carmi_tree.nowDataSize) {
+        currslot++;
+        if (*(tree->carmi_tree.external_data + (left + currslot) * len) !=
+            DBL_MIN) {
+          return *this;
+        }
       }
+      return end();
     }
 
     CARMIExternal *tree;
+    BaseNode *currnode;
     int currslot;  // index in external_data
   };
 
   // main functions
  public:
   iterator Find(double key) {
-    iterator it;
-    carmi_tree.Find(key, &it.currslot);
+    iterator it(this);
+    it.currnode = carmi_tree.Find(key, &it.currslot);
     return it;
   }
 
@@ -138,13 +152,8 @@ CARMIExternal<KeyType>::CARMIExternal(KeyType *dataset, int dataset_size,
   DataVectorType insertQuery;
   std::vector<int> insertQueryIndex;
 
-  carmi_tree.external_data = dataset;
-  carmi_tree.kRecordLen = record_size / sizeof(KeyType);
-  carmi_tree.nowDataSize = dataset_size;
-  carmi_tree.entireDataSize = max_size;
-
   KeyType *idx = dataset;
-  int len = carmi_tree.kRecordLen;
+  int len = record_size / sizeof(KeyType);
   for (int i = 0; i < dataset_size; i++) {
     initDataset[i] = {*idx, 1};
     idx += len;
@@ -155,10 +164,17 @@ CARMIExternal<KeyType>::CARMIExternal(KeyType *dataset, int dataset_size,
     insertQuery.push_back({initDataset[i].first, 1});
     insertQueryIndex.push_back(i);
   }
+
+  carmi_impl tmp(initDataset, findQuery, insertQuery, insertQueryIndex, rate,
+                 thre);
+  carmi_tree = tmp;
+
+  carmi_tree.external_data = dataset;
+  carmi_tree.kRecordLen = record_size / sizeof(KeyType);
+  carmi_tree.nowDataSize = dataset_size;
+  carmi_tree.entireDataSize = max_size;
   carmi_tree.curr = carmi_params::kExternalInsertLeft;
 
-  carmi_tree = carmi_impl(initDataset, findQuery, insertQuery, insertQueryIndex,
-                          rate, thre);
   carmi_tree.Construction(initDataset, findQuery, insertQuery);
 }
 #endif  // SRC_INCLUDE_CARMI_EXTERNAL_H_

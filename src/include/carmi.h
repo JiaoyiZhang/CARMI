@@ -35,20 +35,7 @@ class CARMI {
   CARMI(const DataVectorType &initData, const DataVectorType &findData,
         const DataVectorType &insertData, const std::vector<int> &insertIndex,
         double rate, int thre);
-  CARMI &operator=(const CARMI &p) {
-    firstLeaf = p.firstLeaf;
-    emptyNode.ga = p.emptyNode.ga;
-    kAlgorithmThreshold = p.kAlgorithmThreshold;
-    kRate = p.kRate;
-    nowDataSize = p.nowDataSize;
-    initDataset = p.initDataset;
-    findQuery = p.findQuery;
-    insertQuery = p.insertQuery;
-    insertQueryIndex = p.insertQueryIndex;
-    querySize = p.querySize;
-    entireChild = p.entireChild;
-    return *this;
-  }
+  CARMI &operator=(const CARMI &p);
 
   // main functions
  public:
@@ -295,5 +282,45 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
   }
 
   InitEntireChild(initDataset.size());
+}
+
+template <typename KeyType, typename ValueType>
+CARMI<KeyType, ValueType> &CARMI<KeyType, ValueType>::operator=(
+    const CARMI &p) {
+  root = p.root;
+  rootType = p.rootType;
+  entireChild = p.entireChild;
+  entireData = p.entireData;
+  external_data = p.external_data;
+  kRecordLen = p.kRecordLen;
+
+  curr = p.curr;
+
+  kIsWriteHeavy = p.kIsWriteHeavy;
+  firstLeaf = p.firstLeaf;
+  nowDataSize = p.nowDataSize;
+  entireDataSize = p.entireDataSize;
+
+  entireChildNumber = p.entireChildNumber;
+  nowChildNumber = p.nowChildNumber;
+  emptyBlocks = p.emptyBlocks;
+
+  initDataset = p.initDataset;
+  findQuery = p.findQuery;
+  insertQuery = p.insertQuery;
+  insertQueryIndex = p.insertQueryIndex;
+  COST = p.COST;
+  structMap = p.structMap;
+  scanLeaf = p.scanLeaf;
+  emptyNode = p.emptyNode;
+  emptyRange = IndexPair(-1, 0);
+
+  querySize = p.querySize;
+  kRate = p.kRate;
+  kAlgorithmThreshold = p.kAlgorithmThreshold;
+
+  kLeafNodeID = p.kLeafNodeID;
+  kInnerNodeID = p.kInnerNodeID;
+  return *this;
 }
 #endif  // SRC_INCLUDE_CARMI_H_

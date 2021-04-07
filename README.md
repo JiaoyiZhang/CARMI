@@ -50,9 +50,11 @@ bool CARMI<KeyType, ValueType>::Delete(double key);
 
 We divided the source code into four parts: construct, dataManager, func, nodes and some shared files. The discription of each file is introduced below.
 
-- **src**
+- **include**
   - baseNode.h  *( the union structure of all nodes )*
-  - carmi.h  *( the CARMI class )*
+  - carmi.h  *( the implementation class of CARMI )*
+  - carmi_common.h  *( the CARMI class for common use )*
+  - carmi_external.h  *( the CARMI class for external situation )*
   - **construct**  *( files used to construct the index )*
     - construction.h *( the main function of our algorithm )*
     - choose_root.h *( choose the optimal root node from four root nodes )*

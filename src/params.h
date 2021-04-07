@@ -13,8 +13,6 @@
 
 #define PARAM_ZIPFIAN 0.99
 #define DEBUG
-// #define BASELINE
-// #define EXTERNAL
 
 #include <utility>
 #include <vector>
@@ -25,11 +23,8 @@ typedef double TestValueType;
 typedef std::pair<TestKeyType, TestValueType> TestDataType;
 typedef std::vector<TestDataType> TestDataVecType;
 
-// TODO(jiaoyi): delete
-bool kPrimaryIndex = false;
-int kExternalInsertLeft;
-
-// -------------------------
+static bool kPrimaryIndex = false;
+static int kExternalInsertLeft;
 
 const int kLeafMaxCapacity = 4096;
 const int kAlgorithmThre = 4096;
@@ -69,11 +64,9 @@ const float kSecondToNanosecond = 1000000000.0;
 
 #ifdef DEBUG
 const float Density[1] = {0.5};  // size / capacity
-#endif                           // DEBUG
-
-#ifndef DEBUG
+#else
 const float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity
-#endif                                               // !DEBUG
+#endif  // !DEBUG
 
 const int kRMIInnerChild = 32;
 

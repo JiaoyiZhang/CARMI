@@ -3,3 +3,4 @@ build/*
 CMakeFiles/*
 .vscode/*
 *.csv
+Doxyfile

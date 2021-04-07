@@ -14,8 +14,8 @@
 #include <iostream>
 #include <random>
 
-#include "./experiment/fixed_experiment.h"
-#include "./experiment/main_experiment.h"
+#include "./experiment/functions.h"
+#include "./staticRMI/fixed_experiment.h"
 
 std::ofstream outRes;
 

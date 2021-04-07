@@ -53,12 +53,7 @@ inline bool CARMI<KeyType, ValueType>::AllocateEmptyBlock(int left, int len) {
  */
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::GetActualSize(int size) {
-#ifdef DEBUG
-  if (size > carmi_params::kLeafMaxCapacity || size < 1)
-    std::cout << "size: " << size
-              << ",\tsize > 4096 || size < 1, GetIndex WRONG!" << std::endl;
-#endif  // DEBUG
-  if (size == 1) return 1;
+  if (size <= 1) return 1;
 
   for (int j = emptyBlocks.size() - 1; j > 0; j--) {
     if (size <= emptyBlocks[j].m_width && size > emptyBlocks[j - 1].m_width) {
@@ -76,12 +71,9 @@ inline int CARMI<KeyType, ValueType>::GetActualSize(int size) {
  */
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::GetIndex(int size) {
-#ifdef DEBUG
-  if (size > carmi_params::kLeafMaxCapacity || size < 1)
-    std::cout << "size: " << size
-              << ",\tsize > 4096 || size < 1, GetIndex WRONG!" << std::endl;
-#endif  // DEBUG
-  if (size == 1) return 0;
+  if (size <= 1) {
+    return 0;
+  }
 
   for (int j = emptyBlocks.size() - 1; j > 0; j--) {
     if (size <= emptyBlocks[j].m_width && size > emptyBlocks[j - 1].m_width) {
@@ -141,15 +133,8 @@ int CARMI<KeyType, ValueType>::AllocateSingleMemory(int size, int *idx) {
     if (newLeft != -1) {
       // split the block to smaller blocks
       if (i > *idx) {
-        bool success = AllocateEmptyBlock(newLeft, size);
-
-        if (!success) {
-#ifdef DEBUG
-          std::cout << "in allocate memory, split block wrong" << std::endl;
-#endif  // DEBUG
-        } else {
-          newLeft = emptyBlocks[*idx].allocate(size);
-        }
+        AllocateEmptyBlock(newLeft, size);
+        newLeft = emptyBlocks[*idx].allocate(size);
       }
 
       *idx = i;
@@ -168,12 +153,6 @@ int CARMI<KeyType, ValueType>::AllocateSingleMemory(int size, int *idx) {
 template <typename KeyType, typename ValueType>
 int CARMI<KeyType, ValueType>::AllocateMemory(int size) {
   int idx = GetIndex(size);  // idx in emptyBlocks[]
-#ifdef DEBUG
-  if (idx == -1) {
-    std::cout << "GetIndex in emptyBlocks WRONG!\tsize:" << size << std::endl;
-    GetIndex(size);
-  }
-#endif  // DEBUG
   size = emptyBlocks[idx].m_width;
 
   auto newLeft = AllocateSingleMemory(size, &idx);

@@ -9,13 +9,22 @@
  *
  */
 
-#ifndef SRC_INCLUDE_STATICRMI_RMI_H_
-#define SRC_INCLUDE_STATICRMI_RMI_H_
+#ifndef SRC_STATICRMI_RMI_H_
+#define SRC_STATICRMI_RMI_H_
 #include <vector>
 
-#include "../carmi.h"
+#include "../include/carmi.h"
 
-// RMI
+/**
+ * @brief Construct a new CARMI<KeyType, ValueType>::CARMI object
+ *
+ * @tparam KeyType
+ * @tparam ValueType
+ * @param dataset
+ * @param childNum
+ * @param kInnerID
+ * @param kLeafID
+ */
 template <typename KeyType, typename ValueType>
 CARMI<KeyType, ValueType>::CARMI(const DataVectorType &dataset, int childNum,
                                  int kInnerID, int kLeafID) {
@@ -44,6 +53,18 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &dataset, int childNum,
   }
 }
 
+/**
+ * @brief construct the root of SRMI
+ *
+ * @tparam KeyType
+ * @tparam ValueType
+ * @tparam ROOTTYPE
+ * @tparam ROOTMODEL
+ * @tparam INNERTYPE
+ * @param childNum
+ * @param range
+ * @return ROOTTYPE
+ */
 template <typename KeyType, typename ValueType>
 template <typename ROOTTYPE, typename ROOTMODEL, typename INNERTYPE>
 inline ROOTTYPE CARMI<KeyType, ValueType>::InitSRMIRoot(
@@ -65,6 +86,15 @@ inline ROOTTYPE CARMI<KeyType, ValueType>::InitSRMIRoot(
   return node;
 }
 
+/**
+ * @brief construct the leaf nodes of SRMI
+ *
+ * @tparam KeyType
+ * @tparam ValueType
+ * @tparam TYPE
+ * @param range
+ * @param node the root node
+ */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 inline void CARMI<KeyType, ValueType>::InitSRMILeaf(const IndexPair &range,
@@ -97,4 +127,4 @@ inline void CARMI<KeyType, ValueType>::InitSRMILeaf(const IndexPair &range,
   }
 }
 
-#endif  // SRC_INCLUDE_STATICRMI_RMI_H_
+#endif  // SRC_STATICRMI_RMI_H_

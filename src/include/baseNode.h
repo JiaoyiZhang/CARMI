@@ -25,24 +25,28 @@ class CARMIRoot : public LRType, public PLRType, public HisType, public BSType {
     this->LRType::model = node.model;
     this->flagNumber = node.flagNumber;
     this->childLeft = node.childLeft;
+    this->type = node.flagNumber;
     return *this;
   }
   CARMIRoot& operator=(const PLRType& node) {
     this->PLRType::model = node.model;
     this->flagNumber = node.flagNumber;
     this->childLeft = node.childLeft;
+    this->type = node.flagNumber;
     return *this;
   }
   CARMIRoot& operator=(const HisType& node) {
     this->HisType::model = node.model;
     this->flagNumber = node.flagNumber;
     this->childLeft = node.childLeft;
+    this->type = node.flagNumber;
     return *this;
   }
   CARMIRoot& operator=(const BSType& node) {
     this->BSType::model = node.model;
     this->flagNumber = node.flagNumber;
     this->childLeft = node.childLeft;
+    this->type = node.flagNumber;
     return *this;
   }
 };

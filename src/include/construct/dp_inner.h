@@ -78,9 +78,6 @@ NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
   for (int c = carmi_params::kMinChildNumber; c < tmpEnd; c *= 2) {
-#ifdef DEBUG
-    if (c * 512 < dataRange.initRange.size) continue;
-#endif  // DEBUG
     ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight,
                                carmi_params::kLRInnerTime, dataRange,
                                &optimalCost, &(optimal_node_struct.lr));
@@ -96,11 +93,6 @@ NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
                                  carmi_params::kBSInnerTime, dataRange,
                                  &optimalCost, &(optimal_node_struct.bs));
   }
-
-#ifdef DEBUG
-  if (optimalCost.time == DBL_MAX)
-    std::cout << "wrong, dp inner time is DBL_MAX" << std::endl;
-#endif  // DEBUG
 
   structMap.insert({dataRange.initRange, optimal_node_struct});
   COST.insert({dataRange.initRange, optimalCost});

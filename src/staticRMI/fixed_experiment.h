@@ -8,17 +8,17 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_EXPERIMENT_FIXED_EXPERIMENT_H_
-#define SRC_EXPERIMENT_FIXED_EXPERIMENT_H_
+#ifndef SRC_STATICRMI_FIXED_EXPERIMENT_H_
+#define SRC_STATICRMI_FIXED_EXPERIMENT_H_
 #include <algorithm>
 #include <vector>
 
+#include "../experiment/dataset/exponential_distribution.h"
+#include "../experiment/dataset/lognormal_distribution.h"
+#include "../experiment/dataset/longitudes.h"
+#include "../experiment/dataset/normal_distribution.h"
+#include "../experiment/dataset/uniform_distribution.h"
 #include "./static.h"
-#include "dataset/exponential_distribution.h"
-#include "dataset/lognormal_distribution.h"
-#include "dataset/longitudes.h"
-#include "dataset/normal_distribution.h"
-#include "dataset/uniform_distribution.h"
 
 void fixedSynthetic(double initRatio, int kLeafID,
                     const std::vector<int> &lengt);
@@ -60,18 +60,14 @@ void fixedSynthetic(double initRatio, int kLeafID,
   ExponentialDataset expData = ExponentialDataset(init);
 
   carmi_params::TestDataVecType initData;
-  carmi_params::TestDataVecType trainFind;
-  carmi_params::TestDataVecType trainInsert;
   carmi_params::TestDataVecType testInsert;
-  std::vector<int> trainInsertIndex;
 
   for (int i = 0; i < 1; i++) {
     int childNum = 131072;
     std::cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++"
               << std::endl;
     outRes << "+++++++++++ childNum: " << childNum << std::endl;
-    uniData.GenerateDataset(&initData, &trainFind, &trainInsert,
-                            &trainInsertIndex, &testInsert);
+    uniData.GenerateDataset(&initData, &testInsert);
     outRes << "+++++++++++ uniform dataset++++++++++++++++++++++++++"
            << std::endl;
     RunStatic(initRatio, kLeafID, initData, testInsert, length);
@@ -79,8 +75,7 @@ void fixedSynthetic(double initRatio, int kLeafID,
     std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
               << std::endl;
     outRes << "+++++++++++ childNum: " << childNum << std::endl;
-    expData.GenerateDataset(&initData, &trainFind, &trainInsert,
-                            &trainInsertIndex, &testInsert);
+    expData.GenerateDataset(&initData, &testInsert);
     outRes << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
            << std::endl;
     RunStatic(initRatio, kLeafID, initData, testInsert, length);
@@ -88,8 +83,7 @@ void fixedSynthetic(double initRatio, int kLeafID,
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
               << std::endl;
     outRes << "+++++++++++ childNum: " << childNum << std::endl;
-    norData.GenerateDataset(&initData, &trainFind, &trainInsert,
-                            &trainInsertIndex, &testInsert);
+    norData.GenerateDataset(&initData, &testInsert);
     outRes << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
            << std::endl;
     RunStatic(initRatio, kLeafID, initData, testInsert, length);
@@ -97,12 +91,11 @@ void fixedSynthetic(double initRatio, int kLeafID,
     std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
               << std::endl;
     outRes << "+++++++++++ childNum: " << childNum << std::endl;
-    longData.GenerateDataset(&initData, &trainFind, &trainInsert,
-                             &trainInsertIndex, &testInsert);
+    longData.GenerateDataset(&initData, &testInsert);
     outRes << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
            << std::endl;
     RunStatic(initRatio, kLeafID, initData, testInsert, length);
   }
 }
 
-#endif  // SRC_EXPERIMENT_FIXED_EXPERIMENT_H_
+#endif  // SRC_STATICRMI_FIXED_EXPERIMENT_H_

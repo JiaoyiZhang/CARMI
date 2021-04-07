@@ -46,14 +46,6 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
     table[idx]++;
   }
 
-#ifdef DEBUG
-  // check cnt
-  int cntt = 0;
-  for (int i = 0; i < childNumber; i++) {
-    if (table[i] > 0) cntt++;
-  }
-#endif  // DEBUG
-
   // normalize table
   std::vector<double> index(childNumber, 0);
   index[0] = static_cast<double>(table[0]) / size * (childNumber - 1);
@@ -119,13 +111,13 @@ inline int HisModel::Predict(double key) const {
   tmp = (tmp & 0x0f0f0f0f) + ((tmp >> 4) & 0x0f0f0f0f);
   tmp = (tmp & 0x00ff00ff) + ((tmp >> 8) & 0x00ff00ff);
   index += tmp;
-#ifdef DEBUG
+
   if (index >= childNumber) {
     index = childNumber - 1;
   } else if (index < 0) {
     index = 0;
   }
-#endif  // DEBUG
+
   return index;
 }
 

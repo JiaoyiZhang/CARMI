@@ -9,14 +9,14 @@
             "type": "cppdbg",
             "request": "launch",
             // "program": "${workspaceFolder}/${fileBasenameNoExtension}.out",
-            "program": "${workspaceFolder}/build/learned_index",
+            // "program": "${workspaceFolder}/build/learned_index",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",
-            // "preLaunchTask": "learned_index",
+            "preLaunchTask": "learned_index",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",

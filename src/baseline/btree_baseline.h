@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "../../stx_btree/btree_map.h"
-#include "../experiment/workload/workloads.h"
+#include "../experiment/functions.h"
 #include "../experiment/workload/zipfian.h"
 #include "../params.h"
 

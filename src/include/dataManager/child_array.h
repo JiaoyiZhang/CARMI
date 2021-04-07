@@ -44,9 +44,6 @@ int CARMI<KeyType, ValueType>::AllocateChildMemory(int size) {
     newLeft = nowChildNumber;
     nowChildNumber += size;
   } else {
-#ifdef DEBUG
-    std::cout << "need expand the entireChild!" << std::endl;
-#endif  // DEBUG
     entireChildNumber *= 2;
     BaseNode t;
     for (int i = nowChildNumber; i < entireChildNumber; i++)

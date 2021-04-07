@@ -216,7 +216,6 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
 
         // split
         if (size >= carmi_params::kLeafMaxCapacity) {
-          // int previousIdx = entireChild[idx].ga.previousLeaf;
           Split<ExternalArray>(true, left, size, 0, idx);
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);
@@ -227,12 +226,17 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
           entireChild[idx].externalArray.flagNumber++;
         } else if (size == 0) {
           entireChild[idx].externalArray.m_left = curr;
-          entireChild[idx].externalArray.flagNumber++;
           DataVectorType trainData;
           trainData.push_back(data);
-          Train(entireChild[idx].externalArray.m_left, 1, trainData,
-                &entireChild[idx].externalArray);
+          Train(0, 1, trainData, &entireChild[idx].externalArray);
         }
+        *(external_data + curr * kRecordLen) = data.first;
+        *(external_data + curr * kRecordLen + 1) = data.second;
+
+        entireChild[idx].externalArray.flagNumber++;
+        curr++;
+        nowDataSize++;
+
         return true;
       }
     }

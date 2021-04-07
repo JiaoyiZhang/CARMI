@@ -115,8 +115,8 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
           }
           dp_idx[i] = cand_point[j].second;
 
-          float var0 = Diff(i + 1, childNumber, dp_idx);
-          float var1 = Diff(i + 1, childNumber, opt.idx);
+          float var0 = cand_cost.Diff(i + 1, childNumber, dp_idx);
+          float var1 = cand_cost.Diff(i + 1, childNumber, opt.idx);
           if (var0 < var1) {
             for (int l = 0; l < i; l++) {
               opt.idx[l] = dp[0][k].idx[l];
@@ -154,8 +154,8 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
     } else if (dp[1][j].cost == opt.cost) {
       dp[1][j].idx[6] = childNumber - 1;
       opt.idx[6] = childNumber - 1;
-      float var0 = Diff(7, childNumber, dp[1][j].idx);
-      float var1 = Diff(7, childNumber, opt.idx);
+      float var0 = cand_cost.Diff(7, childNumber, dp[1][j].idx);
+      float var1 = cand_cost.Diff(7, childNumber, opt.idx);
       if (var0 < var1) {
         opt.cost = dp[1][j].cost;
         for (int k = 0; k < 6; k++) {

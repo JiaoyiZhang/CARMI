@@ -67,6 +67,18 @@ class CandidateCost {
     return res;
   }
 
+  float Diff(int n, int len, const int idx[]) {
+    int opt[8];
+    for (int i = 0; i < n; i++) {
+      opt[i] = fabs(static_cast<float>(len) / 8.0 * i - idx[i]);
+    }
+    float diff = 0.0;
+    for (int i = 0; i < n; i++) {
+      diff += opt[i] * opt[i];
+    }
+    return diff;
+  }
+
  public:
   int size;
   std::vector<double> xx;
@@ -75,17 +87,5 @@ class CandidateCost {
   std::vector<double> pp;
   std::vector<double> p;
 };
-
-float Diff(int n, int len, const int idx[]) {
-  int opt[8];
-  for (int i = 0; i < n; i++) {
-    opt[i] = fabs(static_cast<float>(len) / 8.0 * i - idx[i]);
-  }
-  float diff = 0.0;
-  for (int i = 0; i < n; i++) {
-    diff += opt[i] * opt[i];
-  }
-  return diff;
-}
 
 #endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_

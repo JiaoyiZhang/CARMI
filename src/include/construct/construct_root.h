@@ -13,6 +13,10 @@
 #include <vector>
 
 #include "../carmi.h"
+#include "../nodes/rootNode/trainModel/binary_search_model.h"
+#include "../nodes/rootNode/trainModel/histogram.h"
+#include "../nodes/rootNode/trainModel/linear_regression.h"
+#include "../nodes/rootNode/trainModel/piecewiseLR.h"
 #include "./dp.h"
 #include "./store_node.h"
 #include "./structures.h"

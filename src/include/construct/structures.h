@@ -64,15 +64,23 @@ class IndexPair {
   }
 };
 
+/**
+ * @brief the bound ranges of initDataset, findQuery and insertQuery
+ *
+ */
 class DataRange {
  public:
-  IndexPair initRange;
-  IndexPair findRange;
-  IndexPair insertRange;
+  IndexPair initRange;    // the bound range of initDataset
+  IndexPair findRange;    // the bound range of findQuery
+  IndexPair insertRange;  // the bound range of insertQuery
   DataRange(IndexPair init, IndexPair find, IndexPair insert)
       : initRange(init), findRange(find), insertRange(insert) {}
 };
 
+/**
+ * @brief the range of subdatasets
+ *
+ */
 class SubDataset {
  public:
   std::vector<IndexPair> subInit;
@@ -86,6 +94,10 @@ class SubDataset {
   ~SubDataset() {}
 };
 
+/**
+ * @brief enumerate type of all node types
+ *
+ */
 enum NodeType {
   LR_ROOT_NODE,
   PLR_ROOT_NODE,

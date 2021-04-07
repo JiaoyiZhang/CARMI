@@ -77,9 +77,6 @@ NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
   int tmpEnd = dataRange.initRange.size / 2;
   IndexPair singleRange(dataRange.initRange.left, dataRange.initRange.size);
   for (int c = carmi_params::kMinChildNumber; c < tmpEnd; c *= 2) {
-#ifdef DEBUG
-    if (c * 512 < dataRange.initRange.size) continue;
-#endif  // DEBUG
     IsBetterGreedy<LRModel>(c, LR_INNER_NODE, frequency_weight,
                             carmi_params::kLRInnerTime, dataRange.initRange,
                             &(optimal_node_struct.lr), &optimalCost);
@@ -126,10 +123,6 @@ NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
     else
       res = DP(range);
   }
-#ifdef DEBUG
-  if (optimalCost.time == DBL_MAX)
-    std::cout << "wrong, greedy time is DBL_MAX" << std::endl;
-#endif  // DEBUG
 
   structMap.insert({dataRange.initRange, optimal_node_struct});
   COST.insert({dataRange.initRange, optimalCost});

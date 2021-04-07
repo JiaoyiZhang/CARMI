@@ -32,7 +32,6 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
     NodeCost *nodeCost) {
   for (int i = 0; i < rootStruct.rootChildNum; i++) {
     COST.insert({emptyRange, emptyCost});
-    structMap.insert({emptyRange, emptyNode});
 
     NodeCost resChild;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
@@ -41,9 +40,6 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
       resChild = GreedyAlgorithm(range);
     else
       resChild = DP(range);
-
-    auto it = structMap.find(subDataset.subInit[i]);
-    int type = it->second.lr.flagNumber >> 24;
 
     StoreOptimalNode(i, range);
 
@@ -67,12 +63,7 @@ inline void CARMI<KeyType, ValueType>::Construction(
     const DataVectorType &initData, const DataVectorType &findData,
     const DataVectorType &insertData) {
   NodeCost nodeCost = emptyCost;
-#ifndef DEBUG
   RootStruct res = ChooseRoot();
-#endif  // DEBUG
-#ifdef DEBUG
-  RootStruct res = RootStruct(0, 131072);
-#endif  // DEBUG
   rootType = res.rootType;
   SubDataset subDataset = StoreRoot(res, &nodeCost);
 

@@ -31,8 +31,8 @@ class CARMICommon {
   carmi_impl carmi_tree;
 
  public:
-  //   CARMICommon(const DataVectorType &dataset, int childNum, int kInnerID,
-  //               int kLeafID);  // for static structure
+  // CARMICommon(const DataVectorType &dataset, int childNum, int kInnerID,
+  //             int kLeafID);  // for static structure
   CARMICommon() {}
   CARMICommon(const DataVectorType &dataset, int size, double ratio,
               double rate, int thre = 1024, double insert_left = 0,
@@ -41,10 +41,12 @@ class CARMICommon {
   class iterator {
    public:
     inline iterator() : tree(NULL), currnode(NULL), currslot(0) {}
+    explicit inline iterator(CARMICommon *t)
+        : tree(t), currnode(NULL), currslot(-1) {}
     inline iterator(CARMICommon *t, BaseNode *l, int s)
         : tree(t), currnode(l), currslot(s) {}
     inline const KeyType key() const {
-      if (currnode == NULL) {
+      if (currnode == NULL || tree == NULL) {
         return DBL_MIN;
       }
       int left = currnode->array.m_left;
@@ -66,6 +68,7 @@ class CARMICommon {
     }
     inline iterator &end() const {
       static iterator it;
+      it.tree = this->tree;
       it.currnode = NULL;
       it.currslot = -1;
       return it;
@@ -84,7 +87,6 @@ class CARMICommon {
       while (currslot < (currnode->array.flagNumber & 0x00FFFFFF) ||
              currnode->array.nextLeaf != -1) {
         currslot++;
-
         if (tree->carmi_tree.entireData[left + currslot].first != DBL_MIN) {
           return *this;
         }
@@ -102,7 +104,7 @@ class CARMICommon {
   // main functions
  public:
   iterator Find(double key) {
-    iterator it;
+    iterator it(this);
     it.currnode = carmi_tree.Find(key, &it.currslot);
     return it;
   }
@@ -143,6 +145,9 @@ CARMICommon<KeyType, ValueType>::CARMICommon(const DataVectorType &dataset,
 
   if (ratio != carmi_params::kWritePartial &&
       ratio != carmi_params::kReadOnly) {
+    if (ratio == carmi_params::kRangeScan) {
+      ratio = carmi_params::kReadHeavy;
+    }
     int cnt = round(1.0 / (1.0 - ratio));
     for (int j = cnt - 1; j < size; j += cnt) {
       insertQuery.push_back({initDataset[j].first, 1});
@@ -154,9 +159,9 @@ CARMICommon<KeyType, ValueType>::CARMICommon(const DataVectorType &dataset,
       insertQueryIndex.push_back(j);
     }
   }
-
-  carmi_tree = carmi_impl(initDataset, findQuery, insertQuery, insertQueryIndex,
-                          rate, thre);
+  carmi_impl tmp(initDataset, findQuery, insertQuery, insertQueryIndex, rate,
+                 thre);
+  carmi_tree = tmp;
   carmi_tree.InitEntireData(0, initDataset.size(), false);
   carmi_tree.Construction(initDataset, findQuery, insertQuery);
 }
