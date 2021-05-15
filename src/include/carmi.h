@@ -39,10 +39,10 @@ class CARMI {
 
   // main functions
  public:
-  BaseNode *Find(double key, int *currslot);
+  BaseNode *Find(KeyType key, int *currslot);
   bool Insert(DataType data);
   bool Update(DataType data);
-  bool Delete(double key);
+  bool Delete(KeyType key);
 
   long double CalculateSpace() const;
   void PrintStructure(int level, NodeType type, int idx,

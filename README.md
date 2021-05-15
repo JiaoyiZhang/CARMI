@@ -1,6 +1,6 @@
 # A simple implementation of CARMI
 
-This is a simple implementation of our paper: **CARMI: A Cache-Aware Learned Index with a Cost-based Construction Algorithm**.
+This is a simple implementation of our paper: [**CARMI: A Cache-Aware Learned Index with a Cost-based Construction Algorithm**](https://github.com/bingmann/stx-btree)**CARMI: A Cache-Aware Learned Index with a Cost-based Construction Algorithm**.
 
 ## Reproducing the experiment
 
@@ -15,7 +15,7 @@ make
 
 ## Using CARMI
 
-If you want to use only CARMI as an index, then you only need to include the header file respectively (Please keep your code file and *include* folder under the same directory level.):
+If you want to use only CARMI as an index, then you only need to include the header file respectively:
 
 Use in-memory index:
 ```

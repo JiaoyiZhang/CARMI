@@ -24,7 +24,7 @@
  * @return CARMI<KeyType, ValueType>::DataType of a node
  */
 template <typename KeyType, typename ValueType>
-BaseNode* CARMI<KeyType, ValueType>::Find(double key, int* currslot) {
+BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {

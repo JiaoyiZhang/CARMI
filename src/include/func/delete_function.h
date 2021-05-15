@@ -24,7 +24,7 @@
  * @return false the operation fails
  */
 template <typename KeyType, typename ValueType>
-bool CARMI<KeyType, ValueType>::Delete(double key) {
+bool CARMI<KeyType, ValueType>::Delete(KeyType key) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {

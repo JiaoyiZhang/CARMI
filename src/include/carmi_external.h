@@ -110,7 +110,7 @@ class CARMIExternal {
 
   // main functions
  public:
-  iterator Find(double key) {
+  iterator Find(KeyType key) {
     iterator it(this);
     it.currnode = carmi_tree.Find(key, &it.currslot);
     return it;
@@ -131,7 +131,7 @@ class CARMIExternal {
     return isSuccess;
   }
   bool Update(DataType data) { return carmi_tree.Update(data); }
-  bool Delete(double key) { return carmi_tree.Delete(key); }
+  bool Delete(KeyType key) { return carmi_tree.Delete(key); }
 
   int RootType() { return carmi_tree.rootType; }
 
