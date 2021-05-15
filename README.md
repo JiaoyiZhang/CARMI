@@ -1,6 +1,6 @@
 # A simple implementation of CARMI
 
-This is a simple implementation of our paper: [**CARMI: A Cache-Aware Learned Index with a Cost-based Construction Algorithm**](https://github.com/bingmann/stx-btree)**CARMI: A Cache-Aware Learned Index with a Cost-based Construction Algorithm**.
+This is a simple implementation of our paper: [**CARMI: A Cache-Aware Learned Index with a Cost-based Construction Algorithm**](https://arxiv.org/abs/2103.00858).
 
 ## Reproducing the experiment
 
