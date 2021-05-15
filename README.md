@@ -2,15 +2,29 @@
 
 This is a simple implementation of our paper: **CARMI: A Cache-Aware Learned Index with a Cost-based Construction Algorithm**.
 
-## Building
+## Reproducing the experiment
 
-If you want to run the program, do the following
+If you want to reproduce the experiment in our paper, do the following
 
 ```
 cd ./learned_index
 cmake .
 make
 ./learned_index
+```
+
+## Using CARMI
+
+If you want to use only CARMI as an index, then you only need to include the header file respectively (Please keep your code file and *include* folder under the same directory level.):
+
+Use in-memory index:
+```
+#include "./include/carmi_common.h"
+```
+
+Use external index:
+```
+#include "./include/carmi_external.h"
 ```
 
 ## Instructions
@@ -48,7 +62,7 @@ bool CARMI<KeyType, ValueType>::Delete(double key);
 
 ## File structure of CARMI
 
-We divided the source code into four parts: construct, dataManager, func, nodes and some shared files. The discription of each file is introduced below.
+In this project, we include the CARMI header files, the source code of the experimental part and the baseline. The description of each file in CARMI's header file is as follows:
 
 - **include**
   - baseNode.h  *( the union structure of all nodes )*
@@ -102,4 +116,4 @@ We divided the source code into four parts: construct, dataManager, func, nodes 
 
 This code is based on C++.
 
-Main dependencies is [**STX-btree**](github.com/bingmann/stx-btree) and [**ART Tree**](https://github.com/armon/libart).
+Main dependencies is [**STX-btree**](https://github.com/bingmann/stx-btree) and [**ART Tree**](https://github.com/armon/libart).
