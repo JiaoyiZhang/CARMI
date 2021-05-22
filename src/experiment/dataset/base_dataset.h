@@ -58,20 +58,20 @@ class BaseDataset {
   void SplitInitTest(DataVecType *dataset, DataVecType *initDataset,
                      DataVecType *testInsertQuery) {
     (*initDataset) = std::vector<DataType>(kDatasetSize);
-    (*testInsertQuery) = std::vector<DataType>(kTestSize);
+    int end = round(kTestSize * (1 - proportion));
+    (*testInsertQuery) = std::vector<DataType>(end);
 
     unsigned seed = std::clock();
     std::default_random_engine engine(seed);
     shuffle((*dataset).begin(), (*dataset).end(), engine);
 
     int i = 0;
-    int end = round(kTestSize * (1 - proportion));
-    for (; i < end; i++) {
-      testInsertQuery->push_back((*dataset)[i]);
+    for (int j = 0; i < end; i++, j++) {
+      (*testInsertQuery)[j] = (*dataset)[i];
     }
     end = (*dataset).size();
-    for (; i < end; i++) {
-      initDataset->push_back((*dataset)[i]);
+    for (int j = 0; i < end; i++, j++) {
+      (*initDataset)[j] = (*dataset)[i];
     }
 
     std::sort(initDataset->begin(), initDataset->end(),
