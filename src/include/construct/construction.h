@@ -55,7 +55,7 @@ inline void CARMI<KeyType, ValueType>::Construction(
   RootStruct res = ChooseRoot();
   rootType = res.rootType;
   SubDataset subDataset = StoreRoot(res, &nodeCost);
-  
+
 #ifdef DEBUG
   std::cout << std::endl;
   std::cout << "constructing root is over!" << std::endl;
@@ -81,6 +81,14 @@ inline void CARMI<KeyType, ValueType>::Construction(
     for (int i = 0; i < static_cast<int>(emptyBlocks.size()); i++) {
       auto it = emptyBlocks[i].m_block.lower_bound(neededSize);
       emptyBlocks[i].m_block.erase(it, emptyBlocks[i].m_block.end());
+      auto tmp = emptyBlocks[i];
+      for (auto j = tmp.m_block.begin(); j != tmp.m_block.end(); j++) {
+        if (tmp.m_width + *j > entireData.size()) {
+          AllocateEmptyBlock(*j, entireData.size() - *j);
+          emptyBlocks[i].m_block.erase(j);
+          break;
+        }
+      }
     }
   }
 

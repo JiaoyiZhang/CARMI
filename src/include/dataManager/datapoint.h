@@ -29,6 +29,9 @@ inline bool CARMI<KeyType, ValueType>::AllocateEmptyBlock(int left, int len) {
     while (res > 0) {
       len = res;
       res = emptyBlocks[i].addBlock(left, len);
+      if (res == -1) {
+        break;
+      }
     }
     if (res == 0) {
       return true;
