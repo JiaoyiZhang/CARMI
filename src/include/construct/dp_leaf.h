@@ -81,6 +81,7 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct;
 
+  // TODO(jiaoyi): modify the process due to the change of leaf nodes
   if (isPrimary) {
     nodeCost.time = 0.0;
     nodeCost.space = 0.0;
@@ -146,33 +147,6 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     optimal_node_struct.array = tmp;
   }
 
-  // choose a gapped array node as the leaf node
-  for (auto density : carmi_params::Density) {  // for
-    int actualSize = dataRange.initRange.size / density;
-    if (actualSize > carmi_params::kLeafMaxCapacity)
-      actualSize = carmi_params::kLeafMaxCapacity;
-    else
-      actualSize = GetActualSize(actualSize);
-
-    GappedArrayType tmpNode(actualSize);
-    tmpNode.density = density;
-
-    time_cost = 0.0;
-    space_cost = kDataPointSize * actualSize;
-
-    Train(dataRange.initRange.left, dataRange.initRange.size, initDataset,
-          &tmpNode);
-    time_cost += CalLeafFindTime<GappedArrayType>(actualSize, density, tmpNode,
-                                                  dataRange.findRange);
-    time_cost += CalLeafInsertTime<GappedArrayType>(
-        actualSize, density, tmpNode, dataRange.insertRange,
-        dataRange.findRange);
-    cost = time_cost + space_cost * lambda;  // ns + MB * lambda
-    if (cost <= optimalCost.cost) {
-      optimalCost = {time_cost, space_cost, cost};
-      optimal_node_struct.ga = tmpNode;
-    }
-  }
   auto it = COST.find(dataRange.initRange);
   if (it != COST.end()) {
     if (it->second.cost < optimalCost.cost) {

@@ -53,46 +53,6 @@ class ArrayType {
   std::pair<float, float> tmppp[4];
 };
 
-class GappedArrayType {
- public:
-  GappedArrayType() = default;
-  explicit GappedArrayType(int cap) {
-    flagNumber = (GAPPED_ARRAY_LEAF_NODE << 24) + 0;
-    error = 0;
-    density = 0.5;
-    capacity = cap;
-    maxIndex = -2;
-    m_left = -1;
-    previousLeaf = -1;
-    theta1 = 0.0001;
-    theta2 = 0.666;
-    nextLeaf = -1;
-  }
-
-  /**
-   * @brief predict the position of the given key
-   *
-   * @param key
-   * @return int the predicted index in the leaf node
-   */
-  int Predict(double key) const;
-
-  int flagNumber;  // 4 Byte (flag + 0)
-  int previousLeaf;
-  int nextLeaf;
-
-  int m_left;    // the left boundary of the leaf node in the global array
-  int capacity;  // the current maximum capacity of the leaf node
-
-  int maxIndex;   // tht index of the last one
-  int error;      // the boundary of binary search
-  float density;  // the maximum density of the leaf node data
-
-  float theta1;
-  float theta2;
-  std::pair<float, float> tmppp[3];
-};
-
 class ExternalArray {
  public:
   ExternalArray() = default;

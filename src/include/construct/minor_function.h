@@ -98,10 +98,9 @@ void CARMI<KeyType, ValueType>::ConstructEmptyNode(const DataRange &range) {
     Train(range.initRange.left, range.initRange.size, initDataset, &tmp);
     optimal_node_struct.externalArray = tmp;
   } else {
-    GappedArrayType tmpNode(kThreshold);
-    tmpNode.density = 0.5;
+    ArrayType tmpNode(kThreshold);
     Train(range.initRange.left, range.initRange.size, initDataset, &tmpNode);
-    optimal_node_struct.ga = tmpNode;
+    optimal_node_struct.array = tmpNode;
   }
   structMap.insert({range.initRange, optimal_node_struct});
 }

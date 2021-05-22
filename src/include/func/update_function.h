@@ -59,25 +59,6 @@ bool CARMI<KeyType, ValueType>::Update(DataType data) {
         }
         return true;
       }
-      case GAPPED_ARRAY_LEAF_NODE: {
-        auto left = entireChild[idx].ga.m_left;
-        int preIdx = entireChild[idx].ga.Predict(data.first);
-        int maxIndex = entireChild[idx].ga.maxIndex;
-        if (entireData[left + preIdx].first == data.first) {
-          entireData[left + preIdx].second = data.second;
-          return true;
-        } else {
-          preIdx = GASearch(data.first, preIdx, entireChild[idx].ga.error, left,
-                            maxIndex);
-
-          if (preIdx > left + maxIndex ||
-              entireData[preIdx].first != data.first)
-            return false;
-
-          entireData[preIdx].second = data.second;
-          return true;
-        }
-      }
     }
 
     type = entireChild[idx].lr.flagNumber >> 24;

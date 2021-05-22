@@ -25,13 +25,11 @@ const double kPLRInnerTime = 97.1858;   // the time cost of plr inner node
 const double kHisInnerTime = 109.8874;  // the time cost of his inner node
 const double kBSInnerTime = 114.371;    // the time cost of bs inner node
 
+// TODO(jiaoyi): modify the value due to the change of leaf nodes
 const double kCostMoveTime = 6.25;     // the time cost of moving a data point
 const double kLeafBaseTime = 161.241;  // the basic time cost of a leaf node
 const double kCostBSTime =
     10.9438;  // the time cost of binary search in a leaf node
-
-const float Density[5] = {
-    0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity, density list for gapped array
 
 }  // namespace carmi_params
 

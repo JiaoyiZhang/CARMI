@@ -58,30 +58,6 @@ bool CARMI<KeyType, ValueType>::Delete(KeyType key) {
         entireChild[idx].array.flagNumber--;
         return true;
       }
-      case GAPPED_ARRAY_LEAF_NODE: {
-        // DBL_MIN means the data has been deleted
-        // when a data has been deleted, data.second == DBL_MIN
-        int left = entireChild[idx].ga.m_left;
-        int preIdx = entireChild[idx].ga.Predict(key);
-        int maxIndex = entireChild[idx].ga.maxIndex;
-        if (entireData[left + preIdx].first == key) {
-          entireData[left + preIdx].second = DBL_MIN;
-          entireChild[idx].ga.flagNumber--;
-          if (preIdx == maxIndex) entireChild[idx].ga.maxIndex--;
-          return true;
-        } else {
-          preIdx =
-              GASearch(key, preIdx, entireChild[idx].ga.error, left, maxIndex);
-
-          if (preIdx > left + maxIndex || entireData[preIdx].first != key)
-            return false;
-
-          entireChild[idx].ga.flagNumber--;
-          entireData[preIdx] = {DBL_MIN, DBL_MIN};
-          if (preIdx == left + maxIndex) entireChild[idx].ga.maxIndex--;
-          return true;
-        }
-      }
     }
 
     type = entireChild[idx].lr.flagNumber >> 24;

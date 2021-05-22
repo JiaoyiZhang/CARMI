@@ -38,7 +38,6 @@ union BaseNode {
   BSModel bs;
 
   ArrayType array;
-  GappedArrayType ga;
   ExternalArray externalArray;
 
   BaseNode() {}

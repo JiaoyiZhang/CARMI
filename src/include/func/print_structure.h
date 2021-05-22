@@ -32,8 +32,6 @@ void CARMI<KeyType, ValueType>::PrintRoot(int level, int idx,
   if (tree[HIS_INNER_NODE]) std::cout << "\this:" << tree[HIS_INNER_NODE];
   if (tree[BS_INNER_NODE]) std::cout << "\tbin:" << tree[BS_INNER_NODE];
   if (tree[ARRAY_LEAF_NODE]) std::cout << "\tarray:" << tree[ARRAY_LEAF_NODE];
-  if (tree[GAPPED_ARRAY_LEAF_NODE])
-    std::cout << "\tga:" << tree[GAPPED_ARRAY_LEAF_NODE];
   if (tree[EXTERNAL_ARRAY_LEAF_NODE])
     std::cout << "\tycsb:" << tree[EXTERNAL_ARRAY_LEAF_NODE];
   std::cout << std::endl;

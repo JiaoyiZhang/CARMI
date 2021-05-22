@@ -564,18 +564,6 @@ class CARMI {
             ArrayType *arr);
 
   /**
-   * @brief initialize gapped array node
-   *
-   * @param cap the capacity of this leaf node
-   * @param left the start index of data points
-   * @param size  the size of data points
-   * @param subDataset
-   * @param ga leaf node
-   */
-  void Init(int cap, int left, int size, const DataVectorType &subDataset,
-            GappedArrayType *ga);
-
-  /**
    * @brief initialize external array node
    *
    * @param cap the capacity of this leaf node
@@ -599,17 +587,6 @@ class CARMI {
              ArrayType *arr);
 
   /**
-   * @brief train the ga node
-   *
-   * @param start_idx the start index of data points
-   * @param size the size of data points
-   * @param dataset
-   * @param ga leaf node
-   */
-  void Train(int start_idx, int size, const DataVectorType &dataset,
-             GappedArrayType *ga);
-
-  /**
    * @brief train the external array node
    *
    * @param start_idx the start index of data points
@@ -631,18 +608,6 @@ class CARMI {
    */
   void StoreData(int cap, int start_idx, int size,
                  const DataVectorType &dataset, ArrayType *arr);
-
-  /**
-   * @brief store data points into the entireData
-   *
-   * @param cap the capacity of this leaf node
-   * @param left the start index of data points
-   * @param size  the size of data points
-   * @param subDataset
-   * @param ga leaf node
-   */
-  void StoreData(int cap, int start_idx, int size,
-                 const DataVectorType &dataset, GappedArrayType *ga);
 
  private:
   // for public functions
@@ -872,7 +837,7 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
   findQuery = std::move(findData);
   insertQuery = std::move(insertData);
   insertQueryIndex = std::move(insertIndex);
-  emptyNode.ga = GappedArrayType(kThreshold);
+  emptyNode.array = ArrayType(kThreshold);
   reservedSpace =
       static_cast<float>(insertQuery.size()) / initDataset.size() * 4096 * 16;
 

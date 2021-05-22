@@ -27,7 +27,6 @@
 #include "../nodes/innerNode/plr_model.h"
 #include "../nodes/leafNode/array_type.h"
 #include "../nodes/leafNode/external_array_type.h"
-#include "../nodes/leafNode/ga_type.h"
 #include "../params.h"
 #include "./dp_inner.h"
 
@@ -81,14 +80,6 @@ void CARMI<KeyType, ValueType>::StoreOptimalNode(int storeIdx,
       StoreData(it->second.array.m_capacity, range.initRange.left,
                 range.initRange.size, initDataset, &node);
       entireChild[storeIdx].array = node;
-      scanLeaf.push_back(storeIdx);
-      break;
-    }
-    case GAPPED_ARRAY_LEAF_NODE: {
-      GappedArrayType node = it->second.ga;
-      StoreData(it->second.ga.capacity, range.initRange.left,
-                range.initRange.size, initDataset, &node);
-      entireChild[storeIdx].ga = node;
       scanLeaf.push_back(storeIdx);
       break;
     }

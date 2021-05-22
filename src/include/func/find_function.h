@@ -60,26 +60,6 @@ BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
         *currslot = preIdx - left;
         return &entireChild[idx];
       }
-      case GAPPED_ARRAY_LEAF_NODE: {
-        int left = entireChild[idx].ga.m_left;
-        int maxIndex = entireChild[idx].ga.maxIndex;
-        int preIdx = entireChild[idx].ga.Predict(key);
-
-        if (entireData[left + preIdx].first == key) {
-          *currslot = preIdx;
-          return &entireChild[idx];
-        }
-
-        preIdx =
-            GASearch(key, preIdx, entireChild[idx].ga.error, left, maxIndex);
-        if (preIdx > left + maxIndex || entireData[preIdx].first != key) {
-          *currslot = 0;
-          return NULL;
-        }
-
-        *currslot = preIdx - left;
-        return &entireChild[idx];
-      }
       case EXTERNAL_ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
         int preIdx = entireChild[idx].externalArray.Predict(key);
