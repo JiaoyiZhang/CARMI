@@ -28,8 +28,8 @@ void mainExperiment() {
   std::vector<int> length;
 
   // read-only
-  // mainSynthetic(kReadOnly, length);
-  // mainYCSB(kReadOnly, length);
+  mainSynthetic(kReadOnly, length);
+  mainYCSB(kReadOnly, length);
   mainMap(kReadOnly, length);
 
   // write-heavy
