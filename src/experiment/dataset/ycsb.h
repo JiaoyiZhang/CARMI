@@ -12,7 +12,6 @@
 #define SRC_EXPERIMENT_DATASET_YCSB_H_
 
 #include <algorithm>
-#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -27,12 +26,12 @@ class YCSBDataset : public BaseDataset {
  public:
   explicit YCSBDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(carmi_params::TestDataVecType *initDataset,
-                       carmi_params::TestDataVecType *testInsertQuery) {
-    carmi_params::TestDataVecType().swap((*initDataset));
-    carmi_params::TestDataVecType().swap((*testInsertQuery));
+  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+    (*initDataset) = std::vector<DataType>(kDatasetSize);
+    int end = kTestSize * (1 - proportion);
+    (*testInsertQuery) = std::vector<DataType>(end);
 
-    carmi_params::TestDataVecType ds;
+    DataVecType ds;
     std::ifstream inFile("..//src//experiment//dataset//newycsbdata.csv",
                          std::ios::in);
     if (!inFile) {
@@ -51,23 +50,18 @@ class YCSBDataset : public BaseDataset {
       double k = stod(key);
       double v = k / 10;
       ds.push_back({k, v});
-      if (ds.size() == carmi_params::kDatasetSize) {
+      if (ds.size() == kDatasetSize + kTestSize * (1 - proportion)) {
         break;
       }
     }
 
     std::sort(ds.begin(), ds.end());
-
-    int i = 0;
-    int end = carmi_params::kDatasetSize;
-    for (; i < end; i++) {
-      initDataset->push_back(ds[i]);
+    for (int i = 0; i < kDatasetSize; i++) {
+      (*initDataset)[i] = ds[i];
     }
-    carmi_params::kExternalInsertLeft =
-        carmi_params::kDatasetSize - carmi_params::kTestSize * (1 - proportion);
-    i = carmi_params::kExternalInsertLeft;
-    for (; i < carmi_params::kDatasetSize; i++) {
-      testInsertQuery->push_back((*initDataset)[i]);
+
+    for (int i = 0; i < end; i++) {
+      (*testInsertQuery)[i] = ds[i + kDatasetSize];
     }
 
     std::cout << "YCSB: init size:" << (*initDataset).size()

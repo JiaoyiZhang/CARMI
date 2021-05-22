@@ -13,7 +13,7 @@
 
 #include <vector>
 
-#include "../../../params.h"
+#include "../../params.h"
 #include "../../carmi.h"
 #include "../../construct/minor_function.h"
 #include "./leaf_nodes.h"
@@ -32,15 +32,6 @@ inline void CARMI<KeyType, ValueType>::Train(int start_idx, int size,
   FindOptError<ExternalArray>(0, size, data, ext);
 }
 
-/**
- * @brief initialize external array node
- *
- * @param cap the capacity of this leaf node
- * @param start_idx the start index of data points
- * @param size the size of data points
- * @param dataset
- * @param ext leaf node
- */
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Init(int cap, int start_idx, int size,
                                             const DataVectorType &dataset,

@@ -16,34 +16,14 @@
 #include "nodes/leafNode/leaf_nodes.h"
 #include "nodes/rootNode/root_nodes.h"
 
-class CARMIRoot : public LRType, public PLRType, public HisType, public BSType {
+template <typename DataVectorType, typename DataType>
+class CARMIRoot : public LRType<DataVectorType, DataType> {
  public:
   CARMIRoot() = default;
   explicit CARMIRoot(int t) { type = t; }
   int type;
-  CARMIRoot& operator=(const LRType& node) {
-    this->LRType::model = node.model;
-    this->flagNumber = node.flagNumber;
-    this->childLeft = node.childLeft;
-    this->type = node.flagNumber;
-    return *this;
-  }
-  CARMIRoot& operator=(const PLRType& node) {
-    this->PLRType::model = node.model;
-    this->flagNumber = node.flagNumber;
-    this->childLeft = node.childLeft;
-    this->type = node.flagNumber;
-    return *this;
-  }
-  CARMIRoot& operator=(const HisType& node) {
-    this->HisType::model = node.model;
-    this->flagNumber = node.flagNumber;
-    this->childLeft = node.childLeft;
-    this->type = node.flagNumber;
-    return *this;
-  }
-  CARMIRoot& operator=(const BSType& node) {
-    this->BSType::model = node.model;
+  CARMIRoot& operator=(const LRType<DataVectorType, DataType>& node) {
+    this->LRType<DataVectorType, DataType>::model = node.model;
     this->flagNumber = node.flagNumber;
     this->childLeft = node.childLeft;
     this->type = node.flagNumber;

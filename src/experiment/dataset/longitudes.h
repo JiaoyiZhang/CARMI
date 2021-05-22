@@ -12,7 +12,6 @@
 #define SRC_EXPERIMENT_DATASET_LONGITUDES_H_
 
 #include <algorithm>
-#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -27,9 +26,8 @@ class LongitudesDataset : public BaseDataset {
  public:
   explicit LongitudesDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(carmi_params::TestDataVecType *initDataset,
-                       carmi_params::TestDataVecType *testInsertQuery) {
-    carmi_params::TestDataVecType ds;
+  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+    DataVecType ds;
     std::ifstream inFile("../src/experiment/dataset/longitude.csv",
                          std::ios::in);
     if (!inFile) {
@@ -48,13 +46,13 @@ class LongitudesDataset : public BaseDataset {
       double k = stod(key);
       double v = stod(value);
       ds.push_back({k, v});
+      if (ds.size() == kDatasetSize + kTestSize * (1 - proportion)) {
+        break;
+      }
     }
     std::cout << "longitude size:" << ds.size() << std::endl;
 
-    ds.erase(ds.begin() + carmi_params::kDatasetSize +
-                 round(carmi_params::kTestSize * (1 - proportion)),
-             ds.end());
-    SplitInitTest(false, initDataset, testInsertQuery, &ds);
+    SplitInitTest(&ds, initDataset, testInsertQuery);
   }
 };
 

@@ -12,7 +12,6 @@
 #define SRC_EXPERIMENT_DATASET_UNIFORM_DISTRIBUTION_H_
 
 #include <algorithm>
-#include <chrono>
 #include <iostream>
 #include <random>
 #include <utility>
@@ -23,17 +22,29 @@
 class UniformDataset : public BaseDataset {
  public:
   explicit UniformDataset(float initRatio) : BaseDataset(initRatio) {}
+  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+    (*initDataset) = std::vector<DataType>(kDatasetSize);
+    int end = kTestSize * (1 - proportion);
+    (*testInsertQuery) = std::vector<DataType>(end);
 
-  void GenerateDataset(carmi_params::TestDataVecType *initDataset,
-                       carmi_params::TestDataVecType *testInsertQuery) {
-    carmi_params::TestDataVecType dataset(
-        carmi_params::kDatasetSize + carmi_params::kTestSize * (1 - proportion),
-        {0, 0});
-
-    for (int i = 0; i < dataset.size(); i++) {
-      dataset[i] = {i, i};
+    // generate initDataset
+    for (int i = 0; i < kDatasetSize; i++) {
+      (*initDataset)[i] = {i * kMaxValue / kDatasetSize, i * 10};
     }
-    SplitInitTest(false, initDataset, testInsertQuery, &dataset);
+    // generate testInsertQuery
+    srand((unsigned)time(NULL));
+    for (int i = 0; i < end; i++) {
+      int maxValue = kMaxValue;
+      int tmp = (rand() % maxValue);
+      (*testInsertQuery)[i] = {tmp, tmp * 10};
+    }
+
+    std::sort(initDataset->begin(), initDataset->end(),
+              [](std::pair<double, double> p1, std::pair<double, double> p2) {
+                return p1.first < p2.first;
+              });
+    std::cout << "generate dataset over! init size:" << initDataset->size()
+              << "\tWrite size:" << testInsertQuery->size() << std::endl;
   }
 };
 

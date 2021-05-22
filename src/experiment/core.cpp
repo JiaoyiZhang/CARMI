@@ -8,8 +8,6 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_EXPERIMENT_CORE_H_
-#define SRC_EXPERIMENT_CORE_H_
 #include <vector>
 
 #include "../include/carmi_common.h"
@@ -17,7 +15,7 @@
 #include "../include/construct/construction.h"
 #include "../include/func/calculate_space.h"
 #include "../include/func/print_structure.h"
-#include "../params.h"
+#include "./experiment_params.h"
 #include "./functions.h"
 
 extern std::ofstream outRes;
@@ -33,15 +31,13 @@ extern std::ofstream outRes;
  * @param initDataset
  * @param testInsertQuery
  */
-void CoreCARMI(bool isZipfian, double initRatio, double rate, int thre,
-               const std::vector<int> &length,
-               const carmi_params::TestDataVecType &initDataset,
-               const carmi_params::TestDataVecType &testInsertQuery) {
-  carmi_params::TestDataVecType init = initDataset;
+void CoreCARMI(bool isZipfian, double initRatio, double rate,
+               const std::vector<int> &length, const DataVecType &initDataset,
+               const DataVecType &testInsertQuery) {
+  DataVecType init = initDataset;
 
 #ifdef DEBUG
   std::cout << std::endl;
-  std::cout << "kAlgThreshold:" << thre << std::endl;
   std::cout << "-------------------------------" << std::endl;
   std::cout << "Start construction!" << std::endl;
   time_t timep;
@@ -52,14 +48,14 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate, int thre,
 #endif
 
   double l = 0, r = 1;
-  if (initRatio == carmi_params::kWritePartial) {
+  if (initRatio == kWritePartial) {
     l = 0.6;
     r = 0.9;
   }
 
-  typedef CARMICommon<carmi_params::TestKeyType, carmi_params::TestValueType>
-      CarmiType;
-  CarmiType carmi(initDataset, initDataset.size(), initRatio, rate, thre, l, r);
+  typedef CARMICommon<KeyType, ValueType> CarmiType;
+  CarmiType carmi(initDataset.begin(), initDataset.end(), initRatio, rate, l,
+                  r);
 
 #ifdef DEBUG
   time(&timep);
@@ -75,7 +71,7 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate, int thre,
   std::vector<int> nodeVec(11, 0);
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
   std::cout << "print structure:" << std::endl;
-  carmi.PrintStructure(1, NodeType(carmi.RootType()), 0, &levelVec, &nodeVec);
+  carmi.PrintStructure(1, NodeType(0), 0, &levelVec, &nodeVec);
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 
   for (int i = 0; i < 20; i++) {
@@ -90,26 +86,21 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate, int thre,
   }
 #endif
 
-  if (initRatio == carmi_params::kWriteHeavy)
-    WorkloadA<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        isZipfian, init, testInsertQuery,
-        &carmi);  // write-heavy
-  else if (initRatio == carmi_params::kReadHeavy)
-    WorkloadB<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        isZipfian, init, testInsertQuery,
-        &carmi);  // read-heavy
-  else if (initRatio == carmi_params::kReadOnly)
-    WorkloadC<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        isZipfian, init,
-        &carmi);  // read-only
-  else if (initRatio == carmi_params::kWritePartial)
-    WorkloadD<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        isZipfian, init, testInsertQuery,
-        &carmi);  // write-partial
-  else if (initRatio == carmi_params::kRangeScan)
-    WorkloadE<carmi_params::TestKeyType, carmi_params::TestValueType>(
-        isZipfian, init, testInsertQuery, length,
-        &carmi);  // range scan
+  if (initRatio == kWriteHeavy)
+    WorkloadA<KeyType, ValueType>(isZipfian, init, testInsertQuery,
+                                  &carmi);  // write-heavy
+  else if (initRatio == kReadHeavy)
+    WorkloadB<KeyType, ValueType>(isZipfian, init, testInsertQuery,
+                                  &carmi);  // read-heavy
+  else if (initRatio == kReadOnly)
+    WorkloadC<KeyType, ValueType>(isZipfian, init,
+                                  &carmi);  // read-only
+  else if (initRatio == kWritePartial)
+    WorkloadD<KeyType, ValueType>(isZipfian, init, testInsertQuery,
+                                  &carmi);  // write-partial
+  else if (initRatio == kRangeScan)
+    WorkloadE<KeyType, ValueType>(isZipfian, init, testInsertQuery, length,
+                                  &carmi);  // range scan
 }
 
 /**
@@ -123,15 +114,14 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate, int thre,
  * @param initDataset
  * @param testInsertQuery
  */
-void CoreExternalCARMI(bool isZipfian, double initRatio, double rate, int thre,
+void CoreExternalCARMI(bool isZipfian, double initRatio, double rate,
                        const std::vector<int> &length,
-                       const carmi_params::TestDataVecType &initDataset,
-                       const carmi_params::TestDataVecType &testInsertQuery) {
-  carmi_params::TestDataVecType init = initDataset;
+                       const DataVecType &initDataset,
+                       const DataVecType &testInsertQuery) {
+  DataVecType init = initDataset;
 
 #ifdef DEBUG
   std::cout << std::endl;
-  std::cout << "kAlgThreshold:" << thre << std::endl;
   std::cout << "-------------------------------" << std::endl;
   std::cout << "Start construction!" << std::endl;
   time_t timep;
@@ -142,28 +132,28 @@ void CoreExternalCARMI(bool isZipfian, double initRatio, double rate, int thre,
 #endif
 
   double l = 0, r = 1;
-  if (initRatio == carmi_params::kWritePartial) {
+  if (initRatio == kWritePartial) {
     l = 0.6;
     r = 0.9;
   }
 
-  carmi_params::TestKeyType *externalDataset;
-  int record_size =
-      sizeof(carmi_params::TestKeyType) + sizeof(carmi_params::TestValueType);
-  typedef CARMIExternal<carmi_params::TestKeyType> CarmiType;
-  int extLen =
-      initDataset.size() * record_size / sizeof(carmi_params::TestKeyType) +
-      carmi_params::kReservedSpace;
-  externalDataset = new carmi_params::TestKeyType[extLen];
+  KeyType *externalDataset;
+  const int record_size = sizeof(KeyType) + sizeof(ValueType);
+  typedef CARMIExternal<KeyType> CarmiType;
+  int extLen = initDataset.size() * 2 + kTestSize * 2;
+  externalDataset = new KeyType[extLen];
   for (int i = 0, j = 0; i < initDataset.size(); i++) {
     *(externalDataset + j) = initDataset[i].first;
     *(externalDataset + j + 1) = initDataset[i].second;
     j += 2;  // due to <double, double>
   }
-  CarmiType carmi(externalDataset, initDataset.size(), extLen, record_size,
-                  rate, thre);
-
-  init.erase(init.begin() + carmi_params::kExternalInsertLeft, init.end());
+  std::vector<KeyType> futureInsertKey(testInsertQuery.size(), 0);
+  for (int i = 0; i < testInsertQuery.size(); i++) {
+    futureInsertKey[i] = testInsertQuery[i].first;
+  }
+  // initDataset -> only includes the findQuery
+  CarmiType carmi(externalDataset, futureInsertKey, initDataset.size(),
+                  record_size, rate);
 
 #ifdef DEBUG
   time(&timep);
@@ -179,7 +169,7 @@ void CoreExternalCARMI(bool isZipfian, double initRatio, double rate, int thre,
   std::vector<int> nodeVec(11, 0);
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
   std::cout << "print structure:" << std::endl;
-  carmi.PrintStructure(1, NodeType(carmi.RootType()), 0, &levelVec, &nodeVec);
+  carmi.PrintStructure(1, NodeType(0), 0, &levelVec, &nodeVec);
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 
   for (int i = 0; i < 20; i++) {
@@ -194,19 +184,16 @@ void CoreExternalCARMI(bool isZipfian, double initRatio, double rate, int thre,
   }
 #endif
 
-  if (initRatio == carmi_params::kWriteHeavy)
-    WorkloadA<carmi_params::TestKeyType>(isZipfian, init, testInsertQuery,
-                                         &carmi);  // write-heavy
-  else if (initRatio == carmi_params::kReadHeavy)
-    WorkloadB<carmi_params::TestKeyType>(isZipfian, init, testInsertQuery,
-                                         &carmi);  // read-heavy
-  else if (initRatio == carmi_params::kReadOnly)
-    WorkloadC<carmi_params::TestKeyType>(isZipfian, init,
-                                         &carmi);  // read-only
-  else if (initRatio == carmi_params::kRangeScan)
-    WorkloadE<carmi_params::TestKeyType>(isZipfian, init, testInsertQuery,
-                                         length,
-                                         &carmi);  // range scan
+  if (initRatio == kWriteHeavy)
+    WorkloadA<KeyType>(isZipfian, init, testInsertQuery,
+                       &carmi);  // write-heavy
+  else if (initRatio == kReadHeavy)
+    WorkloadB<KeyType>(isZipfian, init, testInsertQuery,
+                       &carmi);  // read-heavy
+  else if (initRatio == kReadOnly)
+    WorkloadC<KeyType>(isZipfian, init,
+                       &carmi);  // read-only
+  else if (initRatio == kRangeScan)
+    WorkloadE<KeyType>(isZipfian, init, testInsertQuery, length,
+                       &carmi);  // range scan
 }
-
-#endif  // SRC_EXPERIMENT_CORE_H_

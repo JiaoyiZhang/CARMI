@@ -15,8 +15,8 @@
 #include <utility>
 #include <vector>
 
-#include "../../../params.h"
 #include "../../construct/structures.h"
+#include "../../params.h"
 
 class ArrayType {
  public:
@@ -28,7 +28,16 @@ class ArrayType {
     m_capacity = cap;
     previousLeaf = -1;
     nextLeaf = -1;
+    theta1 = 0.0001;
+    theta2 = 0.666;
   }
+
+  /**
+   * @brief predict the position of the given key
+   *
+   * @param key
+   * @return int the predicted index in the leaf node
+   */
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + 0)
@@ -55,8 +64,17 @@ class GappedArrayType {
     maxIndex = -2;
     m_left = -1;
     previousLeaf = -1;
+    theta1 = 0.0001;
+    theta2 = 0.666;
     nextLeaf = -1;
   }
+
+  /**
+   * @brief predict the position of the given key
+   *
+   * @param key
+   * @return int the predicted index in the leaf node
+   */
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + 0)
@@ -82,6 +100,8 @@ class ExternalArray {
     flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + 0;
     error = 0;
     m_left = -1;
+    theta1 = 0.0001;
+    theta2 = 0.666;
   }
   inline int Predict(double key) const {
     // return the predicted idx in the leaf node
@@ -89,7 +109,7 @@ class ExternalArray {
     int p = (theta1 * key + theta2) * size;
     if (p < 0)
       p = 0;
-    else if (p >= size)
+    else if (p >= size && size != 0)
       p = size - 1;
     return p;
   }

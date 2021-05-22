@@ -16,18 +16,10 @@
 #include <algorithm>
 #include <vector>
 
-#include "../../params.h"
 #include "../carmi.h"
 #include "../construct/minor_function.h"
+#include "../params.h"
 
-/**
- * @brief search a key-value through binary search
- *
- * @param key
- * @param start
- * @param end
- * @return int the index of the key
- */
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::ArrayBinarySearch(double key, int start,
                                                         int end) const {
@@ -41,14 +33,6 @@ inline int CARMI<KeyType, ValueType>::ArrayBinarySearch(double key, int start,
   return start;
 }
 
-/**
- * @brief search a key-value through binary search in the gapped array
- *
- * @param key
- * @param start_idx
- * @param end_idx
- * @return int the idx of the first element >= key
- */
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::GABinarySearch(double key, int start_idx,
                                                      int end_idx) const {
@@ -72,21 +56,14 @@ inline int CARMI<KeyType, ValueType>::GABinarySearch(double key, int start_idx,
     return end_idx;
 }
 
-/**
- * @brief search a key-value through binary search in the external leaf node
- *
- * @param key
- * @param start
- * @param end
- * @return int the idx of the first element >= key
- */
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::ExternalBinarySearch(double key,
                                                            int start,
                                                            int end) const {
   while (start < end) {
     int mid = (start + end) / 2;
-    if (*(external_data + mid * kRecordLen) < key)
+    if (*reinterpret_cast<const KeyType*>(
+            static_cast<const char*>(external_data) + mid * recordLength) < key)
       start = mid + 1;
     else
       end = mid;
@@ -94,22 +71,12 @@ inline int CARMI<KeyType, ValueType>::ExternalBinarySearch(double key,
   return start;
 }
 
-/**
- * @brief the main function of search a record in array
- *
- * @param key the key value
- * @param preIdx the predicted index of this node
- * @param error the error bound of this node
- * @param left the left index of this node in the entireData
- * @param size the size of this node
- * @return int the index of the record
- */
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::ArraySearch(double key, int preIdx,
                                                   int error, int left,
                                                   int size) const {
   int start = std::max(0, preIdx - error) + left;
-  int end = std::min(size - 1, preIdx + error) + left;
+  int end = std::min(std::max(0, size - 1), preIdx + error) + left;
   start = std::min(start, end);
   int res;
   if (key <= entireData[start].first)
@@ -121,16 +88,6 @@ inline int CARMI<KeyType, ValueType>::ArraySearch(double key, int preIdx,
   return res;
 }
 
-/**
- * @brief the main function of search a record in gapped array
- *
- * @param key the key value
- * @param preIdx the predicted index of this node
- * @param error the error bound of this node
- * @param left the left index of this node in the entireData
- * @param maxIndex the max index of this node
- * @return int the index of the record
- */
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::GASearch(double key, int preIdx,
                                                int error, int left,
@@ -151,43 +108,26 @@ inline int CARMI<KeyType, ValueType>::GASearch(double key, int preIdx,
   return res;
 }
 
-/**
- * @brief the main function of search a record in external array
- *
- * @param key the key value
- * @param preIdx the predicted index of this node
- * @param error the error bound of this node
- * @param left the left index of this node in the entireData
- * @param size the size of this node
- * @return int the index of the record
- */
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::ExternalSearch(double key, int preIdx,
                                                      int error, int left,
                                                      int size) const {
   int start = std::max(0, preIdx - error) + left;
-  int end = std::min(size - 1, preIdx + error) + left;
+  int end = std::min(std::max(0, size - 1), preIdx + error) + left;
   start = std::min(start, end);
   int res;
-  if (key <= *(external_data + start * kRecordLen))
+  if (key <= *reinterpret_cast<const KeyType*>(
+                 static_cast<const char*>(external_data) + start * recordLength))
     res = ExternalBinarySearch(key, left, start);
-  else if (key <= *(external_data + end * kRecordLen))
+  else if (key <=
+           *reinterpret_cast<const KeyType*>(
+               static_cast<const char*>(external_data) + end * recordLength))
     res = ExternalBinarySearch(key, start, end);
   else
     res = ExternalBinarySearch(key, end, left + size - 1);
   return res;
 }
 
-/**
- * @brief split the current leaf node into an inner node and several leaf nodes
- *
- * @tparam TYPE the type of the current leaf node
- * @param isExternal check whether the current node is the external array
- * @param left the left index of this node in the entireData
- * @param size the size of this node
- * @param previousIdx the index of the previous leaf node
- * @param idx the index of the current leaf node
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
@@ -198,7 +138,7 @@ inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
 
   // create a new inner node
   auto node = LRModel();
-  int childNum = carmi_params::kInsertNewChildNumber;
+  int childNum = kInsertNewChildNumber;
   node.SetChildNumber(childNum);
   node.childLeft = AllocateChildMemory(childNum);
   Train(0, actualSize, tmpDataset, &node);

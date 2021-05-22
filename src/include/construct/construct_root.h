@@ -10,29 +10,15 @@
  */
 #ifndef SRC_INCLUDE_CONSTRUCT_CONSTRUCT_ROOT_H_
 #define SRC_INCLUDE_CONSTRUCT_CONSTRUCT_ROOT_H_
+#include <algorithm>
 #include <vector>
 
 #include "../carmi.h"
-#include "../nodes/rootNode/trainModel/binary_search_model.h"
-#include "../nodes/rootNode/trainModel/histogram.h"
 #include "../nodes/rootNode/trainModel/linear_regression.h"
-#include "../nodes/rootNode/trainModel/piecewiseLR.h"
 #include "./dp.h"
 #include "./store_node.h"
 #include "./structures.h"
 
-/**
- * @brief determine whether the current setting is
- *        better than the previous optimal setting (more details)
- *
- * @tparam TYPE the typename of this node
- * @tparam ModelType the typename of the model in this node
- * @param c the child number of this node
- * @param type the type of this node
- * @param time_cost the time cost of this node
- * @param optimalCost the previous optimal setting
- * @param rootStruct used to record the optimal setting
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE, typename ModelType>
 void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
@@ -40,14 +26,14 @@ void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
                                              double *optimalCost,
                                              RootStruct *rootStruct) {
   std::vector<IndexPair> perSize(c, emptyRange);
-  double space_cost = carmi_params::kBaseNodeSpace * c;
+  double space_cost = kBaseNodeSpace * c;
 
   TYPE root(c);
   root.model.Train(initDataset, c);
   IndexPair range(0, initDataset.size());
   NodePartition<ModelType>(root.model, range, initDataset, &perSize);
   double entropy = CalculateEntropy(initDataset.size(), c, perSize);
-  double cost = (time_cost + static_cast<float>(kRate * space_cost)) / entropy;
+  double cost = (time_cost + static_cast<float>(lambda * space_cost)) / entropy;
 
   if (cost <= *optimalCost) {
     *optimalCost = cost;
@@ -56,49 +42,22 @@ void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
   }
 }
 
-/**
- * @brief traverse all possible settings to find the optimal root
- *
- * @return the type and childNumber of the optimal root
- */
 template <typename KeyType, typename ValueType>
 RootStruct CARMI<KeyType, ValueType>::ChooseRoot() {
   double OptimalValue = DBL_MAX;
   RootStruct rootStruct(0, 0);
-  for (int c = carmi_params::kMinChildNumber; c <= initDataset.size() * 10;
-       c *= 2) {
-    IsBetterRoot<LRType, LinearRegression>(
+  int minNum =
+      std::max(kMinChildNumber, static_cast<int>(initDataset.size() / 1024));
+  int maxNum =
+      std::max(kMinChildNumber, static_cast<int>(initDataset.size() / 2));
+  for (int c = minNum; c <= maxNum; c *= 2) {
+    IsBetterRoot<LRType<DataVectorType, DataType>,
+                 LinearRegression<DataVectorType, DataType> >(
         c, LR_ROOT_NODE, carmi_params::kLRRootTime, &OptimalValue, &rootStruct);
-    IsBetterRoot<PLRType, PiecewiseLR>(c, PLR_ROOT_NODE,
-                                       carmi_params::kPLRRootTime,
-                                       &OptimalValue, &rootStruct);
-    IsBetterRoot<HisType, HistogramModel>(c, HIS_ROOT_NODE,
-                                          carmi_params::kHisRootTime,
-                                          &OptimalValue, &rootStruct);
-    IsBetterRoot<BSType, BinarySearchModel>(c, BS_ROOT_NODE,
-                                            carmi_params::kCostBSTime * log2(c),
-                                            &OptimalValue, &rootStruct);
   }
-#ifdef DEBUG
-  std::cout << "Best type is: " << rootStruct.rootType
-            << "\tbest childNumber: " << rootStruct.rootChildNum
-            << "\tOptimal Value: " << OptimalValue << std::endl;
-#endif
   return rootStruct;
 }
 
-/**
- * @brief construct the root
- *
- * @tparam TYPE the type of the constructed root node
- * @tparam ModelType the type of the model in the root node
- * @param rootStruct the optimal setting of root
- * @param range the range of data points in this node (root:0-size)
- * @param subDataset the start index and size of data points in each child node
- * @param childLeft the start index of child nodes
- *
- * @return TYPE return the constructed root
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE, typename ModelType>
 TYPE CARMI<KeyType, ValueType>::ConstructRoot(const RootStruct &rootStruct,
@@ -116,13 +75,6 @@ TYPE CARMI<KeyType, ValueType>::ConstructRoot(const RootStruct &rootStruct,
   return root;
 }
 
-/**
- * @brief store the optimal root into CARMI
- *
- * @param rootStruct the optimal setting of root
- * @param nodeCost the cost of the index
- * @return SubDataset: the range of all child node of the root node
- */
 template <typename KeyType, typename ValueType>
 SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct,
                                                 NodeCost *nodeCost) {
@@ -133,31 +85,10 @@ SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct,
   switch (rootStruct.rootType) {
     case LR_ROOT_NODE: {
       nodeCost->time = carmi_params::kLRRootTime;
-      nodeCost->space += sizeof(LRType);
-      root = ConstructRoot<LRType, LinearRegression>(rootStruct, dataRange,
-                                                     &subDataset);
-      break;
-    }
-    case PLR_ROOT_NODE: {
-      nodeCost->time = carmi_params::kPLRRootTime;
-      nodeCost->space += sizeof(PLRType);
-      root = ConstructRoot<PLRType, PiecewiseLR>(rootStruct, dataRange,
-                                                 &subDataset);
-      break;
-    }
-    case HIS_ROOT_NODE: {
-      nodeCost->time = carmi_params::kHisRootTime;
-      nodeCost->space += sizeof(HisType);
-      root = ConstructRoot<HisType, HistogramModel>(rootStruct, dataRange,
-                                                    &subDataset);
-      break;
-    }
-    case BS_ROOT_NODE: {
-      nodeCost->time =
-          carmi_params::kCostBSTime * log2(rootStruct.rootChildNum);
-      nodeCost->space += sizeof(BSType);
-      root = ConstructRoot<BSType, BinarySearchModel>(rootStruct, dataRange,
-                                                      &subDataset);
+      nodeCost->space += sizeof(LRType<DataVectorType, DataType>);
+      root = ConstructRoot<LRType<DataVectorType, DataType>,
+                           LinearRegression<DataVectorType, DataType> >(
+          rootStruct, dataRange, &subDataset);
       break;
     }
   }

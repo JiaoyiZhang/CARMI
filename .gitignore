@@ -4,3 +4,8 @@ CMakeFiles/*
 .vscode/*
 *.csv
 Doxyfile
+src/CMakeLists.txt
+src/.vscode/*
+src/art_tree/*
+src/stx_btree/*
+src/build/*

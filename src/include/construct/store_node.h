@@ -18,7 +18,6 @@
 #include <set>
 #include <vector>
 
-#include "../../params.h"
 #include "../carmi.h"
 #include "../dataManager/child_array.h"
 #include "../dataManager/datapoint.h"
@@ -29,15 +28,9 @@
 #include "../nodes/leafNode/array_type.h"
 #include "../nodes/leafNode/external_array_type.h"
 #include "../nodes/leafNode/ga_type.h"
+#include "../params.h"
 #include "./dp_inner.h"
 
-/**
- * @brief store an inner node
- *
- * @tparam TYPE the type of this node
- * @param range the left and size of the data points in initDataset
- * @return TYPE trained node
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 TYPE CARMI<KeyType, ValueType>::StoreInnerNode(const IndexPair &range,
@@ -56,13 +49,6 @@ TYPE CARMI<KeyType, ValueType>::StoreInnerNode(const IndexPair &range,
   return *node;
 }
 
-/**
- * @brief store nodes
- *
- * @param storeIdx the index of this node being stored in entireChild
- * @param optimalType the type of this node
- * @param range the left and size of the data points in initDataset
- */
 template <typename KeyType, typename ValueType>
 void CARMI<KeyType, ValueType>::StoreOptimalNode(int storeIdx,
                                                  const DataRange &range) {
@@ -108,9 +94,9 @@ void CARMI<KeyType, ValueType>::StoreOptimalNode(int storeIdx,
     }
     case EXTERNAL_ARRAY_LEAF_NODE: {
       ExternalArray node = it->second.externalArray;
-      int size = range.initRange.size - range.insertRange.size;
+      int size = range.initRange.size;
       if (size <= 0)
-        node.m_left = carmi_params::kExternalInsertLeft;
+        node.m_left = curr;
       else
         node.m_left = range.initRange.left;
       entireChild[storeIdx].externalArray = node;

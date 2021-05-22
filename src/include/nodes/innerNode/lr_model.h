@@ -18,14 +18,6 @@
 #include "../../carmi.h"
 #include "../../construct/minor_function.h"
 
-/**
- * @brief train LR model
- *
- * @param left the start index of data points
- * @param size  the size of data points
- * @param dataset
- * @param lr model
- */
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
                                              const DataVectorType &dataset,

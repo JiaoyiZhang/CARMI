@@ -19,13 +19,6 @@
 #include "./construct_root.h"
 #include "./structures.h"
 
-/**
- * @brief construct each subtree using dp/greedy
- *
- * @param rootStruct the type and childNumber of root
- * @param subDataset the left and size of data points in each child node
- * @param nodeCost the space, time, cost of the index (is added ...)
- */
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::ConstructSubTree(
     const RootStruct &rootStruct, const SubDataset &subDataset,
@@ -36,28 +29,24 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
     NodeCost resChild;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
-    if (subDataset.subInit[i].size > kAlgorithmThreshold)
+    if (subDataset.subInit[i].size > carmi_params::kAlgorithmThreshold)
       resChild = GreedyAlgorithm(range);
     else
       resChild = DP(range);
 
     StoreOptimalNode(i, range);
 
-    nodeCost->cost += resChild.space * kRate + resChild.time;
+    nodeCost->cost += resChild.space * lambda + resChild.time;
     nodeCost->time += resChild.time;
     nodeCost->space += resChild.space;
 
-    COST.clear();
-    structMap.clear();
+    // COST.clear();
+    std::map<IndexPair, NodeCost>().swap(COST);
+    std::map<IndexPair, BaseNode>().swap(structMap);
+    // structMap.clear();
   }
 }
 
-/**
- * @brief main function of construction
- * @param initData the dataset used to initialize the index
- * @param findData the find queries used to training CARMI
- * @param insertData the insert queries used to training CARMI
- */
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Construction(
     const DataVectorType &initData, const DataVectorType &findData,
@@ -66,26 +55,47 @@ inline void CARMI<KeyType, ValueType>::Construction(
   RootStruct res = ChooseRoot();
   rootType = res.rootType;
   SubDataset subDataset = StoreRoot(res, &nodeCost);
+  
+#ifdef DEBUG
+  std::cout << std::endl;
+  std::cout << "constructing root is over!" << std::endl;
+  time_t timep;
+  time(&timep);
+  char tmpTime[64];
+  strftime(tmpTime, sizeof(tmpTime), "%Y-%m-%d %H:%M:%S", localtime(&timep));
+  std::cout << "\nTEST time: " << tmpTime << std::endl;
+#endif
 
   ConstructSubTree(res, subDataset, &nodeCost);
   UpdateLeaf();
 
-  if (!carmi_params::kPrimaryIndex) {
-    entireData.erase(
-        entireData.begin() + nowDataSize + carmi_params::kReservedSpace,
-        entireData.end());
+  int neededSize = nowDataSize + reservedSpace;
+  if (!isPrimary) {
+    if (neededSize < static_cast<int>(entireData.size())) {
+      DataVectorType tmpEntireData(entireData.begin(),
+                                   entireData.begin() + neededSize);
+      DataVectorType().swap(entireData);
+      entireData = tmpEntireData;
+    }
+
+    for (int i = 0; i < static_cast<int>(emptyBlocks.size()); i++) {
+      auto it = emptyBlocks[i].m_block.lower_bound(neededSize);
+      emptyBlocks[i].m_block.erase(it, emptyBlocks[i].m_block.end());
+    }
   }
+
+  neededSize = nowChildNumber + reservedSpace;
+  if (neededSize < static_cast<int>(entireChild.size())) {
+    std::vector<BaseNode> tmp(entireChild.begin(),
+                              entireChild.begin() + neededSize);
+    std::vector<BaseNode>().swap(entireChild);
+    entireChild = tmp;
+  }
+
   DataVectorType().swap(initDataset);
   DataVectorType().swap(findQuery);
   DataVectorType().swap(insertQuery);
   std::vector<int>().swap(insertQueryIndex);
-
-#ifdef DEBUG
-  std::cout << "Construction over!" << std::endl;
-  std::cout << "total cost: " << nodeCost.cost << std::endl;
-  std::cout << "total time: " << nodeCost.time << std::endl;
-  std::cout << "total space: " << nodeCost.space << std::endl;
-#endif
 }
 
 #endif  // SRC_INCLUDE_CONSTRUCT_CONSTRUCTION_H_

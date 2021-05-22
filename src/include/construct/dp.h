@@ -17,18 +17,13 @@
 #include <map>
 #include <vector>
 
-#include "../../params.h"
+#include "../params.h"
 #include "../func/inlineFunction.h"
 #include "./dp_inner.h"
 #include "./dp_leaf.h"
 #include "./greedy.h"
 #include "./structures.h"
-/**
- * @brief the dynamic programming algorithm
- *
- * @param range the range of data points
- * @return NodeCost the cost of the subtree
- */
+
 template <typename KeyType, typename ValueType>
 NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
   NodeCost nodeCost;
@@ -51,7 +46,7 @@ NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
   } else {
     auto res1 = DPInner(range);
     auto res0 = DPLeaf(range);
-    if (res0.space * kRate + res0.time > res1.space * kRate + res1.time)
+    if (res0.space * lambda + res0.time > res1.space * lambda + res1.time)
       return res1;
     else
       return res0;

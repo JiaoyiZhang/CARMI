@@ -16,13 +16,7 @@
 
 #include "../carmi.h"
 #include "inlineFunction.h"
-/**
- * @brief update a record of the given key
- *
- * @param data
- * @return true if the operation succeeds
- * @return false if the operation fails
- */
+
 template <typename KeyType, typename ValueType>
 bool CARMI<KeyType, ValueType>::Update(DataType data) {
   int idx = 0;  // idx in the INDEX
@@ -30,16 +24,8 @@ bool CARMI<KeyType, ValueType>::Update(DataType data) {
   while (1) {
     switch (type) {
       case LR_ROOT_NODE:
-        idx = root.childLeft + root.LRType::model.Predict(data.first);
-        break;
-      case PLR_ROOT_NODE:
-        idx = root.childLeft + root.PLRType::model.Predict(data.first);
-        break;
-      case HIS_ROOT_NODE:
-        idx = root.childLeft + root.HisType::model.Predict(data.first);
-        break;
-      case BS_ROOT_NODE:
-        idx = root.childLeft + root.BSType::model.Predict(data.first);
+        idx = root.childLeft +
+              root.LRType<DataVectorType, DataType>::model.Predict(data.first);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft +
@@ -89,24 +75,6 @@ bool CARMI<KeyType, ValueType>::Update(DataType data) {
             return false;
 
           entireData[preIdx].second = data.second;
-          return true;
-        }
-      }
-      case EXTERNAL_ARRAY_LEAF_NODE: {
-        auto size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
-        int preIdx = entireChild[idx].externalArray.Predict(data.first);
-        auto left = entireChild[idx].externalArray.m_left;
-        if (externalData[left + preIdx].first == data.first) {
-          externalData[left + preIdx].second = data.second;
-          return true;
-        } else {
-          preIdx =
-              ExternalSearch(data.first, preIdx,
-                             entireChild[idx].externalArray.error, left, size);
-          if (preIdx >= left + size || externalData[preIdx].first != data.first)
-            return false;
-
-          externalData[preIdx].second = data.second;
           return true;
         }
       }

@@ -8,15 +8,13 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_EXPERIMENT_MAIN_EXPERIMENT_H_
-#define SRC_EXPERIMENT_MAIN_EXPERIMENT_H_
 
 #include <algorithm>
 #include <vector>
 
 #include "../baseline/art_tree_baseline.h"
 #include "../baseline/btree_baseline.h"
-#include "../params.h"
+#include "./experiment_params.h"
 #include "./functions.h"
 extern std::ofstream outRes;
 
@@ -25,39 +23,38 @@ extern std::ofstream outRes;
  *
  * @param thre the kAlgorithmThreshold
  */
-void mainExperiment(int thre) {
+void mainExperiment() {
   // for range scan
   std::vector<int> length;
 
   // read-only
-  mainSynthetic(carmi_params::kReadOnly, thre, length);
-  mainYCSB(carmi_params::kReadOnly, thre, length);
-  mainMap(carmi_params::kReadOnly, thre, length);
+  // mainSynthetic(kReadOnly, length);
+  // mainYCSB(kReadOnly, length);
+  mainMap(kReadOnly, length);
 
   // write-heavy
-  mainSynthetic(carmi_params::kWriteHeavy, thre, length);
-  mainYCSB(carmi_params::kWriteHeavy, thre, length);
-  mainMap(carmi_params::kWriteHeavy, thre, length);
+  mainSynthetic(kWriteHeavy, length);
+  mainYCSB(kWriteHeavy, length);
+  mainMap(kWriteHeavy, length);
 
   // read-heavy
-  mainSynthetic(carmi_params::kReadHeavy, thre, length);
-  mainYCSB(carmi_params::kReadHeavy, thre, length);
-  mainMap(carmi_params::kReadHeavy, thre, length);
+  mainSynthetic(kReadHeavy, length);
+  mainYCSB(kReadHeavy, length);
+  mainMap(kReadHeavy, length);
 
   // write-partial
-  mainSynthetic(carmi_params::kWritePartial, thre, length);
-  mainYCSB(carmi_params::kWritePartial, thre, length);
-  mainMap(carmi_params::kWritePartial, thre, length);
+  mainSynthetic(kWritePartial, length);
+  mainYCSB(kWritePartial, length);
+  mainMap(kWritePartial, length);
 
   // range scan
   srand(time(0));
-  for (int i = 0; i < carmi_params::kDatasetSize; i++) {
-    length.push_back(
-        std::min(i + rand() % 100 + 1, carmi_params::kDatasetSize) - i);
+  for (int i = 0; i < kDatasetSize; i++) {
+    length.push_back(std::min(i + rand() % 100 + 1, kDatasetSize) - i);
   }
-  mainSynthetic(carmi_params::kRangeScan, thre, length);
-  mainYCSB(carmi_params::kRangeScan, thre, length);
-  mainMap(carmi_params::kRangeScan, thre, length);
+  mainSynthetic(kRangeScan, length);
+  mainYCSB(kRangeScan, length);
+  mainMap(kRangeScan, length);
 }
 
 /**
@@ -67,23 +64,23 @@ void mainExperiment(int thre) {
  * @param thre the kAlgorithmThreshold
  * @param length the length of range scan
  */
-void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
+void mainSynthetic(double initRatio, const std::vector<int> &length) {
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                "&&&&&&&"
             << std::endl;
   std::cout << "initRatio is: " << initRatio << std::endl;
   outRes << "initRatio," << initRatio << std::endl;
   double init = initRatio;
-  if (init == carmi_params::kRangeScan) {
-    init = carmi_params::kReadHeavy;
+  if (init == kRangeScan) {
+    init = kReadHeavy;
   }
   LognormalDataset logData = LognormalDataset(init);
   UniformDataset uniData = UniformDataset(init);
   NormalDataset norData = NormalDataset(init);
   ExponentialDataset expData = ExponentialDataset(init);
 
-  carmi_params::TestDataVecType initData;
-  carmi_params::TestDataVecType testInsert;
+  DataVecType initData;
+  DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG
@@ -96,7 +93,7 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
 
   for (int r = 0; r < rate.size(); r++) {
     double kRate;
-    if (initRatio == carmi_params::kWriteHeavy)
+    if (initRatio == kWriteHeavy)
       kRate = rate1[r];
     else
       kRate = rate[r];
@@ -106,41 +103,41 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
     uniData.GenerateDataset(&initData, &testInsert);
     if (r == 0) {
       btree_test(initRatio, initRatio, initData, testInsert, length);
-      artTree_test(initRatio, initRatio, initData, testInsert, length);
+      // artTree_test(initRatio, initRatio, initData, testInsert, length);
     }
 
-    CoreCARMI(true, initRatio, kRate, thre, length, initData, testInsert);
-    CoreCARMI(false, initRatio, kRate, thre, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
               << std::endl;
     expData.GenerateDataset(&initData, &testInsert);
     if (r == 0) {
       btree_test(initRatio, initRatio, initData, testInsert, length);
-      artTree_test(initRatio, initRatio, initData, testInsert, length);
+      // artTree_test(initRatio, initRatio, initData, testInsert, length);
     }
-    CoreCARMI(true, initRatio, kRate, thre, length, initData, testInsert);
-    CoreCARMI(false, initRatio, kRate, thre, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
               << std::endl;
     norData.GenerateDataset(&initData, &testInsert);
     if (r == 0) {
       btree_test(initRatio, initRatio, initData, testInsert, length);
-      artTree_test(initRatio, initRatio, initData, testInsert, length);
+      // artTree_test(initRatio, initRatio, initData, testInsert, length);
     }
-    CoreCARMI(true, initRatio, kRate, thre, length, initData, testInsert);
-    CoreCARMI(false, initRatio, kRate, thre, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++"
               << std::endl;
     logData.GenerateDataset(&initData, &testInsert);
     if (r == 0) {
       btree_test(initRatio, initRatio, initData, testInsert, length);
-      artTree_test(initRatio, initRatio, initData, testInsert, length);
+      // artTree_test(initRatio, initRatio, initData, testInsert, length);
     }
-    CoreCARMI(true, initRatio, kRate, thre, length, initData, testInsert);
-    CoreCARMI(false, initRatio, kRate, thre, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
 
     outRes << std::endl;
   }
@@ -153,7 +150,7 @@ void mainSynthetic(double initRatio, int thre, const std::vector<int> &length) {
  * @param thre the kAlgorithmThreshold
  * @param length the length of range scan
  */
-void mainMap(double initRatio, int thre, const std::vector<int> &length) {
+void mainMap(double initRatio, const std::vector<int> &length) {
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                "&&&&&&&"
             << std::endl;
@@ -161,18 +158,17 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
   outRes << "initRatio," << initRatio << std::endl;
   std::cout << "construct map" << std::endl;
   outRes << "construct map" << std::endl;
-  std::cout << "kAlgThre:" << thre << std::endl;
   double init = initRatio;
-  if (init == carmi_params::kRangeScan) {
-    init = carmi_params::kReadHeavy;
+  if (init == kRangeScan) {
+    init = kReadHeavy;
   }
   LongitudesDataset longData = LongitudesDataset(init);
   LonglatDataset latData = LonglatDataset(init);
 
-  carmi_params::TestDataVecType initData;
-  carmi_params::TestDataVecType trainFind;
-  carmi_params::TestDataVecType trainInsert;
-  carmi_params::TestDataVecType testInsert;
+  DataVecType initData;
+  DataVecType trainFind;
+  DataVecType trainInsert;
+  DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG
@@ -185,7 +181,7 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
 
   for (int r = 0; r < rate.size(); r++) {
     double kRate;
-    if (initRatio == carmi_params::kWriteHeavy)
+    if (initRatio == kWriteHeavy)
       kRate = rate1[r];
     else
       kRate = rate[r];
@@ -196,18 +192,18 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
     latData.GenerateDataset(&initData, &testInsert);
     if (r == 0) {
       btree_test(initRatio, initRatio, initData, testInsert, length);
-      artTree_test(initRatio, initRatio, initData, testInsert, length);
+      // artTree_test(initRatio, initRatio, initData, testInsert, length);
     }
-    CoreCARMI(true, initRatio, kRate, thre, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
               << std::endl;
     longData.GenerateDataset(&initData, &testInsert);
     if (r == 0) {
       btree_test(initRatio, initRatio, initData, testInsert, length);
-      artTree_test(initRatio, initRatio, initData, testInsert, length);
+      // artTree_test(initRatio, initRatio, initData, testInsert, length);
     }
-    CoreCARMI(true, initRatio, kRate, thre, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     outRes << std::endl;
   }
@@ -220,8 +216,8 @@ void mainMap(double initRatio, int thre, const std::vector<int> &length) {
  * @param thre the kAlgorithmThreshold
  * @param length the length of range scan
  */
-void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
-  carmi_params::kPrimaryIndex = true;
+void mainYCSB(double initRatio, const std::vector<int> &length) {
+  kPrimaryIndex = true;
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
                "&&&&&&&"
             << std::endl;
@@ -230,15 +226,15 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
   std::cout << "construct ycsb" << std::endl;
   outRes << "construct ycsb" << std::endl;
   double init = initRatio;
-  if (init == carmi_params::kRangeScan) {
-    init = carmi_params::kReadHeavy;
+  if (init == kRangeScan) {
+    init = kReadHeavy;
   }
   YCSBDataset ycsbData = YCSBDataset(init);
 
-  carmi_params::TestDataVecType initData;
-  carmi_params::TestDataVecType trainFind;
-  carmi_params::TestDataVecType trainInsert;
-  carmi_params::TestDataVecType testInsert;
+  DataVecType initData;
+  DataVecType trainFind;
+  DataVecType trainInsert;
+  DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
 #ifdef DEBUG
@@ -251,7 +247,7 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
 
   for (int r = 0; r < rate.size(); r++) {
     double kRate;
-    if (initRatio == carmi_params::kWriteHeavy)
+    if (initRatio == kWriteHeavy)
       kRate = rate1[r];
     else
       kRate = rate[r];
@@ -261,14 +257,11 @@ void mainYCSB(double initRatio, int thre, const std::vector<int> &length) {
     ycsbData.GenerateDataset(&initData, &testInsert);
     if (r == 0) {
       btree_test(initRatio, initRatio, initData, testInsert, length);
-      artTree_test(initRatio, initRatio, initData, testInsert, length);
+      // artTree_test(initRatio, initRatio, initData, testInsert, length);
     }
-    CoreExternalCARMI(true, initRatio, kRate, thre, length, initData,
-                      testInsert);
+    CoreExternalCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     outRes << std::endl;
   }
-  carmi_params::kPrimaryIndex = false;
+  kPrimaryIndex = false;
 }
-
-#endif  // SRC_EXPERIMENT_MAIN_EXPERIMENT_H_

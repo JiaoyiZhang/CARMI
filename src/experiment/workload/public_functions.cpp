@@ -12,7 +12,9 @@
 
 #include "public_functions.h"
 
-#include "../../params.h"
+#include <ctime>
+
+#include "../experiment_params.h"
 
 /**
  * @brief prepare query workloads
@@ -24,29 +26,25 @@
  * @param insertQuery
  * @param index
  */
-void InitTestSet(double Ratio,
-                 const carmi_params::TestDataVecType &findQueryset,
-                 const carmi_params::TestDataVecType &insertDataset,
-                 carmi_params::TestDataVecType *findQuery,
-                 carmi_params::TestDataVecType *insertQuery,
-                 std::vector<int> *index) {
+void InitTestSet(double Ratio, const DataVecType &findQueryset,
+                 const DataVecType &insertDataset, DataVecType *findQuery,
+                 DataVecType *insertQuery, std::vector<int> *index) {
   (*findQuery) = findQueryset;  // -> findQueryset
   (*insertQuery) = insertDataset;
 
   std::default_random_engine engine;
 
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  unsigned seed = std::clock();
   engine = std::default_random_engine(seed);
   shuffle((*findQuery).begin(), (*findQuery).end(), engine);
 
-  if (!carmi_params::kPrimaryIndex) {
-    unsigned seed1 =
-        std::chrono::system_clock::now().time_since_epoch().count();
+  if (!kPrimaryIndex) {
+    unsigned seed1 = std::clock();
     engine = std::default_random_engine(seed1);
     shuffle((*insertQuery).begin(), (*insertQuery).end(), engine);
   }
 
-  int end = round(carmi_params::kTestSize * Ratio);
+  int end = round(kTestSize * Ratio);
   Zipfian zip;
   zip.InitZipfian(PARAM_ZIPFIAN, (*findQuery).size());
   *index = std::vector<int>(end, 0);
@@ -62,10 +60,7 @@ void InitTestSet(double Ratio,
  * @param time
  */
 void PrintAvgTime(double time) {
-  std::cout << "total time:"
-            << time * carmi_params::kSecondToNanosecond /
-                   carmi_params::kTestSize
+  std::cout << "average time:" << time * kSecondToNanosecond / kTestSize
             << std::endl;
-  outRes << time * carmi_params::kSecondToNanosecond / carmi_params::kTestSize
-         << ",";
+  outRes << time * kSecondToNanosecond / kTestSize << ",";
 }

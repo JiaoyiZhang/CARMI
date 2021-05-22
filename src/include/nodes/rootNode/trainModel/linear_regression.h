@@ -17,15 +17,16 @@
 #include <utility>
 #include <vector>
 
-#include "../../../../params.h"
+#include "../../../params.h"
 
+template <typename DataVectorType, typename DataType>
 class LinearRegression {
  public:
   LinearRegression() {
     theta1 = 0.0001;
     theta2 = 0.666;
   }
-  void Train(const carmi_params::TestDataVecType &dataset, int len) {
+  void Train(const DataVectorType &dataset, int len) {
     length = len - 1;
     int idx = 0;
     int size = dataset.size();

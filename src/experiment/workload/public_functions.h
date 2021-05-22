@@ -11,13 +11,14 @@
 #ifndef SRC_EXPERIMENT_WORKLOAD_PUBLIC_FUNCTIONS_H_
 #define SRC_EXPERIMENT_WORKLOAD_PUBLIC_FUNCTIONS_H_
 
-#include <chrono>
+
 #include <utility>
 #include <vector>
 
 #include "../../include/carmi_common.h"
 #include "../../include/func/find_function.h"
 #include "../../include/func/insert_function.h"
+#include "../experiment_params.h"
 #include "./zipfian.h"
 
 extern std::ofstream outRes;
@@ -32,12 +33,9 @@ extern std::ofstream outRes;
  * @param insertQuery
  * @param index
  */
-void InitTestSet(double Ratio,
-                 const carmi_params::TestDataVecType &findQueryset,
-                 const carmi_params::TestDataVecType &insertDataset,
-                 carmi_params::TestDataVecType *findQuery,
-                 carmi_params::TestDataVecType *insertQuery,
-                 std::vector<int> *index);
+void InitTestSet(double Ratio, const DataVecType &findQueryset,
+                 const DataVecType &insertDataset, DataVecType *findQuery,
+                 DataVecType *insertQuery, std::vector<int> *index);
 
 /**
  * @brief print the average time of the workload

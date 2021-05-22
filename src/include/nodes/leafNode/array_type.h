@@ -17,37 +17,22 @@
 #include <utility>
 #include <vector>
 
-#include "../../../params.h"
 #include "../../carmi.h"
 #include "../../construct/minor_function.h"
+#include "../../params.h"
 #include "./leaf_nodes.h"
 
-/**
- * @brief predict the position of the given key
- *
- * @param key
- * @return int the predicted index in the leaf node
- */
 inline int ArrayType::Predict(double key) const {
   // return the predicted idx in the leaf node
   int size = (flagNumber & 0x00FFFFFF);
   int p = (theta1 * key + theta2) * size;
   if (p < 0)
     p = 0;
-  else if (p >= size)
+  else if (p >= size && size != 0)
     p = size - 1;
   return p;
 }
 
-/**
- * @brief initialize array node
- *
- * @param cap the capacity of this leaf node
- * @param left the start index of data points
- * @param size  the size of data points
- * @param dataset
- * @param arr leaf node
- */
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Init(int cap, int left, int size,
                                             const DataVectorType &dataset,
@@ -60,15 +45,6 @@ inline void CARMI<KeyType, ValueType>::Init(int cap, int left, int size,
   StoreData(cap, 0, actualSize, newDataset, arr);
 }
 
-/**
- * @brief store data points into the entireData
- *
- * @param cap the capacity of this leaf node
- * @param left the start index of data points
- * @param size  the size of data points
- * @param dataset
- * @param arr leaf node
- */
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::StoreData(int cap, int left, int size,
                                                  const DataVectorType &dataset,
@@ -92,14 +68,6 @@ inline void CARMI<KeyType, ValueType>::StoreData(int cap, int left, int size,
     entireData[i] = dataset[j];
 }
 
-/**
- * @brief train the array node
- *
- * @param start_idx the start index of data points
- * @param size the size of data points
- * @param dataset
- * @param arr leaf node
- */
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Train(int start_idx, int size,
                                              const DataVectorType &dataset,

@@ -17,16 +17,7 @@
 #include <vector>
 
 #include "../../carmi.h"
-#include "../rootNode/trainModel/candidate_plr.h"
-
-/**
- * @brief train PLR model
- *
- * @param left the start index of data points
- * @param size  the size of data points
- * @param dataset
- * @param plr model
- */
+#include "./candidate_plr.h"
 
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
@@ -37,7 +28,7 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
 
   int end = left + size;
   plr->keys[0] = dataset[left].first;
-  plr->keys[7] = dataset[end].first;
+  plr->keys[7] = dataset[end - 1].first;
   double avg = 0.0;
   for (int i = left, j = 0; i < end; i++, j++) {
     avg += dataset[i].first / size;
@@ -50,10 +41,10 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
     data[j].first = dataset[i].first - avg;
   }
 
-  int cand_size = 100;
+  int cand_size = std::min(size, 100);
   DataVectorType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
-  CandidateCost cand_cost(cand_size);
+  CandidateCost<DataVectorType, DataType> cand_cost(cand_size);
   int seg = size / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
     if (i * seg >= size) {

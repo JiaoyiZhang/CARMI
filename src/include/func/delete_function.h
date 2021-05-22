@@ -16,13 +16,6 @@
 #include "../carmi.h"
 #include "inlineFunction.h"
 
-/**
- * @brief delete the record of the given key
- *
- * @param key
- * @return true deletion is successful
- * @return false the operation fails
- */
 template <typename KeyType, typename ValueType>
 bool CARMI<KeyType, ValueType>::Delete(KeyType key) {
   int idx = 0;  // idx in the INDEX
@@ -30,16 +23,8 @@ bool CARMI<KeyType, ValueType>::Delete(KeyType key) {
   while (1) {
     switch (type) {
       case LR_ROOT_NODE:
-        idx = root.childLeft + root.LRType::model.Predict(key);
-        break;
-      case PLR_ROOT_NODE:
-        idx = root.childLeft + root.PLRType::model.Predict(key);
-        break;
-      case HIS_ROOT_NODE:
-        idx = root.childLeft + root.HisType::model.Predict(key);
-        break;
-      case BS_ROOT_NODE:
-        idx = root.childLeft + root.BSType::model.Predict(key);
+        idx = root.childLeft +
+              root.LRType<DataVectorType, DataType>::model.Predict(key);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(key);
@@ -94,24 +79,6 @@ bool CARMI<KeyType, ValueType>::Delete(KeyType key) {
           entireChild[idx].ga.flagNumber--;
           entireData[preIdx] = {DBL_MIN, DBL_MIN};
           if (preIdx == left + maxIndex) entireChild[idx].ga.maxIndex--;
-          return true;
-        }
-      }
-      case EXTERNAL_ARRAY_LEAF_NODE: {
-        auto size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
-        int preIdx = entireChild[idx].externalArray.Predict(key);
-        auto left = entireChild[idx].externalArray.m_left;
-        if (externalData[left + preIdx].first == key) {
-          externalData.erase(externalData.begin() + left + preIdx);
-          return true;
-        } else {
-          preIdx = ExternalSearch(
-              key, preIdx, entireChild[idx].externalArray.error, left, size);
-
-          if (preIdx >= left + size || externalData[preIdx].first != key)
-            return false;
-
-          externalData.erase(externalData.begin() + preIdx);
           return true;
         }
       }

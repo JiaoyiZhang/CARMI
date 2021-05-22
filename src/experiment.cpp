@@ -20,6 +20,7 @@
 std::ofstream outRes;
 
 int main() {
+  kPrimaryIndex = false;
   outRes.open("res_0322.csv", std::ios::app);
 
   time_t timep;
@@ -29,7 +30,7 @@ int main() {
   std::cout << "\nTest time: " << tmpTime << std::endl;
   outRes << "\nTest time: " << tmpTime << std::endl;
 
-  mainExperiment(carmi_params::kAlgorithmThre);
+  mainExperiment();
 
   outRes << "----------------------------------------------" << std::endl;
 

@@ -14,22 +14,21 @@
 #include <stdio.h>
 
 #include <algorithm>
-#include <chrono>
 #include <fstream>
 #include <random>
 
 #include "../../art_tree/art.cpp"
 #include "../../art_tree/art.h"
+#include "../experiment/experiment_params.h"
 #include "../experiment/functions.h"
 #include "../experiment/workload/zipfian.h"
-#include "../params.h"
 #include "iostream"
 
 extern std::ofstream outRes;
 
 void artTree_test(bool isZipfian, double initRatio,
-                  const carmi_params::TestDataVecType &findDataset,
-                  const carmi_params::TestDataVecType &insertDataset,
+                  const DataVecType &findDataset,
+                  const DataVecType &insertDataset,
                   const std::vector<int> &length) {
   outRes << "artTree,";
   std::cout << "artTree,";
@@ -44,19 +43,19 @@ void artTree_test(bool isZipfian, double initRatio,
   }
   std::cout << "init over" << std::endl;
 
-  carmi_params::TestDataVecType findQuery;
-  carmi_params::TestDataVecType insertQuery;
+  DataVecType findQuery;
+  DataVecType insertQuery;
   std::vector<int> index;
   double tmp;
 
-  if (initRatio == carmi_params::kWriteHeavy) {
-    int end = carmi_params::kTestSize * carmi_params::kWriteHeavy;
-    InitTestSet(carmi_params::kWriteHeavy, findDataset, insertDataset,
-                &findQuery, &insertQuery, &index);
+  if (initRatio == kWriteHeavy) {
+    int end = kTestSize * kWriteHeavy;
+    InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
-    std::chrono::_V2::system_clock::time_point s, e;
+    std::clock_t s, e;
     double tmp;
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
@@ -80,13 +79,10 @@ void artTree_test(bool isZipfian, double initRatio,
                    strlen((const char *)key) + 1, insertQuery[i].second);
       }
     }
-    e = std::chrono::system_clock::now();
-    tmp = static_cast<double>(
-              std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                  .count()) /
-          std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
 
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
@@ -102,23 +98,19 @@ void artTree_test(bool isZipfian, double initRatio,
         sprintf(key, "%f", insertQuery[i].first);
       }
     }
-    e = std::chrono::system_clock::now();
-    double tmp0 =
-        static_cast<double>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                .count()) /
-        std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
-  } else if (initRatio == carmi_params::kReadHeavy) {
-    int end = round(carmi_params::kTestSize * (1 - carmi_params::kReadHeavy));
+  } else if (initRatio == kReadHeavy) {
+    int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
 
-    InitTestSet(carmi_params::kReadHeavy, findDataset, insertDataset,
-                &findQuery, &insertQuery, &index);
+    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
-    std::chrono::_V2::system_clock::time_point s, e;
+    std::clock_t s, e;
     double tmp;
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
@@ -150,14 +142,11 @@ void artTree_test(bool isZipfian, double initRatio,
                    strlen((const char *)key) + 1, insertQuery[i].second);
       }
     }
-    e = std::chrono::system_clock::now();
-    tmp = static_cast<double>(
-              std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                  .count()) /
-          std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
 
     findCnt = 0;
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
@@ -181,22 +170,17 @@ void artTree_test(bool isZipfian, double initRatio,
         sprintf(key, "%f", insertQuery[i].first);
       }
     }
-    e = std::chrono::system_clock::now();
-    double tmp0 =
-        static_cast<double>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                .count()) /
-        std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
-  } else if (initRatio == carmi_params::kReadOnly) {
-    int end = carmi_params::kTestSize * carmi_params::kReadOnly;
-    InitTestSet(carmi_params::kReadOnly, findDataset,
-                carmi_params::TestDataVecType(), &findQuery, &insertQuery,
+  } else if (initRatio == kReadOnly) {
+    int end = kTestSize * kReadOnly;
+    InitTestSet(kReadOnly, findDataset, DataVecType(), &findQuery, &insertQuery,
                 &index);
 
-    std::chrono::_V2::system_clock::time_point s, e;
+    std::clock_t s, e;
     double tmp;
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
@@ -214,13 +198,10 @@ void artTree_test(bool isZipfian, double initRatio,
                    strlen((const char *)key) + 1, rets);
       }
     }
-    e = std::chrono::system_clock::now();
-    tmp = static_cast<double>(
-              std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                  .count()) /
-          std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
 
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         std::vector<double> rets;
@@ -234,25 +215,20 @@ void artTree_test(bool isZipfian, double initRatio,
         sprintf(key, "%f", findQuery[i].first);
       }
     }
-    e = std::chrono::system_clock::now();
-    double tmp0 =
-        static_cast<double>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                .count()) /
-        std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
-  } else if (initRatio == carmi_params::kWritePartial) {
-    int length = round(carmi_params::kTestSize * carmi_params::kWritePartial);
-    int insert_length =
-        round(carmi_params::kTestSize * (1 - carmi_params::kWritePartial));
-    InitTestSet(carmi_params::kWritePartial, findDataset, insertDataset,
-                &findQuery, &insertQuery, &index);
+  } else if (initRatio == kWritePartial) {
+    int length = round(kTestSize * kWritePartial);
+    int insert_length = round(kTestSize * (1 - kWritePartial));
+    InitTestSet(kWritePartial, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
     int findCnt = 0, insertCnt = 0;
 
-    std::chrono::_V2::system_clock::time_point s, e;
+    std::clock_t s, e;
     double tmp;
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < insert_length; i++) {
         for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
@@ -292,15 +268,12 @@ void artTree_test(bool isZipfian, double initRatio,
         }
       }
     }
-    e = std::chrono::system_clock::now();
-    tmp = static_cast<double>(
-              std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                  .count()) /
-          std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
 
     findCnt = 0;
     insertCnt = 0;
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < insert_length; i++) {
         for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
@@ -330,26 +303,22 @@ void artTree_test(bool isZipfian, double initRatio,
         }
       }
     }
-    e = std::chrono::system_clock::now();
-    double tmp0 =
-        static_cast<double>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                .count()) /
-        std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
-  } else if (initRatio == carmi_params::kRangeScan) {
-    int end = round(carmi_params::kTestSize * (1 - carmi_params::kReadHeavy));
+  } else if (initRatio == kRangeScan) {
+    int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
     for (int i = 0; i < findQuery.size(); i++) {
       int len = std::min(i + length[i], static_cast<int>(findQuery.size() - 1));
       findQuery[i].second = findQuery[len].first;
     }
-    InitTestSet(carmi_params::kReadHeavy, findDataset, insertDataset,
-                &findQuery, &insertQuery, &index);
+    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
+                &insertQuery, &index);
 
-    std::chrono::_V2::system_clock::time_point s, e;
+    std::clock_t s, e;
     double tmp;
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
@@ -391,13 +360,11 @@ void artTree_test(bool isZipfian, double initRatio,
                    strlen((const char *)key) + 1, insertQuery[i].second);
       }
     }
-    e = std::chrono::system_clock::now();
-    tmp = double(std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                     .count()) /
-          std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
 
     findCnt = 0;
-    s = std::chrono::system_clock::now();
+    s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
         for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
@@ -425,12 +392,8 @@ void artTree_test(bool isZipfian, double initRatio,
         sprintf(key, "%f", insertQuery[i].first);
       }
     }
-    e = std::chrono::system_clock::now();
-    double tmp0 =
-        static_cast<double>(
-            std::chrono::duration_cast<std::chrono::nanoseconds>(e - s)
-                .count()) /
-        std::chrono::nanoseconds::period::den;
+    e = std::clock();
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
   }
 

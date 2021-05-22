@@ -17,20 +17,10 @@
 #include <map>
 #include <vector>
 
-#include "../../params.h"
 #include "../func/inlineFunction.h"
+#include "../params.h"
 #include "./structures.h"
 
-/**
- * @brief calculate the time cost of find queries
- *
- * @tparam TYPE the type of this leaf node
- * @param actualSize the capacity of this leaf node
- * @param density the density of of this leaf node (array: 1)
- * @param node this leaf node
- * @param range the range of find queries
- * @return double the time cost of this leaf node
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 double CARMI<KeyType, ValueType>::CalLeafFindTime(
@@ -54,17 +44,6 @@ double CARMI<KeyType, ValueType>::CalLeafFindTime(
   return time_cost;
 }
 
-/**
- * @brief calculate the time cost of insert queries
- *
- * @tparam TYPE the type of this leaf node
- * @param actualSize the capacity of this leaf node
- * @param density the density of of this leaf node (array: 1)
- * @param node this leaf node
- * @param range the range of insert queries
- * @param findRange the range of find queries
- * @return double the time cost of this leaf node
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 double CARMI<KeyType, ValueType>::CalLeafInsertTime(
@@ -96,25 +75,18 @@ double CARMI<KeyType, ValueType>::CalLeafInsertTime(
   return time_cost;
 }
 
-/**
- * @brief traverse all possible settings to find the optimal leaf node
- *
- * @param dataRange the range of data points in this node
- * @return NodeCost the optimal cost of this subtree
- */
 template <typename KeyType, typename ValueType>
 NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode optimal_node_struct;
 
-  if (carmi_params::kPrimaryIndex) {
+  if (isPrimary) {
     nodeCost.time = 0.0;
     nodeCost.space = 0.0;
 
     ExternalArray tmp(kThreshold);
-    Train(dataRange.initRange.left,
-          dataRange.initRange.size - dataRange.insertRange.size, initDataset,
+    Train(dataRange.initRange.left, dataRange.initRange.size, initDataset,
           &tmp);
     auto error = tmp.error;
     int findEnd = dataRange.findRange.left + dataRange.findRange.size;
@@ -133,7 +105,8 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
                          querySize;
     }
 
-    nodeCost.cost = nodeCost.time + nodeCost.space * kRate;  // ns + MB * kRate
+    nodeCost.cost =
+        nodeCost.time + nodeCost.space * lambda;  // ns + MB * lambda
     optimalCost = {nodeCost.time, nodeCost.space, nodeCost.cost};
     optimal_node_struct.externalArray = tmp;
 
@@ -156,12 +129,9 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     actualSize = carmi_params::kLeafMaxCapacity;
   else
     actualSize = GetActualSize(actualSize);
-  if (kIsWriteHeavy && actualSize == dataRange.initRange.size)
-    actualSize =
-        GetActualSize(std::min(actualSize + 1, carmi_params::kLeafMaxCapacity));
   // choose an array node as the leaf node
   double time_cost = 0.0;
-  double space_cost = carmi_params::kDataPointSize * actualSize;
+  double space_cost = kDataPointSize * actualSize;
 
   ArrayType tmp(actualSize);
   Train(dataRange.initRange.left, dataRange.initRange.size, initDataset, &tmp);
@@ -170,7 +140,7 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
   time_cost += CalLeafInsertTime<ArrayType>(
       actualSize, 1, tmp, dataRange.insertRange, dataRange.findRange);
 
-  double cost = time_cost + space_cost * kRate;  // ns + MB * kRate
+  double cost = time_cost + space_cost * lambda;  // ns + MB * lambda
   if (cost <= optimalCost.cost) {
     optimalCost = {time_cost, space_cost, cost};
     optimal_node_struct.array = tmp;
@@ -183,15 +153,12 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
       actualSize = carmi_params::kLeafMaxCapacity;
     else
       actualSize = GetActualSize(actualSize);
-    if (kIsWriteHeavy && actualSize == dataRange.initRange.size)
-      actualSize = GetActualSize(
-          std::min(actualSize + 1, carmi_params::kLeafMaxCapacity));
 
     GappedArrayType tmpNode(actualSize);
     tmpNode.density = density;
 
     time_cost = 0.0;
-    space_cost = carmi_params::kDataPointSize * actualSize;
+    space_cost = kDataPointSize * actualSize;
 
     Train(dataRange.initRange.left, dataRange.initRange.size, initDataset,
           &tmpNode);
@@ -200,7 +167,7 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     time_cost += CalLeafInsertTime<GappedArrayType>(
         actualSize, density, tmpNode, dataRange.insertRange,
         dataRange.findRange);
-    cost = time_cost + space_cost * kRate;  // ns + MB * kRate
+    cost = time_cost + space_cost * lambda;  // ns + MB * lambda
     if (cost <= optimalCost.cost) {
       optimalCost = {time_cost, space_cost, cost};
       optimal_node_struct.ga = tmpNode;

@@ -12,8 +12,8 @@
 
 #include <vector>
 
-#include "../../../../params.h"
-#include "../../../construct/structures.h"
+#include "../../construct/structures.h"
+#include "../../params.h"
 
 #ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
 #define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
@@ -24,6 +24,7 @@ struct SegmentPoint {
   int idx[8] = {-1, -1, -1, -1, -1, -1, -1};
 };
 
+template <typename DataVectorType, typename DataType>
 class CandidateCost {
  public:
   explicit CandidateCost(int s)
@@ -31,14 +32,14 @@ class CandidateCost {
     size = s;
   }
 
-  void StoreValue(const carmi_params::TestDataVecType &dataset,
+  void StoreValue(const DataVectorType &dataset,
                   const std::vector<int> &index) {
     xx[0] = 0.0;
     x[0] = 0.0;
     px[0] = 0.0;
     pp[0] = 0.0;
     p[0] = 0.0;
-    for (int i = 1; i < index.size(); i++) {
+    for (int i = 1; i < static_cast<int>(index.size()); i++) {
       for (int j = index[i - 1]; j < index[i]; j++) {
         xx[i] += dataset[j].first * dataset[j].first;
         x[i] += dataset[j].first;
@@ -54,9 +55,7 @@ class CandidateCost {
     }
   }
 
-  float CalculateCost(int left, int right, int size,
-                      carmi_params::TestDataType p1,
-                      carmi_params::TestDataType p2) {
+  float CalculateCost(int left, int right, int size, DataType p1, DataType p2) {
     double a = (p2.second - p1.second) / (p2.first - p1.first);
     double b = p1.second - a * p1.first;
     double res = b * b * size;

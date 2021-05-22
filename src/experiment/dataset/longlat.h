@@ -12,7 +12,6 @@
 #define SRC_EXPERIMENT_DATASET_LONGLAT_H_
 
 #include <algorithm>
-#include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -27,9 +26,8 @@ class LonglatDataset : public BaseDataset {
  public:
   explicit LonglatDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(carmi_params::TestDataVecType *initDataset,
-                       carmi_params::TestDataVecType *testInsertQuery) {
-    carmi_params::TestDataVecType ds;
+  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+    DataVecType ds;
     std::ifstream inFile("../src/experiment/dataset/longlat.csv", std::ios::in);
     if (!inFile) {
       std::cout << "打开文件失败！" << std::endl;
@@ -47,12 +45,12 @@ class LonglatDataset : public BaseDataset {
       double k = stod(key);
       double v = stod(value);
       ds.push_back({k, v});
+      if (ds.size() == kDatasetSize + kTestSize * (1 - proportion)) {
+        break;
+      }
     }
 
-    ds.erase(ds.begin() + carmi_params::kDatasetSize +
-                 round(carmi_params::kTestSize * (1 - proportion)),
-             ds.end());
-    SplitInitTest(false, initDataset, testInsertQuery, &ds);
+    SplitInitTest(&ds, initDataset, testInsertQuery);
   }
 };
 

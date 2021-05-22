@@ -17,12 +17,6 @@
 
 #include "../carmi.h"
 
-/**
- * @brief find a record of the given key
- *
- * @param key
- * @return CARMI<KeyType, ValueType>::DataType of a node
- */
 template <typename KeyType, typename ValueType>
 BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
   int idx = 0;  // idx in the INDEX
@@ -30,16 +24,8 @@ BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
   while (1) {
     switch (type) {
       case LR_ROOT_NODE:
-        idx = root.childLeft + root.LRType::model.Predict(key);
-        break;
-      case PLR_ROOT_NODE:
-        idx = root.childLeft + root.PLRType::model.Predict(key);
-        break;
-      case HIS_ROOT_NODE:
-        idx = root.childLeft + root.HisType::model.Predict(key);
-        break;
-      case BS_ROOT_NODE:
-        idx = root.childLeft + root.BSType::model.Predict(key);
+        idx = root.childLeft +
+              root.LRType<DataVectorType, DataType>::model.Predict(key);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(key);
@@ -90,6 +76,7 @@ BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
           *currslot = 0;
           return NULL;
         }
+
         *currslot = preIdx - left;
         return &entireChild[idx];
       }
@@ -98,7 +85,9 @@ BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
         int preIdx = entireChild[idx].externalArray.Predict(key);
         auto left = entireChild[idx].externalArray.m_left;
 
-        if (*(external_data + (left + preIdx) * kRecordLen) == key) {
+        if (*reinterpret_cast<const KeyType*>(
+                static_cast<const char*>(external_data) +
+                (left + preIdx) * recordLength) == key) {
           *currslot = preIdx;
           return &entireChild[idx];
         }
@@ -107,7 +96,9 @@ BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
             key, preIdx, entireChild[idx].externalArray.error, left, size);
 
         if (preIdx >= left + size ||
-            *(external_data + preIdx * kRecordLen) != key) {
+            *reinterpret_cast<const KeyType*>(
+                static_cast<const char*>(external_data) +
+                preIdx * recordLength) != key) {
           *currslot = 0;
           return NULL;
         }

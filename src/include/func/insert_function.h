@@ -21,13 +21,6 @@
 #include "../carmi.h"
 #include "../construct/minor_function.h"
 
-/**
- * @brief insert a data point
- *
- * @param data
- * @return true if the insertion is successful
- * @return false if the operation fails
- */
 template <typename KeyType, typename ValueType>
 bool CARMI<KeyType, ValueType>::Insert(DataType data) {
   int idx = 0;  // idx in the INDEX
@@ -36,16 +29,8 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
   while (1) {
     switch (type) {
       case LR_ROOT_NODE:
-        idx = root.childLeft + root.LRType::model.Predict(data.first);
-        break;
-      case PLR_ROOT_NODE:
-        idx = root.childLeft + root.PLRType::model.Predict(data.first);
-        break;
-      case HIS_ROOT_NODE:
-        idx = root.childLeft + root.HisType::model.Predict(data.first);
-        break;
-      case BS_ROOT_NODE:
-        idx = root.childLeft + root.BSType::model.Predict(data.first);
+        idx = root.childLeft +
+              root.LRType<DataVectorType, DataType>::model.Predict(data.first);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft +
@@ -209,8 +194,6 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
         return false;
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {
-        if (curr >= entireDataSize) return false;
-
         int left = entireChild[idx].externalArray.m_left;
         int size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
 
@@ -230,12 +213,9 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
           trainData.push_back(data);
           Train(0, 1, trainData, &entireChild[idx].externalArray);
         }
-        *(external_data + curr * kRecordLen) = data.first;
-        *(external_data + curr * kRecordLen + 1) = data.second;
 
         entireChild[idx].externalArray.flagNumber++;
         curr++;
-        nowDataSize++;
 
         return true;
       }

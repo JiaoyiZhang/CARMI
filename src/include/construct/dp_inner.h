@@ -16,19 +16,6 @@
 
 #include "../carmi.h"
 
-/**
- * @brief determine whether the current inner node's setting is
- *        better than the previous optimal setting
- *
- * @tparam TYPE the type of this inner node
- * @param c the child number of this inner node
- * @param type the type of this inne node
- * @param frequency_weight the frequency weight of these queries
- * @param time_cost the time cost of this inner node
- * @param dataRange the range of data points in this node
- * @param optimalCost the optimal cost of the previous setting
- * @param optimal_node_struct the optimal setting
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
@@ -37,9 +24,9 @@ void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
                                                   const DataRange &dataRange,
                                                   NodeCost *optimalCost,
                                                   TYPE *optimal_node_struct) {
-  double space_cost = carmi_params::kBaseNodeSpace * c;  // MB
+  double space_cost = kBaseNodeSpace * c;  // MB
   time_cost = time_cost * frequency_weight;
-  double RootCost = time_cost + kRate * space_cost;
+  double RootCost = time_cost + lambda * space_cost;
   if (RootCost > optimalCost->cost) return;
 
   SubDataset subDataset(c);
@@ -49,14 +36,14 @@ void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
     NodeCost res;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
-    if (subDataset.subInit[i].size > kAlgorithmThreshold)
+    if (subDataset.subInit[i].size > carmi_params::kAlgorithmThreshold)
       res = GreedyAlgorithm(range);
     else
       res = DP(range);
 
     space_cost += res.space;
     time_cost += res.time;
-    RootCost += kRate * res.space + res.time;
+    RootCost += lambda * res.space + res.time;
   }
   if (RootCost <= optimalCost->cost) {
     *optimalCost = {time_cost, space_cost, RootCost};
@@ -64,12 +51,6 @@ void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
   }
 }
 
-/**
- * @brief traverse all possible settings to find the optimal inner node
- *
- * @param dataRange the range of data points in this node
- * @return NodeCost the optimal cost of this subtree
- */
 template <typename KeyType, typename ValueType>
 NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   NodeCost nodeCost;
@@ -77,18 +58,18 @@ NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   BaseNode optimal_node_struct = emptyNode;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
-  for (int c = carmi_params::kMinChildNumber; c < tmpEnd; c *= 2) {
+  for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
     ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight,
                                carmi_params::kLRInnerTime, dataRange,
                                &optimalCost, &(optimal_node_struct.lr));
     ChooseBetterInner<PLRModel>(c, PLR_INNER_NODE, frequency_weight,
                                 carmi_params::kPLRInnerTime, dataRange,
                                 &optimalCost, &(optimal_node_struct.plr));
-    if (c <= carmi_params::kHisMaxChildNumber)
+    if (c <= kHisMaxChildNumber)
       ChooseBetterInner<HisModel>(c, HIS_INNER_NODE, frequency_weight,
                                   carmi_params::kHisInnerTime, dataRange,
                                   &optimalCost, &(optimal_node_struct.his));
-    if (c <= carmi_params::kBSMaxChildNumber)
+    if (c <= kBSMaxChildNumber)
       ChooseBetterInner<BSModel>(c, BS_INNER_NODE, frequency_weight,
                                  carmi_params::kBSInnerTime, dataRange,
                                  &optimalCost, &(optimal_node_struct.bs));

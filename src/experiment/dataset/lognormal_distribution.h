@@ -12,7 +12,7 @@
 #define SRC_EXPERIMENT_DATASET_LOGNORMAL_DISTRIBUTION_H_
 
 #include <algorithm>
-#include <chrono>
+
 #include <iostream>
 #include <random>
 #include <utility>
@@ -24,20 +24,13 @@ class LognormalDataset : public BaseDataset {
  public:
   explicit LognormalDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(carmi_params::TestDataVecType *initDataset,
-                       carmi_params::TestDataVecType *testInsertQuery) {
+  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
     // create dataset randomly
     std::default_random_engine generator;
     std::lognormal_distribution<double> distribution(0.0, 2.0);
-    carmi_params::TestDataVecType dataset(
-        carmi_params::kDatasetSize + carmi_params::kTestSize * (1 - proportion),
-        {0, 0});
 
-    for (int i = 0; i < dataset.size(); i++) {
-      double tmp = distribution(generator);
-      dataset[i] = {tmp, tmp};
-    }
-    SplitInitTest(true, initDataset, testInsertQuery, &dataset);
+    SplitInitTest<std::lognormal_distribution<double>>(
+        distribution, initDataset, testInsertQuery);
   }
 };
 

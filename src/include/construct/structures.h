@@ -100,9 +100,6 @@ class SubDataset {
  */
 enum NodeType {
   LR_ROOT_NODE,
-  PLR_ROOT_NODE,
-  HIS_ROOT_NODE,
-  BS_ROOT_NODE,
   LR_INNER_NODE,
   PLR_INNER_NODE,
   HIS_INNER_NODE,

@@ -16,8 +16,8 @@
 #include <utility>
 #include <vector>
 
-#include "../../../params.h"
 #include "../../construct/structures.h"
+#include "../../params.h"
 
 class LRModel {
  public:

@@ -14,18 +14,14 @@
 #include <vector>
 
 #include "../carmi.h"
-/**
- * @brief calculate the entropy of this node
- *
- * @param size the size of the entire data points
- * @param childNum the child number of this node
- * @param perSize the size of each child
- * @return double entropy
- */
+
 template <typename KeyType, typename ValueType>
 double CARMI<KeyType, ValueType>::CalculateEntropy(
     int size, int childNum, const std::vector<IndexPair> &perSize) const {
   double entropy = 0.0;
+  if (size == 0) {
+    return DBL_MAX;
+  }
   for (int i = 0; i < childNum; i++) {
     auto p = static_cast<float>(perSize[i].size) / size;
     if (p != 0) entropy += p * (-log2(p));
@@ -33,15 +29,6 @@ double CARMI<KeyType, ValueType>::CalculateEntropy(
   return entropy;
 }
 
-/**
- * @brief use this node to split the data points
- *
- * @tparam TYPE the type of this node
- * @param node used to split dataset
- * @param range the left and size of these data points
- * @param dataset partitioned dataset
- * @param subData the left and size of each sub dataset after being split
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 void CARMI<KeyType, ValueType>::NodePartition(
@@ -57,16 +44,6 @@ void CARMI<KeyType, ValueType>::NodePartition(
   }
 }
 
-/**
- * @brief train the given node and use it to divide initDataset, trainFindQuery
- *        and trainTestQuery
- *
- * @tparam TYPE the type of this node
- * @param c the child number of this node
- * @param range the left and size of the data points
- * @param subDataset the left and size of each sub dataset after being split
- * @return TYPE node
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 TYPE CARMI<KeyType, ValueType>::InnerDivideAll(int c, const DataRange &range,
@@ -83,13 +60,9 @@ TYPE CARMI<KeyType, ValueType>::InnerDivideAll(int c, const DataRange &range,
   return node;
 }
 
-/**
- * @brief update the previousLeaf and nextLeaf of each leaf nodes
- *
- */
 template <typename KeyType, typename ValueType>
 void CARMI<KeyType, ValueType>::UpdateLeaf() {
-  if (carmi_params::kPrimaryIndex) return;
+  if (isPrimary) return;
   entireChild[scanLeaf[0]].array.nextLeaf = scanLeaf[1];
   int end = scanLeaf.size() - 1;
   entireChild[end].array.nextLeaf = -1;
@@ -99,15 +72,10 @@ void CARMI<KeyType, ValueType>::UpdateLeaf() {
     entireChild[scanLeaf[i]].array.previousLeaf = scanLeaf[i - 1];
   }
 
-  scanLeaf.clear();
+  // scanLeaf.clear();
+  std::vector<int>().swap(scanLeaf);
 }
 
-/**
- * @brief calculate the frequency weight
- *
- * @param dataRange the left and size of data points
- * @return double frequency weight
- */
 template <typename KeyType, typename ValueType>
 double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
     const DataRange &dataRange) {
@@ -122,15 +90,10 @@ double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
   return frequency_weight;
 }
 
-/**
- * @brief construct the empty node and insert it into map
- *
- * @param range the left and size of data points
- */
 template <typename KeyType, typename ValueType>
 void CARMI<KeyType, ValueType>::ConstructEmptyNode(const DataRange &range) {
   BaseNode optimal_node_struct;
-  if (carmi_params::kPrimaryIndex) {
+  if (isPrimary) {
     ExternalArray tmp(kThreshold);
     Train(range.initRange.left, range.initRange.size, initDataset, &tmp);
     optimal_node_struct.externalArray = tmp;
@@ -143,15 +106,6 @@ void CARMI<KeyType, ValueType>::ConstructEmptyNode(const DataRange &range) {
   structMap.insert({range.initRange, optimal_node_struct});
 }
 
-/**
- * @brief train the parameters of linear regression model
- *
- * @param left the start index of data points
- * @param size the size of data points
- * @param dataset
- * @param a parameter A of LR model
- * @param b parameter B of LR model
- */
 template <typename KeyType, typename ValueType>
 void CARMI<KeyType, ValueType>::LRTrain(const int left, const int size,
                                         const DataVectorType &dataset, float *a,
@@ -173,15 +127,6 @@ void CARMI<KeyType, ValueType>::LRTrain(const int left, const int size,
   }
 }
 
-/**
- * @brief extract data points (delete useless gaps and deleted data points)
- *
- * @param left the left index of the data points
- * @param size the size of the entire data points
- * @param dataset
- * @param actual the actual size of these data points
- * @return DataVectorType pure data points
- */
 template <typename KeyType, typename ValueType>
 typename CARMI<KeyType, ValueType>::DataVectorType
 CARMI<KeyType, ValueType>::ExtractData(const int left, const int size,
@@ -198,16 +143,6 @@ CARMI<KeyType, ValueType>::ExtractData(const int left, const int size,
   return data;
 }
 
-/**
- * @brief set the y of each data point as a precentage of
- * the entire dataset size (index / size),
- * prepare for the linear regression
- *
- * @param left the left index of the data points
- * @param size the size of the entire data points
- * @param dataset
- * @return DataVectorType dataset used for training
- */
 template <typename KeyType, typename ValueType>
 typename CARMI<KeyType, ValueType>::DataVectorType
 CARMI<KeyType, ValueType>::SetY(const int left, const int size,
@@ -221,15 +156,6 @@ CARMI<KeyType, ValueType>::SetY(const int left, const int size,
   return data;
 }
 
-/**
- * @brief find the optimal error value from 0 to size
- *
- * @tparam TYPE the typename of this node
- * @param start_idx the start index of the data points
- * @param size the size of the data points
- * @param dataset
- * @param node used to predict the position of each data point
- */
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
 void CARMI<KeyType, ValueType>::FindOptError(int start_idx, int size,
@@ -250,7 +176,7 @@ void CARMI<KeyType, ValueType>::FindOptError(int start_idx, int size,
   // find the optimal value of error
   int minRes = size * log2(size);
   int res;
-  int cntBetween;
+  int cntBetween = 0;
   for (int e = 0; e <= size; e++) {
     if (error_count[e] == 0) {
       continue;

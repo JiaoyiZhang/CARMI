@@ -35,12 +35,9 @@
  * @param insertQuery
  * @param index
  */
-void InitTestSet(double Ratio,
-                 const carmi_params::TestDataVecType &findQueryset,
-                 const carmi_params::TestDataVecType &insertDataset,
-                 carmi_params::TestDataVecType *findQuery,
-                 carmi_params::TestDataVecType *insertQuery,
-                 std::vector<int> *index);
+void InitTestSet(double Ratio, const DataVecType &findQueryset,
+                 const DataVecType &insertDataset, DataVecType *findQuery,
+                 DataVecType *insertQuery, std::vector<int> *index);
 
 /**
  * @brief print the average time of the workload
@@ -55,15 +52,13 @@ void PrintAvgTime(double time);
  * @param isZipfian whether to use zipfian access during the test
  * @param initRatio the workload type
  * @param rate the weight of space
- * @param thre the kAlgorithmThreshold
  * @param length the length of range scan
  * @param initDataset
  * @param testInsertQuery
  */
-void CoreCARMI(bool isZipfian, double initRatio, double rate, int thre,
-               const std::vector<int> &length,
-               const carmi_params::TestDataVecType &initDataset,
-               const carmi_params::TestDataVecType &testInsertQuery);
+void CoreCARMI(bool isZipfian, double initRatio, double rate,
+               const std::vector<int> &length, const DataVecType &initDataset,
+               const DataVecType &testInsertQuery);
 
 /**
  * @brief the function of using external CARMI
@@ -71,19 +66,18 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate, int thre,
  * @param isZipfian whether to use zipfian access during the test
  * @param initRatio the workload type
  * @param rate the weight of space
- * @param thre the kAlgorithmThreshold
  * @param length the length of range scan
  * @param initDataset
  * @param testInsertQuery
  */
-void CoreExternalCARMI(bool isZipfian, double initRatio, double rate, int thre,
+void CoreExternalCARMI(bool isZipfian, double initRatio, double rate,
                        const std::vector<int> &length,
-                       const carmi_params::TestDataVecType &initDataset,
-                       const carmi_params::TestDataVecType &testInsertQuery);
+                       const DataVecType &initDataset,
+                       const DataVecType &testInsertQuery);
 
-void mainSynthetic(double initRatio, int thre, const std::vector<int> &length);
-void mainYCSB(double initRatio, int thre, const std::vector<int> &length);
-void mainMap(double initRatio, int thre, const std::vector<int> &length);
-void mainExperiment(int thre);
+void mainSynthetic(double initRatio, const std::vector<int> &length);
+void mainYCSB(double initRatio, const std::vector<int> &length);
+void mainMap(double initRatio, const std::vector<int> &length);
+void mainExperiment();
 
 #endif  // SRC_EXPERIMENT_FUNCTIONS_H_
