@@ -20,8 +20,8 @@
 
 struct SegmentPoint {
   float cost;
-  double key[7] = {-1, -1, -1, -1, -1, -1, -1};
-  int idx[8] = {-1, -1, -1, -1, -1, -1, -1};
+  double key[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
+  float idx[8] = {-1, -1, -1, -1, -1, -1, -1};
 };
 
 template <typename DataVectorType, typename DataType>
@@ -66,10 +66,10 @@ class CandidateCost {
     return res;
   }
 
-  float Diff(int n, int len, const int idx[]) {
-    int opt[8];
+  float Diff(int n, int len, const float idx[]) {
+    float opt[8];
     for (int i = 0; i < n; i++) {
-      opt[i] = fabs(static_cast<float>(len) / 8.0 * i - idx[i]);
+      opt[i] = fabs(static_cast<float>(len) / 7.0 * i - idx[i]);
     }
     float diff = 0.0;
     for (int i = 0; i < n; i++) {

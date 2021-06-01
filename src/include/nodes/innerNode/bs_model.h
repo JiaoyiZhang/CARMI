@@ -54,7 +54,7 @@ inline int BSModel::Predict(double key) const {
   int end_idx = (flagNumber & 0x00FFFFFF) - 1;
   int mid;
   while (start_idx < end_idx) {
-    mid = (start_idx + end_idx) / 2;
+    mid = (start_idx + end_idx) >> 1;
     if (index[mid] < key)
       start_idx = mid + 1;
     else

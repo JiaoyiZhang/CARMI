@@ -22,7 +22,10 @@
 class LRModel {
  public:
   LRModel() = default;
-  void SetChildNumber(int c) { flagNumber = (LR_INNER_NODE << 24) + c; }
+  void SetChildNumber(int c) {
+    childLeft = 0;
+    flagNumber = (LR_INNER_NODE << 24) + c;
+  }
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + childNumber)
@@ -36,7 +39,10 @@ class LRModel {
 class PLRModel {
  public:
   PLRModel() = default;
-  void SetChildNumber(int c) { flagNumber = (PLR_INNER_NODE << 24) + c; }
+  void SetChildNumber(int c) {
+    childLeft = 0;
+    flagNumber = (PLR_INNER_NODE << 24) + c;
+  }
   int Predict(double key) const;
 
   int flagNumber;  // 4 Byte (flag + childNumber)
@@ -50,6 +56,7 @@ class HisModel {
  public:
   HisModel() = default;
   void SetChildNumber(int c) {
+    childLeft = 0;
     flagNumber = (HIS_INNER_NODE << 24) + std::min(c, 256);
     minValue = 0;
     divisor = 1;
@@ -69,6 +76,7 @@ class BSModel {
  public:
   BSModel() = default;
   void SetChildNumber(int c) {
+    childLeft = 0;
     flagNumber = (BS_INNER_NODE << 24) + std::min(c, 15);
     for (int i = 0; i < 14; i++) index[i] = 0;
   }

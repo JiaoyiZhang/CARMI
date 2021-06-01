@@ -28,12 +28,12 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
   int childNumber = his->flagNumber & 0x00FFFFFF;
   double maxValue = dataset[end - 1].first;
   his->minValue = dataset[left].first;
-  his->divisor = (maxValue - his->minValue) / childNumber;
+  his->divisor = 1.0 / ((maxValue - his->minValue) / childNumber);
 
   // count the number of data points in each child
   std::vector<int> table(childNumber, 0);
   for (int i = left; i < end; i++) {
-    int idx = (dataset[i].first - his->minValue) / his->divisor;
+    int idx = (dataset[i].first - his->minValue) * his->divisor;
     idx = std::min(std::max(0, idx), childNumber - 1);
     table[idx]++;
   }
@@ -90,7 +90,7 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
 inline int HisModel::Predict(double key) const {
   // return the idx in children
   int childNumber = flagNumber & 0x00FFFFFF;
-  int idx = (key - minValue) / divisor;
+  int idx = (key - minValue) * divisor;
   if (idx < 0)
     idx = 0;
   else if (idx >= childNumber)
@@ -103,12 +103,6 @@ inline int HisModel::Predict(double key) const {
   tmp = (tmp & 0x0f0f0f0f) + ((tmp >> 4) & 0x0f0f0f0f);
   tmp = (tmp & 0x00ff00ff) + ((tmp >> 8) & 0x00ff00ff);
   index += tmp;
-
-  if (index >= childNumber) {
-    index = childNumber - 1;
-  } else if (index < 0) {
-    index = 0;
-  }
 
   return index;
 }
