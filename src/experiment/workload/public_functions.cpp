@@ -44,11 +44,10 @@ void InitTestSet(double Ratio, const DataVecType &findQueryset,
     shuffle((*insertQuery).begin(), (*insertQuery).end(), engine);
   }
 
-  int end = round(kTestSize * Ratio);
   Zipfian zip;
   zip.InitZipfian(PARAM_ZIPFIAN, (*findQuery).size());
-  *index = std::vector<int>(end, 0);
-  for (int i = 0; i < end; i++) {
+  *index = std::vector<int>(kTestSize, 0);
+  for (int i = 0; i < kTestSize; i++) {
     int idx = zip.GenerateNextIndex();
     (*index)[i] = idx;
   }
