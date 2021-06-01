@@ -83,14 +83,6 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
-#ifdef DEBUG
-  std::vector<double> rate = {0.2};
-  std::vector<double> rate1 = {0.1};  // 0.5
-#else
-  std::vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
-  std::vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
-#endif  // !DEBUG
-
   for (int r = 0; r < rate.size(); r++) {
     double kRate;
     if (initRatio == kWriteHeavy)
@@ -171,14 +163,6 @@ void mainMap(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
-#ifdef DEBUG
-  std::vector<double> rate = {0.2};
-  std::vector<double> rate1 = {0.1};  // 0.5
-#else
-  std::vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
-  std::vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
-#endif  // !DEBUG
-
   for (int r = 0; r < rate.size(); r++) {
     double kRate;
     if (initRatio == kWriteHeavy)
@@ -236,14 +220,6 @@ void mainYCSB(double initRatio, const std::vector<int> &length) {
   DataVecType trainInsert;
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
-
-#ifdef DEBUG
-  std::vector<double> rate = {0.2};
-  std::vector<double> rate1 = {0.1};  // 0.5
-#else
-  std::vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
-  std::vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
-#endif  // DEBUG
 
   for (int r = 0; r < rate.size(); r++) {
     double kRate;

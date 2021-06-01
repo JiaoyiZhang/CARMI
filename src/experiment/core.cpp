@@ -52,10 +52,13 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
     l = 0.6;
     r = 0.9;
   }
+  double initR = initRatio;
+  if (initR == kRangeScan) {
+    initR = kReadHeavy;
+  }
 
   typedef CARMICommon<KeyType, ValueType> CarmiType;
-  CarmiType carmi(initDataset.begin(), initDataset.end(), initRatio, rate, l,
-                  r);
+  CarmiType carmi(initDataset.begin(), initDataset.end(), initR, rate, l, r);
 
 #ifdef DEBUG
   time(&timep);

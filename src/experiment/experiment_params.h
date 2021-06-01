@@ -28,6 +28,9 @@ static bool kPrimaryIndex = false;
 
 const int kDatasetSize =
     1024.0 / sizeof(DataType) * 1024 * 1024;  // 1 GB / 16 byte
+// const int kDatasetSize =
+//     1.0 / sizeof(DataType) * 1024 * 1024;  // 1 MB / 16 byte
+// const float kTestSize = kDatasetSize;
 const float kTestSize = 100000.0;
 const float kMaxValue = 100000000;
 
@@ -40,9 +43,11 @@ const float kRangeScan = 2;
 const float kSecondToNanosecond = 1000000000.0;
 
 #ifdef DEBUG
-const float Density[1] = {0.5};  // size / capacity
+std::vector<double> rate = {0.02};
+std::vector<double> rate1 = {0.01};  // 0.5
 #else
-const float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity
+std::vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
+std::vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
 #endif  // !DEBUG
 
 const int kRMIInnerChild = 32;
