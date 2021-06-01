@@ -30,7 +30,7 @@ class LonglatDataset : public BaseDataset {
     DataVecType ds;
     std::ifstream inFile("../src/experiment/dataset/longlat.csv", std::ios::in);
     if (!inFile) {
-      std::cout << "打开文件失败！" << std::endl;
+      std::cout << "open longlat.csv failed" << std::endl;
       exit(1);
     }
     std::string line;
@@ -45,7 +45,7 @@ class LonglatDataset : public BaseDataset {
       double k = stod(key);
       double v = stod(value);
       ds.push_back({k, v});
-      if (ds.size() == kDatasetSize + kTestSize * (1 - proportion)) {
+      if (ds.size() == kDatasetSize + round(kTestSize * (1 - proportion))) {
         break;
       }
     }

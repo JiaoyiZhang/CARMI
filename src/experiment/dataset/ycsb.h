@@ -28,14 +28,14 @@ class YCSBDataset : public BaseDataset {
 
   void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
     (*initDataset) = std::vector<DataType>(kDatasetSize);
-    int end = kTestSize * (1 - proportion);
+    int end = round(kTestSize * (1 - proportion));
     (*testInsertQuery) = std::vector<DataType>(end);
 
     DataVecType ds;
     std::ifstream inFile("..//src//experiment//dataset//newycsbdata.csv",
                          std::ios::in);
     if (!inFile) {
-      std::cout << "打开文件失败！" << std::endl;
+      std::cout << "open ycsb.csv failed" << std::endl;
       exit(1);
     }
     std::string line;
@@ -50,7 +50,7 @@ class YCSBDataset : public BaseDataset {
       double k = stod(key);
       double v = k / 10;
       ds.push_back({k, v});
-      if (ds.size() == kDatasetSize + kTestSize * (1 - proportion)) {
+      if (ds.size() == kDatasetSize + round(kTestSize * (1 - proportion))) {
         break;
       }
     }

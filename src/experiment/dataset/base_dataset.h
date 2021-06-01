@@ -32,7 +32,7 @@ class BaseDataset {
   void SplitInitTest(DistributionType &distribution, DataVecType *initDataset,
                      DataVecType *testInsertQuery) {
     (*initDataset) = std::vector<DataType>(kDatasetSize);
-    int end = kTestSize * (1 - proportion);
+    int end = round(kTestSize * (1 - proportion));
     (*testInsertQuery) = std::vector<DataType>(end);
     std::default_random_engine generator;
 

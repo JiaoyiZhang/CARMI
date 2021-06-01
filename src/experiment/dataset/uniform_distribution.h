@@ -24,7 +24,7 @@ class UniformDataset : public BaseDataset {
   explicit UniformDataset(float initRatio) : BaseDataset(initRatio) {}
   void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
     (*initDataset) = std::vector<DataType>(kDatasetSize);
-    int end = kTestSize * (1 - proportion);
+    int end = round(kTestSize * (1 - proportion));
     (*testInsertQuery) = std::vector<DataType>(end);
 
     // generate initDataset
@@ -36,7 +36,7 @@ class UniformDataset : public BaseDataset {
     for (int i = 0; i < end; i++) {
       int maxValue = kMaxValue;
       int tmp = (rand() % maxValue);
-      (*testInsertQuery)[i] = {tmp, tmp * 10};
+      (*testInsertQuery)[i] = {tmp + 0.5, tmp * 10};
     }
 
     std::sort(initDataset->begin(), initDataset->end(),
