@@ -18,7 +18,8 @@
 #include "../carmi.h"
 
 template <typename KeyType, typename ValueType>
-BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
+BaseNode<KeyType>* CARMI<KeyType, ValueType>::Find(KeyType key, int* currunion,
+                                                   int* currslot) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {
@@ -43,22 +44,20 @@ BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
         break;
       case ARRAY_LEAF_NODE: {
         int size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
-        int preIdx = entireChild[idx].array.Predict(key);
+        *currunion = entireChild[idx].array.Predict(key);
         int left = entireChild[idx].array.m_left;
 
-        if (entireData[left + preIdx].first == key) {
-          *currslot = preIdx;
+#ifdef DEBUG
+        CheckBound(left, *currunion, nowDataSize);
+#endif  // DEBUG
+        int res = SlotsUnionSearch(entireData[left + *currunion], key);
+        if (entireData[left + *currunion].slots[res].first == key) {
+          *currslot = res;
+          return &entireChild[idx];
+        } else {
+          *currslot = -1;
           return &entireChild[idx];
         }
-
-        preIdx =
-            ArraySearch(key, preIdx, entireChild[idx].array.error, left, size);
-        if (preIdx >= left + size || entireData[preIdx].first != key) {
-          *currslot = 0;
-          return NULL;
-        }
-        *currslot = preIdx - left;
-        return &entireChild[idx];
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {
         auto size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;

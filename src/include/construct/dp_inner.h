@@ -55,7 +55,7 @@ template <typename KeyType, typename ValueType>
 NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
-  BaseNode optimal_node_struct = emptyNode;
+  BaseNode<KeyType> optimal_node_struct = emptyNode;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
   for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {

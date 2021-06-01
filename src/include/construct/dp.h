@@ -17,8 +17,8 @@
 #include <map>
 #include <vector>
 
-#include "../params.h"
 #include "../func/inlineFunction.h"
+#include "../params.h"
 #include "./dp_inner.h"
 #include "./dp_leaf.h"
 #include "./greedy.h"
@@ -41,7 +41,7 @@ NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
 
   if (range.initRange.size <= kMaxKeyNum) {
     return DPLeaf(range);
-  } else if (range.initRange.size > carmi_params::kLeafMaxCapacity) {
+  } else if (range.initRange.size > kLeafMaxCapacity) {
     return DPInner(range);
   } else {
     auto res1 = DPInner(range);

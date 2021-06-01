@@ -56,7 +56,7 @@ NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
   }
 
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
-  BaseNode optimal_node_struct;
+  BaseNode<KeyType> optimal_node_struct;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = dataRange.initRange.size / 2;
   IndexPair singleRange(dataRange.initRange.left, dataRange.initRange.size);

@@ -84,7 +84,7 @@ class CARMICommon {
      * @brief Construct a new iterator object
      *
      */
-    inline iterator() : tree(NULL), currnode(NULL), currslot(0) {}
+    inline iterator() : tree(NULL), currnode(NULL), currslot(0), currunion(0) {}
 
     /**
      * @brief Construct a new iterator object
@@ -92,7 +92,7 @@ class CARMICommon {
      * @param t the carmi tree
      */
     explicit inline iterator(CARMICommon *t)
-        : tree(t), currnode(NULL), currslot(-1) {}
+        : tree(t), currnode(NULL), currslot(-1), currunion(0) {}
 
     /**
      * @brief Construct a new iterator object
@@ -101,8 +101,8 @@ class CARMICommon {
      * @param l the current node
      * @param s the current slot
      */
-    inline iterator(CARMICommon *t, BaseNode *l, int s)
-        : tree(t), currnode(l), currslot(s) {}
+    inline iterator(CARMICommon *t, BaseNode<KeyType> *l, int u, int s)
+        : tree(t), currnode(l), currunion(u), currslot(s) {}
 
     /**
      * @brief get the key of this iterator
@@ -110,11 +110,19 @@ class CARMICommon {
      * @return const KeyType
      */
     inline const KeyType key() const {
-      if (currnode == NULL || tree == NULL) {
+      if (currnode == NULL || tree == NULL || currslot == -1 ||
+          currunion >= tree->carmi_tree.kMaxLeafNum) {
         return DBL_MIN;
       }
       int left = currnode->array.m_left;
-      return tree->carmi_tree.entireData[left + currslot].first;
+      if (left + currunion >= tree->carmi_tree.nowDataSize) {
+        std::cout << "index is: " << left + currunion << std::endl;
+        std::cout << "the index is out of range, size:"
+                  << tree->carmi_tree.nowDataSize << std::endl;
+      }
+      return tree->carmi_tree.entireData[left + currunion]
+          .slots[currslot]
+          .first;
     }
 
     /**
@@ -123,11 +131,19 @@ class CARMICommon {
      * @return const ValueType
      */
     inline const ValueType data() const {
-      if (currnode == NULL) {
+      if (currnode == NULL || tree == NULL || currslot == -1 ||
+          currunion >= tree->carmi_tree.kMaxLeafNum) {
         return DBL_MIN;
       }
       int left = currnode->array.m_left;
-      return tree->carmi_tree.entireData[left + currslot].second;
+      if (left + currunion >= tree->carmi_tree.nowDataSize) {
+        std::cout << "index is: " << left + currunion << std::endl;
+        std::cout << "the index is out of range, size:"
+                  << tree->carmi_tree.nowDataSize << std::endl;
+      }
+      return tree->carmi_tree.entireData[left + currunion]
+          .slots[currslot]
+          .second;
     }
 
     /**
@@ -139,7 +155,7 @@ class CARMICommon {
      */
     inline bool operator==(const iterator &x) const {
       return (x.tree == tree && x.currnode == currnode) &&
-             (x.currslot == currslot);
+             (x.currslot == currslot && x.currunion == currunion);
     }
 
     /**
@@ -151,7 +167,7 @@ class CARMICommon {
      */
     inline bool operator!=(const iterator &x) const {
       return (x.currnode != currnode || x.tree != tree) ||
-             (x.currslot != currslot);
+             (x.currslot != currslot || x.currunion != currunion);
     }
 
     /**
@@ -162,15 +178,25 @@ class CARMICommon {
     inline iterator &operator++() {
       int left = currnode->array.m_left;
       currslot++;
-      while (currslot < (currnode->array.flagNumber & 0x00FFFFFF) ||
+      while (currunion < (currnode->array.flagNumber & 0x00FFFFFF) ||
              currnode->array.nextLeaf != -1) {
-        if (currslot == (currnode->array.flagNumber & 0x00FFFFFF)) {
+        if (currunion == (currnode->array.flagNumber & 0x00FFFFFF)) {
           currnode = &(tree->carmi_tree.entireChild[currnode->array.nextLeaf]);
           currslot = 0;
+          currunion = 0;
           left = currnode->array.m_left;
           continue;
         }
-        if (tree->carmi_tree.entireData[left + currslot].first != DBL_MIN) {
+        if (currslot == tree->carmi_tree.kMaxSlotNum ||
+            tree->carmi_tree.entireData[left + currunion]
+                    .slots[currslot]
+                    .first == DBL_MIN) {
+          currslot = 0;
+          currunion++;
+        }
+        if (tree->carmi_tree.entireData[left + currunion]
+                .slots[currslot]
+                .first != DBL_MIN) {
           return *this;
         }
       }
@@ -178,9 +204,10 @@ class CARMICommon {
       return *this;
     }
 
-    CARMICommon *tree;   // the carmi tree
-    BaseNode *currnode;  // the current leaf node
-    int currslot;        // index in external_data
+    CARMICommon *tree;            // the carmi tree
+    BaseNode<KeyType> *currnode;  // the current leaf node
+    int currunion;                // index in unions of this leaf node
+    int currslot;                 // index in external_data
   };
 
  private:
@@ -222,7 +249,7 @@ class CARMICommon {
    */
   iterator Find(KeyType key) {
     iterator it(this);
-    it.currnode = carmi_tree.Find(key, &it.currslot);
+    it.currnode = carmi_tree.Find(key, &it.currunion, &it.currslot);
     return it;
   }
 

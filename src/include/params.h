@@ -14,9 +14,9 @@
 #define DEBUG
 
 namespace carmi_params {
+const int kMaxLeafNodeSize = 128;  // bytes, the size of a union in leaf nodes
 
 const int kAlgorithmThreshold = 1024;
-const int kLeafMaxCapacity = 4096;  // the max capacity of a leaf node
 
 const double kLRRootTime = 12.7013;  // the time cost of lr root
 

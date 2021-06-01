@@ -46,18 +46,14 @@ bool CARMI<KeyType, ValueType>::Update(DataType data) {
       case ARRAY_LEAF_NODE: {
         auto left = entireChild[idx].array.m_left;
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
-        int preIdx = entireChild[idx].array.Predict(data.first);
-        if (entireData[left + preIdx].first == data.first) {
-          entireData[left + preIdx].second = data.second;
-        } else {
-          preIdx = ArraySearch(data.first, preIdx, entireChild[idx].array.error,
-                               left, size);
-          if (preIdx >= left + size || entireData[preIdx].first != data.first)
-            return false;
+        left += entireChild[idx].array.Predict(data.first);
 
-          entireData[preIdx].second = data.second;
+        int res = SlotsUnionSearch(entireData[left], data.first);
+        if (entireData[left].slots[res].first == data.first) {
+          entireData[left].slots[res].second = data.second;
+          return true;
         }
-        return true;
+        return false;
       }
     }
 

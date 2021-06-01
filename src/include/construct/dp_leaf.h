@@ -22,64 +22,10 @@
 #include "./structures.h"
 
 template <typename KeyType, typename ValueType>
-template <typename TYPE>
-double CARMI<KeyType, ValueType>::CalLeafFindTime(
-    int actualSize, double density, const TYPE &node,
-    const IndexPair &range) const {
-  double time_cost = 0;
-  for (int i = range.left; i < range.left + range.size; i++) {
-    auto predict = node.Predict(findQuery[i].first) + range.left;
-    auto d = abs(i - predict);
-    time_cost +=
-        (carmi_params::kLeafBaseTime * findQuery[i].second) / querySize;
-    if (d <= node.error)
-      time_cost += (log2(node.error + 1) * findQuery[i].second *
-                    carmi_params::kCostBSTime) *
-                   (2 - density) / querySize;
-    else
-      time_cost += (log2(actualSize) * findQuery[i].second *
-                    carmi_params::kCostBSTime * (2 - density)) /
-                   querySize;
-  }
-  return time_cost;
-}
-
-template <typename KeyType, typename ValueType>
-template <typename TYPE>
-double CARMI<KeyType, ValueType>::CalLeafInsertTime(
-    int actualSize, double density, const TYPE &node, const IndexPair &range,
-    const IndexPair &findRange) const {
-  double time_cost = 0;
-  for (int i = range.left; i < range.left + range.size; i++) {
-    int predict = node.Predict(insertQuery[i].first) + findRange.left;
-    int d = abs(insertQueryIndex[i] - predict);
-    time_cost +=
-        (carmi_params::kLeafBaseTime * insertQuery[i].second) / querySize;
-    // add the cost of binary search between error or the entire node
-    if (d <= node.error)
-      time_cost += (log2(node.error + 1) * insertQuery[i].second *
-                    carmi_params::kCostBSTime) *
-                   (2 - density) / querySize;
-    else
-      time_cost += (log2(actualSize) * insertQuery[i].second *
-                    carmi_params::kCostBSTime * (2 - density)) /
-                   querySize;
-    // add the cost of moving data points
-    if (density == 1)
-      time_cost += carmi_params::kCostMoveTime * findRange.size / 2 *
-                   insertQuery[i].second / querySize;
-    else
-      time_cost += carmi_params::kCostMoveTime * density / (1 - density) *
-                   insertQuery[i].second / querySize;
-  }
-  return time_cost;
-}
-
-template <typename KeyType, typename ValueType>
 NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
-  BaseNode optimal_node_struct;
+  BaseNode<KeyType> optimal_node_struct;
 
   // TODO(jiaoyi): modify the process due to the change of leaf nodes
   if (isPrimary) {
@@ -125,21 +71,31 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     return nodeCost;
   }
 
-  int actualSize = dataRange.initRange.size;
-  if (actualSize > carmi_params::kLeafMaxCapacity)
-    actualSize = carmi_params::kLeafMaxCapacity;
-  else
-    actualSize = GetActualSize(actualSize);
+  // int actualSize = dataRange.initRange.size;
+  // if (actualSize > carmi_params::kLeafMaxCapacity)
+  //   actualSize = carmi_params::kLeafMaxCapacity;
+  // else
   // choose an array node as the leaf node
-  double time_cost = 0.0;
-  double space_cost = kDataPointSize * actualSize;
+  int leftNum = GetActualSize(dataRange.initRange.size);
+  int avgSlotNum = std::max(1, dataRange.initRange.size / leftNum + 1);
+  avgSlotNum = std::min(avgSlotNum, kMaxSlotNum);
 
-  ArrayType tmp(actualSize);
-  Train(dataRange.initRange.left, dataRange.initRange.size, initDataset, &tmp);
-  time_cost +=
-      CalLeafFindTime<ArrayType>(actualSize, 1, tmp, dataRange.findRange);
-  time_cost += CalLeafInsertTime<ArrayType>(
-      actualSize, 1, tmp, dataRange.insertRange, dataRange.findRange);
+  double time_cost = carmi_params::kLeafBaseTime;
+  double space_cost = leftNum * carmi_params::kMaxLeafNodeSize;
+
+  ArrayType<KeyType> tmp;
+  int end = dataRange.findRange.left + dataRange.findRange.size;
+  for (int i = dataRange.findRange.left; i < end; i++) {
+    time_cost += findQuery[i].second / querySize *
+                 (log2(avgSlotNum) * carmi_params::kCostBSTime);
+  }
+
+  end = dataRange.insertRange.left + dataRange.insertRange.size;
+  for (int i = dataRange.insertRange.left; i < end; i++) {
+    time_cost += insertQuery[i].second / querySize *
+                 ((log2(avgSlotNum) * carmi_params::kCostBSTime) +
+                  (1 + avgSlotNum) / 2.0 * carmi_params::kCostMoveTime);
+  }
 
   double cost = time_cost + space_cost * lambda;  // ns + MB * lambda
   if (cost <= optimalCost.cost) {

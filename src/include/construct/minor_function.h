@@ -10,6 +10,7 @@
  */
 #ifndef SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_
 #define SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -92,14 +93,13 @@ double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
 
 template <typename KeyType, typename ValueType>
 void CARMI<KeyType, ValueType>::ConstructEmptyNode(const DataRange &range) {
-  BaseNode optimal_node_struct;
+  BaseNode<KeyType> optimal_node_struct;
   if (isPrimary) {
     ExternalArray tmp(kThreshold);
     Train(range.initRange.left, range.initRange.size, initDataset, &tmp);
     optimal_node_struct.externalArray = tmp;
   } else {
-    ArrayType tmpNode(kThreshold);
-    Train(range.initRange.left, range.initRange.size, initDataset, &tmpNode);
+    ArrayType<KeyType> tmpNode;
     optimal_node_struct.array = tmpNode;
   }
   structMap.insert({range.initRange, optimal_node_struct});
@@ -137,6 +137,37 @@ CARMI<KeyType, ValueType>::ExtractData(const int left, const int size,
   for (int i = left; i < end; i++) {
     if (dataset[i].first != DBL_MIN) {
       data[(*actual)++] = dataset[i];
+    }
+  }
+  return data;
+}
+
+template <typename KeyType, typename ValueType>
+inline int CARMI<KeyType, ValueType>::GetDataNum(const int unionleft,
+                                                 const int unionright) {
+  int num = 0;
+  for (int i = unionleft; i < unionright; i++) {
+    for (int j = 0; j < kMaxSlotNum; j++) {
+      if (entireData[i].slots[j].first != DBL_MIN) {
+        num++;
+      }
+    }
+  }
+  return num;
+}
+
+template <typename KeyType, typename ValueType>
+typename CARMI<KeyType, ValueType>::DataVectorType
+CARMI<KeyType, ValueType>::ExtractData(const int unionleft,
+                                       const int unionright, int *actual) {
+  *actual = 0;
+  int size = unionright - unionleft;
+  DataVectorType data(size * kMaxSlotNum, {DBL_MIN, DBL_MIN});
+  for (int i = unionleft; i < unionright; i++) {
+    for (int j = 0; j < kMaxSlotNum; j++) {
+      if (entireData[i].slots[j].first != DBL_MIN) {
+        data[(*actual)++] = entireData[i].slots[j];
+      }
     }
   }
   return data;
@@ -190,5 +221,155 @@ void CARMI<KeyType, ValueType>::FindOptError(int start_idx, int size,
       node->error = e;
     }
   }
+}
+
+template <typename KeyType, typename ValueType>
+bool CARMI<KeyType, ValueType>::SlotsUnionInsert(
+    const DataType &data, int currunion, LeafSlots<KeyType, ValueType> *node,
+    BaseNode<KeyType> *arr) {
+  if (node->slots[kMaxSlotNum - 1].first != DBL_MIN) {
+    return false;  // this node is full
+  }
+  if (node->slots[0].first == DBL_MIN) {
+    node->slots[0] = data;
+    if (currunion == 0) {
+      arr->array.slotkeys[0] = data.first + 1;
+    } else {
+      arr->array.slotkeys[currunion - 1] = data.first;
+    }
+    arr->array.flagNumber++;
+#ifdef DEBUG
+    for (int i = 0; i < kMaxSlotNum - 1; i++) {
+      if (node->slots[i].first != DBL_MIN &&
+          node->slots[i + 1].first != DBL_MIN) {
+        if (node->slots[i].first > node->slots[i + 1].first) {
+          std::cout << "after insert, check is wrong!" << std::endl;
+        }
+      }
+      if (node->slots[i].first == DBL_MIN &&
+          node->slots[i + 1].first != DBL_MIN) {
+        std::cout << "after insert, check is wrong!" << std::endl;
+      }
+    }
+#endif  // DEBUG
+    return true;
+  }
+  int res = SlotsUnionSearch(*node, data.first);
+  if (node->slots[res].first == DBL_MIN) {
+    node->slots[res] = data;
+    return true;
+  }
+  // move data
+  int num = res;
+  for (; num < kMaxSlotNum; num++) {
+    if (node->slots[num].first == DBL_MIN) {
+      break;
+    }
+  }
+  for (; num > res; num--) {
+    node->slots[num] = node->slots[num - 1];
+  }
+  node->slots[res] = data;
+  if (currunion != 0)
+    arr->array.slotkeys[currunion - 1] =
+        std::min(arr->array.slotkeys[currunion - 1], data.first);
+#ifdef DEBUG
+  for (int i = 0; i < kMaxSlotNum - 1; i++) {
+    if (node->slots[i].first != DBL_MIN &&
+        node->slots[i + 1].first != DBL_MIN) {
+      if (node->slots[i].first > node->slots[i + 1].first) {
+        std::cout << "after insert, check is wrong!" << std::endl;
+      }
+    }
+    if (node->slots[i].first == DBL_MIN &&
+        node->slots[i + 1].first != DBL_MIN) {
+      std::cout << "after insert, check is wrong!" << std::endl;
+    }
+  }
+#endif  // DEBUG
+  return true;
+}
+
+template <typename KeyType, typename ValueType>
+void CARMI<KeyType, ValueType>::CheckBound(int left, int currunion,
+                                           int nowDataSize) {
+#ifdef DEBUG
+  if (left + currunion >= nowDataSize) {
+    std::cout << "left + currunion :" << left + currunion
+              << ",\tnowDataSize:" << nowDataSize << std::endl;
+  }
+#endif  // DEBUG
+}
+
+template <typename KeyType, typename ValueType>
+bool CARMI<KeyType, ValueType>::CheckChildBound(int idx) {
+#ifdef DEBUG
+  if (idx >= nowChildNumber) {
+    std::cout << "lidx :" << idx << ",\tnowDataSize:" << nowChildNumber
+              << std::endl;
+    return false;
+  }
+  if (idx >= entireChild.size()) {
+    std::cout << "lidx :" << idx
+              << ",\entireChild.size():" << entireChild.size() << std::endl;
+    return false;
+  }
+  if (((entireChild[idx].lr.flagNumber >> 24) == ARRAY_LEAF_NODE) &&
+      entireChild[idx].array.m_left > nowDataSize) {
+    std::cout << "m_left :" << entireChild[idx].array.m_left
+              << ",\tnowDataSize:" << nowDataSize << std::endl;
+    return false;
+  }
+#endif  // DEBUG
+  return true;
+}
+
+template <typename KeyType, typename ValueType>
+bool CARMI<KeyType, ValueType>::CheckSlots(const BaseNode<KeyType> &arr) {
+  int left = arr.array.m_left;
+  int nowLeafNum = arr.array.flagNumber & 0x00FFFFFF;
+  if (nowLeafNum == 1) {
+    for (int j = 0; j < kMaxSlotNum; j++) {
+      if (entireData[left].slots[j].first != DBL_MIN) {
+        if (entireData[left].slots[j].first >= arr.array.slotkeys[0]) {
+          std::cout << "check slots wrong, i:" << left << ",\tj:" << j
+                    << ",\tentireData[i].slots[j].first:"
+                    << entireData[left].slots[j].first
+                    << ",\tarr.array.slotkeys[0]:" << arr.array.slotkeys[0]
+                    << std::endl;
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  for (int i = left; i < left + nowLeafNum - 1; i++) {
+    for (int j = 0; j < kMaxSlotNum; j++) {
+      if (entireData[i].slots[j].first != DBL_MIN) {
+        if (entireData[i].slots[j].first >= arr.array.slotkeys[i - left]) {
+          std::cout << "check slots wrong, i:" << i << ",\tj:" << j
+                    << ",\tentireData[i].slots[j].first:"
+                    << entireData[i].slots[j].first
+                    << ",\tarr.array.slotkeys[i - left]:"
+                    << arr.array.slotkeys[i - left] << std::endl;
+          return false;
+        }
+      }
+    }
+  }
+  for (int j = 0; j < kMaxSlotNum; j++) {
+    if (entireData[left + nowLeafNum - 1].slots[j].first != DBL_MIN) {
+      if (entireData[left + nowLeafNum - 1].slots[j].first <
+          arr.array.slotkeys[nowLeafNum - 1]) {
+        std::cout << "check slots wrong, i:" << left + nowLeafNum - 1
+                  << ",\tj:" << j << ",\tentireData[i].slots[j].first:"
+                  << entireData[left + nowLeafNum - 1].slots[j].first
+                  << ",\tarr.array.slotkeys[i - left]:"
+                  << arr.array.slotkeys[nowLeafNum - 1] << std::endl;
+        return false;
+      }
+    }
+  }
+  return true;
 }
 #endif  // SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_

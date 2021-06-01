@@ -11,6 +11,8 @@
 #ifndef SRC_INCLUDE_NODES_LEAFNODE_LEAF_NODES_H_
 #define SRC_INCLUDE_NODES_LEAFNODE_LEAF_NODES_H_
 
+#include <float.h>
+
 #include <iostream>
 #include <utility>
 #include <vector>
@@ -18,18 +20,17 @@
 #include "../../construct/structures.h"
 #include "../../params.h"
 
+template <typename KeyType>
 class ArrayType {
  public:
-  ArrayType() = default;
-  explicit ArrayType(int cap) {
+  ArrayType() {
     flagNumber = (ARRAY_LEAF_NODE << 24) + 0;
-    error = 0;
     m_left = -1;
-    m_capacity = cap;
     previousLeaf = -1;
     nextLeaf = -1;
-    theta1 = 0.0001;
-    theta2 = 0.666;
+    for (int i = 0; i < 48 / sizeof(KeyType); i++) {
+      slotkeys[i] = DBL_MIN;
+    }
   }
 
   /**
@@ -40,17 +41,12 @@ class ArrayType {
    */
   int Predict(double key) const;
 
-  int flagNumber;  // 4 Byte (flag + 0)
+  int flagNumber;  // 4 Byte (flag + 0), size: the number of union
   int previousLeaf;
   int nextLeaf;
+  int m_left;  // the left boundary of the leaf node in the global array
 
-  int m_left;      // the left boundary of the leaf node in the global array
-  int m_capacity;  // the maximum capacity of this leaf node
-  int error;       // the boundary of binary search
-
-  float theta1;
-  float theta2;
-  std::pair<float, float> tmppp[4];
+  KeyType slotkeys[48 / sizeof(KeyType)];
 };
 
 class ExternalArray {

@@ -43,20 +43,21 @@ bool CARMI<KeyType, ValueType>::Delete(KeyType key) {
       case ARRAY_LEAF_NODE: {
         auto left = entireChild[idx].array.m_left;
         auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
-        int preIdx = entireChild[idx].array.Predict(key);
-        if (entireData[left + preIdx].first == key)
-          preIdx += left;
-        else
-          preIdx = ArraySearch(key, preIdx, entireChild[idx].array.error, left,
-                               size);
-        if (preIdx >= left + size || entireData[preIdx].first != key)
-          return false;
+        left += entireChild[idx].array.Predict(key);
 
-        for (int i = preIdx; i < left + size - 1; i++)
-          entireData[i] = entireData[i + 1];
-        entireData[left + size - 1] = {DBL_MIN, DBL_MIN};
-        entireChild[idx].array.flagNumber--;
-        return true;
+        int res = SlotsUnionSearch(entireData[left], key);
+        if (entireData[left].slots[res].first == key) {
+          int i = res;
+          for (; i < kMaxSlotNum - 1; i++) {
+            entireData[left].slots[i] = entireData[left].slots[i + 1];
+            if (entireData[left].slots[i + 1].first == DBL_MIN) {
+              break;
+            }
+          }
+          entireData[left].slots[i] = {DBL_MIN, DBL_MIN};
+          return true;
+        }
+        return false;
       }
     }
 

@@ -40,10 +40,8 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
     nodeCost->time += resChild.time;
     nodeCost->space += resChild.space;
 
-    // COST.clear();
     std::map<IndexPair, NodeCost>().swap(COST);
-    std::map<IndexPair, BaseNode>().swap(structMap);
-    // structMap.clear();
+    std::map<IndexPair, BaseNode<KeyType>>().swap(structMap);
   }
 }
 
@@ -59,6 +57,7 @@ inline void CARMI<KeyType, ValueType>::Construction(
 #ifdef DEBUG
   std::cout << std::endl;
   std::cout << "constructing root is over!" << std::endl;
+  std::cout << "the number of children is: " << res.rootChildNum << std::endl;
   time_t timep;
   time(&timep);
   char tmpTime[64];
@@ -72,9 +71,9 @@ inline void CARMI<KeyType, ValueType>::Construction(
   int neededSize = nowDataSize + reservedSpace;
   if (!isPrimary) {
     if (neededSize < static_cast<int>(entireData.size())) {
-      DataVectorType tmpEntireData(entireData.begin(),
-                                   entireData.begin() + neededSize);
-      DataVectorType().swap(entireData);
+      std::vector<LeafSlots<KeyType, ValueType>> tmpEntireData(
+          entireData.begin(), entireData.begin() + neededSize);
+      std::vector<LeafSlots<KeyType, ValueType>>().swap(entireData);
       entireData = tmpEntireData;
     }
 
@@ -94,9 +93,9 @@ inline void CARMI<KeyType, ValueType>::Construction(
 
   neededSize = nowChildNumber + reservedSpace;
   if (neededSize < static_cast<int>(entireChild.size())) {
-    std::vector<BaseNode> tmp(entireChild.begin(),
-                              entireChild.begin() + neededSize);
-    std::vector<BaseNode>().swap(entireChild);
+    std::vector<BaseNode<KeyType>> tmp(entireChild.begin(),
+                                       entireChild.begin() + neededSize);
+    std::vector<BaseNode<KeyType>>().swap(entireChild);
     entireChild = tmp;
   }
 

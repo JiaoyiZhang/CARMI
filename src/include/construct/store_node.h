@@ -76,9 +76,10 @@ void CARMI<KeyType, ValueType>::StoreOptimalNode(int storeIdx,
       break;
     }
     case ARRAY_LEAF_NODE: {
-      ArrayType node = it->second.array;
-      StoreData(it->second.array.m_capacity, range.initRange.left,
-                range.initRange.size, initDataset, &node);
+      ArrayType<KeyType> node = it->second.array;
+      int neededLeafNum = GetActualSize(range.initRange.size);
+      StoreData(neededLeafNum, range.initRange.left, range.initRange.size,
+                initDataset, &node);
       entireChild[storeIdx].array = node;
       scanLeaf.push_back(storeIdx);
       break;

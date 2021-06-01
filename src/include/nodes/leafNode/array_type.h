@@ -22,62 +22,112 @@
 #include "../../params.h"
 #include "./leaf_nodes.h"
 
-inline int ArrayType::Predict(double key) const {
-  // return the predicted idx in the leaf node
-  int size = (flagNumber & 0x00FFFFFF);
-  int p = (theta1 * key + theta2) * size;
-  if (p < 0)
-    p = 0;
-  else if (p >= size && size != 0)
-    p = size - 1;
-  return p;
+template <typename KeyType>
+inline int ArrayType<KeyType>::Predict(double key) const {
+  // return the idx of the union in entireData
+  int start_idx = 0;
+  int end_idx = std::max(0, (flagNumber & 0x00FFFFFF) - 2);
+  if (slotkeys[0] == DBL_MIN || key < slotkeys[0]) {
+    return 0;
+  }
+  // while (slotkeys[end_idx] == DBL_MIN) {
+  //   end_idx--;
+  // }
+  if (key >= slotkeys[end_idx]) {
+    return end_idx + 1;
+  }
+
+  int mid;
+  while (start_idx < end_idx) {
+    mid = (start_idx + end_idx) / 2;
+    if (slotkeys[mid] < key)
+      start_idx = mid + 1;
+    else
+      end_idx = mid;
+  }
+  if (slotkeys[start_idx] == key) {
+    return start_idx + 1;
+  }
+  return start_idx;
 }
 
 template <typename KeyType, typename ValueType>
-inline void CARMI<KeyType, ValueType>::Init(int cap, int left, int size,
+inline void CARMI<KeyType, ValueType>::Init(int left, int size,
                                             const DataVectorType &dataset,
-                                            ArrayType *arr) {
+                                            ArrayType<KeyType> *arr) {
   if (size == 0) return;
   int actualSize = 0;
   DataVectorType newDataset = ExtractData(left, size, dataset, &actualSize);
+  int neededLeafNum = GetActualSize(size);
 
-  Train(0, actualSize, newDataset, arr);
-  StoreData(cap, 0, actualSize, newDataset, arr);
+  StoreData(neededLeafNum, 0, actualSize, newDataset, arr);
 }
 
 template <typename KeyType, typename ValueType>
-inline void CARMI<KeyType, ValueType>::StoreData(int cap, int left, int size,
+inline void CARMI<KeyType, ValueType>::Rebalance(const int unionleft,
+                                                 const int unionright,
+                                                 ArrayType<KeyType> *arr) {
+  int actualSize = 0;
+  DataVectorType newDataset = ExtractData(unionleft, unionright, &actualSize);
+  int nowLeafNum = unionright - unionleft;
+
+  StoreData(nowLeafNum, 0, actualSize, newDataset, arr);
+}
+
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::Expand(const int unionleft,
+                                              const int unionright,
+                                              ArrayType<KeyType> *arr) {
+  int actualSize = 0;
+  DataVectorType newDataset = ExtractData(unionleft, unionright, &actualSize);
+  int neededLeafNum = unionright - unionleft + 1;
+
+  StoreData(neededLeafNum, 0, actualSize, newDataset, arr);
+}
+
+template <typename KeyType, typename ValueType>
+inline void CARMI<KeyType, ValueType>::StoreData(int neededLeafNum, int left,
+                                                 int size,
                                                  const DataVectorType &dataset,
-                                                 ArrayType *arr) {
-  if (arr->m_left != -1) {
-    ReleaseMemory(arr->m_left, arr->m_capacity);
+                                                 ArrayType<KeyType> *arr) {
+  int nowLeafNum = arr->flagNumber & 0x00FFFFFF;
+  if (nowLeafNum != neededLeafNum) {
+    if (arr->m_left != -1) {
+      ReleaseMemory(arr->m_left, nowLeafNum);
+    }
+    arr->m_left = AllocateMemory(neededLeafNum);
   }
-  if (cap < size) {
-    arr->m_capacity = GetActualSize(size);
-  } else {
-    arr->m_capacity = cap;
-  }
-  if (arr->m_capacity == size) {
-    arr->m_capacity =
-        GetActualSize(std::min(size + 1, carmi_params::kLeafMaxCapacity));
-  }
-  arr->m_left = AllocateMemory(arr->m_capacity);
+
+  arr->flagNumber = (ARRAY_LEAF_NODE << 24) + 0;
+  LeafSlots<KeyType, ValueType> tmp;
+  int avg = std::max(1, size / neededLeafNum + 1);
+  avg = std::min(avg, kMaxSlotNum);
+  BaseNode<KeyType> tmpArr;
 
   int end = left + size;
-  for (int i = arr->m_left, j = left; j < end; i++, j++)
-    entireData[i] = dataset[j];
-}
-
-template <typename KeyType, typename ValueType>
-inline void CARMI<KeyType, ValueType>::Train(int start_idx, int size,
-                                             const DataVectorType &dataset,
-                                             ArrayType *arr) {
-  if (size == 0) return;
-
-  DataVectorType data = SetY(start_idx, size, dataset);
-  arr->flagNumber = (ARRAY_LEAF_NODE << 24) + size;
-  LRTrain(0, size, data, &(arr->theta1), &(arr->theta2));
-  FindOptError<ArrayType>(0, size, data, arr);
+  for (int i = arr->m_left, j = left, k = 1; j < end; j++, k++) {
+    SlotsUnionInsert(dataset[j], 0, &tmp, &tmpArr);
+    if (k == avg || j == end - 1) {
+      k = 0;
+#ifdef DEBUG
+      CheckBound(i, 0, nowDataSize);
+#endif  // DEBUG
+      entireData[i++] = tmp;
+      tmp = LeafSlots<KeyType, ValueType>();
+      arr->flagNumber++;
+    }
+  }
+  if (neededLeafNum == 1) {
+    if (size > 0) {
+      arr->slotkeys[0] = dataset[end - 1].first + 1;
+    }
+    return;
+  }
+  end = arr->m_left + neededLeafNum;
+  int j = 0;
+  for (int i = arr->m_left + 1; i < end; i++, j++) {
+    arr->slotkeys[j] = entireData[i].slots[0].first;
+  }
 }
 
 #endif  // SRC_INCLUDE_NODES_LEAFNODE_ARRAY_TYPE_H_

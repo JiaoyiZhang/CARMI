@@ -11,8 +11,13 @@
 #ifndef SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_
 #define SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_
 
+#include <float.h>
+
 #include <iostream>
+#include <utility>
 #include <vector>
+
+#include "../params.h"
 
 /**
  * @brief the structure of the information
@@ -51,12 +56,12 @@ class IndexPair {
     left = l;
     size = s;
   }
-  IndexPair(const IndexPair &data) {
+  IndexPair(const IndexPair& data) {
     left = data.left;
     size = data.size;
   }
 
-  bool operator<(const IndexPair &a) const {
+  bool operator<(const IndexPair& a) const {
     if (left == a.left)
       return size < a.size;
     else
@@ -108,4 +113,30 @@ enum NodeType {
   EXTERNAL_ARRAY_LEAF_NODE
 };
 
+template <typename KeyType, typename ValueType>
+union LeafSlots {
+  // int tmp[carmi_params::kUnionTmpNum];
+  std::pair<KeyType, ValueType> slots[carmi_params::kMaxLeafNodeSize /
+                                      sizeof(std::pair<KeyType, ValueType>)];
+
+  LeafSlots() {
+    int len =
+        carmi_params::kMaxLeafNodeSize / sizeof(std::pair<KeyType, ValueType>);
+    for (int i = 0; i < len; i++) {
+      slots[i] = {DBL_MIN, DBL_MIN};
+    }
+  }
+
+  LeafSlots& operator=(const LeafSlots& node) {
+    if (this != &node) {
+      int len = carmi_params::kMaxLeafNodeSize /
+                sizeof(std::pair<KeyType, ValueType>);
+      for (int i = 0; i < len; i++) {
+        this->slots[i].first = node.slots[i].first;
+        this->slots[i].second = node.slots[i].second;
+      }
+    }
+    return *this;
+  }
+};
 #endif  // SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_

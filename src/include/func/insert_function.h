@@ -49,61 +49,131 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
               entireChild[idx].bs.Predict(data.first);
         break;
       case ARRAY_LEAF_NODE: {
-        int size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+        CheckChildBound(idx);
+        int nowLeafNum = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         int left = entireChild[idx].array.m_left;
+        int currunion = entireChild[idx].array.Predict(data.first);
 
-        // split
-        if (size >= carmi_params::kLeafMaxCapacity) {
+        if (nowLeafNum == 0) {
+          bool isSuccess =
+              SlotsUnionInsert(data, currunion, &entireData[left + currunion],
+                               &entireChild[idx]);
+          if (isSuccess) {
+            CheckChildBound(idx);
+            return true;
+          }
+        } else if (currunion >= nowLeafNum) {
+          bool isSuccess = SlotsUnionInsert(data, currunion,
+                                            &entireData[left + currunion - 1],
+                                            &entireChild[idx]);
+          if (isSuccess) {
+            CheckChildBound(idx);
+            entireChild[idx].array.slotkeys[currunion - 1] = std::max(
+                entireChild[idx].array.slotkeys[currunion - 1], data.first + 1);
+            return true;
+          } else {
+            // expand
+            Expand(left, left + nowLeafNum, &entireChild[idx].array);
+            break;
+          }
+        }
+        bool isSuccess = SlotsUnionInsert(
+            data, currunion, &entireData[left + currunion], &entireChild[idx]);
+        if (isSuccess) {
+          CheckChildBound(idx);
+          return true;
+        }
+        int nowDataNum = GetDataNum(left, left + nowLeafNum);
+
+        left += currunion;
+        // insert into the sibling
+        if (currunion == 0 && nowLeafNum != 1) {
+#ifdef DEBUG
+          CheckBound(left, 1, nowDataSize);
+#endif  // DEBUG
+        // only check the next union
+          if (entireData[left + 1].slots[kMaxSlotNum - 1].first == DBL_MIN) {
+            CheckChildBound(idx);
+            isSuccess =
+                ArrayInsertNext(data, left, currunion, &entireChild[idx]);
+            CheckChildBound(idx);
+            if (isSuccess) {
+              return true;
+            }
+          }
+        } else if (currunion == nowLeafNum - 1 && currunion != 0) {
+#ifdef DEBUG
+          CheckBound(left, -1, nowDataSize);
+#endif  // DEBUG
+#ifdef DEBUG
+          CheckBound(left, 0, nowDataSize);
+#endif  // DEBUG
+        // only check the previous union
+          if (entireData[left - 1].slots[kMaxSlotNum - 1].first == DBL_MIN &&
+              (entireData[left].slots[0].first !=
+               entireData[left].slots[1].first)) {
+            isSuccess =
+                ArrayInsertPrevious(data, left, currunion, &entireChild[idx]);
+            if (isSuccess) {
+              CheckChildBound(idx);
+              return true;
+            }
+          }
+        } else if (currunion > 0 && currunion < nowLeafNum - 1) {
+#ifdef DEBUG
+          CheckBound(left, -1, nowDataSize);
+#endif  // DEBUG
+#ifdef DEBUG
+          CheckBound(left, 0, nowDataSize);
+#endif  // DEBUG
+          if (entireData[left - 1].slots[kMaxSlotNum - 1].first == DBL_MIN &&
+              (entireData[left].slots[0].first !=
+               entireData[left].slots[1].first)) {
+            isSuccess =
+                ArrayInsertPrevious(data, left, currunion, &entireChild[idx]);
+            if (isSuccess) {
+              CheckChildBound(idx);
+              return true;
+            }
+          }
+#ifdef DEBUG
+          CheckBound(left, 1, nowDataSize);
+#endif  // DEBUG
+          if (entireData[left + 1].slots[kMaxSlotNum - 1].first == DBL_MIN) {
+            isSuccess =
+                ArrayInsertNext(data, left, currunion, &entireChild[idx]);
+            if (isSuccess) {
+              CheckChildBound(idx);
+              return true;
+            }
+          }
+        }
+        if (nowDataNum < nowLeafNum * (kMaxSlotNum - 1)) {
+          // rebalance
+          Rebalance(left - currunion, left - currunion + nowLeafNum,
+                    &entireChild[idx].array);
+        } else if (nowLeafNum >= kMaxLeafNum) {
+          // split
           int previousIdx = entireChild[idx].array.previousLeaf;
-          Split<ArrayType>(false, left, size, previousIdx, idx);
+          Split<ArrayType<KeyType>>(false, left - currunion, kMaxLeafNum,
+                                    previousIdx, idx);
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);
-          left = entireChild[idx].array.m_left;
-          size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
-        }
 
-        // size == 0
-        if (size == 0) {
-          entireData[left] = data;
-          entireChild[idx].array.flagNumber++;
-          Init(entireChild[idx].array.m_capacity, left, 1, entireData,
-               &entireChild[idx].array);
-          return true;
+          CheckChildBound(idx);
+        } else {
+          // expand
+          Expand(left - currunion, left - currunion + nowLeafNum,
+                 &entireChild[idx].array);
         }
-        int preIdx = entireChild[idx].array.Predict(data.first);
-        preIdx = ArraySearch(data.first, preIdx, entireChild[idx].array.error,
-                             left, size);
-
-        // expand
-        if ((size >= entireChild[idx].array.m_capacity) &&
-            entireChild[idx].array.m_capacity <
-                carmi_params::kLeafMaxCapacity) {
-          auto diff = preIdx - left;
-          Init(entireChild[idx].array.m_capacity, left, size, entireData,
-               &entireChild[idx].array);
-          left = entireChild[idx].array.m_left;
-          preIdx = left + diff;
-        }
-
-        // Insert data
-        if ((preIdx == left + size - 1) &&
-            (entireData[preIdx].first < data.first)) {
-          entireData[left + size] = data;
-          entireChild[idx].array.flagNumber++;
-          return true;
-        }
-        entireChild[idx].array.flagNumber++;
-        for (int i = left + size; i > preIdx; i--)
-          entireData[i] = entireData[i - 1];
-        entireData[preIdx] = data;
-        return true;
+        break;
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {
         int left = entireChild[idx].externalArray.m_left;
         int size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
 
         // split
-        if (size >= carmi_params::kLeafMaxCapacity) {
+        if (size >= kLeafMaxCapacity) {
           Split<ExternalArray>(true, left, size, 0, idx);
           idx = entireChild[idx].lr.childLeft +
                 entireChild[idx].lr.Predict(data.first);

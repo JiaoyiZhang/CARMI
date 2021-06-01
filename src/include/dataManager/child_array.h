@@ -16,9 +16,9 @@
 #include "../carmi.h"
 
 template <typename KeyType, typename ValueType>
-void CARMI<KeyType, ValueType>::InitEntireChild(int size) {
+void CARMI<KeyType, ValueType>::InitEntireChild() {
   nowChildNumber = 0;
-  std::vector<BaseNode>(4096, BaseNode()).swap(entireChild);
+  std::vector<BaseNode<KeyType>>(4096, BaseNode<KeyType>()).swap(entireChild);
 }
 
 template <typename KeyType, typename ValueType>
@@ -29,7 +29,7 @@ int CARMI<KeyType, ValueType>::AllocateChildMemory(int size) {
     newLeft = nowChildNumber;
     nowChildNumber += size;
   } else {
-    BaseNode t;
+    BaseNode<KeyType> t;
     while (nowChildNumber + size > tmpSize) {
       tmpSize *= 2;
     }

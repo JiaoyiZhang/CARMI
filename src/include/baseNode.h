@@ -11,6 +11,7 @@
 #ifndef SRC_INCLUDE_BASENODE_H_
 #define SRC_INCLUDE_BASENODE_H_
 #include <iostream>
+#include <utility>
 
 #include "nodes/innerNode/inner_nodes.h"
 #include "nodes/leafNode/leaf_nodes.h"
@@ -31,13 +32,14 @@ class CARMIRoot : public LRType<DataVectorType, DataType> {
   }
 };
 
+template <typename KeyType>
 union BaseNode {
   LRModel lr;
   PLRModel plr;
   HisModel his;
   BSModel bs;
 
-  ArrayType array;
+  ArrayType<KeyType> array;
   ExternalArray externalArray;
 
   BaseNode() {}

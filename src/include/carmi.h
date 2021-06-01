@@ -30,7 +30,10 @@ class CARMI {
 
  public:
   CARMI() {}
-
+  // TODO(jiaoyi): debug functions, need to be deleted
+  void CheckBound(int left, int currunion, int nowDataSize);
+  bool CheckChildBound(int idx);
+  bool CheckSlots(const BaseNode<KeyType> &arr);
   /**
    * @brief Construct a new CARMI object for carmi_common
    *
@@ -66,9 +69,11 @@ class CARMI {
    * @brief find a record of the given key
    *
    * @param key
-   * @return CARMI<KeyType, ValueType>::DataType of a node
+   * @param currunion the index of the second layer of the leaf node
+   * @param currslot the index of the slot in a leaf node
+   * @return BaseNode<KeyType>*
    */
-  BaseNode *Find(KeyType key, int *currslot);
+  BaseNode<KeyType> *Find(KeyType key, int *currunion, int *currslot);
 
   /**
    * @brief insert a data point
@@ -141,9 +146,8 @@ class CARMI {
   /**
    * @brief initialize entireChild
    *
-   * @param size the size of datasets
    */
-  void InitEntireChild(int size);
+  void InitEntireChild();
 
  private:
   // root
@@ -250,36 +254,6 @@ class CARMI {
                          double time_cost, const DataRange &dataRange,
                          NodeCost *optimalCost, TYPE *optimal_node_struct);
 
-  /**
-   * @brief calculate the time cost of find queries
-   *
-   * @tparam TYPE the type of this leaf node
-   * @param actualSize the capacity of this leaf node
-   * @param density the density of of this leaf node (array: 1)
-   * @param node this leaf node
-   * @param range the range of find queries
-   * @return double the time cost of this leaf node
-   */
-  template <typename TYPE>
-  double CalLeafFindTime(int actualSize, double density, const TYPE &node,
-                         const IndexPair &range) const;
-
-  /**
-   * @brief calculate the time cost of insert queries
-   *
-   * @tparam TYPE the type of this leaf node
-   * @param actualSize the capacity of this leaf node
-   * @param density the density of of this leaf node (array: 1)
-   * @param node this leaf node
-   * @param range the range of insert queries
-   * @param findRange the range of find queries
-   * @return double the time cost of this leaf node
-   */
-  template <typename TYPE>
-  double CalLeafInsertTime(int actualSize, double density, const TYPE &node,
-                           const IndexPair &range,
-                           const IndexPair &findRange) const;
-
  private:
   // greedy algorithm
 
@@ -348,14 +322,6 @@ class CARMI {
    * @param size the size
    */
   void ReleaseMemory(int left, int size);
-
-  /**
-   * @brief find the corresponding index in emptyBlocks
-   *
-   * @param size the size of the data points
-   * @return int the index in emptyBlocks
-   */
-  int GetIndex(int size);
 
   /**
    * @brief find the actual size in emptyBlocks
@@ -479,6 +445,16 @@ class CARMI {
                              const DataVectorType &dataset, int *actual);
 
   /**
+   * @brief extract data points (delete useless gaps and deleted data points)
+   *
+   * @param unionleft the left index of the union structure in the leaf node
+   * @param unionright the right index of the union structure in the leaf node
+   * @param actual the actual size of these data points
+   * @return DataVectorType: pure data points
+   */
+  DataVectorType ExtractData(const int unionleft, const int unionright,
+                             int *actual);
+  /**
    * @brief set the y of each data point as a precentage of
    * the entire dataset size (index / size),
    * prepare for the linear regression
@@ -505,7 +481,7 @@ class CARMI {
                     TYPE *node);
   inline float log2(double value) const { return log(value) / log(2); }
 
- private:
+ public:
   // inner nodes
 
   /**
@@ -554,37 +530,81 @@ class CARMI {
   /**
    * @brief initialize array node
    *
-   * @param cap the capacity of this leaf node
    * @param left the start index of data points
    * @param size  the size of data points
    * @param dataset
    * @param arr leaf node
    */
-  void Init(int cap, int left, int size, const DataVectorType &dataset,
-            ArrayType *arr);
+  void Init(int left, int size, const DataVectorType &dataset,
+            ArrayType<KeyType> *arr);
 
   /**
    * @brief initialize external array node
    *
-   * @param cap the capacity of this leaf node
    * @param start_idx the start index of data points
    * @param size the size of data points
    * @param dataset
    * @param ext leaf node
    */
-  void Init(int cap, int start_idx, int size, const DataVectorType &dataset,
+  void Init(int start_idx, int size, const DataVectorType &dataset,
             ExternalArray *ext);
 
   /**
-   * @brief train the array node
+   * @brief insert a data point into the previous structure in the leaf node
    *
-   * @param start_idx the start index of data points
-   * @param size the size of data points
-   * @param dataset
-   * @param arr leaf node
+   * @param data the data points needed to be inserted
+   * @param nowDataIdx the index of this structure in entireData
+   * @param currunion the index of the current structure in the leaf node
+   * @param node the leaf node
+   * @return true INSERT succeeds
+   * @return false INSERT fails (the previous structure is full)
    */
-  void Train(int start_idx, int size, const DataVectorType &dataset,
-             ArrayType *arr);
+  inline bool ArrayInsertPrevious(const DataType &data, int nowDataIdx,
+                                  int currunion, BaseNode<KeyType> *node);
+
+  /**
+   * @brief insert a data point into the next structure in the leaf node
+   *
+   * @param data the data points needed to be inserted
+   * @param nowDataIdx the index of this structure in entireData
+   * @param currunion the index of the current structure in the leaf node
+   * @param node the leaf node
+   * @return true INSERT succeeds
+   * @return false INSERT fails (the next structure is full)
+   */
+  inline bool ArrayInsertNext(const DataType &data, int nowDataIdx,
+                              int currunion, BaseNode<KeyType> *node);
+
+  /**
+   * @brief if the structure and the sibling nodes are all full, this leaf node
+   * needs to be rebalanced
+   *
+   * @param unionleft the left index of the structure
+   * @param unionright the right index of the structure
+   * @param arr the leaf node
+   */
+  inline void Rebalance(const int unionleft, const int unionright,
+                        ArrayType<KeyType> *arr);
+
+  /**
+   * @brief if the leaf node is full but has not reached KMaxLeafNUm, this leaf
+   * node needs to be expanded
+   *
+   * @param unionleft the left index of the structure
+   * @param unionright the right index of the structure
+   * @param arr the leaf node
+   */
+  inline void Expand(const int unionleft, const int unionright,
+                     ArrayType<KeyType> *arr);
+
+  /**
+   * @brief Get the number of data points in entireData[unionleft, unionright)
+   *
+   * @param unionleft
+   * @param unionright
+   * @return int
+   */
+  inline int GetDataNum(const int unionleft, const int unionright);
 
   /**
    * @brief train the external array node
@@ -600,14 +620,14 @@ class CARMI {
   /**
    * @brief store data points into the entireData
    *
-   * @param cap the capacity of this leaf node
-   * @param left the start index of data points
+   * @param needLeafNum the needed number of leaf nodes
+   * @param start_idx the start index of data points
    * @param size  the size of data points
    * @param dataset
    * @param arr leaf node
    */
-  void StoreData(int cap, int start_idx, int size,
-                 const DataVectorType &dataset, ArrayType *arr);
+  void StoreData(int needLeafNum, int start_idx, int size,
+                 const DataVectorType &dataset, ArrayType<KeyType> *arr);
 
  private:
   // for public functions
@@ -623,16 +643,6 @@ class CARMI {
   int ArrayBinarySearch(double key, int start, int end) const;
 
   /**
-   * @brief search a key-value through binary search in the gapped array
-   *
-   * @param key
-   * @param start_idx
-   * @param end_idx
-   * @return int the idx of the first element >= key
-   */
-  int GABinarySearch(double key, int start_idx, int end_idx) const;
-
-  /**
    * @brief search a key-value through binary search in the external leaf node
    *
    * @param key
@@ -641,6 +651,29 @@ class CARMI {
    * @return int the idx of the first element >= key
    */
   int ExternalBinarySearch(double key, int start, int end) const;
+
+  /**
+   * @brief binary search within a structure
+   *
+   * @param node the current node
+   * @param key
+   * @return int: the index of the given key
+   */
+  int SlotsUnionSearch(const LeafSlots<KeyType, ValueType> &node, double key);
+
+  /**
+   * @brief insert the given data into a leaf node
+   *
+   * @param data
+   * @param currunion the index of current structure
+   * @param node the structure where the data will be inserted
+   * @param arr the leaf node
+   * @return true
+   * @return false
+   */
+  bool SlotsUnionInsert(const DataType &data, int currunion,
+                        LeafSlots<KeyType, ValueType> *node,
+                        BaseNode<KeyType> *arr);
 
   /**
    * @brief the main function of search a record in array
@@ -653,18 +686,6 @@ class CARMI {
    * @return int the index of the record
    */
   int ArraySearch(double key, int preIdx, int error, int left, int size) const;
-
-  /**
-   * @brief the main function of search a record in gapped array
-   *
-   * @param key the key value
-   * @param preIdx the predicted index of this node
-   * @param error the error bound of this node
-   * @param left the left index of this node in the entireData
-   * @param maxIndex the max index of this node
-   * @return int the index of the record
-   */
-  int GASearch(double key, int preIdx, int error, int left, int maxIndex) const;
 
   /**
    * @brief the main function of search a record in external array
@@ -716,14 +737,19 @@ class CARMI {
                   std::vector<int> *nodeVec) const;
 
  public:
-  std::vector<BaseNode> entireChild;
+  std::vector<BaseNode<KeyType>> entireChild;
 
   // for carmi_common
-  DataVectorType entireData;
+  std::vector<LeafSlots<KeyType, ValueType>> entireData;
+  int nowDataSize;  // the used size of entireData to store data points
 
   // for carmi_tree
   const void *external_data;
   int recordLength;
+
+  static const int kMaxLeafNum;       // the number of union in a leaf node
+  static const int kMaxSlotNum;       // the maximum number of slots in a union
+  static const int kLeafMaxCapacity;  // the max capacity of a leaf node
 
  private:
   CARMIRoot<DataVectorType, DataType> root;  // the root node
@@ -738,8 +764,7 @@ class CARMI {
 
   // for carmi_common
   unsigned int entireDataSize;  // the size of the entireData
-  unsigned int nowDataSize;  // the used size of entireData to store data points
-  int firstLeaf;             // the index of the first leaf node in entireChild
+  int firstLeaf;  // the index of the first leaf node in entireChild
   std::vector<EmptyBlock> emptyBlocks;  // store the index of all empty
                                         // blocks(size: 1,2^i, 3*2^i, 4096)
 
@@ -752,10 +777,10 @@ class CARMI {
   std::vector<int> insertQueryIndex;
 
   std::map<IndexPair, NodeCost> COST;
-  std::map<IndexPair, BaseNode> structMap;
+  std::map<IndexPair, BaseNode<KeyType>> structMap;
   std::vector<int> scanLeaf;
 
-  BaseNode emptyNode;
+  BaseNode<KeyType> emptyNode;
   static const IndexPair emptyRange;
   static const NodeCost emptyCost;
 
@@ -781,13 +806,13 @@ class CARMI {
   friend class HisModel;
   friend class BSModel;
 
-  friend class ArrayType;
+  friend class ArrayType<KeyType>;
   friend class GappedArrayType;
   friend class ExternalArray;
 };
 
 template <typename KeyType, typename ValueType>
-const int CARMI<KeyType, ValueType>::kMaxKeyNum = 1024;
+const int CARMI<KeyType, ValueType>::kMaxKeyNum = 28;
 
 template <typename KeyType, typename ValueType>
 const int CARMI<KeyType, ValueType>::kThreshold = 2;
@@ -796,13 +821,25 @@ template <typename KeyType, typename ValueType>
 const int CARMI<KeyType, ValueType>::kHisMaxChildNumber = 256;
 
 template <typename KeyType, typename ValueType>
-const int CARMI<KeyType, ValueType>::kBSMaxChildNumber = 20;
+const int CARMI<KeyType, ValueType>::kBSMaxChildNumber = 15;
 
 template <typename KeyType, typename ValueType>
 const int CARMI<KeyType, ValueType>::kMinChildNumber = 16;
 
 template <typename KeyType, typename ValueType>
 const int CARMI<KeyType, ValueType>::kInsertNewChildNumber = 16;
+
+template <typename KeyType, typename ValueType>
+const int CARMI<KeyType, ValueType>::kMaxLeafNum = 48 / sizeof(KeyType) + 1;
+
+template <typename KeyType, typename ValueType>
+const int CARMI<KeyType, ValueType>::kMaxSlotNum =
+    carmi_params::kMaxLeafNodeSize / sizeof(DataType);
+
+template <typename KeyType, typename ValueType>
+const int CARMI<KeyType, ValueType>::kLeafMaxCapacity =
+    CARMI<KeyType, ValueType>::kMaxSlotNum
+        *CARMI<KeyType, ValueType>::kMaxLeafNum;
 
 template <typename KeyType, typename ValueType>
 const IndexPair CARMI<KeyType, ValueType>::emptyRange = IndexPair(-1, 0);
@@ -837,7 +874,7 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
   findQuery = std::move(findData);
   insertQuery = std::move(insertData);
   insertQueryIndex = std::move(insertIndex);
-  emptyNode.array = ArrayType(kThreshold);
+  emptyNode.array = ArrayType<KeyType>();
   reservedSpace =
       static_cast<float>(insertQuery.size()) / initDataset.size() * 4096 * 16;
 
@@ -850,7 +887,7 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
   }
 
   InitEntireData(initDataset.size());
-  InitEntireChild(initDataset.size());
+  InitEntireChild();
 }
 
 template <typename KeyType, typename ValueType>
@@ -885,7 +922,7 @@ CARMI<KeyType, ValueType>::CARMI(const void *dataset, DataVectorType &initData,
     querySize += insertQuery[i].second;
   }
 
-  InitEntireChild(initDataset.size());
+  InitEntireChild();
 }
 
 #endif  // SRC_INCLUDE_CARMI_H_
