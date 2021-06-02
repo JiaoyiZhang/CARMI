@@ -58,7 +58,8 @@ class CARMIExternal {
    */
   const void *Find(KeyType key) {
     int idx = 0;
-    auto node = carmi_tree.Find(key, &idx);
+    int currunion = 0;
+    auto node = carmi_tree.Find(key, &currunion, &idx);
 
     return static_cast<const void *>(
         static_cast<const char *>(carmi_tree.external_data) +

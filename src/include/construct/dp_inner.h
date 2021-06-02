@@ -12,6 +12,7 @@
 #define SRC_INCLUDE_CONSTRUCT_DP_INNER_H_
 #include <float.h>
 
+#include <algorithm>
 #include <vector>
 
 #include "../carmi.h"
@@ -57,7 +58,7 @@ NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode<KeyType> optimal_node_struct = emptyNode;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
-  int tmpEnd = dataRange.initRange.size / 2;
+  int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 2);
   for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
     ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight,
                                carmi_params::kLRInnerTime, dataRange,

@@ -49,7 +49,8 @@ RootStruct CARMI<KeyType, ValueType>::ChooseRoot() {
   int minNum =
       std::max(kMinChildNumber, static_cast<int>(initDataset.size() / 1024));
   int maxNum =
-      std::max(kMinChildNumber, static_cast<int>(initDataset.size() / 2));
+      std::max(kMinChildNumber,
+               std::min(0x00FFFFFF, static_cast<int>(initDataset.size() / 2)));
   for (int c = minNum; c <= maxNum; c *= 2) {
     IsBetterRoot<LRType<DataVectorType, DataType>,
                  LinearRegression<DataVectorType, DataType> >(

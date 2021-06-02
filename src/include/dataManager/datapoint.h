@@ -53,7 +53,7 @@ inline int CARMI<KeyType, ValueType>::GetActualSize(int size) {
     return -1;
   }
   int leafNumber =
-      std::min(static_cast<int>(ceil(size / 0.75 / kMaxSlotNum)), kMaxLeafNum);
+      std::min(static_cast<int>(ceil(size / kMaxSlotNum)), kMaxLeafNum);
 
   return leafNumber;
 }

@@ -30,9 +30,6 @@ inline int ArrayType<KeyType>::Predict(double key) const {
   if (slotkeys[0] == DBL_MIN || key < slotkeys[0]) {
     return 0;
   }
-  // while (slotkeys[end_idx] == DBL_MIN) {
-  //   end_idx--;
-  // }
   if (key >= slotkeys[end_idx]) {
     return end_idx + 1;
   }
