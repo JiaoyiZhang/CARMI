@@ -9,3 +9,4 @@ src/.vscode/*
 src/art_tree/*
 src/stx_btree/*
 src/build/*
+src/test.cpp

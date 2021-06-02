@@ -19,9 +19,9 @@ const int kSize = 100000000;
 const float kSecondToNanosecond = 1000000000.0;
 std::vector<double> entireData;
 std::vector<int> idx;
-const int end = kSize / 64;
+const int end = kSize / 64 - 8;
 
-inline int BinarySearch(double key, int start, int end) {
+__always_inline int BinarySearch(double key, int start, int end) {
   while (start < end) {
     int mid = (start + end) / 2;
     if (entireData[mid] < key)
@@ -41,15 +41,17 @@ void GetBinarySearchTime(int nodeSize) {
   double value;
   std::clock_t s, e;
   double tmp;
+  int c;
   s = std::clock();
   for (int i = 0, j = 0; i < end; i++, j++) {
     start = idx[i];
-    endidx = std::min(start + nodeSize - 1, kSize - 1);
+    // endidx = std::min(start + nodeSize - 1, kSize - 1);
+    endidx = start + nodeSize - 1;
 
-    value = entireData[start + j];
-    BinarySearch(value, start, endidx);
+    value = start + j;
+    c = BinarySearch(value, start, endidx);
 
-    j %= nodeSize;
+    j &= nodeSize - 1;
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
@@ -57,9 +59,10 @@ void GetBinarySearchTime(int nodeSize) {
   s = std::clock();
   for (int i = 0, j = 0; i < end; i++, j++) {
     start = idx[i];
-    endidx = std::min(start + nodeSize - 1, kSize - 1);
-
-    j %= nodeSize;
+    // endidx = std::min(start + nodeSize - 1, kSize - 1);
+    endidx = start + nodeSize - 1;
+    value = start + j;
+    j &= nodeSize - 1;
   }
   e = std::clock();
   double tmp1 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);

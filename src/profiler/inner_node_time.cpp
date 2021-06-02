@@ -56,16 +56,16 @@ double GetNodePredictTime(CARMI<double, double> carmi) {
   s = std::clock();
   for (int i = 0; i < end; i++) {
     tmpIdx = idx[i];
-    key = keys[i % kSize];
+    key = keys[i & (kSize - 1)];
     res = node[tmpIdx].childLeft + node[tmpIdx].Predict(key);
-    type = node[tmpIdx + 256].flagNumber >> 24;
+    // type = node[tmpIdx + 256].flagNumber >> 24;
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
   s = std::clock();
   for (int i = 0; i < end; i++) {
     tmpIdx = idx[i];
-    key = keys[i % kSize];
+    key = keys[i & (kSize - 1)];
     // res = node[tmpIdx].childLeft + node[tmpIdx].Predict(key);
     // type = node[res + 256].flagNumber >> 24;
   }
@@ -83,7 +83,7 @@ int main() {
   }
   CARMI<double, double> carmi;
   double lr = 0, plr = 0, bs = 0, his = 0;
-  float times = 1.0;
+  float times = 10.0;
   for (int i = 0; i < times; i++) {
     lr += GetNodePredictTime<LRModel>(carmi);
     plr += GetNodePredictTime<PLRModel>(carmi);
