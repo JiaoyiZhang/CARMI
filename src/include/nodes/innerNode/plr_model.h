@@ -13,6 +13,7 @@
 
 #include <float.h>
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 
@@ -32,8 +33,7 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
   double avg = 0.0;
   for (int i = left, j = 0; i < end; i++, j++) {
     avg += dataset[i].first / size;
-    data[j].second =
-        static_cast<int>(static_cast<float>(j) / size * (childNumber - 1));
+    data[j].second = static_cast<float>(j) / size * (childNumber - 1);
   }
 
   // normalize
@@ -45,7 +45,7 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
   DataVectorType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost<DataVectorType, DataType> cand_cost(cand_size);
-  int seg = size / cand_size;
+  float seg = size * 1.0 / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
     if (i * seg >= size) {
       for (; i < cand_size - 1; i++) {
@@ -69,8 +69,12 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
   for (int j = 1; j < cand_size; j++) {
     dp[0][j].cost = cand_cost.CalculateCost(0, j, cand_index[j], cand_point[0],
                                             cand_point[j]);
-    dp[0][j].key[0] = cand_point[j].first;
-    dp[0][j].idx[0] = cand_point[j].second;
+    dp[0][j].key[0] = cand_point[0].first;
+    dp[0][j].idx[0] = cand_point[0].second;
+    dp[0][j].key[1] = cand_point[j].first;
+    dp[0][j].idx[1] = cand_point[j].second;
+    dp[0][j].key[7] = cand_point[cand_size - 1].first;
+    dp[0][j].idx[7] = cand_point[cand_size - 1].second;
   }
 
   for (int i = 1; i < 6; i++) {
@@ -93,72 +97,84 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
         }
         if (res < opt.cost) {
           opt.cost = res;
-          for (int l = 0; l < i; l++) {
+          for (int l = 0; l <= i; l++) {
             opt.idx[l] = dp[0][k].idx[l];
             opt.key[l] = dp[0][k].key[l];
           }
-          opt.key[i] = cand_point[j].first;
-          opt.idx[i] = cand_point[j].second;
+          opt.key[i + 1] = cand_point[j].first;
+          opt.idx[i + 1] = cand_point[j].second;
         } else if (res == opt.cost) {
-          int dp_idx[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
-          for (int l = 0; l < i; l++) {
-            dp_idx[l] = dp[0][k].idx[l];
+          float dp_idx[8] = {0,  -1, -1, -1,
+                             -1, -1, -1, static_cast<float>(childNumber - 1)};
+          for (int l = 0; l <= i; l++) {
+            dp_idx[l + 1] = dp[0][k].idx[l];
           }
           dp_idx[i] = cand_point[j].second;
+          int tmpLen = i + 2;
+          if (tmpLen == 7) {
+            tmpLen = 8;
+          }
 
-          float var0 = cand_cost.Diff(i + 1, childNumber, dp_idx);
-          float var1 = cand_cost.Diff(i + 1, childNumber, opt.idx);
+          float var0 = cand_cost.Diff(tmpLen, childNumber, dp_idx);
+          float var1 = cand_cost.Diff(tmpLen, childNumber, opt.idx);
           if (var0 < var1) {
-            for (int l = 0; l < i; l++) {
+            for (int l = 0; l <= i; l++) {
               opt.idx[l] = dp[0][k].idx[l];
               opt.key[l] = dp[0][k].key[l];
             }
-            opt.key[i] = cand_point[j].first;
-            opt.idx[i] = cand_point[j].second;
+            opt.key[i + 1] = cand_point[j].first;
+            opt.idx[i + 1] = cand_point[j].second;
           }
         }
       }
       dp[1][j].cost = opt.cost;
-      for (int l = 0; l <= i; l++) {
+      for (int l = 0; l <= i + 1; l++) {
         dp[1][j].idx[l] = opt.idx[l];
         dp[1][j].key[l] = opt.key[l];
       }
     }
-    for (int m = i + 1; m < cand_size - 1; m++) {
-      dp[0][m].cost = dp[1][m].cost;
-      for (int l = 0; l <= i; l++) {
-        dp[0][m].idx[l] = dp[1][m].idx[l];
-        dp[0][m].key[l] = dp[1][m].key[l];
+    if (i != 5) {
+      for (int m = i + 1; m < cand_size - 1; m++) {
+        dp[0][m].cost = dp[1][m].cost;
+        for (int l = 0; l <= i + 1; l++) {
+          dp[0][m].idx[l] = dp[1][m].idx[l];
+          dp[0][m].key[l] = dp[1][m].key[l];
+        }
       }
     }
   }
 
   SegmentPoint opt;
   opt.cost = DBL_MAX;
+  opt.idx[7] = cand_point[cand_size - 1].second;
+  opt.key[7] = cand_point[cand_size - 1].first;
   for (int j = 6; j < cand_size; j++) {
     if (dp[1][j].cost < opt.cost) {
       opt.cost = dp[1][j].cost;
-      for (int k = 0; k < 6; k++) {
+      for (int k = 0; k <= 6; k++) {
         opt.idx[k] = dp[1][j].idx[k];
         opt.key[k] = dp[1][j].key[k];
       }
     } else if (dp[1][j].cost == opt.cost) {
-      dp[1][j].idx[6] = childNumber - 1;
-      opt.idx[6] = childNumber - 1;
-      float var0 = cand_cost.Diff(7, childNumber, dp[1][j].idx);
-      float var1 = cand_cost.Diff(7, childNumber, opt.idx);
+      dp[1][j].idx[7] = childNumber - 1;
+      float var0 = cand_cost.Diff(8, childNumber, dp[1][j].idx);
+      float var1 = cand_cost.Diff(8, childNumber, opt.idx);
       if (var0 < var1) {
         opt.cost = dp[1][j].cost;
-        for (int k = 0; k < 6; k++) {
+        for (int k = 0; k <= 6; k++) {
           opt.idx[k] = dp[1][j].idx[k];
           opt.key[k] = dp[1][j].key[k];
         }
       }
     }
   }
-  for (int i = 0; i < 6; i++) {
-    plr->keys[i + 1] = opt.key[i] + avg;
-    plr->index[i] = opt.idx[i];
+  for (int i = 1; i < 7; i++) {
+    // plr->keys[i] = opt.key[i] + avg;
+    plr->keys[i] = static_cast<int>(opt.key[i]);
+    plr->keys[i] += static_cast<float>(opt.key[i] - plr->keys[i]);
+    plr->keys[i] += avg;
+
+    plr->index[i - 1] = round(opt.idx[i]);
   }
 }
 
@@ -173,7 +189,7 @@ inline int PLRModel::Predict(double key) const {
   int e = 7;
   int mid;
   while (s < e) {
-    mid = (s + e) / 2;
+    mid = (s + e) >> 1;
     if (keys[mid] < key)
       s = mid + 1;
     else
@@ -183,43 +199,28 @@ inline int PLRModel::Predict(double key) const {
   if (e == 0) {
     return 0;
   }
-  int p;
-  int childNumber = flagNumber & 0x00FFFFFF;
-  if (e == 7) {
-    float a =
-        static_cast<float>(childNumber - 1 - index[5]) / (keys[7] - keys[6]);
-    float b = childNumber - 1 - a * keys[7];
-    p = a * key + b;
 
-    if (p >= childNumber) {
-      p = childNumber - 1;
-    } else if (p < index[5]) {
-      p = index[5];
+  int p;
+  if (e == 7) {
+    e = (flagNumber & 0x00FFFFFF) - 1;               // childNumber
+    float a = (e - index[5]) / (keys[7] - keys[6]);  // a
+    p = a * (key - keys[7]) + e;                     // b=e-a*keys[7], p=ax+b
+
+    if (p > e) {
+      return e;
     }
+
   } else if (e == 1) {
     float a = static_cast<float>(index[0]) / (keys[1] - keys[0]);
-    float b = -a * keys[0];
-    p = a * key + b;
-
-    if (p > index[0]) {
-      p = index[0];
-    } else if (p < 0) {
-      p = 0;
-    }
-
+    p = a * (key - keys[0]);  // b = -a * keys[0], p=ax+b
   } else {
     float a = static_cast<float>(index[e - 1] - index[e - 2]) /
               (keys[e] - keys[e - 1]);
-    float b = index[e - 1] - a * keys[e];
-    p = a * key + b;
-
-    if (p > index[e - 1]) {
-      p = index[e - 1];
-    } else if (p < index[e - 2]) {
-      p = index[e - 2];
-    }
+    p = a * (key - keys[e]) + index[e - 1];  // b=index[e-1]-a*keys[e]
   }
-
+  if (p < 0) {
+    p = 0;
+  }
   return p;
 }
 
