@@ -90,9 +90,11 @@ class CARMIExternal {
    * @param nodeVec the node type vector
    */
   void PrintStructure(int level, NodeType type, int idx,
-                      std::vector<int> *levelVec,
-                      std::vector<int> *nodeVec) const {
+                      std::vector<int> *levelVec, std::vector<int> *nodeVec) {
     carmi_tree.PrintStructure(level, LR_ROOT_NODE, idx, levelVec, nodeVec);
+    std::cout << "avg level is: "
+              << carmi_tree.sumDepth * 1.0 / carmi_tree.nowChildNumber
+              << std::endl;
   }
 };
 

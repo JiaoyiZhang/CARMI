@@ -13,6 +13,7 @@
 
 #include <float.h>
 
+#include <algorithm>
 #include <map>
 #include <utility>
 #include <vector>
@@ -34,6 +35,9 @@ class CARMI {
   void CheckBound(int left, int currunion, int nowDataSize);
   bool CheckChildBound(int idx);
   bool CheckSlots(const BaseNode<KeyType> &arr);
+  int SplitNum = 0;
+  int RebalanceNum = 0;
+  int ExpandNum = 0;
   /**
    * @brief Construct a new CARMI object for carmi_common
    *
@@ -119,8 +123,7 @@ class CARMI {
    * @param nodeVec used to record the number of each type of CARMI's node
    */
   void PrintStructure(int level, NodeType type, int idx,
-                      std::vector<int> *levelVec,
-                      std::vector<int> *nodeVec) const;
+                      std::vector<int> *levelVec, std::vector<int> *nodeVec);
 
   // construction algorithms
   // main function
@@ -559,8 +562,8 @@ class CARMI {
    * @return true INSERT succeeds
    * @return false INSERT fails (the previous structure is full)
    */
-  inline bool ArrayInsertPrevious(const DataType &data, int nowDataIdx,
-                                  int currunion, BaseNode<KeyType> *node);
+  // inline bool ArrayInsertPrevious(const DataType &data, int nowDataIdx,
+  //                                 int currunion, BaseNode<KeyType> *node);
 
   /**
    * @brief insert a data point into the next structure in the leaf node
@@ -659,7 +662,7 @@ class CARMI {
    * @param key
    * @return int: the index of the given key
    */
-  int SlotsUnionSearch(const LeafSlots<KeyType, ValueType> &node, double key);
+  int SlotsUnionSearch(const LeafSlots<KeyType, ValueType> &node, KeyType key);
 
   /**
    * @brief insert the given data into a leaf node
@@ -723,7 +726,7 @@ class CARMI {
    * @param nodeVec used to record the number of each type of CARMI's node
    */
   void PrintRoot(int level, int idx, std::vector<int> *levelVec,
-                 std::vector<int> *nodeVec) const;
+                 std::vector<int> *nodeVec);
 
   /**
    * @brief print the inner node
@@ -734,7 +737,7 @@ class CARMI {
    * @param nodeVec used to record the number of each type of CARMI's node
    */
   void PrintInner(int level, int idx, std::vector<int> *levelVec,
-                  std::vector<int> *nodeVec) const;
+                  std::vector<int> *nodeVec);
 
  public:
   std::vector<BaseNode<KeyType>> entireChild;
@@ -742,19 +745,21 @@ class CARMI {
   // for carmi_common
   std::vector<LeafSlots<KeyType, ValueType>> entireData;
   int nowDataSize;  // the used size of entireData to store data points
+  std::vector<LeafSlots<KeyType, ValueType>> BufferPool;
 
   // for carmi_tree
   const void *external_data;
   int recordLength;
+  int sumDepth;
+  unsigned int nowChildNumber;  // the number of inner nodes and leaf nodes
 
   static const int kMaxLeafNum;       // the number of union in a leaf node
   static const int kMaxSlotNum;       // the maximum number of slots in a union
   static const int kLeafMaxCapacity;  // the max capacity of a leaf node
 
  private:
-  CARMIRoot<DataVectorType, DataType> root;  // the root node
-  int rootType;                              // the type of the root node
-  unsigned int nowChildNumber;  // the number of inner nodes and leaf nodes
+  CARMIRoot<DataVectorType, KeyType> root;  // the root node
+  int rootType;                             // the type of the root node
 
   double lambda;      // cost = time + lambda * space
   int querySize;      // the total frequency of queries
@@ -770,6 +775,7 @@ class CARMI {
 
   // for carmi_external
   int curr;  // the current insert index for external array
+  float readRate;
 
   DataVectorType initDataset;
   DataVectorType findQuery;
@@ -784,8 +790,7 @@ class CARMI {
   static const IndexPair emptyRange;
   static const NodeCost emptyCost;
 
-  // if size < kMaxKeyNum, this node is a leaf node
-  static const int kMaxKeyNum;
+  static const int kPrefetchRange;
   static const int kThreshold;  // used to initialize a leaf node
   static const float kDataPointSize;
 
@@ -799,7 +804,7 @@ class CARMI {
   static const double kLRRootSpace;  // the space cost of lr root
 
  public:
-  friend class LRType<DataVectorType, DataType>;
+  friend class LRType<DataVectorType, KeyType>;
 
   friend class LRModel;
   friend class PLRModel;
@@ -812,7 +817,7 @@ class CARMI {
 };
 
 template <typename KeyType, typename ValueType>
-const int CARMI<KeyType, ValueType>::kMaxKeyNum = 28;
+const int CARMI<KeyType, ValueType>::kPrefetchRange = 2;
 
 template <typename KeyType, typename ValueType>
 const int CARMI<KeyType, ValueType>::kThreshold = 2;
@@ -821,7 +826,7 @@ template <typename KeyType, typename ValueType>
 const int CARMI<KeyType, ValueType>::kHisMaxChildNumber = 256;
 
 template <typename KeyType, typename ValueType>
-const int CARMI<KeyType, ValueType>::kBSMaxChildNumber = 15;
+const int CARMI<KeyType, ValueType>::kBSMaxChildNumber = 16;
 
 template <typename KeyType, typename ValueType>
 const int CARMI<KeyType, ValueType>::kMinChildNumber = 16;
@@ -856,7 +861,7 @@ const double CARMI<KeyType, ValueType>::kBaseNodeSpace = 64.0 / 1024 / 1024;
 
 template <typename KeyType, typename ValueType>
 const double CARMI<KeyType, ValueType>::kLRRootSpace =
-    sizeof(LRType<DataVectorType, DataType>) / 1024.0 / 1024.0;
+    sizeof(LRType<DataVectorType, KeyType>) / 1024.0 / 1024.0;
 
 template <typename KeyType, typename ValueType>
 CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
@@ -869,14 +874,23 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
   lambda = l;
   firstLeaf = -1;
   nowDataSize = 0;
+  sumDepth = 0;
 
   initDataset = std::move(initData);
   findQuery = std::move(findData);
   insertQuery = std::move(insertData);
   insertQueryIndex = std::move(insertIndex);
   emptyNode.array = ArrayType<KeyType>();
-  reservedSpace =
-      static_cast<float>(insertQuery.size()) / initDataset.size() * 4096 * 16;
+  reservedSpace = insertQuery.size() * 1.0 / initDataset.size() * 4096 * 16 /
+                  kLeafMaxCapacity;
+  readRate = 1.0 - insertQuery.size() * 1.0 / initDataset.size();
+#ifdef DEBUG
+  std::cout << "readRate:" << readRate << std::endl;
+#endif  // DEBUG
+  readRate = std::max(readRate, static_cast<float>(0.7));
+  if (readRate < 1) {
+    readRate = std::min(readRate, static_cast<float>(0.8));
+  }
 
   querySize = 0;
   for (int i = 0; i < findQuery.size(); i++) {
@@ -885,6 +899,7 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
   for (int i = 0; i < insertQuery.size(); i++) {
     querySize += insertQuery[i].second;
   }
+  BufferPool = std::vector<LeafSlots<KeyType, ValueType>>(kPrefetchRange * 2);
 
   InitEntireData(initDataset.size());
   InitEntireChild();
@@ -901,6 +916,7 @@ CARMI<KeyType, ValueType>::CARMI(const void *dataset, DataVectorType &initData,
   external_data = dataset;
   recordLength = record_len;
   curr = record_number;
+  sumDepth = 0;
 
   isPrimary = true;
   lambda = l;
@@ -911,6 +927,7 @@ CARMI<KeyType, ValueType>::CARMI(const void *dataset, DataVectorType &initData,
   findQuery = std::move(findData);
   insertQuery = std::move(insertData);
   insertQueryIndex = std::move(insertIndex);
+  BufferPool = std::vector<LeafSlots<KeyType, ValueType>>(kPrefetchRange * 2);
 
   reservedSpace =
       static_cast<float>(insertQuery.size()) / initDataset.size() * 4096 * 16;

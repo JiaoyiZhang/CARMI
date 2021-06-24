@@ -11,6 +11,7 @@
 #ifndef SRC_INCLUDE_CARMI_COMMON_H_
 #define SRC_INCLUDE_CARMI_COMMON_H_
 
+#include <map>
 #include <vector>
 
 #include "./carmi.h"
@@ -22,7 +23,6 @@
 #include "func/insert_function.h"
 #include "func/print_structure.h"
 #include "func/update_function.h"
-
 template <typename KeyType, typename ValueType>
 class CARMICommon {
  public:
@@ -32,6 +32,17 @@ class CARMICommon {
 
  private:
   carmi_impl carmi_tree;
+
+ public:
+  void OutputTimes() {
+    std::cout << "split num: " << carmi_tree.SplitNum << std::endl;
+    std::cout << "RebalanceNum(hit) num: " << carmi_tree.RebalanceNum
+              << std::endl;
+    std::cout << "ExpandNum num: " << carmi_tree.ExpandNum << std::endl;
+    carmi_tree.SplitNum = 0;
+    carmi_tree.RebalanceNum = 0;
+    carmi_tree.ExpandNum = 0;
+  }
 
  public:
   /**
@@ -323,9 +334,11 @@ class CARMICommon {
    * @param nodeVec the node type vector
    */
   void PrintStructure(int level, NodeType type, int idx,
-                      std::vector<int> *levelVec,
-                      std::vector<int> *nodeVec) const {
+                      std::vector<int> *levelVec, std::vector<int> *nodeVec) {
     carmi_tree.PrintStructure(level, type, idx, levelVec, nodeVec);
+    std::cout << "avg level is: "
+              << carmi_tree.sumDepth * 1.0 / carmi_tree.nowChildNumber
+              << std::endl;
   }
 };
 
