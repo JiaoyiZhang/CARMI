@@ -17,17 +17,19 @@
 #include "nodes/leafNode/leaf_nodes.h"
 #include "nodes/rootNode/root_nodes.h"
 
-template <typename DataVectorType, typename DataType>
-class CARMIRoot : public LRType<DataVectorType, DataType> {
+template <typename DataVectorType, typename KeyType>
+class CARMIRoot : public LRType<DataVectorType, KeyType> {
  public:
   CARMIRoot() = default;
   explicit CARMIRoot(int t) { type = t; }
   int type;
-  CARMIRoot& operator=(const LRType<DataVectorType, DataType>& node) {
-    this->LRType<DataVectorType, DataType>::model = node.model;
+  CARMIRoot& operator=(const LRType<DataVectorType, KeyType>& node) {
+    this->LRType<DataVectorType, KeyType>::model = node.model;
+    this->LRType<DataVectorType, KeyType>::fetch_model = node.fetch_model;
     this->flagNumber = node.flagNumber;
     this->childLeft = node.childLeft;
     this->type = node.flagNumber;
+    this->childNumber = node.childNumber;
     return *this;
   }
 };
