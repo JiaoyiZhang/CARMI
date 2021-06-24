@@ -18,13 +18,18 @@
 #include "../../params.h"
 #include "trainModel/linear_regression.h"
 
-template <typename DataVectorType, typename DataType>
+template <typename DataVectorType, typename KeyType>
 class LRType {
  public:
   LRType() = default;
-  explicit LRType(int c) { flagNumber = (LR_ROOT_NODE << 24) + c; }
-  LinearRegression<DataVectorType, DataType> model;  // 20 Byte
+  explicit LRType(int c) {
+    flagNumber = (LR_ROOT_NODE << 24);
+    childNumber = c;
+  }
+  LinearRegression<DataVectorType, KeyType> model;        // 20 Byte
+  LinearRegression<DataVectorType, KeyType> fetch_model;  // 20 Byte
   int flagNumber;
+  int childNumber;
   int childLeft;
 };
 #endif  // SRC_INCLUDE_NODES_ROOTNODE_ROOT_NODES_H_

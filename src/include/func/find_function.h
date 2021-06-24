@@ -14,6 +14,7 @@
 #include <float.h>
 
 #include <algorithm>
+#include <cstring>
 
 #include "../carmi.h"
 
@@ -22,11 +23,31 @@ BaseNode<KeyType>* CARMI<KeyType, ValueType>::Find(KeyType key, int* currunion,
                                                    int* currslot) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
+  int fetch_start = 0;
+  int fetch_size = kPrefetchRange * 2;
   while (1) {
     switch (type) {
       case LR_ROOT_NODE:
         idx = root.childLeft +
-              root.LRType<DataVectorType, DataType>::model.Predict(key);
+              root.LRType<DataVectorType, KeyType>::model.Predict(key);
+        fetch_start =
+            root.LRType<DataVectorType, KeyType>::fetch_model.Predict(key) -
+            kPrefetchRange;
+        // std::cout << "fetch_start: " << fetch_start << std::endl;
+        // std::cout << "FetchPredict: "
+        //           << root.LRType<DataVectorType, KeyType>::fetch_model.Predict(
+        //                  key)
+        //           << std::endl;
+        if (fetch_start < 0) {
+          fetch_start = 0;
+        }
+        if (fetch_size > nowDataSize / carmi_params::kMaxLeafNodeSize) {
+          fetch_size = nowDataSize / carmi_params::kMaxLeafNodeSize;
+        }
+        memcpy(reinterpret_cast<char*>(&BufferPool[0]),
+               reinterpret_cast<char*>(&entireData[fetch_start]),
+               fetch_size * sizeof(entireData[0]));
+        // memcpy(BufferPool, entireData + fetch_start, fetch_size);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(key);
@@ -43,20 +64,39 @@ BaseNode<KeyType>* CARMI<KeyType, ValueType>::Find(KeyType key, int* currunion,
         idx = entireChild[idx].bs.childLeft + entireChild[idx].bs.Predict(key);
         break;
       case ARRAY_LEAF_NODE: {
-        int size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+        // int size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         *currunion = entireChild[idx].array.Predict(key);
         int left = entireChild[idx].array.m_left;
-
-#ifdef DEBUG
-        CheckBound(left, *currunion, nowDataSize);
-#endif  // DEBUG
-        int res = SlotsUnionSearch(entireData[left + *currunion], key);
-        if (entireData[left + *currunion].slots[res].first == key) {
-          *currslot = res;
-          return &entireChild[idx];
+        int find_idx = left + *currunion;
+        // std::cout << "find_idx: " << find_idx << std::endl;
+        // std::cout << "fetch_start: " << fetch_start << std::endl;
+        // std::cout
+        //     << "fetch_size / carmi_params::kMaxLeafNodeSize + fetch_start: "
+        //     << fetch_size + fetch_start << std::endl;
+        // std::cout << std::endl;
+        if (find_idx >= fetch_start && find_idx < fetch_size + fetch_start) {
+          // access BufferPool
+          RebalanceNum++;
+          // std::cout << "access buffer pool! " << std::endl;
+          find_idx -= fetch_start;
+          int res = SlotsUnionSearch(BufferPool[find_idx], key);
+          if (BufferPool[find_idx].slots[res].first == key) {
+            *currslot = res;
+            return &entireChild[idx];
+          } else {
+            *currslot = -1;
+            return &entireChild[idx];
+          }
         } else {
-          *currslot = -1;
-          return &entireChild[idx];
+          // access entireData
+          int res = SlotsUnionSearch(entireData[find_idx], key);
+          if (entireData[find_idx].slots[res].first == key) {
+            *currslot = res;
+            return &entireChild[idx];
+          } else {
+            *currslot = -1;
+            return &entireChild[idx];
+          }
         }
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {

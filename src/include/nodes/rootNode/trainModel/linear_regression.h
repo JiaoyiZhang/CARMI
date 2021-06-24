@@ -19,7 +19,7 @@
 
 #include "../../../params.h"
 
-template <typename DataVectorType, typename DataType>
+template <typename DataVectorType, typename KeyType>
 class LinearRegression {
  public:
   LinearRegression() {
@@ -46,7 +46,23 @@ class LinearRegression {
     theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
     theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
   }
-  int Predict(double key) const {
+  void FrefetchTrain(const DataVectorType &dataset, int len) {
+    length = len - 1;
+    int size = dataset.size();
+    if (size == 0) return;
+
+    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+    for (int i = 0; i < size; i++) {
+      t1 += dataset[i].first * dataset[i].first;
+      t2 += dataset[i].first;
+      t3 += dataset[i].first * dataset[i].second;
+      t4 += dataset[i].second;
+    }
+    theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+    theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+    // std::cout << "theta1 :" << theta1 << ",\ttheta2:" << theta2 << std::endl;
+  }
+  int Predict(KeyType key) const {
     // return the predicted idx in the children
     int p = theta1 * key + theta2;
     if (p < 0)
