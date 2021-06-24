@@ -92,6 +92,10 @@ inline void CARMI<KeyType, ValueType>::StoreData(int neededLeafNum, int left,
                                                  int size,
                                                  const DataVectorType &dataset,
                                                  ArrayType<KeyType> *arr) {
+  if (neededLeafNum == 0) {
+    arr->flagNumber = (ARRAY_LEAF_NODE << 24) + 0;
+    return;
+  }
   int nowLeafNum = arr->flagNumber & 0x00FFFFFF;
   if (nowLeafNum != neededLeafNum) {
     if (arr->m_left != -1) {

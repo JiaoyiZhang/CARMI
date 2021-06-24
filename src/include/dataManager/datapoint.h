@@ -43,7 +43,7 @@ inline bool CARMI<KeyType, ValueType>::AllocateEmptyBlock(int left, int len) {
 
 template <typename KeyType, typename ValueType>
 inline int CARMI<KeyType, ValueType>::GetActualSize(int size) {
-  if (size <= 2) return 1;
+  if (size <= 0) return 0;
   if (size > kMaxLeafNum * kMaxSlotNum) {
 #ifdef DEBUG
     std::cout << "the size is " << size

@@ -51,6 +51,13 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
       case ARRAY_LEAF_NODE: {
         CheckChildBound(idx);
         int nowLeafNum = entireChild[idx].array.flagNumber & 0x00FFFFFF;
+        if (nowLeafNum == 0) {
+          entireChild[idx].array.m_left = AllocateMemory(1);
+          entireData[entireChild[idx].array->m_left].slots[0] = data;
+          entireChild[idx].array.slotkeys[0] = data.first + 1;
+          entireChild[idx].array.flagNumber++;
+          return true;
+        }
         int left = entireChild[idx].array.m_left;
         int currunion = entireChild[idx].array.Predict(data.first);
 
