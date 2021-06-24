@@ -23,12 +23,18 @@
 #include "./leaf_nodes.h"
 
 template <typename KeyType>
-inline int ArrayType<KeyType>::Predict(double key) const {
+inline int ArrayType<KeyType>::Predict(KeyType key) const {
   // return the idx of the union in entireData
   int start_idx = 0;
-  int end_idx = std::max(0, (flagNumber & 0x00FFFFFF) - 2);
+  int end_idx = (flagNumber & 0x00FFFFFF) - 2;
+  if (end_idx < 0) {
+    return 0;
+  }
   if (slotkeys[0] == DBL_MIN || key < slotkeys[0]) {
     return 0;
+  }
+  while (slotkeys[end_idx] == DBL_MIN) {
+    end_idx--;
   }
   if (key >= slotkeys[end_idx]) {
     return end_idx + 1;
@@ -52,7 +58,6 @@ template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Init(int left, int size,
                                             const DataVectorType &dataset,
                                             ArrayType<KeyType> *arr) {
-  if (size == 0) return;
   int actualSize = 0;
   DataVectorType newDataset = ExtractData(left, size, dataset, &actualSize);
   int neededLeafNum = GetActualSize(size);
@@ -95,23 +100,37 @@ inline void CARMI<KeyType, ValueType>::StoreData(int neededLeafNum, int left,
     arr->m_left = AllocateMemory(neededLeafNum);
   }
 
-  arr->flagNumber = (ARRAY_LEAF_NODE << 24) + 0;
+  arr->flagNumber = (ARRAY_LEAF_NODE << 24) + neededLeafNum;
   LeafSlots<KeyType, ValueType> tmp;
-  int avg = std::max(1, size / neededLeafNum + 1);
+  int avg = std::max(1.0, ceil(size * 1.0 / neededLeafNum));
   avg = std::min(avg, kMaxSlotNum);
   BaseNode<KeyType> tmpArr;
+  entireData[arr->m_left] = LeafSlots<KeyType, ValueType>();
 
   int end = left + size;
+  int actualNum = 0;
   for (int i = arr->m_left, j = left, k = 1; j < end; j++, k++) {
     SlotsUnionInsert(dataset[j], 0, &tmp, &tmpArr);
     if (k == avg || j == end - 1) {
       k = 0;
-#ifdef DEBUG
-      CheckBound(i, 0, nowDataSize);
-#endif  // DEBUG
       entireData[i++] = tmp;
       tmp = LeafSlots<KeyType, ValueType>();
-      arr->flagNumber++;
+      actualNum++;
+    }
+  }
+  if (&dataset == &initDataset) {
+    for (int i = arr->m_left, j = left, k = 1; j < end; j++, k++) {
+      initDataset[j].second = i;
+      if (k == avg || j == end - 1) {
+        i++;
+        k = 0;
+      }
+    }
+  }
+  if (actualNum < neededLeafNum) {
+    end = arr->m_left + neededLeafNum;
+    for (int i = arr->m_left + actualNum; i < end; i++) {
+      entireData[i] = LeafSlots<KeyType, ValueType>();
     }
   }
   if (neededLeafNum == 1) {
@@ -120,7 +139,7 @@ inline void CARMI<KeyType, ValueType>::StoreData(int neededLeafNum, int left,
     }
     return;
   }
-  end = arr->m_left + neededLeafNum;
+  end = arr->m_left + actualNum;
   int j = 0;
   for (int i = arr->m_left + 1; i < end; i++, j++) {
     arr->slotkeys[j] = entireData[i].slots[0].first;
