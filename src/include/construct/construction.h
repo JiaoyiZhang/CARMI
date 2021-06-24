@@ -70,6 +70,8 @@ inline void CARMI<KeyType, ValueType>::Construction(
 
   int neededSize = nowDataSize + reservedSpace;
   if (!isPrimary) {
+    root.fetch_model.FrefetchTrain(initDataset, nowDataSize);
+
     if (neededSize < static_cast<int>(entireData.size())) {
       std::vector<LeafSlots<KeyType, ValueType>> tmpEntireData(
           entireData.begin(), entireData.begin() + neededSize);
@@ -84,7 +86,7 @@ inline void CARMI<KeyType, ValueType>::Construction(
       for (auto j = tmp.m_block.begin(); j != tmp.m_block.end(); j++) {
         if (tmp.m_width + *j > entireData.size()) {
           AllocateEmptyBlock(*j, entireData.size() - *j);
-          emptyBlocks[i].m_block.erase(j);
+          emptyBlocks[i].m_block.erase(*j);
           break;
         }
       }

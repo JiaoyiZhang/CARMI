@@ -38,6 +38,13 @@ void CARMI<KeyType, ValueType>::NodePartition(
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = node.Predict(dataset[i].first);
+#ifdef DEBUG
+    if (p < 0 || p >= (*subData).size()) {
+      std::cout << "model: " << typeid(TYPE).name() << ",\tp: " << p
+                << ",\ti: " << i << std::endl;
+      node.Predict(dataset[i].first);
+    }
+#endif  // DEBUG
     if ((*subData)[p].left == -1) {
       (*subData)[p].left = i;
     }
@@ -237,7 +244,6 @@ bool CARMI<KeyType, ValueType>::SlotsUnionInsert(
     } else {
       arr->array.slotkeys[currunion - 1] = data.first;
     }
-    arr->array.flagNumber++;
 #ifdef DEBUG
     for (int i = 0; i < kMaxSlotNum - 1; i++) {
       if (node->slots[i].first != DBL_MIN &&
@@ -257,6 +263,14 @@ bool CARMI<KeyType, ValueType>::SlotsUnionInsert(
   int res = SlotsUnionSearch(*node, data.first);
   if (node->slots[res].first == DBL_MIN) {
     node->slots[res] = data;
+    if (currunion != 0) {
+      arr->array.slotkeys[currunion - 1] =
+          std::min(arr->array.slotkeys[currunion - 1], data.first);
+    } else {
+      if (data.first > arr->array.slotkeys[0]) {
+        arr->array.slotkeys[0] = data.first + 1;
+      }
+    }
     return true;
   }
   // move data
@@ -270,9 +284,14 @@ bool CARMI<KeyType, ValueType>::SlotsUnionInsert(
     node->slots[num] = node->slots[num - 1];
   }
   node->slots[res] = data;
-  if (currunion != 0)
+  if (currunion != 0) {
     arr->array.slotkeys[currunion - 1] =
         std::min(arr->array.slotkeys[currunion - 1], data.first);
+  } else {
+    if (data.first > arr->array.slotkeys[0]) {
+      arr->array.slotkeys[0] = data.first + 1;
+    }
+  }
 #ifdef DEBUG
   for (int i = 0; i < kMaxSlotNum - 1; i++) {
     if (node->slots[i].first != DBL_MIN &&

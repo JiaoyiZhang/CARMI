@@ -53,10 +53,11 @@ class EmptyBlock {
    * @return false this block is not empty and has been allocated
    */
   bool find(int idx) {
-    if (m_block.find(idx) == m_block.end())
-      return false;
-    else
+    std::set<int>::iterator it = m_block.find(idx);
+    if (it != m_block.end())
       return true;
+    else
+      return false;
   }
 
   std::set<int> m_block;

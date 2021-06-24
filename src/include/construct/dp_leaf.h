@@ -71,10 +71,6 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     return nodeCost;
   }
 
-  // int actualSize = dataRange.initRange.size;
-  // if (actualSize > carmi_params::kLeafMaxCapacity)
-  //   actualSize = carmi_params::kLeafMaxCapacity;
-  // else
   // choose an array node as the leaf node
   int leftNum = GetActualSize(dataRange.initRange.size);
   int avgSlotNum = std::max(1, dataRange.initRange.size / leftNum + 1);

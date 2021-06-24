@@ -114,8 +114,8 @@ enum NodeType {
 };
 
 template <typename KeyType, typename ValueType>
-union LeafSlots {
-  // int tmp[carmi_params::kUnionTmpNum];
+class LeafSlots {
+ public:
   std::pair<KeyType, ValueType> slots[carmi_params::kMaxLeafNodeSize /
                                       sizeof(std::pair<KeyType, ValueType>)];
 

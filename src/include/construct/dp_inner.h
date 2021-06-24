@@ -37,6 +37,9 @@ void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
     NodeCost res;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
+    if (subDataset.subInit[i].size == dataRange.initRange.size) {
+      return;
+    }
     if (subDataset.subInit[i].size > carmi_params::kAlgorithmThreshold)
       res = GreedyAlgorithm(range);
     else
@@ -59,7 +62,15 @@ NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   BaseNode<KeyType> optimal_node_struct = emptyNode;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 2);
-  for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
+  tmpEnd = std::max(tmpEnd, kMinChildNumber);
+#ifdef DEBUG
+  if (dataRange.initRange.left == 9220302 ||
+      dataRange.initRange.left == 3376646) {
+    std::cout << " left:" << dataRange.initRange.left
+              << ",\tsize:" << dataRange.initRange.size << std::endl;
+  }
+#endif  // DEBUG
+  for (int c = kMinChildNumber; c <= tmpEnd; c *= 2) {
     ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight,
                                carmi_params::kLRInnerTime, dataRange,
                                &optimalCost, &(optimal_node_struct.lr));
@@ -75,6 +86,14 @@ NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
                                  carmi_params::kBSInnerTime, dataRange,
                                  &optimalCost, &(optimal_node_struct.bs));
   }
+
+#ifdef DEBUG
+  if (optimal_node_struct.array.flagNumber == emptyNode.array.flagNumber) {
+    std::cout << "optimal_node_struct is equal to the emptyNode, left:"
+              << dataRange.initRange.left
+              << ",\tsize:" << dataRange.initRange.size << std::endl;
+  }
+#endif  // DEBUG
 
   structMap.insert({dataRange.initRange, optimal_node_struct});
   COST.insert({dataRange.initRange, optimalCost});

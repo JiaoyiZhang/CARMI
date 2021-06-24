@@ -39,9 +39,9 @@ NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
     return nodeCost;
   }
 
-  if (range.initRange.size <= kMaxKeyNum) {
+  if (range.initRange.size <= kLeafMaxCapacity / 2) {
     return DPLeaf(range);
-  } else if (range.initRange.size >= kLeafMaxCapacity) {
+  } else if (range.initRange.size > readRate * kLeafMaxCapacity) {
     return DPInner(range);
   } else {
     auto res1 = DPInner(range);

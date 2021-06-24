@@ -59,8 +59,9 @@ NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
   BaseNode<KeyType> optimal_node_struct;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 2);
+  tmpEnd = std::max(tmpEnd, kMinChildNumber);
   IndexPair singleRange(dataRange.initRange.left, dataRange.initRange.size);
-  for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
+  for (int c = kMinChildNumber; c <= tmpEnd; c *= 2) {
     IsBetterGreedy<LRModel>(c, LR_INNER_NODE, frequency_weight,
                             carmi_params::kLRInnerTime, dataRange.initRange,
                             &(optimal_node_struct.lr), &optimalCost);
