@@ -50,8 +50,7 @@ void artTree_test(bool isZipfian, double initRatio,
 
   if (initRatio == kWriteHeavy) {
     int end = kTestSize * kWriteHeavy;
-    InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
     double tmp;
@@ -105,8 +104,7 @@ void artTree_test(bool isZipfian, double initRatio,
     int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
 
-    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
     double tmp;
@@ -175,8 +173,7 @@ void artTree_test(bool isZipfian, double initRatio,
     tmp -= tmp0;
   } else if (initRatio == kReadOnly) {
     int end = kTestSize * kReadOnly;
-    InitTestSet(kReadOnly, findDataset, DataVecType(), &findQuery, &insertQuery,
-                &index);
+    InitTestSet(findDataset, DataVecType(), &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
     double tmp;
@@ -221,8 +218,7 @@ void artTree_test(bool isZipfian, double initRatio,
   } else if (initRatio == kWritePartial) {
     int length = round(kTestSize * kWritePartial);
     int insert_length = round(kTestSize * (1 - kWritePartial));
-    InitTestSet(kWritePartial, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
     int findCnt = 0, insertCnt = 0;
 
@@ -313,8 +309,7 @@ void artTree_test(bool isZipfian, double initRatio,
       int len = std::min(i + length[i], static_cast<int>(findQuery.size() - 1));
       findQuery[i].second = findQuery[len].first;
     }
-    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
     double tmp;

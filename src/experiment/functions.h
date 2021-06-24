@@ -26,27 +26,6 @@
 #include "dataset/ycsb.h"
 
 /**
- * @brief prepare query workloads
- *
- * @param Ratio the ratio of find queries
- * @param findQueryset
- * @param insertDataset
- * @param findQuery
- * @param insertQuery
- * @param index
- */
-void InitTestSet(double Ratio, const DataVecType &findQueryset,
-                 const DataVecType &insertDataset, DataVecType *findQuery,
-                 DataVecType *insertQuery, std::vector<int> *index);
-
-/**
- * @brief print the average time of the workload
- *
- * @param time
- */
-void PrintAvgTime(double time);
-
-/**
  * @brief the function of using CARMI
  *
  * @param isZipfian whether to use zipfian access during the test

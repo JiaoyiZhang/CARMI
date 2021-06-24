@@ -95,7 +95,7 @@ class CARMICommon {
      * @brief Construct a new iterator object
      *
      */
-    inline iterator() : tree(NULL), currnode(NULL), currslot(0), currunion(0) {}
+    inline iterator() : tree(NULL), currnode(NULL), currunion(0), currslot(0) {}
 
     /**
      * @brief Construct a new iterator object
@@ -103,7 +103,7 @@ class CARMICommon {
      * @param t the carmi tree
      */
     explicit inline iterator(CARMICommon *t)
-        : tree(t), currnode(NULL), currslot(-1), currunion(0) {}
+        : tree(t), currnode(NULL), currunion(0), currslot(-1) {}
 
     /**
      * @brief Construct a new iterator object
@@ -363,7 +363,7 @@ void CARMICommon<KeyType, ValueType>::Init(DataVectorType initDataset,
   std::vector<int> insertQueryIndex;
 
   // set the read frequency
-  for (int i = 0; i < findQuery.size(); i++) {
+  for (int i = 0; i < static_cast<int>(findQuery.size()); i++) {
     findQuery[i].second = 1;
   }
 
@@ -381,7 +381,7 @@ void CARMICommon<KeyType, ValueType>::Init(DataVectorType initDataset,
   // construct carmi
   carmi_tree =
       carmi_impl(initDataset, findQuery, insertQuery, insertQueryIndex, rate);
-  carmi_tree.Construction(initDataset, findQuery, insertQuery);
+  carmi_tree.Construction();
 }
 
 #endif  // SRC_INCLUDE_CARMI_COMMON_H_

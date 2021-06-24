@@ -45,8 +45,7 @@ void BaselineWorkloadA(bool isZipfian, const DataVecType &findDataset,
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kWriteHeavy;
-  InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   std::clock_t s, e;
   double tmp;
@@ -98,8 +97,7 @@ void BaselineWorkloadB(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
@@ -109,7 +107,7 @@ void BaselineWorkloadB(bool isZipfian, const DataVecType &findDataset,
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < index.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(index.size()); j++) {
         baselineIndex->find(findQuery[index[findCnt]].first);
         findCnt++;
       }
@@ -117,7 +115,8 @@ void BaselineWorkloadB(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
         baselineIndex->find(findQuery[findCnt++].first);
       }
       baselineIndex->insert(insertQuery[i]);
@@ -136,7 +135,8 @@ void BaselineWorkloadB(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
         findCnt++;
       }
     }
@@ -164,8 +164,7 @@ void BaselineWorkloadC(bool isZipfian, const DataVecType &findDataset,
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kReadOnly;
-  InitTestSet(kReadOnly, findDataset, DataVecType(), &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, DataVecType(), &findQuery, &insertQuery, &index);
 
   std::clock_t s, e;
   auto resIte = baselineIndex->end();
@@ -247,8 +246,7 @@ void BaselineWorkloadD(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kWritePartial, findDataset, insertDataset, &findQuery,
-              &insertQuery, &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int length = round(kTestSize * kWritePartial);
   int insert_length = round(kTestSize * (1 - kWritePartial));
@@ -289,8 +287,11 @@ void BaselineWorkloadD(bool isZipfian, const DataVecType &findDataset,
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < insert_length; i++) {
-      for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) findCnt++;
-      for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+      for (int j = 0; j < 17 && findCnt < static_cast<int>(findQuery.size());
+           j++)
+        findCnt++;
+      for (int j = 0; j < 3 && insertCnt < static_cast<int>(insertQuery.size());
+           j++) {
         insertCnt++;
       }
     }
@@ -331,8 +332,7 @@ void BaselineWorkloadE(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
@@ -343,7 +343,7 @@ void BaselineWorkloadE(bool isZipfian, const DataVecType &findDataset,
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < index.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(index.size()); j++) {
         auto it = baselineIndex->find(findQuery[index[findCnt]].first);
 
         for (int l = 0;
@@ -357,7 +357,8 @@ void BaselineWorkloadE(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
         auto it = baselineIndex->find(findQuery[findCnt].first);
         for (int l = 0; l < length[findCnt] && it != baselineIndex->end();
              l++) {
@@ -376,7 +377,7 @@ void BaselineWorkloadE(bool isZipfian, const DataVecType &findDataset,
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < index.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(index.size()); j++) {
         typename BaselineType::iterator it;
         for (int l = 0; l < length[index[findCnt]]; l++) {
         }
@@ -385,7 +386,8 @@ void BaselineWorkloadE(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
         typename BaselineType::iterator it;
         for (int l = 0; l < length[findCnt]; l++) {
         }
@@ -414,7 +416,7 @@ void test_btree(bool isZipfian, double initRatio,
   double space =
       static_cast<double>(stat.innernodes * 272 + stat.leaves * 280) / 1024 /
       1024;
-  std::cout << "btree space:" << space <<","<< std::endl;
+  std::cout << "btree space:" << space << "," << std::endl;
   outRes << space;
 
   if (initRatio == kWriteHeavy)
@@ -476,9 +478,7 @@ void test_alex(bool isZipfian, double initRatio, const DataVecType &findDataset,
 }
 
 void test_radix_spline(bool isZipfian, double initRatio,
-                       const DataVecType &findDataset,
-                       const DataVecType &insertDataset,
-                       const std::vector<int> &length) {
+                       const DataVecType &findDataset) {
   std::cout << "RadixSpline,";
   outRes << "RadixSpline,";
   rs::MultiMap<uint64_t, int> rs(findDataset.begin(), findDataset.end());
@@ -488,8 +488,7 @@ void test_radix_spline(bool isZipfian, double initRatio,
     DataVecType insertQuery;
     std::vector<int> index;
     int end = kTestSize * kReadOnly;
-    InitTestSet(kReadOnly, findDataset, DataVecType(), &findQuery, &insertQuery,
-                &index);
+    InitTestSet(findDataset, DataVecType(), &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
     auto resIte = rs.end();

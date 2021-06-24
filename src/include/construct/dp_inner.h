@@ -19,7 +19,7 @@
 
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
-void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
+void CARMI<KeyType, ValueType>::ChooseBetterInner(int c,
                                                   double frequency_weight,
                                                   double time_cost,
                                                   const DataRange &dataRange,
@@ -59,7 +59,8 @@ template <typename KeyType, typename ValueType>
 NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
-  BaseNode<KeyType> optimal_node_struct = emptyNode;
+  BaseNode<KeyType> optimal_node_struct;
+  optimal_node_struct = emptyNode;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
   int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 2);
   tmpEnd = std::max(tmpEnd, kMinChildNumber);
@@ -71,18 +72,18 @@ NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   }
 #endif  // DEBUG
   for (int c = kMinChildNumber; c <= tmpEnd; c *= 2) {
-    ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight,
-                               carmi_params::kLRInnerTime, dataRange,
-                               &optimalCost, &(optimal_node_struct.lr));
-    ChooseBetterInner<PLRModel>(c, PLR_INNER_NODE, frequency_weight,
+    ChooseBetterInner<LRModel>(c, frequency_weight, carmi_params::kLRInnerTime,
+                               dataRange, &optimalCost,
+                               &(optimal_node_struct.lr));
+    ChooseBetterInner<PLRModel>(c, frequency_weight,
                                 carmi_params::kPLRInnerTime, dataRange,
                                 &optimalCost, &(optimal_node_struct.plr));
     if (c <= kHisMaxChildNumber)
-      ChooseBetterInner<HisModel>(c, HIS_INNER_NODE, frequency_weight,
+      ChooseBetterInner<HisModel>(c, frequency_weight,
                                   carmi_params::kHisInnerTime, dataRange,
                                   &optimalCost, &(optimal_node_struct.his));
     if (c <= kBSMaxChildNumber)
-      ChooseBetterInner<BSModel>(c, BS_INNER_NODE, frequency_weight,
+      ChooseBetterInner<BSModel>(c, frequency_weight,
                                  carmi_params::kBSInnerTime, dataRange,
                                  &optimalCost, &(optimal_node_struct.bs));
   }

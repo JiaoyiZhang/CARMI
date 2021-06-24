@@ -15,8 +15,7 @@
 #include "../carmi.h"
 
 template <typename KeyType, typename ValueType>
-void CARMI<KeyType, ValueType>::PrintRoot(int level, int idx,
-                                          std::vector<int> *levelVec,
+void CARMI<KeyType, ValueType>::PrintRoot(int level, std::vector<int> *levelVec,
                                           std::vector<int> *nodeVec) {
   sumDepth += level;
   std::vector<int> tree(8, 0);
@@ -80,7 +79,7 @@ void CARMI<KeyType, ValueType>::PrintStructure(int level, NodeType type,
     case LR_ROOT_NODE: {
       std::cout << "level " << level << ": now root is lr, idx:" << idx
                 << ", number:" << root.childNumber;
-      PrintRoot(level, idx, levelVec, nodeVec);
+      PrintRoot(level, levelVec, nodeVec);
       break;
     }
     default:

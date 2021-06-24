@@ -97,7 +97,7 @@ inline int HisModel::Predict(double key) const {
     idx = childNumber - 1;
 
   int index = base[(idx >> 4)];
-  int tmp = offset[(idx >> 4)] >> (15 - idx & 0x0000000F);
+  int tmp = offset[(idx >> 4)] >> (15 - (idx & 0x0000000F));
   tmp = (tmp & 0x55555555) + ((tmp >> 1) & 0x55555555);
   tmp = (tmp & 0x33333333) + ((tmp >> 2) & 0x33333333);
   tmp = (tmp & 0x0f0f0f0f) + ((tmp >> 4) & 0x0f0f0f0f);

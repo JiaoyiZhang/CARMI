@@ -25,7 +25,6 @@ template <typename KeyType, typename ValueType>
 bool CARMI<KeyType, ValueType>::Insert(DataType data) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
-  int childIdx = 0;
   while (1) {
     switch (type) {
       case LR_ROOT_NODE:
@@ -53,7 +52,7 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
         int nowLeafNum = entireChild[idx].array.flagNumber & 0x00FFFFFF;
         if (nowLeafNum == 0) {
           entireChild[idx].array.m_left = AllocateMemory(1);
-          entireData[entireChild[idx].array->m_left].slots[0] = data;
+          entireData[entireChild[idx].array.m_left].slots[0] = data;
           entireChild[idx].array.slotkeys[0] = data.first + 1;
           entireChild[idx].array.flagNumber++;
           return true;

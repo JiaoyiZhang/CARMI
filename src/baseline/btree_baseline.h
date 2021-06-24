@@ -48,8 +48,7 @@ void btree_test(bool isZipfian, double initRatio,
 
   if (initRatio == kWriteHeavy) {
     int end = kTestSize * kWriteHeavy;
-    InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
 
@@ -77,23 +76,22 @@ void btree_test(bool isZipfian, double initRatio,
       }
     }
     e = std::clock();
-    double tmp0 =
-        (e - s) / static_cast<double>(CLOCKS_PER_SEC);
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
 
   } else if (initRatio == kReadHeavy) {
     int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
 
-    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
 
     s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           btree.find(findQuery[index[findCnt]].first);
           findCnt++;
         }
@@ -101,7 +99,8 @@ void btree_test(bool isZipfian, double initRatio,
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           btree.find(findQuery[findCnt].first);
           findCnt++;
         }
@@ -115,26 +114,26 @@ void btree_test(bool isZipfian, double initRatio,
     s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           findCnt++;
         }
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           findCnt++;
         }
       }
     }
     e = std::clock();
-    double tmp0 =
-        (e - s) / static_cast<double>(CLOCKS_PER_SEC);
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
 
   } else if (initRatio == kReadOnly) {
     int end = kTestSize * kReadOnly;
-    InitTestSet(kReadOnly, findDataset, DataVecType(), &findQuery, &insertQuery,
-                &index);
+    InitTestSet(findDataset, DataVecType(), &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
 
@@ -160,14 +159,11 @@ void btree_test(bool isZipfian, double initRatio,
       }
     }
     e = std::clock();
-    double tmp0 =
-        (e - s) / static_cast<double>(CLOCKS_PER_SEC);
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
   } else if (initRatio == kWritePartial) {
-    int length = round(kTestSize * kWritePartial);
     int insert_length = round(kTestSize * (1 - kWritePartial));
-    InitTestSet(kWritePartial, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
     int findCnt = 0, insertCnt = 0;
 
@@ -176,22 +172,26 @@ void btree_test(bool isZipfian, double initRatio,
     s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < insert_length; i++) {
-        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 17 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           btree.find(findQuery[index[findCnt]].first);
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+        for (int j = 0;
+             j < 3 && insertCnt < static_cast<int>(insertQuery.size()); j++) {
           btree.insert(insertQuery[insertCnt]);
           insertCnt++;
         }
       }
     } else {
       for (int i = 0; i < insert_length; i++) {
-        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 17 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           btree.find(findQuery[findCnt].first);
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+        for (int j = 0;
+             j < 3 && insertCnt < static_cast<int>(insertQuery.size()); j++) {
           btree.insert(insertQuery[insertCnt]);
           insertCnt++;
         }
@@ -205,39 +205,42 @@ void btree_test(bool isZipfian, double initRatio,
     s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < insert_length; i++) {
-        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 17 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+        for (int j = 0;
+             j < 3 && insertCnt < static_cast<int>(insertQuery.size()); j++) {
           insertCnt++;
         }
       }
     } else {
       for (int i = 0; i < insert_length; i++) {
-        for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 17 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           findCnt++;
         }
-        for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
+        for (int j = 0;
+             j < 3 && insertCnt < static_cast<int>(insertQuery.size()); j++) {
           insertCnt++;
         }
       }
     }
     e = std::clock();
-    double tmp0 =
-        (e - s) / static_cast<double>(CLOCKS_PER_SEC);
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
   } else if (initRatio == kRangeScan) {
     int end = round(kTestSize * (1 - kReadHeavy));
     int findCnt = 0;
-    InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery,
-                &insertQuery, &index);
+    InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
     std::clock_t s, e;
 
     s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           DataVecType ret(length[index[findCnt]], {-1, -1});
           auto it = btree.find(findQuery[index[findCnt]].first);
           for (int l = 0; l < length[index[findCnt]]; l++) {
@@ -250,7 +253,8 @@ void btree_test(bool isZipfian, double initRatio,
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           DataVecType ret(length[findCnt], {-1, -1});
           auto it = btree.find(findQuery[findCnt].first);
           for (int l = 0; l < length[findCnt]; l++) {
@@ -269,7 +273,8 @@ void btree_test(bool isZipfian, double initRatio,
     s = std::clock();
     if (isZipfian) {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           DataVecType ret(length[index[findCnt]], {-1, -1});
           stx::btree<double, double>::iterator it;
           for (int l = 0; l < length[index[findCnt]]; l++) {
@@ -279,7 +284,8 @@ void btree_test(bool isZipfian, double initRatio,
       }
     } else {
       for (int i = 0; i < end; i++) {
-        for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+        for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+             j++) {
           DataVecType ret(length[findCnt], {-1, -1});
           stx::btree<double, double>::iterator it;
           for (int l = 0; l < length[findCnt]; l++) {
@@ -289,8 +295,7 @@ void btree_test(bool isZipfian, double initRatio,
       }
     }
     e = std::clock();
-    double tmp0 =
-        (e - s) / static_cast<double>(CLOCKS_PER_SEC);
+    double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
     tmp -= tmp0;
   }
 

@@ -137,24 +137,18 @@ void CoreExternalCARMI(bool isZipfian, double initRatio, double rate,
   std::cout << "\nTEST time: " << tmpTime << std::endl;
 #endif
 
-  double l = 0, r = 1;
-  if (initRatio == kWritePartial) {
-    l = 0.6;
-    r = 0.9;
-  }
-
   KeyType *externalDataset;
   const int record_size = sizeof(KeyType) + sizeof(ValueType);
   typedef CARMIExternal<KeyType> CarmiType;
   int extLen = initDataset.size() * 2 + kTestSize * 2;
   externalDataset = new KeyType[extLen];
-  for (int i = 0, j = 0; i < initDataset.size(); i++) {
+  for (int i = 0, j = 0; i < static_cast<int>(initDataset.size()); i++) {
     *(externalDataset + j) = initDataset[i].first;
     *(externalDataset + j + 1) = initDataset[i].second;
     j += 2;  // due to <double, double>
   }
   std::vector<KeyType> futureInsertKey(testInsertQuery.size(), 0);
-  for (int i = 0; i < testInsertQuery.size(); i++) {
+  for (int i = 0; i < static_cast<int>(testInsertQuery.size()); i++) {
     futureInsertKey[i] = testInsertQuery[i].first;
   }
   // initDataset -> only includes the findQuery
@@ -175,7 +169,7 @@ void CoreExternalCARMI(bool isZipfian, double initRatio, double rate,
   std::vector<int> nodeVec(11, 0);
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
   std::cout << "print structure:" << std::endl;
-  carmi.PrintStructure(1, NodeType(0), 0, &levelVec, &nodeVec);
+  carmi.PrintStructure(1, 0, &levelVec, &nodeVec);
   std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << std::endl;
 
   for (int i = 0; i < 20; i++) {

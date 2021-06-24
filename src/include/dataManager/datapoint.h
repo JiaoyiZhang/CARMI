@@ -65,7 +65,7 @@ void CARMI<KeyType, ValueType>::InitEntireData(int size) {
   entireData = std::vector<LeafSlots<KeyType, ValueType>>(
       entireDataSize, LeafSlots<KeyType, ValueType>());
   unsigned int len = 4096;
-  while (len < size) len *= 2;
+  while (len < static_cast<unsigned int>(size)) len *= 2;
   len = len * 2.5 / kMaxSlotNum;
   entireDataSize = len;
 
@@ -76,14 +76,14 @@ void CARMI<KeyType, ValueType>::InitEntireData(int size) {
   for (int i = 0; i <= kMaxLeafNum; i++) {
     emptyBlocks.push_back(EmptyBlock(i));
   }
-  auto res = AllocateEmptyBlock(0, len);
+  AllocateEmptyBlock(0, len);
 }
 
 template <typename KeyType, typename ValueType>
-int CARMI<KeyType, ValueType>::AllocateSingleMemory(int size, int *idx) {
+int CARMI<KeyType, ValueType>::AllocateSingleMemory(int *idx) {
   int newLeft = -1;
   for (int i = *idx; i < static_cast<int>(emptyBlocks.size()); i++) {
-    newLeft = emptyBlocks[i].allocate(size);
+    newLeft = emptyBlocks[i].allocate();
     if (newLeft != -1) {
       *idx = i;
       break;
@@ -95,7 +95,7 @@ int CARMI<KeyType, ValueType>::AllocateSingleMemory(int size, int *idx) {
 template <typename KeyType, typename ValueType>
 int CARMI<KeyType, ValueType>::AllocateMemory(int neededLeafNumber) {
   int idx = neededLeafNumber;
-  int newLeft = AllocateSingleMemory(neededLeafNumber, &idx);
+  int newLeft = AllocateSingleMemory(&idx);
 
   // allocation fails
   // need to expand the entireData
@@ -103,7 +103,7 @@ int CARMI<KeyType, ValueType>::AllocateMemory(int neededLeafNumber) {
     entireData.resize(entireDataSize * 2, LeafSlots<KeyType, ValueType>());
     AllocateEmptyBlock(entireDataSize, entireDataSize);
     entireDataSize *= 2;
-    newLeft = AllocateSingleMemory(neededLeafNumber, &idx);
+    newLeft = AllocateSingleMemory(&idx);
   }
 
   // if the allocated size is less than block size, add the rest empty blocks

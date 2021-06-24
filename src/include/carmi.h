@@ -130,13 +130,8 @@ class CARMI {
 
   /**
    * @brief main function of construction
-   * @param initData the dataset used to initialize the index
-   * @param findData the find queries used to training CARMI
-   * @param insertData the insert queries used to training CARMI
    */
-  void Construction(const DataVectorType &initData,
-                    const DataVectorType &findData,
-                    const DataVectorType &insertData);
+  void Construction();
 
  private:
   /**
@@ -245,7 +240,6 @@ class CARMI {
    *
    * @tparam TYPE the type of this inner node
    * @param c the child number of this inner node
-   * @param type the type of this inne node
    * @param frequency_weight the frequency weight of these queries
    * @param time_cost the time cost of this inner node
    * @param dataRange the range of data points in this node
@@ -253,9 +247,9 @@ class CARMI {
    * @param optimal_node_struct the optimal setting
    */
   template <typename TYPE>
-  void ChooseBetterInner(int c, NodeType type, double frequency_weight,
-                         double time_cost, const DataRange &dataRange,
-                         NodeCost *optimalCost, TYPE *optimal_node_struct);
+  void ChooseBetterInner(int c, double frequency_weight, double time_cost,
+                         const DataRange &dataRange, NodeCost *optimalCost,
+                         TYPE *optimal_node_struct);
 
  private:
   // greedy algorithm
@@ -265,7 +259,6 @@ class CARMI {
    *
    * @tparam TYPE the type of this node
    * @param c the number of child nodes
-   * @param type the type index of this node
    * @param frequency_weight the frequency weight of these queries
    * @param time_cost the time cost of this node
    * @param range the range of queries
@@ -273,9 +266,9 @@ class CARMI {
    * @param optimalCost the optimal cost
    */
   template <typename TYPE>
-  void IsBetterGreedy(int c, NodeType type, double frequency_weight,
-                      double time_cost, const IndexPair &range,
-                      TYPE *optimal_node_struct, NodeCost *optimalCost);
+  void IsBetterGreedy(int c, double frequency_weight, double time_cost,
+                      const IndexPair &range, TYPE *optimal_node_struct,
+                      NodeCost *optimalCost);
 
   /**
    * @brief the greedy algorithm
@@ -347,11 +340,10 @@ class CARMI {
   /**
    * @brief allocate a block to this leaf node
    *
-   * @param size the size of the leaf node needs to be allocated
    * @param idx the idx in emptyBlocks
    * @return int return idx (if it fails, return -1)
    */
-  int AllocateSingleMemory(int size, int *idx);
+  int AllocateSingleMemory(int *idx);
 
   /**
    * @brief allocate a block to the current inner node
@@ -721,11 +713,10 @@ class CARMI {
    * @brief print the root node
    *
    * @param level the current level
-   * @param idx  the index of the node
    * @param levelVec used to record the level of CARMI
    * @param nodeVec used to record the number of each type of CARMI's node
    */
-  void PrintRoot(int level, int idx, std::vector<int> *levelVec,
+  void PrintRoot(int level, std::vector<int> *levelVec,
                  std::vector<int> *nodeVec);
 
   /**
@@ -893,10 +884,10 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
   }
 
   querySize = 0;
-  for (int i = 0; i < findQuery.size(); i++) {
+  for (int i = 0; i < static_cast<int>(findQuery.size()); i++) {
     querySize += findQuery[i].second;
   }
-  for (int i = 0; i < insertQuery.size(); i++) {
+  for (int i = 0; i < static_cast<int>(insertQuery.size()); i++) {
     querySize += insertQuery[i].second;
   }
   BufferPool = std::vector<LeafSlots<KeyType, ValueType>>(kPrefetchRange * 2);
@@ -932,10 +923,10 @@ CARMI<KeyType, ValueType>::CARMI(const void *dataset, DataVectorType &initData,
   reservedSpace =
       static_cast<float>(insertQuery.size()) / initDataset.size() * 4096 * 16;
   querySize = 0;
-  for (int i = 0; i < findQuery.size(); i++) {
+  for (int i = 0; i < static_cast<int>(findQuery.size()); i++) {
     querySize += findQuery[i].second;
   }
-  for (int i = 0; i < insertQuery.size(); i++) {
+  for (int i = 0; i < static_cast<int>(insertQuery.size()); i++) {
     querySize += insertQuery[i].second;
   }
 

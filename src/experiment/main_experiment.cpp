@@ -84,7 +84,7 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
-  for (int r = 0; r < rate.size(); r++) {
+  for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
     if (initRatio == kWriteHeavy)
       kRate = rate1[r];
@@ -99,11 +99,11 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
       // test_btree(false, initRatio, initData, testInsert, length);
       // test_alex(true, initRatio, initData, testInsert, length);
       // test_alex(false, initRatio, initData, testInsert, length);
-      // test_radix_spline(true, initRatio, initData, testInsert, length);
-      // test_radix_spline(false, initRatio, initData, testInsert, length);
+      // test_radix_spline(true, initRatio, initData);
+      // test_radix_spline(false, initRatio, initData);
     }
 
-    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    // CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
     CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
@@ -115,7 +115,7 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
       // test_alex(true, initRatio, initData, testInsert, length);
       // test_alex(false, initRatio, initData, testInsert, length);
     }
-    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    // CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
     CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
@@ -126,10 +126,10 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
       // test_btree(false, initRatio, initData, testInsert, length);
       // test_alex(true, initRatio, initData, testInsert, length);
       // test_alex(false, initRatio, initData, testInsert, length);
-      // test_radix_spline(true, initRatio, initData, testInsert, length);
-      // test_radix_spline(false, initRatio, initData, testInsert, length);
+      // test_radix_spline(true, initRatio, initData);
+      // test_radix_spline(false, initRatio, initData);
     }
-    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    // CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
     CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++"
@@ -140,10 +140,10 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
       // test_btree(false, initRatio, initData, testInsert, length);
       // test_alex(true, initRatio, initData, testInsert, length);
       // test_alex(false, initRatio, initData, testInsert, length);
-      // test_radix_spline(true, initRatio, initData, testInsert, length);
-      // test_radix_spline(false, initRatio, initData, testInsert, length);
+      // test_radix_spline(true, initRatio, initData);
+      // test_radix_spline(false, initRatio, initData);
     }
-    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    // CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
     CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     outRes << std::endl;
@@ -178,7 +178,7 @@ void mainMap(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
-  for (int r = 0; r < rate.size(); r++) {
+  for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
     if (initRatio == kWriteHeavy)
       kRate = rate1[r];
@@ -192,7 +192,7 @@ void mainMap(double initRatio, const std::vector<int> &length) {
     if (r == 0) {
       // test_btree(true, initRatio, initData, testInsert, length);
       // test_alex(true, initRatio, initData, testInsert, length);
-      // test_radix_spline(true, initRatio, initData, testInsert, length);
+      // test_radix_spline(true, initRatio, initData);
     }
     CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
@@ -202,7 +202,7 @@ void mainMap(double initRatio, const std::vector<int> &length) {
     if (r == 0) {
       // test_btree(true, initRatio, initData, testInsert, length);
       // test_alex(true, initRatio, initData, testInsert, length);
-      // test_radix_spline(true, initRatio, initData, testInsert, length);
+      // test_radix_spline(true, initRatio, initData);
     }
     CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
@@ -238,7 +238,7 @@ void mainYCSB(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
-  for (int r = 0; r < rate.size(); r++) {
+  for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
     if (initRatio == kWriteHeavy)
       kRate = rate1[r];
@@ -249,9 +249,9 @@ void mainYCSB(double initRatio, const std::vector<int> &length) {
               << std::endl;
     ycsbData.GenerateDataset(&initData, &testInsert);
     if (r == 0) {
-      test_btree(true, initRatio, initData, testInsert, length);
-      test_alex(true, initRatio, initData, testInsert, length);
-      test_radix_spline(true, initRatio, initData, testInsert, length);
+      // test_btree(true, initRatio, initData, testInsert, length);
+      // test_alex(true, initRatio, initData, testInsert, length);
+      // test_radix_spline(true, initRatio, initData);
     }
     CoreExternalCARMI(true, initRatio, kRate, length, initData, testInsert);
 

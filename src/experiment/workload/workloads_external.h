@@ -43,8 +43,7 @@ void WorkloadA(bool isZipfian, const DataVecType &findDataset,
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kWriteHeavy;
-  InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   std::clock_t s, e;
   double tmp;
@@ -103,8 +102,7 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
@@ -124,7 +122,8 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
         carmi->Find(findQuery[findCnt++].first);
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
@@ -145,7 +144,9 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) findCnt++;
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++)
+        findCnt++;
       std::pair<KeyType, std::vector<KeyType>> data = {
           insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
     }
@@ -172,8 +173,7 @@ void WorkloadC(bool isZipfian, const DataVecType &findDataset,
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kReadOnly;
-  InitTestSet(kReadOnly, findDataset, DataVecType(), &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, DataVecType(), &findQuery, &insertQuery, &index);
 
   std::clock_t s, e;
   double tmp;
@@ -223,8 +223,7 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
@@ -235,8 +234,14 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < index.size(); j++) {
-        auto it = carmi->Find(findQuery[index[findCnt]].first);
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(index.size()); j++) {
+        auto it = static_cast<const KeyType *>(
+            carmi->Find(findQuery[index[findCnt]].first));
+
+        for (int l = 0; l < length[index[findCnt]]; l++) {
+          ret[l] = {*it, *it};
+          it++;
+        }
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
@@ -245,8 +250,14 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        auto it = carmi->Find(findQuery[findCnt].first);
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
+        auto it =
+            static_cast<const KeyType *>(carmi->Find(findQuery[findCnt].first));
+        for (int l = 0; l < length[findCnt]; l++) {
+          ret[l] = {*it, *it};
+          it++;
+        }
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
@@ -261,7 +272,9 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < index.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(index.size()); j++) {
+        for (int l = 0; l < length[index[findCnt]]; l++) {
+        }
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
@@ -269,7 +282,10 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
+        for (int l = 0; l < length[findCnt]; l++) {
+        }
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {

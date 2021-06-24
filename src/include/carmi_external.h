@@ -84,13 +84,12 @@ class CARMIExternal {
    * @brief print the structure of carmi
    *
    * @param level 1
-   * @param type the root type
    * @param idx 0
    * @param levelVec the level of carmi
    * @param nodeVec the node type vector
    */
-  void PrintStructure(int level, NodeType type, int idx,
-                      std::vector<int> *levelVec, std::vector<int> *nodeVec) {
+  void PrintStructure(int level, int idx, std::vector<int> *levelVec,
+                      std::vector<int> *nodeVec) {
     carmi_tree.PrintStructure(level, LR_ROOT_NODE, idx, levelVec, nodeVec);
     std::cout << "avg level is: "
               << carmi_tree.sumDepth * 1.0 / carmi_tree.nowChildNumber
@@ -114,7 +113,7 @@ CARMIExternal<KeyType>::CARMIExternal(const void *dataset,
                       1};
   }
 
-  for (int i = 0; i < future_insert.size(); i++) {
+  for (int i = 0; i < static_cast<int>(future_insert.size()); i++) {
     insertQuery[i] = {initDataset[i].first, 1};
     insertQueryIndex[i] = record_number + i;
   }
@@ -122,6 +121,6 @@ CARMIExternal<KeyType>::CARMIExternal(const void *dataset,
   carmi_tree = carmi_impl(dataset, initDataset, findQuery, insertQuery,
                           insertQueryIndex, lambda, record_number, record_len);
 
-  carmi_tree.Construction(initDataset, findQuery, insertQuery);
+  carmi_tree.Construction();
 }
 #endif  // SRC_INCLUDE_CARMI_EXTERNAL_H_

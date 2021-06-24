@@ -46,9 +46,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
 }
 
 template <typename KeyType, typename ValueType>
-inline void CARMI<KeyType, ValueType>::Construction(
-    const DataVectorType &initData, const DataVectorType &findData,
-    const DataVectorType &insertData) {
+inline void CARMI<KeyType, ValueType>::Construction() {
   NodeCost nodeCost = emptyCost;
   RootStruct res = ChooseRoot();
   rootType = res.rootType;
@@ -84,7 +82,7 @@ inline void CARMI<KeyType, ValueType>::Construction(
       emptyBlocks[i].m_block.erase(it, emptyBlocks[i].m_block.end());
       auto tmp = emptyBlocks[i];
       for (auto j = tmp.m_block.begin(); j != tmp.m_block.end(); j++) {
-        if (tmp.m_width + *j > entireData.size()) {
+        if (tmp.m_width + *j > static_cast<int>(entireData.size())) {
           AllocateEmptyBlock(*j, entireData.size() - *j);
           emptyBlocks[i].m_block.erase(*j);
           break;

@@ -23,7 +23,7 @@ class EmptyBlock {
    * @param size the size that needs to be allocated
    * @return int return the key
    */
-  int allocate(int size) {
+  int allocate() {
     // if the set is empty, allocation fails
     if (m_block.empty()) return -1;
     auto res = *m_block.begin();

@@ -28,7 +28,7 @@ class ArrayType {
     m_left = -1;
     previousLeaf = -1;
     nextLeaf = -1;
-    for (int i = 0; i < 48 / sizeof(KeyType); i++) {
+    for (int i = 0; i < 48 / static_cast<int>(sizeof(KeyType)); i++) {
       slotkeys[i] = DBL_MIN;
     }
   }

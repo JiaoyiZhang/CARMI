@@ -39,7 +39,7 @@ void CARMI<KeyType, ValueType>::NodePartition(
   for (int i = range.left; i < end; i++) {
     int p = node.Predict(dataset[i].first);
 #ifdef DEBUG
-    if (p < 0 || p >= (*subData).size()) {
+    if (p < 0 || p >= static_cast<int>((*subData).size())) {
       std::cout << "model: " << typeid(TYPE).name() << ",\tp: " << p
                 << ",\ti: " << i << std::endl;
       node.Predict(dataset[i].first);
@@ -323,12 +323,12 @@ void CARMI<KeyType, ValueType>::CheckBound(int left, int currunion,
 template <typename KeyType, typename ValueType>
 bool CARMI<KeyType, ValueType>::CheckChildBound(int idx) {
 #ifdef DEBUG
-  if (idx >= nowChildNumber) {
+  if (static_cast<unsigned int>(idx) >= nowChildNumber) {
     std::cout << "lidx :" << idx << ",\tnowDataSize:" << nowChildNumber
               << std::endl;
     return false;
   }
-  if (idx >= entireChild.size()) {
+  if (idx >= static_cast<int>(entireChild.size())) {
     std::cout << "lidx :" << idx
               << ",\entireChild.size():" << entireChild.size() << std::endl;
     return false;

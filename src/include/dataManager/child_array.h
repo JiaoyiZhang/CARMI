@@ -24,7 +24,7 @@ void CARMI<KeyType, ValueType>::InitEntireChild() {
 template <typename KeyType, typename ValueType>
 int CARMI<KeyType, ValueType>::AllocateChildMemory(int size) {
   int newLeft = -1;
-  int tmpSize = entireChild.size();
+  unsigned int tmpSize = entireChild.size();
   if (nowChildNumber + size <= tmpSize) {
     newLeft = nowChildNumber;
     nowChildNumber += size;
