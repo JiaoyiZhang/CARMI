@@ -24,7 +24,7 @@ bool CARMI<KeyType, ValueType>::Delete(KeyType key) {
     switch (type) {
       case LR_ROOT_NODE:
         idx = root.childLeft +
-              root.LRType<DataVectorType, DataType>::model.Predict(key);
+              root.LRType<DataVectorType, KeyType>::model.Predict(key);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(key);

@@ -25,7 +25,7 @@ bool CARMI<KeyType, ValueType>::Update(DataType data) {
     switch (type) {
       case LR_ROOT_NODE:
         idx = root.childLeft +
-              root.LRType<DataVectorType, DataType>::model.Predict(data.first);
+              root.LRType<DataVectorType, KeyType>::model.Predict(data.first);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft +

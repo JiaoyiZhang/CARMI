@@ -30,7 +30,7 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
     switch (type) {
       case LR_ROOT_NODE:
         idx = root.childLeft +
-              root.LRType<DataVectorType, DataType>::model.Predict(data.first);
+              root.LRType<DataVectorType, KeyType>::model.Predict(data.first);
         break;
       case LR_INNER_NODE:
         idx = entireChild[idx].lr.childLeft +
@@ -54,40 +54,18 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
         int left = entireChild[idx].array.m_left;
         int currunion = entireChild[idx].array.Predict(data.first);
 
-        if (nowLeafNum == 0) {
-          bool isSuccess =
-              SlotsUnionInsert(data, currunion, &entireData[left + currunion],
-                               &entireChild[idx]);
-          if (isSuccess) {
-            CheckChildBound(idx);
-            return true;
-          }
-        } else if (currunion >= nowLeafNum) {
-          bool isSuccess = SlotsUnionInsert(data, currunion,
-                                            &entireData[left + currunion - 1],
-                                            &entireChild[idx]);
-          if (isSuccess) {
-            CheckChildBound(idx);
-            entireChild[idx].array.slotkeys[currunion - 1] = std::max(
-                entireChild[idx].array.slotkeys[currunion - 1], data.first + 1);
-            return true;
-          } else {
-            // expand
-            Expand(left, left + nowLeafNum, &entireChild[idx].array);
-            break;
-          }
-        }
         bool isSuccess = SlotsUnionInsert(
             data, currunion, &entireData[left + currunion], &entireChild[idx]);
         if (isSuccess) {
           CheckChildBound(idx);
           return true;
         }
+
         int nowDataNum = GetDataNum(left, left + nowLeafNum);
 
         left += currunion;
         // insert into the sibling
-        if (currunion == 0 && nowLeafNum != 1) {
+        if (currunion < nowLeafNum - 1) {
 #ifdef DEBUG
           CheckBound(left, 1, nowDataSize);
 #endif  // DEBUG
@@ -101,58 +79,15 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
               return true;
             }
           }
-        } else if (currunion == nowLeafNum - 1 && currunion != 0) {
-#ifdef DEBUG
-          CheckBound(left, -1, nowDataSize);
-#endif  // DEBUG
-#ifdef DEBUG
-          CheckBound(left, 0, nowDataSize);
-#endif  // DEBUG
-        // only check the previous union
-          if (entireData[left - 1].slots[kMaxSlotNum - 1].first == DBL_MIN &&
-              (entireData[left].slots[0].first !=
-               entireData[left].slots[1].first)) {
-            isSuccess =
-                ArrayInsertPrevious(data, left, currunion, &entireChild[idx]);
-            if (isSuccess) {
-              CheckChildBound(idx);
-              return true;
-            }
-          }
-        } else if (currunion > 0 && currunion < nowLeafNum - 1) {
-#ifdef DEBUG
-          CheckBound(left, -1, nowDataSize);
-#endif  // DEBUG
-#ifdef DEBUG
-          CheckBound(left, 0, nowDataSize);
-#endif  // DEBUG
-          if (entireData[left - 1].slots[kMaxSlotNum - 1].first == DBL_MIN &&
-              (entireData[left].slots[0].first !=
-               entireData[left].slots[1].first)) {
-            isSuccess =
-                ArrayInsertPrevious(data, left, currunion, &entireChild[idx]);
-            if (isSuccess) {
-              CheckChildBound(idx);
-              return true;
-            }
-          }
-#ifdef DEBUG
-          CheckBound(left, 1, nowDataSize);
-#endif  // DEBUG
-          if (entireData[left + 1].slots[kMaxSlotNum - 1].first == DBL_MIN) {
-            isSuccess =
-                ArrayInsertNext(data, left, currunion, &entireChild[idx]);
-            if (isSuccess) {
-              CheckChildBound(idx);
-              return true;
-            }
-          }
         }
+
+        // inserting into sibling failed, need to change the leaf node
         if (nowDataNum < nowLeafNum * (kMaxSlotNum - 1)) {
           // rebalance
           Rebalance(left - currunion, left - currunion + nowLeafNum,
                     &entireChild[idx].array);
         } else if (nowLeafNum >= kMaxLeafNum) {
+          SplitNum++;
           // split
           int previousIdx = entireChild[idx].array.previousLeaf;
           Split<ArrayType<KeyType>>(false, left - currunion, kMaxLeafNum,
@@ -162,6 +97,7 @@ bool CARMI<KeyType, ValueType>::Insert(DataType data) {
 
           CheckChildBound(idx);
         } else {
+          ExpandNum++;
           // expand
           Expand(left - currunion, left - currunion + nowLeafNum,
                  &entireChild[idx].array);

@@ -50,8 +50,23 @@ inline int CARMI<KeyType, ValueType>::ExternalBinarySearch(double key,
 }
 
 template <typename KeyType, typename ValueType>
-inline int CARMI<KeyType, ValueType>::SlotsUnionSearch(
-    const LeafSlots<KeyType, ValueType> &node, double key) {
+__always_inline int CARMI<KeyType, ValueType>::SlotsUnionSearch(
+    const LeafSlots<KeyType, ValueType> &node, KeyType key) {
+  // if (node.slots[0].first >= key) {
+  //   return 0;
+  // } else if (node.slots[1].first == DBL_MIN || node.slots[1].first >= key) {
+  //   return 1;
+  // } else if (node.slots[2].first == DBL_MIN || node.slots[2].first >= key) {
+  //   return 2;
+  // } else {
+  //   return 3;
+  // }
+  // for (int i = 0; i < kMaxSlotNum; i++) {
+  //   if (key <= node.slots[i].first || node.slots[i].first == DBL_MIN) {
+  //     return i;
+  //   }
+  // }
+
   int start_idx = 0;
   int end_idx = kMaxSlotNum - 1;
   if (node.slots[0].first == DBL_MIN || key < node.slots[0].first) {
@@ -74,144 +89,6 @@ inline int CARMI<KeyType, ValueType>::SlotsUnionSearch(
   }
   return start_idx;
 }
-
-template <typename KeyType, typename ValueType>
-inline bool CARMI<KeyType, ValueType>::ArrayInsertPrevious(
-    const DataType &data, int nowDataIdx, int currunion,
-    BaseNode<KeyType> *node) {
-#ifdef DEBUG
-  CheckBound(nowDataIdx, 0, nowDataSize);
-#endif  // DEBUG
-
-#ifdef DEBUG
-  CheckBound(nowDataIdx, -1, nowDataSize);
-#endif  // DEBUG
-  if (data.first > entireData[nowDataIdx].slots[0].first) {
-    SlotsUnionInsert(entireData[nowDataIdx].slots[0], currunion - 1,
-                     &entireData[nowDataIdx - 1], node);
-#ifdef DEBUG
-    for (int i = 0; i < kMaxSlotNum - 1; i++) {
-      if (entireData[nowDataIdx - 1].slots[i].first != DBL_MIN &&
-          entireData[nowDataIdx - 1].slots[i + 1].first != DBL_MIN) {
-        if (entireData[nowDataIdx - 1].slots[i].first >
-            entireData[nowDataIdx - 1].slots[i + 1].first) {
-          std::cout << "after insert, check is wrong!" << std::endl;
-        }
-      }
-      if (entireData[nowDataIdx - 1].slots[i].first == DBL_MIN &&
-          entireData[nowDataIdx - 1].slots[i + 1].first != DBL_MIN) {
-        std::cout << "after insert, check is wrong!" << std::endl;
-      }
-    }
-    int e = node->array.flagNumber & 0x00FFFFFF;
-    int cnt = 0;
-    for (int i = 0; i < e - 2; i++) {
-      if (node->array.slotkeys[i] == DBL_MIN &&
-          node->array.slotkeys[i + 1] != DBL_MIN) {
-        std::cout << "after insert, check is wrong!" << std::endl;
-      }
-      if (node->array.slotkeys[i] != DBL_MIN) {
-        cnt++;
-      }
-    }
-    if (node->array.slotkeys[e - 2] != DBL_MIN) {
-      cnt++;
-    }
-    if ((e != 1 && cnt != e - 1) || (e == 1 && cnt != 1)) {
-      std::cout << "after insert, check is wrong!" << std::endl;
-    }
-#endif  // DEBUG
-    entireData[nowDataIdx].slots[0] = {DBL_MIN, DBL_MIN};
-    if (entireData[nowDataIdx].slots[kMaxSlotNum - 1].first < data.first) {
-      for (int j = 0; j < kMaxSlotNum - 1; j++) {
-        entireData[nowDataIdx].slots[j] = entireData[nowDataIdx].slots[j + 1];
-      }
-      entireData[nowDataIdx].slots[kMaxSlotNum - 1] = data;
-    } else {
-      for (int i = 1; i < kMaxSlotNum; i++) {
-        if (entireData[nowDataIdx].slots[i].first > data.first) {
-          for (int j = 0; j < i - 1; j++) {
-            entireData[nowDataIdx].slots[j] =
-                entireData[nowDataIdx].slots[j + 1];
-          }
-          entireData[nowDataIdx].slots[i - 1] = data;
-          break;
-        }
-      }
-    }
-    node->array.slotkeys[currunion - 1] = entireData[nowDataIdx].slots[0].first;
-#ifdef DEBUG
-    for (int i = 0; i < kMaxSlotNum - 1; i++) {
-      if (entireData[nowDataIdx].slots[i].first != DBL_MIN &&
-          entireData[nowDataIdx].slots[i + 1].first != DBL_MIN) {
-        if (entireData[nowDataIdx].slots[i].first >
-            entireData[nowDataIdx].slots[i + 1].first) {
-          std::cout << "after insert, check is wrong!" << std::endl;
-        }
-      }
-      if (entireData[nowDataIdx].slots[i].first == DBL_MIN &&
-          entireData[nowDataIdx].slots[i + 1].first != DBL_MIN) {
-        std::cout << "after insert, check is wrong!" << std::endl;
-      }
-    }
-    e = node->array.flagNumber & 0x00FFFFFF;
-    cnt = 0;
-    for (int i = 0; i < e - 2; i++) {
-      if (node->array.slotkeys[i] == DBL_MIN &&
-          node->array.slotkeys[i + 1] != DBL_MIN) {
-        std::cout << "after insert, check is wrong!" << std::endl;
-      }
-      if (node->array.slotkeys[i] != DBL_MIN) {
-        cnt++;
-      }
-    }
-    if (node->array.slotkeys[e - 2] != DBL_MIN) {
-      cnt++;
-    }
-    if ((e != 1 && cnt != e - 1) || (e == 1 && cnt != 1)) {
-      std::cout << "after insert, check is wrong!" << std::endl;
-    }
-#endif  // DEBUG
-    return true;
-  } else if (data.first < entireData[nowDataIdx].slots[0].first) {
-    SlotsUnionInsert(data, currunion - 1, &entireData[nowDataIdx - 1], node);
-#ifdef DEBUG
-    for (int i = 0; i < kMaxSlotNum - 1; i++) {
-      if (entireData[nowDataIdx - 1].slots[i].first != DBL_MIN &&
-          entireData[nowDataIdx - 1].slots[i + 1].first != DBL_MIN) {
-        if (entireData[nowDataIdx - 1].slots[i].first >
-            entireData[nowDataIdx - 1].slots[i + 1].first) {
-          std::cout << "after insert, check is wrong!" << std::endl;
-        }
-      }
-      if (entireData[nowDataIdx - 1].slots[i].first == DBL_MIN &&
-          entireData[nowDataIdx - 1].slots[i + 1].first != DBL_MIN) {
-        std::cout << "after insert, check is wrong!" << std::endl;
-      }
-    }
-    int e = node->array.flagNumber & 0x00FFFFFF;
-    int cnt = 0;
-    for (int i = 0; i < e - 2; i++) {
-      if (node->array.slotkeys[i] == DBL_MIN &&
-          node->array.slotkeys[i + 1] != DBL_MIN) {
-        std::cout << "after insert, check is wrong!" << std::endl;
-      }
-      if (node->array.slotkeys[i] != DBL_MIN) {
-        cnt++;
-      }
-    }
-    if (node->array.slotkeys[e - 2] != DBL_MIN) {
-      cnt++;
-    }
-    if ((e != 1 && cnt != e - 1) || (e == 1 && cnt != 1)) {
-      std::cout << "after insert, check is wrong!" << std::endl;
-    }
-#endif  // DEBUG
-    return true;
-  }
-  return false;
-}
-
 template <typename KeyType, typename ValueType>
 inline bool CARMI<KeyType, ValueType>::ArrayInsertNext(
     const DataType &data, int nowDataIdx, int currunion,
@@ -222,12 +99,6 @@ inline bool CARMI<KeyType, ValueType>::ArrayInsertNext(
 
 #ifdef DEBUG
   CheckBound(nowDataIdx, 1, nowDataSize);
-#endif  // DEBUG
-#ifdef DEBUG
-  CheckBound(nowDataIdx, currunion, nowDataSize);
-#endif  // DEBUG
-#ifdef DEBUG
-  CheckBound(nowDataIdx, currunion + 1, nowDataSize);
 #endif  // DEBUG
   if (data.first > entireData[nowDataIdx].slots[kMaxSlotNum - 1].first) {
     SlotsUnionInsert(data, currunion + 1, &entireData[nowDataIdx + 1], node);
@@ -248,21 +119,11 @@ inline bool CARMI<KeyType, ValueType>::ArrayInsertNext(
       }
     }
     int e = node->array.flagNumber & 0x00FFFFFF;
-    int cnt = 0;
     for (int i = 0; i < e - 2; i++) {
       if (node->array.slotkeys[i] == DBL_MIN &&
           node->array.slotkeys[i + 1] != DBL_MIN) {
         std::cout << "after insert, check is wrong!" << std::endl;
       }
-      if (node->array.slotkeys[i] != DBL_MIN) {
-        cnt++;
-      }
-    }
-    if (node->array.slotkeys[e - 2] != DBL_MIN) {
-      cnt++;
-    }
-    if ((e != 1 && cnt != e - 1) || (e == 1 && cnt != 1)) {
-      std::cout << "after insert, check is wrong!" << std::endl;
     }
 #endif  // DEBUG
     return true;
@@ -284,21 +145,11 @@ inline bool CARMI<KeyType, ValueType>::ArrayInsertNext(
       }
     }
     int e = node->array.flagNumber & 0x00FFFFFF;
-    int cnt = 0;
     for (int i = 0; i < e - 2; i++) {
       if (node->array.slotkeys[i] == DBL_MIN &&
           node->array.slotkeys[i + 1] != DBL_MIN) {
         std::cout << "after insert, check is wrong!" << std::endl;
       }
-      if (node->array.slotkeys[i] != DBL_MIN) {
-        cnt++;
-      }
-    }
-    if (node->array.slotkeys[e - 2] != DBL_MIN) {
-      cnt++;
-    }
-    if ((e != 1 && cnt != e - 1) || (e == 1 && cnt != 1)) {
-      std::cout << "after insert, check is wrong!" << std::endl;
     }
 #endif  // DEBUG
 
@@ -340,21 +191,11 @@ inline bool CARMI<KeyType, ValueType>::ArrayInsertNext(
       }
     }
     e = node->array.flagNumber & 0x00FFFFFF;
-    cnt = 0;
     for (int i = 0; i < e - 2; i++) {
       if (node->array.slotkeys[i] == DBL_MIN &&
           node->array.slotkeys[i + 1] != DBL_MIN) {
         std::cout << "after insert, check is wrong!" << std::endl;
       }
-      if (node->array.slotkeys[i] != DBL_MIN) {
-        cnt++;
-      }
-    }
-    if (node->array.slotkeys[e - 2] != DBL_MIN) {
-      cnt++;
-    }
-    if ((e != 1 && cnt != e - 1) || (e == 1 && cnt != 1)) {
-      std::cout << "after insert, check is wrong!" << std::endl;
     }
 #endif  // DEBUG
     return true;
@@ -428,12 +269,10 @@ inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
     TYPE tmpLeaf;
     Init(perSize[i].left, perSize[i].size, tmpDataset, &tmpLeaf);
 
-    // TODO(jiaoyi): changes to b+ tree
     if (isExternal) {
       tmpLeaf.m_left = tmpLeft;
       tmpLeft += perSize[i].size;
     }
-    CheckChildBound(node.childLeft + i);
     entireChild[node.childLeft + i].array =
         *(reinterpret_cast<ArrayType<KeyType> *>(&tmpLeaf));
   }
