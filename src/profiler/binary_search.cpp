@@ -15,15 +15,19 @@
 #include <utility>
 #include <vector>
 
-const int kSize = 100000000;
+const int kSize = 1410065408;
 const float kSecondToNanosecond = 1000000000.0;
-std::vector<double> entireData;
-std::vector<int> idx;
-const int end = kSize / 64 - 8;
+std::vector<double> entireData(kSize, 0);
+const int end = kSize / 64;
+std::vector<int> idx(end, 0);
+std::vector<int> start_idx(end, 0);
+std::vector<double> value(end, 0.0);
+std::vector<int> end_idx(end, 0);
 
 __always_inline int BinarySearch(double key, int start, int end) {
+  return entireData[start];// + entireData[start + 1];
   while (start < end) {
-    int mid = (start + end) / 2;
+    int mid = (start + end) >> 1;
     if (entireData[mid] < key)
       start = mid + 1;
     else
@@ -33,47 +37,59 @@ __always_inline int BinarySearch(double key, int start, int end) {
 }
 
 void GetBinarySearchTime(int nodeSize) {
+  std::vector<int> bias(nodeSize, 0);
+  for (int i = 0; i < nodeSize; i++) {
+    bias[i] = i;
+  }
   unsigned seed = std::clock();
   std::default_random_engine engine(seed);
+  shuffle(bias.begin(), bias.end(), engine);
+  for (int i = 0; i < end; i++) {
+    value[i] = i + bias[i & (nodeSize - 1)];
+    start_idx[i] = i;
+    end_idx[i] = i + nodeSize - 1;
+    // std::cout << "idx[i]:" << idx[i] << ",\tstart_idx[i]:" << start_idx[i]
+    //           << ",\tend:" << end_idx[i] << ",\tkey:" << value[i]
+    //           << ",\tbias:" << value[i] - start_idx[i] << std::endl;
+  }
+
   shuffle(idx.begin(), idx.end(), engine);
 
-  int start, endidx;
-  double value;
   std::clock_t s, e;
+  register int index, startidx, endidx;
+  register double key;
   double tmp;
-  int c;
+  register int c;
   s = std::clock();
-  for (int i = 0, j = 0; i < end; i++, j++) {
-    start = idx[i];
-    // endidx = std::min(start + nodeSize - 1, kSize - 1);
-    endidx = start + nodeSize - 1;
-
-    value = start + j;
-    c = BinarySearch(value, start, endidx);
-
-    j &= nodeSize - 1;
+  for (int i = 0; i < end; i++) {
+    index = idx[i];
+    // key = value[index];
+    // startidx = start_idx[index];
+    // endidx = end_idx[index];
+    c += BinarySearch(index, index, index);
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
 
+  double tmp1 = 0;
+  shuffle(idx.begin(), idx.end(), engine);
   s = std::clock();
-  for (int i = 0, j = 0; i < end; i++, j++) {
-    start = idx[i];
-    // endidx = std::min(start + nodeSize - 1, kSize - 1);
-    endidx = start + nodeSize - 1;
-    value = start + j;
-    j &= nodeSize - 1;
+  for (int i = 0; i < end; i++) {
+    index = idx[i];
+    // c += index;
+    // key = value[index];
+    // startidx = start_idx[index];
+    // endidx = end_idx[index];
+    // c += key + startidx + endidx;
   }
   e = std::clock();
-  double tmp1 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
+  tmp1 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
   std::cout << nodeSize * 8
             << " bs average time:" << (tmp - tmp1) * kSecondToNanosecond / end
-            << std::endl;
+            << ",\tc:" << c << std::endl;
 }
 
 int main() {
-  entireData = std::vector<double>(kSize, 0);
-  idx = std::vector<int>(end);
   for (int i = 0; i < kSize; i++) {
     entireData[i] = i;
   }

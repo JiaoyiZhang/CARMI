@@ -39,6 +39,7 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
 #ifdef DEBUG
   std::cout << std::endl;
   std::cout << "-------------------------------" << std::endl;
+  std::cout << "kRate: " << rate << std::endl;
   std::cout << "Start construction!" << std::endl;
   time_t timep;
   time(&timep);
@@ -69,6 +70,7 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
   std::cout << "\nprint the space:" << std::endl;
   auto space = carmi.CalculateSpace();
   outRes << space << ",";
+  std::cout << space << " MB\n";
 
   std::vector<int> levelVec(20, 0);
   std::vector<int> nodeVec(11, 0);
@@ -104,6 +106,7 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
   else if (initRatio == kRangeScan)
     WorkloadE<KeyType, ValueType>(isZipfian, init, testInsertQuery, length,
                                   &carmi);  // range scan
+  carmi.OutputTimes();
 }
 
 /**
