@@ -29,11 +29,13 @@ inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
   int end = left + size;
   for (int i = start; i < end; i += value) {
     if (cnt >= childNumber) break;
-    if (dataset[i].first != -1) {
-      bs->index[cnt - 1] = dataset[i].first;
+    if (dataset[i].first != DBL_MIN) {
+      bs->index[cnt - 1] = static_cast<int>(dataset[i].first);
+      bs->index[cnt - 1] +=
+          static_cast<float>(dataset[i].first - bs->index[cnt - 1]);
     } else {
       for (int j = i + 1; j < end; j++) {
-        if (dataset[j].first != -1) {
+        if (dataset[j].first != DBL_MIN) {
           bs->index[cnt - 1] = dataset[i].first;
           break;
         }

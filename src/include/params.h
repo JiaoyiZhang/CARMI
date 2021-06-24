@@ -14,7 +14,7 @@
 #define DEBUG
 
 namespace carmi_params {
-const int kMaxLeafNodeSize = 64;  // bytes, the size of a union in leaf nodes
+const int kMaxLeafNodeSize = 256;  // bytes, the size of a union in leaf nodes
 
 const int kAlgorithmThreshold = 1024;
 

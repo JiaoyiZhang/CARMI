@@ -69,7 +69,7 @@ inline int LRModel::Predict(double key) const {
 
   // return the predicted idx in the children
   int p = theta[idx].first * key + theta[idx].second;
-  int bound = (flagNumber & 0x00FFFFFF) * 0.16667;
+  int bound = (flagNumber & 0x00FFFFFF) * 0.16666;
   idx = bound * idx;
   if (p < idx)
     p = idx;

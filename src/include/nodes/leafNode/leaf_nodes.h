@@ -39,7 +39,7 @@ class ArrayType {
    * @param key
    * @return int the predicted index in the leaf node
    */
-  int Predict(double key) const;
+  int Predict(KeyType key) const;
 
   int flagNumber;  // 4 Byte (flag + 0), size: the number of union
   int previousLeaf;

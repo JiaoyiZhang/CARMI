@@ -13,9 +13,9 @@
 
 #include <vector>
 
-#include "../../params.h"
 #include "../../carmi.h"
 #include "../../construct/minor_function.h"
+#include "../../params.h"
 #include "./leaf_nodes.h"
 
 template <typename KeyType, typename ValueType>
@@ -33,7 +33,7 @@ inline void CARMI<KeyType, ValueType>::Train(int start_idx, int size,
 }
 
 template <typename KeyType, typename ValueType>
-inline void CARMI<KeyType, ValueType>::Init(int cap, int start_idx, int size,
+inline void CARMI<KeyType, ValueType>::Init(int start_idx, int size,
                                             const DataVectorType &dataset,
                                             ExternalArray *ext) {
   ext->m_left = start_idx;
