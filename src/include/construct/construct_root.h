@@ -35,9 +35,13 @@ void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
   for (int i = 0; i < c; i++) {
     int maxLeafCapacity = carmi_params::kMaxLeafNodeSizeExternal;
     if (!isPrimary) {
-      space_cost += CFArrayType<KeyType, ValueType>::CalculateNeededBlockNumber(
-                        perSize[i].size) *
-                    carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
+      int tmpBlockNum = std::min(
+          static_cast<int>(
+              ceil(perSize[i].size * 1.0 /
+                   CFArrayType<KeyType, ValueType>::kMaxBlockCapacity)),
+          CFArrayType<KeyType, ValueType>::kMaxBlockNum);
+      space_cost +=
+          tmpBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
       maxLeafCapacity = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
     }
     if (perSize[i].size > maxLeafCapacity) {

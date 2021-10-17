@@ -41,9 +41,13 @@ void CARMI<KeyType, ValueType>::IsBetterGreedy(int c, double frequency_weight,
   double cost = time_cost / entropy;
   for (int i = 0; i < c; i++) {
     if (!isPrimary) {
-      space_cost += CFArrayType<KeyType, ValueType>::CalculateNeededBlockNumber(
-                        perSize[i].size) *
-                    carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
+      int tmpBlockNum = std::min(
+          static_cast<int>(
+              ceil(perSize[i].size * 1.0 /
+                   CFArrayType<KeyType, ValueType>::kMaxBlockCapacity)),
+          CFArrayType<KeyType, ValueType>::kMaxBlockNum);
+      space_cost +=
+          tmpBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
     }
     if (perSize[i].size > CFArrayType<KeyType, ValueType>::kMaxLeafCapacity) {
       space_cost += kBaseNodeSpace;
