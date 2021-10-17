@@ -1,8 +1,8 @@
 /**
  * @file carmi_common.h
  * @author Jiaoyi
- * @brief
- * @version 0.1
+ * @brief the common type of CARMI
+ * @version 3.0
  * @date 2021-04-01
  *
  * @copyright Copyright (c) 2021
@@ -11,27 +11,36 @@
 #ifndef SRC_INCLUDE_CARMI_COMMON_H_
 #define SRC_INCLUDE_CARMI_COMMON_H_
 
+#include <map>
 #include <vector>
 
 #include "./carmi.h"
 #include "construct/construction.h"
-#include "dataManager/child_array.h"
-#include "dataManager/datapoint.h"
 #include "func/delete_function.h"
 #include "func/find_function.h"
 #include "func/insert_function.h"
 #include "func/print_structure.h"
 #include "func/update_function.h"
+#include "memoryLayout/node_array.h"
 
+/**
+ * @brief the common type of CARMI
+ *
+ * @tparam KeyType the type of the key
+ * @tparam ValueType the type of the value
+ */
 template <typename KeyType, typename ValueType>
 class CARMICommon {
  public:
-  typedef CARMI<KeyType, ValueType> carmi_impl;
-  typedef typename CARMI<KeyType, ValueType>::DataType DataType;
-  typedef typename CARMI<KeyType, ValueType>::DataVectorType DataVectorType;
+  typedef CARMI<KeyType, ValueType>
+      carmi_impl;  ///< the type of implementation of CARMI
+  typedef typename CARMI<KeyType, ValueType>::DataType
+      DataType;  ///< the type of the data point
+  typedef typename CARMI<KeyType, ValueType>::DataVectorType
+      DataVectorType;  ///< the type of the dataset
 
  private:
-  carmi_impl carmi_tree;
+  carmi_impl carmi_tree;  ///< the implementation of CARMI
 
  public:
   /**
@@ -84,7 +93,7 @@ class CARMICommon {
      * @brief Construct a new iterator object
      *
      */
-    inline iterator() : tree(NULL), currnode(NULL), currslot(0) {}
+    inline iterator() : tree(NULL), currnode(NULL), currblock(0), currslot(0) {}
 
     /**
      * @brief Construct a new iterator object
@@ -92,7 +101,7 @@ class CARMICommon {
      * @param t the carmi tree
      */
     explicit inline iterator(CARMICommon *t)
-        : tree(t), currnode(NULL), currslot(-1) {}
+        : tree(t), currnode(NULL), currblock(0), currslot(-1) {}
 
     /**
      * @brief Construct a new iterator object
@@ -101,8 +110,9 @@ class CARMICommon {
      * @param l the current node
      * @param s the current slot
      */
-    inline iterator(CARMICommon *t, BaseNode *l, int s)
-        : tree(t), currnode(l), currslot(s) {}
+    inline iterator(CARMICommon *t, BaseNode<KeyType, ValueType> *l, int u,
+                    int s)
+        : tree(t), currnode(l), currblock(u), currslot(s) {}
 
     /**
      * @brief get the key of this iterator
@@ -110,11 +120,20 @@ class CARMICommon {
      * @return const KeyType
      */
     inline const KeyType key() const {
-      if (currnode == NULL || tree == NULL) {
-        return DBL_MIN;
+      if (currnode == NULL || tree == NULL ||
+          currslot >= CFArrayType<KeyType, ValueType>::kMaxBlockCapacity ||
+          currblock >= CFArrayType<KeyType, ValueType>::kMaxBlockNum) {
+        return DBL_MAX;
       }
-      int left = currnode->array.m_left;
-      return tree->carmi_tree.entireData[left + currslot].first;
+      int left = currnode->cfArray.m_left;
+      if (left + currblock >= tree->carmi_tree.data.nowDataSize) {
+        std::cout << "index is: " << left + currblock << std::endl;
+        std::cout << "the index is out of range, size:"
+                  << tree->carmi_tree.data.nowDataSize << std::endl;
+      }
+      return tree->carmi_tree.data.dataArray[left + currblock]
+          .slots[currslot]
+          .first;
     }
 
     /**
@@ -123,11 +142,20 @@ class CARMICommon {
      * @return const ValueType
      */
     inline const ValueType data() const {
-      if (currnode == NULL) {
-        return DBL_MIN;
+      if (currnode == NULL || tree == NULL ||
+          currslot >= CFArrayType<KeyType, ValueType>::kMaxBlockCapacity ||
+          currblock >= CFArrayType<KeyType, ValueType>::kMaxBlockNum) {
+        return DBL_MAX;
       }
-      int left = currnode->array.m_left;
-      return tree->carmi_tree.entireData[left + currslot].second;
+      int left = currnode->cfArray.m_left;
+      if (left + currblock >= tree->carmi_tree.data.nowDataSize) {
+        std::cout << "index is: " << left + currblock << std::endl;
+        std::cout << "the index is out of range, size:"
+                  << tree->carmi_tree.data.nowDataSize << std::endl;
+      }
+      return tree->carmi_tree.data.dataArray[left + currblock]
+          .slots[currslot]
+          .second;
     }
 
     /**
@@ -139,7 +167,7 @@ class CARMICommon {
      */
     inline bool operator==(const iterator &x) const {
       return (x.tree == tree && x.currnode == currnode) &&
-             (x.currslot == currslot);
+             (x.currslot == currslot && x.currblock == currblock);
     }
 
     /**
@@ -151,7 +179,7 @@ class CARMICommon {
      */
     inline bool operator!=(const iterator &x) const {
       return (x.currnode != currnode || x.tree != tree) ||
-             (x.currslot != currslot);
+             (x.currslot != currslot || x.currblock != currblock);
     }
 
     /**
@@ -160,17 +188,30 @@ class CARMICommon {
      * @return iterator&
      */
     inline iterator &operator++() {
-      int left = currnode->array.m_left;
+      int left = currnode->cfArray.m_left;
       currslot++;
-      while (currslot < (currnode->array.flagNumber & 0x00FFFFFF) ||
-             currnode->array.nextLeaf != -1) {
-        if (currslot == (currnode->array.flagNumber & 0x00FFFFFF)) {
-          currnode = &(tree->carmi_tree.entireChild[currnode->array.nextLeaf]);
+      while (currblock < (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
+             currnode->cfArray.nextLeaf != -1) {
+        if (left + currblock >= tree->carmi_tree.data.dataArray.size()) {
+          *this = this->tree->end();
+          return *this;
+        } else if (currblock == (currnode->cfArray.flagNumber & 0x00FFFFFF)) {
+          currnode =
+              &(tree->carmi_tree.node.nodeArray[currnode->cfArray.nextLeaf]);
           currslot = 0;
-          left = currnode->array.m_left;
+          currblock = 0;
+          left = currnode->cfArray.m_left;
           continue;
-        }
-        if (tree->carmi_tree.entireData[left + currslot].first != DBL_MIN) {
+        } else if (
+            // currslot == tree->carmi_tree.kMaxDataPointNum ||
+            tree->carmi_tree.data.dataArray[left + currblock]
+                .slots[currslot]
+                .first == DBL_MAX) {
+          currslot = 0;
+          currblock++;
+        } else if (tree->carmi_tree.data.dataArray[left + currblock]
+                       .slots[currslot]
+                       .first != DBL_MAX) {
           return *this;
         }
       }
@@ -178,9 +219,10 @@ class CARMICommon {
       return *this;
     }
 
-    CARMICommon *tree;   // the carmi tree
-    BaseNode *currnode;  // the current leaf node
-    int currslot;        // index in external_data
+    CARMICommon *tree;                       ///< the carmi tree
+    BaseNode<KeyType, ValueType> *currnode;  ///< the current leaf node
+    int currblock;  ///< index in unions of this leaf node
+    int currslot;   ///< index in external_data
   };
 
  private:
@@ -191,6 +233,7 @@ class CARMICommon {
    * @tparam InputIterator the iterator type of input
    * @param first the first input iterator
    * @param last the last input iterator
+   * @param initDataset the dataset
    */
   template <typename InputIterator>
   void PreprocessInput(const InputIterator &first, const InputIterator &last,
@@ -201,7 +244,7 @@ class CARMICommon {
    * the ratio, the range of write queries is [insert_leaf*dataset.size(),
    * insert_right*dataset.size())
    *
-   * @param initDataset
+   * @param initDataset the dataset
    * @param ratio readQuerySize/(readQuerySize+writeQuerySize)
    * @param insert_left the left boundary of the insert operation, the value is
    * between 0 and 1 (left_index / initDataset.size())
@@ -217,41 +260,45 @@ class CARMICommon {
   /**
    * @brief find the corresponding iterator of the given key
    *
-   * @param key
+   * @param key the given key value
    * @return iterator
    */
-  iterator Find(KeyType key) {
+  iterator Find(const KeyType &key) {
     iterator it(this);
-    it.currnode = carmi_tree.Find(key, &it.currslot);
+    it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
     return it;
   }
 
   /**
-   * @brief  insert the given key into carmi
+   * @brief insert the given key into carmi
    *
-   * @param data
-   * @return true
-   * @return false
+   * @param datapoint the inserted data point
+   * @retval true if the operation succeeds
+   * @retval false if the operation fails
    */
-  bool Insert(DataType data) { return carmi_tree.Insert(data); }
+  bool Insert(const DataType &datapoint) {
+    return carmi_tree.Insert(datapoint);
+  }
 
   /**
    * @brief update the value of the given data
    *
-   * @param data
-   * @return true
-   * @return false
+   * @param datapoint the new data point
+   * @retval true if the operation succeeds
+   * @retval false if the operation fails
    */
-  bool Update(DataType data) { return carmi_tree.Update(data); }
+  bool Update(const DataType &datapoint) {
+    return carmi_tree.Update(datapoint);
+  }
 
   /**
    * @brief delete the record of the given key
    *
-   * @param key
-   * @return true
-   * @return false
+   * @param key the key value of the deleted record
+   * @retval true if the operation succeeds
+   * @retval false if the operation fails
    */
-  bool Delete(KeyType key) { return carmi_tree.Delete(key); }
+  bool Delete(const KeyType &key) { return carmi_tree.Delete(key); }
 
   /**
    * @brief get the iterator of the first leaf node in carmi tree
@@ -261,7 +308,7 @@ class CARMICommon {
   iterator begin() {
     iterator it;
     it.tree = this;
-    it.currnode = carmi_tree.entireChild[carmi_tree.firstLeaf];
+    it.currnode = carmi_tree.node.nodeArray[carmi_tree.firstLeaf];
     it.currslot = 0;
     return it;
   }
@@ -282,7 +329,7 @@ class CARMICommon {
   /**
    * @brief calculate the space of carmi
    *
-   * @return long double
+   * @return long double: space
    */
   long double CalculateSpace() const { return carmi_tree.CalculateSpace(); }
 
@@ -291,14 +338,18 @@ class CARMICommon {
    *
    * @param level 1
    * @param type the root type
+   * @param dataSize the size of the dataset
    * @param idx 0
    * @param levelVec the level of carmi
    * @param nodeVec the node type vector
    */
-  void PrintStructure(int level, NodeType type, int idx,
-                      std::vector<int> *levelVec,
-                      std::vector<int> *nodeVec) const {
-    carmi_tree.PrintStructure(level, type, idx, levelVec, nodeVec);
+  void PrintStructure(int level, NodeType type, int dataSize, int idx,
+                      std::vector<int> *levelVec, std::vector<int> *nodeVec) {
+    carmi_tree.PrintStructure(level, type, dataSize, idx, levelVec, nodeVec);
+    std::cout << "avg level is: " << carmi_tree.sumDepth << std::endl;
+    // std::cout << "avg level is: "
+    //           << carmi_tree.sumDepth * 1.0 / carmi_tree.nowChildNumber
+    //           << std::endl;
   }
 };
 
@@ -323,7 +374,7 @@ void CARMICommon<KeyType, ValueType>::Init(DataVectorType initDataset,
   std::vector<int> insertQueryIndex;
 
   // set the read frequency
-  for (int i = 0; i < findQuery.size(); i++) {
+  for (int i = 0; i < static_cast<int>(findQuery.size()); i++) {
     findQuery[i].second = 1;
   }
 
@@ -341,7 +392,7 @@ void CARMICommon<KeyType, ValueType>::Init(DataVectorType initDataset,
   // construct carmi
   carmi_tree =
       carmi_impl(initDataset, findQuery, insertQuery, insertQueryIndex, rate);
-  carmi_tree.Construction(initDataset, findQuery, insertQuery);
+  carmi_tree.Construction();
 }
 
 #endif  // SRC_INCLUDE_CARMI_COMMON_H_

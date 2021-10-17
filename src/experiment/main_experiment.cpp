@@ -2,7 +2,7 @@
  * @file main_experiment.cpp
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-16
  *
  * @copyright Copyright (c) 2021
@@ -12,8 +12,6 @@
 #include <algorithm>
 #include <vector>
 
-#include "../baseline/art_tree_baseline.h"
-#include "../baseline/btree_baseline.h"
 #include "./experiment_params.h"
 #include "./functions.h"
 extern std::ofstream outRes;
@@ -28,14 +26,14 @@ void mainExperiment() {
   std::vector<int> length;
 
   // read-only
-  // mainSynthetic(kReadOnly, length);
-  // mainYCSB(kReadOnly, length);
+  mainSynthetic(kReadOnly, length);
+  mainYCSB(kReadOnly, length);
   mainMap(kReadOnly, length);
 
   // write-heavy
   mainSynthetic(kWriteHeavy, length);
-  mainYCSB(kWriteHeavy, length);
-  mainMap(kWriteHeavy, length);
+  // mainYCSB(kWriteHeavy, length);
+  // mainMap(kWriteHeavy, length);
 
   // read-heavy
   mainSynthetic(kReadHeavy, length);
@@ -83,15 +81,7 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
-#ifdef DEBUG
-  std::vector<double> rate = {0.2};
-  std::vector<double> rate1 = {0.1};  // 0.5
-#else
-  std::vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
-  std::vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
-#endif  // !DEBUG
-
-  for (int r = 0; r < rate.size(); r++) {
+  for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
     if (initRatio == kWriteHeavy)
       kRate = rate1[r];
@@ -101,43 +91,26 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
     std::cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++"
               << std::endl;
     uniData.GenerateDataset(&initData, &testInsert);
-    if (r == 0) {
-      btree_test(initRatio, initRatio, initData, testInsert, length);
-      // artTree_test(initRatio, initRatio, initData, testInsert, length);
-    }
-
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
     CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
               << std::endl;
     expData.GenerateDataset(&initData, &testInsert);
-    if (r == 0) {
-      btree_test(initRatio, initRatio, initData, testInsert, length);
-      // artTree_test(initRatio, initRatio, initData, testInsert, length);
-    }
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
     CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
               << std::endl;
     norData.GenerateDataset(&initData, &testInsert);
-    if (r == 0) {
-      btree_test(initRatio, initRatio, initData, testInsert, length);
-      // artTree_test(initRatio, initRatio, initData, testInsert, length);
-    }
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
     CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++"
               << std::endl;
     logData.GenerateDataset(&initData, &testInsert);
-    if (r == 0) {
-      btree_test(initRatio, initRatio, initData, testInsert, length);
-      // artTree_test(initRatio, initRatio, initData, testInsert, length);
-    }
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
     CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     outRes << std::endl;
   }
@@ -171,15 +144,7 @@ void mainMap(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
-#ifdef DEBUG
-  std::vector<double> rate = {0.2};
-  std::vector<double> rate1 = {0.1};  // 0.5
-#else
-  std::vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
-  std::vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
-#endif  // !DEBUG
-
-  for (int r = 0; r < rate.size(); r++) {
+  for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
     if (initRatio == kWriteHeavy)
       kRate = rate1[r];
@@ -190,20 +155,14 @@ void mainMap(double initRatio, const std::vector<int> &length) {
     std::cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++"
               << std::endl;
     latData.GenerateDataset(&initData, &testInsert);
-    if (r == 0) {
-      btree_test(initRatio, initRatio, initData, testInsert, length);
-      // artTree_test(initRatio, initRatio, initData, testInsert, length);
-    }
     CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    // CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
 
     std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
               << std::endl;
     longData.GenerateDataset(&initData, &testInsert);
-    if (r == 0) {
-      btree_test(initRatio, initRatio, initData, testInsert, length);
-      // artTree_test(initRatio, initRatio, initData, testInsert, length);
-    }
     CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    // CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
 
     outRes << std::endl;
   }
@@ -237,15 +196,7 @@ void mainYCSB(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
   std::vector<int> trainInsertIndex;
 
-#ifdef DEBUG
-  std::vector<double> rate = {0.2};
-  std::vector<double> rate1 = {0.1};  // 0.5
-#else
-  std::vector<double> rate = {0.3, 0.25, 0.22, 0.2, 0.1};
-  std::vector<double> rate1 = {0.25, 0.2, 0.15, 0.1, 0.075, 0.05};  // 0.5
-#endif  // DEBUG
-
-  for (int r = 0; r < rate.size(); r++) {
+  for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
     if (initRatio == kWriteHeavy)
       kRate = rate1[r];
@@ -255,10 +206,6 @@ void mainYCSB(double initRatio, const std::vector<int> &length) {
     std::cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++"
               << std::endl;
     ycsbData.GenerateDataset(&initData, &testInsert);
-    if (r == 0) {
-      btree_test(initRatio, initRatio, initData, testInsert, length);
-      // artTree_test(initRatio, initRatio, initData, testInsert, length);
-    }
     CoreExternalCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     outRes << std::endl;

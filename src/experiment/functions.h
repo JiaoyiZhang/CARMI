@@ -2,7 +2,7 @@
  * @file functions.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-04-07
  *
  * @copyright Copyright (c) 2021

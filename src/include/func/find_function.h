@@ -2,7 +2,7 @@
  * @file find_function.h
  * @author Jiaoyi
  * @brief find a record
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
@@ -14,100 +14,86 @@
 #include <float.h>
 
 #include <algorithm>
+#include <cstring>
+#include <utility>
+#include <vector>
 
 #include "../carmi.h"
+#include "./inlineFunction.h"
 
 template <typename KeyType, typename ValueType>
-BaseNode* CARMI<KeyType, ValueType>::Find(KeyType key, int* currslot) {
-  int idx = 0;  // idx in the INDEX
+BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
+    const KeyType &key, int *currblock, int *currslot) {
+  int idx = 0;
   int type = rootType;
+  int fetch_start = 0;
+  double fetch_leafIdx;
   while (1) {
     switch (type) {
-      case LR_ROOT_NODE:
+      case PLR_ROOT_NODE:
         idx = root.childLeft +
-              root.LRType<DataVectorType, DataType>::model.Predict(key);
+              root.PLRType<DataVectorType, KeyType>::model.Predict(key);
+        if (isPrimary == false) {
+          fetch_leafIdx =
+              root.PLRType<DataVectorType, KeyType>::model.PredictIdx(key);
+          fetch_start = root.PLRType<DataVectorType, KeyType>::fetch_model
+                            .PrefetchPredict(fetch_leafIdx);
+#ifdef Ubuntu
+          __builtin_prefetch(&data.dataArray[fetch_start], 0, 3);
+          // __builtin_prefetch(&data.dataArray[fetch_start] + 64, 0, 3);
+          // __builtin_prefetch(&data.dataArray[fetch_start] + 128, 0, 3);
+          // __builtin_prefetch(&data.dataArray[fetch_start] + 192, 0, 3);
+#endif
+#ifdef Windows
+          _mm_prefetch(static_cast<char *>(
+                           static_cast<void *>(&data.dataArray[fetch_start])),
+                       _MM_HINT_T1);
+          _mm_prefetch(static_cast<char *>(
+                           static_cast<void *>(&data.dataArray[fetch_start])) +
+                           64,
+                       _MM_HINT_T1);
+          _mm_prefetch(static_cast<char *>(
+                           static_cast<void *>(&data.dataArray[fetch_start])) +
+                           128,
+                       _MM_HINT_T1);
+          _mm_prefetch(static_cast<char *>(
+                           static_cast<void *>(&data.dataArray[fetch_start])) +
+                           192,
+                       _MM_HINT_T1);
+#endif
+        }
+        type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case LR_INNER_NODE:
-        idx = entireChild[idx].lr.childLeft + entireChild[idx].lr.Predict(key);
+        idx = node.nodeArray[idx].lr.childLeft +
+              node.nodeArray[idx].lr.Predict(key);
+        type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case PLR_INNER_NODE:
-        idx =
-            entireChild[idx].plr.childLeft + entireChild[idx].plr.Predict(key);
+        idx = node.nodeArray[idx].plr.childLeft +
+              node.nodeArray[idx].plr.Predict(key);
+        type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case HIS_INNER_NODE:
-        idx =
-            entireChild[idx].his.childLeft + entireChild[idx].his.Predict(key);
+        idx = node.nodeArray[idx].his.childLeft +
+              node.nodeArray[idx].his.Predict(key);
+        type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case BS_INNER_NODE:
-        idx = entireChild[idx].bs.childLeft + entireChild[idx].bs.Predict(key);
+        idx = node.nodeArray[idx].bs.childLeft +
+              node.nodeArray[idx].bs.Predict(key);
+        type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case ARRAY_LEAF_NODE: {
-        int size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
-        int preIdx = entireChild[idx].array.Predict(key);
-        int left = entireChild[idx].array.m_left;
-
-        if (entireData[left + preIdx].first == key) {
-          *currslot = preIdx;
-          return &entireChild[idx];
-        }
-
-        preIdx =
-            ArraySearch(key, preIdx, entireChild[idx].array.error, left, size);
-        if (preIdx >= left + size || entireData[preIdx].first != key) {
-          *currslot = 0;
-          return NULL;
-        }
-        *currslot = preIdx - left;
-        return &entireChild[idx];
-      }
-      case GAPPED_ARRAY_LEAF_NODE: {
-        int left = entireChild[idx].ga.m_left;
-        int maxIndex = entireChild[idx].ga.maxIndex;
-        int preIdx = entireChild[idx].ga.Predict(key);
-
-        if (entireData[left + preIdx].first == key) {
-          *currslot = preIdx;
-          return &entireChild[idx];
-        }
-
-        preIdx =
-            GASearch(key, preIdx, entireChild[idx].ga.error, left, maxIndex);
-        if (preIdx > left + maxIndex || entireData[preIdx].first != key) {
-          *currslot = 0;
-          return NULL;
-        }
-
-        *currslot = preIdx - left;
-        return &entireChild[idx];
+        *currslot = node.nodeArray[idx].cfArray.Find(data, key, currblock);
+        return &node.nodeArray[idx];
       }
       case EXTERNAL_ARRAY_LEAF_NODE: {
-        auto size = entireChild[idx].externalArray.flagNumber & 0x00FFFFFF;
-        int preIdx = entireChild[idx].externalArray.Predict(key);
-        auto left = entireChild[idx].externalArray.m_left;
-
-        if (*reinterpret_cast<const KeyType*>(
-                static_cast<const char*>(external_data) +
-                (left + preIdx) * recordLength) == key) {
-          *currslot = preIdx;
-          return &entireChild[idx];
-        }
-
-        preIdx = ExternalSearch(
-            key, preIdx, entireChild[idx].externalArray.error, left, size);
-
-        if (preIdx >= left + size ||
-            *reinterpret_cast<const KeyType*>(
-                static_cast<const char*>(external_data) +
-                preIdx * recordLength) != key) {
-          *currslot = 0;
-          return NULL;
-        }
-        *currslot = preIdx - left;
-        return &entireChild[idx];
+        *currslot = node.nodeArray[idx].externalArray.Find(key, recordLength,
+                                                           external_data);
+        return &node.nodeArray[idx];
       }
     }
-
-    type = entireChild[idx].lr.flagNumber >> 24;
   }
 }
 

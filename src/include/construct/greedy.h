@@ -1,8 +1,8 @@
 /**
  * @file greedy.h
  * @author Jiaoyi
- * @brief use greedy algorithm to construct inner nodes
- * @version 0.1
+ * @brief use the greedy node selection algorithm to construct inner nodes
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
@@ -25,22 +25,36 @@
 
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
-void CARMI<KeyType, ValueType>::IsBetterGreedy(
-    int c, NodeType type, double frequency_weight, double time_cost,
-    const IndexPair &range, TYPE *optimal_node_struct, NodeCost *optimalCost) {
+void CARMI<KeyType, ValueType>::IsBetterGreedy(int c, double frequency_weight,
+                                               double time_cost,
+                                               const IndexPair &range,
+                                               TYPE *optimal_node_struct,
+                                               NodeCost *optimalCost) {
   std::vector<IndexPair> perSize(c, emptyRange);
   double space_cost = kBaseNodeSpace * c;
 
-  TYPE node;
-  node.SetChildNumber(c);
-  Train(range.left, range.size, initDataset, &node);
-
-  NodePartition<TYPE>(node, range, initDataset, &perSize);
+  TYPE currnode;
+  currnode.SetChildNumber(c);
+  currnode.Train(range.left, range.size, initDataset);
+  NodePartition<TYPE>(currnode, range, initDataset, &perSize);
   double entropy = CalculateEntropy(range.size, c, perSize);
-  double cost = (time_cost + lambda * space_cost / frequency_weight) / entropy;
+  double cost = time_cost / entropy;
+  for (int i = 0; i < c; i++) {
+    if (!isPrimary) {
+      space_cost += CFArrayType<KeyType, ValueType>::CalculateNeededBlockNumber(
+                        perSize[i].size) *
+                    carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
+    }
+    if (perSize[i].size > CFArrayType<KeyType, ValueType>::kMaxLeafCapacity) {
+      space_cost += kBaseNodeSpace;
+      cost += carmi_params::kMemoryAccessTime * perSize[i].size / range.size /
+              entropy;
+    }
+  }
+  cost += lambda * space_cost / frequency_weight / entropy;
 
   if (cost <= optimalCost->cost) {
-    *optimal_node_struct = node;
+    *optimal_node_struct = currnode;
     *optimalCost = {time_cost, space_cost, cost};
   }
 }
@@ -56,25 +70,26 @@ NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
   }
 
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
-  BaseNode optimal_node_struct;
+  BaseNode<KeyType, ValueType> optimal_node_struct;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
-  int tmpEnd = dataRange.initRange.size / 2;
-  IndexPair singleRange(dataRange.initRange.left, dataRange.initRange.size);
-  for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
-    IsBetterGreedy<LRModel>(c, LR_INNER_NODE, frequency_weight,
-                            carmi_params::kLRInnerTime, dataRange.initRange,
-                            &(optimal_node_struct.lr), &optimalCost);
-    IsBetterGreedy<PLRModel>(c, PLR_INNER_NODE, frequency_weight,
-                             carmi_params::kPLRInnerTime, dataRange.initRange,
-                             &(optimal_node_struct.plr), &optimalCost);
+  int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 2);
+  tmpEnd = std::max(tmpEnd, kMinChildNumber);
+  IndexPair singleRange{dataRange.initRange.left, dataRange.initRange.size};
+  for (int c = kMinChildNumber; c <= tmpEnd; c *= 2) {
+    IsBetterGreedy<LRModel<KeyType, ValueType>>(
+        c, frequency_weight, carmi_params::kLRInnerTime, dataRange.initRange,
+        &(optimal_node_struct.lr), &optimalCost);
+    IsBetterGreedy<PLRModel<KeyType, ValueType>>(
+        c, frequency_weight, carmi_params::kPLRInnerTime, dataRange.initRange,
+        &(optimal_node_struct.plr), &optimalCost);
     if (c <= kHisMaxChildNumber)
-      IsBetterGreedy<HisModel>(c, HIS_INNER_NODE, frequency_weight,
-                               carmi_params::kHisInnerTime, dataRange.initRange,
-                               &(optimal_node_struct.his), &optimalCost);
+      IsBetterGreedy<HisModel<KeyType, ValueType>>(
+          c, frequency_weight, carmi_params::kHisInnerTime, dataRange.initRange,
+          &(optimal_node_struct.his), &optimalCost);
     if (c <= kBSMaxChildNumber)
-      IsBetterGreedy<BSModel>(c, BS_INNER_NODE, frequency_weight,
-                              carmi_params::kBSInnerTime, dataRange.initRange,
-                              &(optimal_node_struct.bs), &optimalCost);
+      IsBetterGreedy<BSModel<KeyType, ValueType>>(
+          c, frequency_weight, carmi_params::kBSInnerTime, dataRange.initRange,
+          &(optimal_node_struct.bs), &optimalCost);
   }
 
   // construct child
@@ -83,19 +98,23 @@ NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
   SubDataset subDataset(childNum);
   switch (type) {
     case LR_INNER_NODE: {
-      InnerDivideAll<LRModel>(childNum, dataRange, &subDataset);
+      InnerDivideAll<LRModel<KeyType, ValueType>>(childNum, dataRange,
+                                                  &subDataset);
       break;
     }
     case PLR_INNER_NODE: {
-      InnerDivideAll<PLRModel>(childNum, dataRange, &subDataset);
+      InnerDivideAll<PLRModel<KeyType, ValueType>>(childNum, dataRange,
+                                                   &subDataset);
       break;
     }
     case HIS_INNER_NODE: {
-      InnerDivideAll<HisModel>(childNum, dataRange, &subDataset);
+      InnerDivideAll<HisModel<KeyType, ValueType>>(childNum, dataRange,
+                                                   &subDataset);
       break;
     }
     case BS_INNER_NODE: {
-      InnerDivideAll<BSModel>(childNum, dataRange, &subDataset);
+      InnerDivideAll<BSModel<KeyType, ValueType>>(childNum, dataRange,
+                                                  &subDataset);
       break;
     }
   }

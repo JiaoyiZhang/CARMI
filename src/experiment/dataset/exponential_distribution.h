@@ -2,7 +2,7 @@
  * @file exponential_distribution.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-16
  *
  * @copyright Copyright (c) 2021

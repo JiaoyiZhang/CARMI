@@ -2,7 +2,7 @@
  * @file experiment_params.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-05-19
  *
  * @copyright Copyright (c) 2021
@@ -40,9 +40,11 @@ const float kRangeScan = 2;
 const float kSecondToNanosecond = 1000000000.0;
 
 #ifdef DEBUG
-const float Density[1] = {0.5};  // size / capacity
+const std::vector<double> rate = {0.025};
+const std::vector<double> rate1 = {0.025};
 #else
-const float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity
+const std::vector<double> rate = {0.01, 0.02, 0.025, 0.03, 0.05, 0.1};
+const std::vector<double> rate1 = {0.01, 0.02, 0.025, 0.03, 0.05, 0.1};  // 0.5
 #endif  // !DEBUG
 
 const int kRMIInnerChild = 32;

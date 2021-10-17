@@ -2,7 +2,7 @@
  * @file inlineFunction.h
  * @author Jiaoyi
  * @brief the inline functions for public functions
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
@@ -21,155 +21,71 @@
 #include "../params.h"
 
 template <typename KeyType, typename ValueType>
-inline int CARMI<KeyType, ValueType>::ArrayBinarySearch(double key, int start,
-                                                        int end) const {
-  while (start < end) {
-    int mid = (start + end) / 2;
-    if (entireData[mid].first < key)
-      start = mid + 1;
-    else
-      end = mid;
-  }
-  return start;
-}
-
-template <typename KeyType, typename ValueType>
-inline int CARMI<KeyType, ValueType>::GABinarySearch(double key, int start_idx,
-                                                     int end_idx) const {
-  while (end_idx - start_idx >= 2) {
-    int mid = (start_idx + end_idx) >> 1;
-    if (entireData[mid].first == DBL_MIN) {
-      if (entireData[mid - 1].first >= key)
-        end_idx = mid - 1;
-      else
-        start_idx = mid + 1;
-    } else {
-      if (entireData[mid].first >= key)
-        end_idx = mid;
-      else
-        start_idx = mid + 1;
-    }
-  }
-  if (entireData[start_idx].first >= key)
-    return start_idx;
-  else
-    return end_idx;
-}
-
-template <typename KeyType, typename ValueType>
-inline int CARMI<KeyType, ValueType>::ExternalBinarySearch(double key,
-                                                           int start,
-                                                           int end) const {
-  while (start < end) {
-    int mid = (start + end) / 2;
-    if (*reinterpret_cast<const KeyType*>(
-            static_cast<const char*>(external_data) + mid * recordLength) < key)
-      start = mid + 1;
-    else
-      end = mid;
-  }
-  return start;
-}
-
-template <typename KeyType, typename ValueType>
-inline int CARMI<KeyType, ValueType>::ArraySearch(double key, int preIdx,
-                                                  int error, int left,
-                                                  int size) const {
-  int start = std::max(0, preIdx - error) + left;
-  int end = std::min(std::max(0, size - 1), preIdx + error) + left;
-  start = std::min(start, end);
-  int res;
-  if (key <= entireData[start].first)
-    res = ArrayBinarySearch(key, left, start);
-  else if (key <= entireData[end].first)
-    res = ArrayBinarySearch(key, start, end);
-  else
-    res = ArrayBinarySearch(key, end, left + size - 1);
-  return res;
-}
-
-template <typename KeyType, typename ValueType>
-inline int CARMI<KeyType, ValueType>::GASearch(double key, int preIdx,
-                                               int error, int left,
-                                               int maxIndex) const {
-  int start = std::max(0, preIdx - error) + left;
-  int end = std::min(maxIndex, preIdx + error) + left;
-  start = std::min(start, end);
-
-  int res;
-  if (entireData[start].first == DBL_MIN) start--;
-  if (entireData[end].first == DBL_MIN) end--;
-  if (key <= entireData[start].first)
-    res = GABinarySearch(key, left, start);
-  else if (key <= entireData[end].first)
-    res = GABinarySearch(key, start, end);
-  else
-    res = GABinarySearch(key, end, left + maxIndex);
-  return res;
-}
-
-template <typename KeyType, typename ValueType>
-inline int CARMI<KeyType, ValueType>::ExternalSearch(double key, int preIdx,
-                                                     int error, int left,
-                                                     int size) const {
-  int start = std::max(0, preIdx - error) + left;
-  int end = std::min(std::max(0, size - 1), preIdx + error) + left;
-  start = std::min(start, end);
-  int res;
-  if (key <= *reinterpret_cast<const KeyType*>(
-                 static_cast<const char*>(external_data) + start * recordLength))
-    res = ExternalBinarySearch(key, left, start);
-  else if (key <=
-           *reinterpret_cast<const KeyType*>(
-               static_cast<const char*>(external_data) + end * recordLength))
-    res = ExternalBinarySearch(key, start, end);
-  else
-    res = ExternalBinarySearch(key, end, left + size - 1);
-  return res;
-}
-
-template <typename KeyType, typename ValueType>
 template <typename TYPE>
 inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
                                              int size, int previousIdx,
                                              int idx) {
   int actualSize = 0;
-  DataVectorType tmpDataset = ExtractData(left, size, entireData, &actualSize);
+  DataVectorType tmpDataset;
+  if (isExternal) {
+    tmpDataset = ExternalArray<KeyType>::ExtractDataset(
+        external_data, left, size + left, recordLength, &actualSize);
+  } else {
+    tmpDataset = CFArrayType<KeyType, ValueType>::ExtractDataset(
+        data, left, size + left, &actualSize);
+  }
+
+  int nextIdx = node.nodeArray[idx].cfArray.nextLeaf;
 
   // create a new inner node
-  auto node = LRModel();
+  auto currnode = LRModel<KeyType, ValueType>();
   int childNum = kInsertNewChildNumber;
-  node.SetChildNumber(childNum);
-  node.childLeft = AllocateChildMemory(childNum);
-  Train(0, actualSize, tmpDataset, &node);
-  entireChild[idx].lr = node;
+  currnode.SetChildNumber(childNum);
+  currnode.childLeft = node.AllocateNodeMemory(childNum);
+  currnode.Train(0, actualSize, tmpDataset);
+  node.nodeArray[idx].lr = currnode;
 
   std::vector<IndexPair> perSize(childNum, emptyRange);
-  IndexPair range(0, actualSize);
-  NodePartition<LRModel>(node, range, tmpDataset, &perSize);
+  IndexPair range{0, actualSize};
+  NodePartition<LRModel<KeyType, ValueType>>(currnode, range, tmpDataset,
+                                             &perSize);
 
   int tmpLeft = left;
   for (int i = 0; i < childNum; i++) {
-    TYPE tmpLeaf(kThreshold);
-    Init(kMaxKeyNum, perSize[i].left, perSize[i].size, tmpDataset, &tmpLeaf);
+    TYPE tmpLeaf;
+    std::vector<int> prefetchIndex(perSize[i].size);
+    int s = perSize[i].left;
+    int e = perSize[i].left + perSize[i].size;
+    for (int j = s; j < e; j++) {
+      double predictLeafIdx = root.model.PredictIdx(tmpDataset[j].first);
+      int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
+      prefetchIndex[j - s] = p;
+    }
+    tmpLeaf.Init(tmpDataset, prefetchIndex, perSize[i].left, perSize[i].size,
+                 &data);
     if (isExternal) {
       tmpLeaf.m_left = tmpLeft;
       tmpLeft += perSize[i].size;
     }
-    entireChild[node.childLeft + i].array =
-        *(reinterpret_cast<ArrayType*>(&tmpLeaf));
+    node.nodeArray[currnode.childLeft + i].cfArray =
+        *(reinterpret_cast<CFArrayType<KeyType, ValueType> *>(&tmpLeaf));
   }
 
   if (!isExternal) {
-    if (previousIdx >= 0)
-      entireChild[previousIdx].array.nextLeaf = node.childLeft;
-    entireChild[node.childLeft].array.previousLeaf = previousIdx;
-    int end = node.childLeft + childNum - 1;
-    for (int i = node.childLeft + 1; i < end; i++) {
-      entireChild[i].array.previousLeaf = i - 1;
-      entireChild[i].array.nextLeaf = i + 1;
+    if (previousIdx >= 0) {
+      node.nodeArray[previousIdx].cfArray.nextLeaf = currnode.childLeft;
     }
-    entireChild[end].array.previousLeaf = end - 1;
+    node.nodeArray[currnode.childLeft].cfArray.previousLeaf = previousIdx;
+    int end = currnode.childLeft + childNum - 1;
+    for (int i = currnode.childLeft + 1; i < end; i++) {
+      node.nodeArray[i].cfArray.previousLeaf = i - 1;
+      node.nodeArray[i].cfArray.nextLeaf = i + 1;
+    }
+    node.nodeArray[end].cfArray.previousLeaf = end - 1;
+    if (nextIdx != -1) {
+      node.nodeArray[end].cfArray.nextLeaf = nextIdx;
+      node.nodeArray[nextIdx].cfArray.previousLeaf = end;
+    }
   }
 }
 

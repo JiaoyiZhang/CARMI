@@ -1,8 +1,8 @@
 /**
- * @file candicate_plr.h
+ * @file candidate_plr.h
  * @author Jiaoyi
- * @brief
- * @version 0.1
+ * @brief class for piecewise linear regression model
+ * @version 3.0
  * @date 2021-03-16
  *
  * @copyright Copyright (c) 2021
@@ -10,6 +10,8 @@
  */
 #include <math.h>
 
+#include <map>
+#include <utility>
 #include <vector>
 
 #include "../../construct/structures.h"
@@ -18,73 +20,122 @@
 #ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
 #define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
 
+/**
+ * @brief designed for P. LR model
+ *
+ */
 struct SegmentPoint {
-  float cost;
-  double key[7] = {-1, -1, -1, -1, -1, -1, -1};
-  int idx[8] = {-1, -1, -1, -1, -1, -1, -1};
+  double cost;  ///< the current cost
+  double key[12] = {-1, -1, -1, -1, -1, -1,
+                    -1, -1, -1, -1, -1, -1};  ///< the key values
+  int idx[12] = {-1, -1, -1, -1, -1, -1,
+                 -1, -1, -1, -1, -1, -1};  ///< the corresponding indexes
+  int blockNum[12] = {1, 1, 1, 1, 1, 1,
+                      1, 1, 1, 1, 1, 1};  ///< the number of blocks
 };
 
+/**
+ * @brief designed for P. LR model
+ *
+ * @tparam DataVectorType the vector type of the dataset
+ * @tparam DataType the type of a data point
+ */
 template <typename DataVectorType, typename DataType>
 class CandidateCost {
  public:
-  explicit CandidateCost(int s)
-      : xx(s, 0), x(s, 0), px(s, 0), pp(s, 0), p(s, 0) {
-    size = s;
+  CandidateCost() {}
+  /**
+   * @brief store params for each segment
+   *
+   * @param dataset the dataset
+   * @param index the indexes of candidates
+   */
+  void StoreTheta(const DataVectorType &dataset,
+                  const std::vector<int> &index) {
+    StoreValue(dataset, index);
+    for (int i = 0; i < index.size() - 1; i++) {
+      for (int j = i + 1; j < index.size(); j++) {
+        int l = index[i];
+        int r = index[j];
+        auto tmp_theta = TrainLR(i, j, r - l);
+        theta.insert({{l, r}, tmp_theta});
+      }
+    }
   }
 
+  /**
+   * @brief calculate the entropy of each segment
+   *
+   * @param leftIdx the left index of the sub-dataset
+   * @param rightIdx the right-index of the sub-dataset
+   * @return double: entropy
+   */
+  double Entropy(int leftIdx, int rightIdx) {
+    auto tmp_theta = theta.find({leftIdx, rightIdx});
+    double a = tmp_theta->second.first;
+    double entropy = log2(a) * (rightIdx - leftIdx);
+    return entropy;
+  }
+
+  /**
+   * @brief train the params of the segment
+   *
+   * @param left the left index of the sub-dataset
+   * @param right the right index of the sub-dataset
+   * @param size the size of the sub-dataset
+   * @return std::pair<double, double>: the slope and intercept
+   */
+  std::pair<double, double> TrainLR(int left, int right, int size) {
+    double theta1 = 0.0001, theta2 = 0.666;
+    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+    t1 = xx[right] - xx[left];
+    t2 = x[right] - x[left];
+    t3 = px[right] - px[left];
+    t4 = p[right] - p[left];
+
+    theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+    theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+
+    return {theta1, theta2};
+  }
+
+  /**
+   * @brief store the value of each segment
+   *
+   * @param dataset the original dataset
+   * @param index the corresponding indexes in the dataset
+   */
   void StoreValue(const DataVectorType &dataset,
                   const std::vector<int> &index) {
+    xx = std::vector<double>(index.size(), 0);
+    x = std::vector<double>(index.size(), 0);
+    px = std::vector<double>(index.size(), 0);
+    p = std::vector<double>(index.size(), 0);
     xx[0] = 0.0;
     x[0] = 0.0;
     px[0] = 0.0;
-    pp[0] = 0.0;
     p[0] = 0.0;
     for (int i = 1; i < static_cast<int>(index.size()); i++) {
       for (int j = index[i - 1]; j < index[i]; j++) {
         xx[i] += dataset[j].first * dataset[j].first;
         x[i] += dataset[j].first;
         px[i] += dataset[j].first * dataset[j].second;
-        pp[i] += dataset[j].second * dataset[j].second;
         p[i] += dataset[j].second;
       }
       xx[i] += xx[i - 1];
       x[i] += x[i - 1];
       px[i] += px[i - 1];
-      pp[i] += pp[i - 1];
       p[i] += p[i - 1];
     }
   }
 
-  float CalculateCost(int left, int right, int size, DataType p1, DataType p2) {
-    double a = (p2.second - p1.second) / (p2.first - p1.first);
-    double b = p1.second - a * p1.first;
-    double res = b * b * size;
-    res += a * a * (xx[right] - xx[left]);
-    res += 2.0 * a * (b * (x[right] - x[left]) - (px[right] - px[left]));
-    res += pp[right] - pp[left];
-    res -= 2.0 * b * (p[right] - p[left]);
-    return res;
-  }
-
-  float Diff(int n, int len, const int idx[]) {
-    int opt[8];
-    for (int i = 0; i < n; i++) {
-      opt[i] = fabs(static_cast<float>(len) / 8.0 * i - idx[i]);
-    }
-    float diff = 0.0;
-    for (int i = 0; i < n; i++) {
-      diff += opt[i] * opt[i];
-    }
-    return diff;
-  }
-
  public:
-  int size;
-  std::vector<double> xx;
-  std::vector<double> x;
-  std::vector<double> px;
-  std::vector<double> pp;
-  std::vector<double> p;
+  std::map<std::pair<int, int>, std::pair<double, double>>
+      theta;               ///< params for the corresponding segment
+  std::vector<double> xx;  ///< the value of key*key
+  std::vector<double> x;   ///< the value of key
+  std::vector<double> px;  ///< the value of y*key
+  std::vector<double> p;   ///< the value of y
 };
 
 #endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_

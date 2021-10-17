@@ -2,7 +2,7 @@
  * @file workloads.cpp
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-26
  *
  * @copyright Copyright (c) 2021
@@ -12,6 +12,7 @@
 #ifndef SRC_EXPERIMENT_WORKLOAD_WORKLOADS_H_
 #define SRC_EXPERIMENT_WORKLOAD_WORKLOADS_H_
 
+#include <algorithm>
 #include <ctime>
 #include <utility>
 #include <vector>
@@ -44,8 +45,7 @@ void WorkloadA(bool isZipfian, const DataVecType &findDataset,
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kWriteHeavy;
-  InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   std::clock_t s, e;
   double tmp;
@@ -97,8 +97,7 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
@@ -108,7 +107,7 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19; j++) {
+      for (int j = 0; j < 19 && findCnt < index.size(); j++) {
         carmi->Find(findQuery[index[findCnt]].first);
         findCnt++;
       }
@@ -163,8 +162,7 @@ void WorkloadC(bool isZipfian, const DataVecType &findDataset,
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kReadOnly;
-  InitTestSet(kReadOnly, findDataset, DataVecType(), &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, DataVecType(), &findQuery, &insertQuery, &index);
 
   std::clock_t s, e;
   double tmp;
@@ -214,8 +212,7 @@ void WorkloadD(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kWritePartial, findDataset, insertDataset, &findQuery,
-              &insertQuery, &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int length = round(kTestSize * kWritePartial);
   int insert_length = round(kTestSize * (1 - kWritePartial));
@@ -224,11 +221,14 @@ void WorkloadD(bool isZipfian, const DataVecType &findDataset,
 
   std::clock_t s, e;
   double tmp;
+  double res = 0.0;
+  auto resIte = carmi->end();
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < insert_length; i++) {
       for (int j = 0; j < 17 && findCnt < length; j++) {
-        carmi->Find(findQuery[index[findCnt]].first);
+        resIte = carmi->Find(findQuery[index[findCnt]].first);
+        res += resIte.data();
         findCnt++;
       }
       for (int j = 0; j < 3 && insertCnt < insert_length; j++) {
@@ -240,6 +240,7 @@ void WorkloadD(bool isZipfian, const DataVecType &findDataset,
     for (int i = 0; i < insert_length; i++) {
       for (int j = 0; j < 17 && findCnt < length; j++) {
         carmi->Find(findQuery[findCnt].first);
+        res += resIte.data();
         findCnt++;
       }
       for (int j = 0; j < 3 && insertCnt < insert_length; j++) {
@@ -297,8 +298,7 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;

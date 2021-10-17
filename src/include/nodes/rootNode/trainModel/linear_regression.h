@@ -1,8 +1,8 @@
 /**
  * @file linear_regression.h
  * @author Jiaoyi
- * @brief
- * @version 0.1
+ * @brief linear regression model
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
@@ -12,6 +12,7 @@
 #define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
 
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <random>
 #include <utility>
@@ -19,15 +20,25 @@
 
 #include "../../../params.h"
 
-template <typename DataVectorType, typename DataType>
+/**
+ * @brief linear regression model for root node
+ *
+ * @tparam DataVectorType the vector type of the dataset
+ * @tparam KeyType the type of the key value
+ */
+template <typename DataVectorType, typename KeyType>
 class LinearRegression {
  public:
   LinearRegression() {
     theta1 = 0.0001;
     theta2 = 0.666;
   }
-  void Train(const DataVectorType &dataset, int len) {
-    length = len - 1;
+  /**
+   * @brief train the lr model
+   *
+   * @param dataset the original dataset
+   */
+  void Train(const DataVectorType &dataset) {
     int idx = 0;
     int size = dataset.size();
     std::vector<double> index(size, 0);
@@ -46,9 +57,27 @@ class LinearRegression {
     theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
     theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
   }
+
+  /**
+   * @brief predict the next node of the given key value
+   *
+   * @param key the given key value
+   * @return int: the index of the next node
+   */
   int Predict(double key) const {
+    int p = PredictIdx(key);
+    return p;
+  }
+
+  /**
+   * @brief output the unrounded index
+   *
+   * @param key the given key value
+   * @return double: the index
+   */
+  inline double PredictIdx(KeyType key) const {
     // return the predicted idx in the children
-    int p = theta1 * key + theta2;
+    double p = theta1 * key + theta2;
     if (p < 0)
       p = 0;
     else if (p > length)
@@ -56,9 +85,10 @@ class LinearRegression {
     return p;
   }
 
+  int length;  ///< the number of child nodes
+
  private:
-  int length;
-  double theta1;
-  double theta2;
+  double theta1;  ///< the slope
+  double theta2;  ///< the intercept
 };
 #endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_

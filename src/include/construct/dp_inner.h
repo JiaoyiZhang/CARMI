@@ -2,7 +2,7 @@
  * @file dp_inner.h
  * @author Jiaoyi
  * @brief use dynamic programming algorithm to construct inner nodes
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
@@ -12,13 +12,14 @@
 #define SRC_INCLUDE_CONSTRUCT_DP_INNER_H_
 #include <float.h>
 
+#include <algorithm>
 #include <vector>
 
 #include "../carmi.h"
 
 template <typename KeyType, typename ValueType>
 template <typename TYPE>
-void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
+void CARMI<KeyType, ValueType>::ChooseBetterInner(int c,
                                                   double frequency_weight,
                                                   double time_cost,
                                                   const DataRange &dataRange,
@@ -30,12 +31,15 @@ void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
   if (RootCost > optimalCost->cost) return;
 
   SubDataset subDataset(c);
-  auto node = InnerDivideAll<TYPE>(c, dataRange, &subDataset);
+  auto currnode = InnerDivideAll<TYPE>(c, dataRange, &subDataset);
 
   for (int i = 0; i < c; i++) {
     NodeCost res;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
+    if (subDataset.subInit[i].size == dataRange.initRange.size) {
+      return;
+    }
     if (subDataset.subInit[i].size > carmi_params::kAlgorithmThreshold)
       res = GreedyAlgorithm(range);
     else
@@ -47,7 +51,7 @@ void CARMI<KeyType, ValueType>::ChooseBetterInner(int c, NodeType type,
   }
   if (RootCost <= optimalCost->cost) {
     *optimalCost = {time_cost, space_cost, RootCost};
-    *optimal_node_struct = node;
+    *optimal_node_struct = currnode;
   }
 }
 
@@ -55,24 +59,26 @@ template <typename KeyType, typename ValueType>
 NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   NodeCost nodeCost;
   NodeCost optimalCost = {DBL_MAX, DBL_MAX, DBL_MAX};
-  BaseNode optimal_node_struct = emptyNode;
+  BaseNode<KeyType, ValueType> optimal_node_struct;
+  optimal_node_struct = emptyNode;
   double frequency_weight = CalculateFrequencyWeight(dataRange);
-  int tmpEnd = dataRange.initRange.size / 2;
-  for (int c = kMinChildNumber; c < tmpEnd; c *= 2) {
-    ChooseBetterInner<LRModel>(c, LR_INNER_NODE, frequency_weight,
-                               carmi_params::kLRInnerTime, dataRange,
-                               &optimalCost, &(optimal_node_struct.lr));
-    ChooseBetterInner<PLRModel>(c, PLR_INNER_NODE, frequency_weight,
-                                carmi_params::kPLRInnerTime, dataRange,
-                                &optimalCost, &(optimal_node_struct.plr));
+  int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 4);
+  tmpEnd = std::max(tmpEnd, kMinChildNumber);
+  for (int c = kMinChildNumber; c <= tmpEnd; c *= 2) {
+    ChooseBetterInner<LRModel<KeyType, ValueType>>(
+        c, frequency_weight, carmi_params::kLRInnerTime, dataRange,
+        &optimalCost, &(optimal_node_struct.lr));
+    ChooseBetterInner<PLRModel<KeyType, ValueType>>(
+        c, frequency_weight, carmi_params::kPLRInnerTime, dataRange,
+        &optimalCost, &(optimal_node_struct.plr));
     if (c <= kHisMaxChildNumber)
-      ChooseBetterInner<HisModel>(c, HIS_INNER_NODE, frequency_weight,
-                                  carmi_params::kHisInnerTime, dataRange,
-                                  &optimalCost, &(optimal_node_struct.his));
+      ChooseBetterInner<HisModel<KeyType, ValueType>>(
+          c, frequency_weight, carmi_params::kHisInnerTime, dataRange,
+          &optimalCost, &(optimal_node_struct.his));
     if (c <= kBSMaxChildNumber)
-      ChooseBetterInner<BSModel>(c, BS_INNER_NODE, frequency_weight,
-                                 carmi_params::kBSInnerTime, dataRange,
-                                 &optimalCost, &(optimal_node_struct.bs));
+      ChooseBetterInner<BSModel<KeyType, ValueType>>(
+          c, frequency_weight, carmi_params::kBSInnerTime, dataRange,
+          &optimalCost, &(optimal_node_struct.bs));
   }
 
   structMap.insert({dataRange.initRange, optimal_node_struct});

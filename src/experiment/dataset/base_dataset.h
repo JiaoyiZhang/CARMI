@@ -2,7 +2,7 @@
  * @file base_dataset.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-26
  *
  * @copyright Copyright (c) 2021
@@ -32,7 +32,7 @@ class BaseDataset {
   void SplitInitTest(DistributionType &distribution, DataVecType *initDataset,
                      DataVecType *testInsertQuery) {
     (*initDataset) = std::vector<DataType>(kDatasetSize);
-    int end = kTestSize * (1 - proportion);
+    int end = round(kTestSize * (1 - proportion));
     (*testInsertQuery) = std::vector<DataType>(end);
     std::default_random_engine generator;
 

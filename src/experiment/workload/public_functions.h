@@ -2,7 +2,7 @@
  * @file public_functions.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-04-07
  *
  * @copyright Copyright (c) 2021
@@ -10,7 +10,6 @@
  */
 #ifndef SRC_EXPERIMENT_WORKLOAD_PUBLIC_FUNCTIONS_H_
 #define SRC_EXPERIMENT_WORKLOAD_PUBLIC_FUNCTIONS_H_
-
 
 #include <utility>
 #include <vector>
@@ -26,14 +25,13 @@ extern std::ofstream outRes;
 /**
  * @brief prepare query workloads
  *
- * @param Ratio the ratio of find queries
  * @param findQueryset
  * @param insertDataset
  * @param findQuery
  * @param insertQuery
  * @param index
  */
-void InitTestSet(double Ratio, const DataVecType &findQueryset,
+void InitTestSet(const DataVecType &findQueryset,
                  const DataVecType &insertDataset, DataVecType *findQuery,
                  DataVecType *insertQuery, std::vector<int> *index);
 

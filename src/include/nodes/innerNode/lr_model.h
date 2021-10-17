@@ -1,8 +1,8 @@
 /**
  * @file lr_model.h
  * @author Jiaoyi
- * @brief
- * @version 0.1
+ * @brief linear regression inner node
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
@@ -11,70 +11,99 @@
 #ifndef SRC_INCLUDE_NODES_INNERNODE_LR_MODEL_H_
 #define SRC_INCLUDE_NODES_INNERNODE_LR_MODEL_H_
 
+#include <float.h>
+
 #include <algorithm>
 #include <utility>
 #include <vector>
 
-#include "../../carmi.h"
-#include "../../construct/minor_function.h"
+#include "../../construct/structures.h"
 
+/**
+ * @brief linear regression inner node
+ *
+ * @tparam KeyType the type of the keyword
+ * @tparam ValueType the type of the value
+ */
 template <typename KeyType, typename ValueType>
-inline void CARMI<KeyType, ValueType>::Train(const int left, const int size,
-                                             const DataVectorType &dataset,
-                                             LRModel *lr) {
-  if (size == 0) return;
-
-  // calculate divisor
-  int childNumber = lr->flagNumber & 0x00FFFFFF;
-  int end = left + size;
-  double maxValue = dataset[end - 1].first;
-  lr->minValue = dataset[left].first;
-  lr->divisor = static_cast<float>(maxValue - lr->minValue) / 6;
-
-  // extract data points and their index
-  std::vector<int> segCnt(6, 0);
-  DataVectorType data(size, {DBL_MIN, DBL_MIN});
-  for (int i = left, j = 0; i < end; i++, j++) {
-    data[j].first = dataset[i].first;
-    data[j].second = static_cast<double>(j) / size * childNumber;
-    int idx = (dataset[i].first - lr->minValue) / lr->divisor;
-    idx = std::min(idx, 5);
-    idx = std::max(0, idx);
-    segCnt[idx]++;
+class LRModel {
+ public:
+  typedef std::pair<KeyType, ValueType> DataType;
+  typedef std::vector<DataType> DataVectorType;
+  LRModel() = default;
+  /**
+   * @brief Set the Child Number object
+   *
+   * @param c the number of child nodes
+   */
+  void SetChildNumber(int c) {
+    childLeft = 0;
+    flagNumber = (LR_INNER_NODE << 24) + c;
   }
 
-  // train in segments
-  int start_idx = left;
-  for (int k = 0; k < 6; k++) {
-    float a, b;
-    LRTrain(start_idx, segCnt[k], dataset, &a, &b);
-    int bound = childNumber / 6 * (k + 1);
-    lr->theta[k] = {a * bound, b * bound};
-    start_idx += segCnt[k];
+  /**
+   * @brief train the model with this dataset
+   *
+   * @param left the start index of data points
+   * @param size  the size of data points
+   * @param dataset used to train the model
+   */
+  void Train(int left, int size, const DataVectorType &dataset);
+
+  /**
+   * @brief predict the position of the given key value
+   *
+   * @param key the given key value
+   * @return int: the predicted index of next node
+   */
+  int Predict(KeyType key) const;
+
+  int flagNumber;  ///< 4 Byte (flag + childNumber)
+
+  int childLeft;          ///< 4 Byte, the start index of child nodes
+  float slope;            ///< 4 Byte, the slpoe
+  float intercept;        ///< 4 Byte, the intercept
+  float Placeholder[12];  ///< 48 Byte, placeholder
+};
+
+template <typename KeyType, typename ValueType>
+inline void LRModel<KeyType, ValueType>::Train(int left, int size,
+                                               const DataVectorType &dataset) {
+  if (size == 0) return;
+
+  // extract data points and their index
+  int childNumber = flagNumber & 0x00FFFFFF;
+  DataVectorType currdata(size, {DBL_MAX, DBL_MAX});
+  for (int i = 0, j = left; i < size; i++, j++) {
+    currdata[i].first = dataset[j].first;
+    currdata[i].second = static_cast<double>(i) / size * childNumber;
+  }
+
+  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+  for (int i = 0; i < size; i++) {
+    t1 += currdata[i].first * currdata[i].first;
+    t2 += currdata[i].first;
+    t3 += currdata[i].first * currdata[i].second;
+    t4 += currdata[i].second;
+  }
+  if (t1 * size - t2 * t2) {
+    slope = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+    intercept = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+  } else {
+    slope = 0;
+    intercept = 0;
   }
 }
 
-/**
- * @brief predict the index of the next branch
- *
- * @param key
- * @return int index (from 0 to childNumber-1 )
- */
-inline int LRModel::Predict(double key) const {
-  int idx = (key - minValue) / divisor;
-  if (idx < 0)
-    idx = 0;
-  else if (idx >= 6)
-    idx = 5;
-
+template <typename KeyType, typename ValueType>
+inline int LRModel<KeyType, ValueType>::Predict(KeyType key) const {
   // return the predicted idx in the children
-  int p = theta[idx].first * key + theta[idx].second;
-  int bound = (flagNumber & 0x00FFFFFF) / 6;
-  int left = bound * idx;
-  if (p < left)
-    p = left;
-  else if (p >= left + bound)
-    p = left + bound - 1;
+  int p = slope * key + intercept;
+  int bound = flagNumber & 0x00FFFFFF;
+  if (p < 0)
+    p = 0;
+  else if (p >= bound)
+    p = bound - 1;
   return p;
 }
 #endif  // SRC_INCLUDE_NODES_INNERNODE_LR_MODEL_H_

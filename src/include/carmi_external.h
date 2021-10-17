@@ -1,8 +1,8 @@
 /**
- * @file carmi_common.h
+ * @file carmi_external.h
  * @author Jiaoyi
- * @brief
- * @version 0.1
+ * @brief the external CARMI
+ * @version 3.0
  * @date 2021-04-01
  *
  * @copyright Copyright (c) 2021
@@ -16,23 +16,30 @@
 
 #include "./carmi.h"
 #include "construct/construction.h"
-#include "dataManager/child_array.h"
-#include "dataManager/datapoint.h"
 #include "func/delete_function.h"
 #include "func/find_function.h"
 #include "func/insert_function.h"
 #include "func/print_structure.h"
 #include "func/update_function.h"
+#include "memoryLayout/node_array.h"
 
+/**
+ * @brief the external CARMI
+ *
+ * @tparam KeyType the type of the given key
+ */
 template <typename KeyType>
 class CARMIExternal {
  public:
-  typedef CARMI<KeyType, KeyType> carmi_impl;
-  typedef typename CARMI<KeyType, KeyType>::DataType DataType;
-  typedef typename CARMI<KeyType, KeyType>::DataVectorType DataVectorType;
+  typedef CARMI<KeyType, KeyType>
+      carmi_impl;  ///< the type of implementation of CARMI
+  typedef typename CARMI<KeyType, KeyType>::DataType
+      DataType;  ///< the type of the data point
+  typedef typename CARMI<KeyType, KeyType>::DataVectorType
+      DataVectorType;  ///< the type of the dataset
 
  private:
-  carmi_impl carmi_tree;
+  carmi_impl carmi_tree;  ///< the implementation of CARMI
 
  public:
   /**
@@ -53,29 +60,30 @@ class CARMIExternal {
   /**
    * @brief find the corresponding iterator of the given key
    *
-   * @param key
-   * @return void * the pointer
+   * @param key the given key value
+   * @return void *: the pointer
    */
-  const void *Find(KeyType key) {
+  const void *Find(const KeyType &key) {
     int idx = 0;
-    auto node = carmi_tree.Find(key, &idx);
+    int currblock = 0;
+    auto currnode = carmi_tree.Find(key, &currblock, &idx);
 
     return static_cast<const void *>(
         static_cast<const char *>(carmi_tree.external_data) +
-        (node->externalArray.m_left + idx) * carmi_tree.recordLength);
+        (currnode->externalArray.m_left + idx) * carmi_tree.recordLength);
   }
 
   /**
    * @brief insert the given key into carmi
    *
-   * @param key
+   * @param key the given key value
    */
-  void Insert(KeyType key) { carmi_tree.Insert({key, key}); }
+  void Insert(const KeyType &key) { carmi_tree.Insert({key, key}); }
 
   /**
    * @brief calculate the space of carmi
    *
-   * @return long double
+   * @return long double: space
    */
   long double CalculateSpace() const { return carmi_tree.CalculateSpace(); }
 
@@ -83,15 +91,15 @@ class CARMIExternal {
    * @brief print the structure of carmi
    *
    * @param level 1
-   * @param type the root type
+   * @param dataSize the size of the dataset
    * @param idx 0
    * @param levelVec the level of carmi
    * @param nodeVec the node type vector
    */
-  void PrintStructure(int level, NodeType type, int idx,
-                      std::vector<int> *levelVec,
-                      std::vector<int> *nodeVec) const {
-    carmi_tree.PrintStructure(level, LR_ROOT_NODE, idx, levelVec, nodeVec);
+  void PrintStructure(int level, int dataSize, int idx,
+                      std::vector<int> *levelVec, std::vector<int> *nodeVec) {
+    carmi_tree.PrintStructure(level, PLR_ROOT_NODE, dataSize, idx, levelVec,
+                              nodeVec);
   }
 };
 
@@ -111,7 +119,7 @@ CARMIExternal<KeyType>::CARMIExternal(const void *dataset,
                       1};
   }
 
-  for (int i = 0; i < future_insert.size(); i++) {
+  for (int i = 0; i < static_cast<int>(future_insert.size()); i++) {
     insertQuery[i] = {initDataset[i].first, 1};
     insertQueryIndex[i] = record_number + i;
   }
@@ -119,6 +127,6 @@ CARMIExternal<KeyType>::CARMIExternal(const void *dataset,
   carmi_tree = carmi_impl(dataset, initDataset, findQuery, insertQuery,
                           insertQueryIndex, lambda, record_number, record_len);
 
-  carmi_tree.Construction(initDataset, findQuery, insertQuery);
+  carmi_tree.Construction();
 }
 #endif  // SRC_INCLUDE_CARMI_EXTERNAL_H_

@@ -1,9 +1,8 @@
-
 /**
  * @file main.cpp
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-16
  *
  * @copyright Copyright (c) 2021
@@ -15,13 +14,12 @@
 #include <random>
 
 #include "./experiment/functions.h"
-#include "./staticRMI/fixed_experiment.h"
 
 std::ofstream outRes;
 
 int main() {
   kPrimaryIndex = false;
-  outRes.open("res_0322.csv", std::ios::app);
+  outRes.open("res_0907.csv", std::ios::app);
 
   time_t timep;
   time(&timep);

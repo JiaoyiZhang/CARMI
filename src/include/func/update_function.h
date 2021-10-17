@@ -2,7 +2,7 @@
  * @file update_function.h
  * @author Jiaoyi
  * @brief update a record
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
@@ -18,69 +18,38 @@
 #include "inlineFunction.h"
 
 template <typename KeyType, typename ValueType>
-bool CARMI<KeyType, ValueType>::Update(DataType data) {
+bool CARMI<KeyType, ValueType>::Update(const DataType &datapoint) {
   int idx = 0;  // idx in the INDEX
   int type = rootType;
   while (1) {
     switch (type) {
-      case LR_ROOT_NODE:
+      case PLR_ROOT_NODE:
         idx = root.childLeft +
-              root.LRType<DataVectorType, DataType>::model.Predict(data.first);
+              root.PLRType<DataVectorType, KeyType>::model.Predict(
+                  datapoint.first);
         break;
       case LR_INNER_NODE:
-        idx = entireChild[idx].lr.childLeft +
-              entireChild[idx].lr.Predict(data.first);
+        idx = node.nodeArray[idx].lr.childLeft +
+              node.nodeArray[idx].lr.Predict(datapoint.first);
         break;
       case PLR_INNER_NODE:
-        idx = entireChild[idx].plr.childLeft +
-              entireChild[idx].plr.Predict(data.first);
+        idx = node.nodeArray[idx].plr.childLeft +
+              node.nodeArray[idx].plr.Predict(datapoint.first);
         break;
       case HIS_INNER_NODE:
-        idx = entireChild[idx].his.childLeft +
-              entireChild[idx].his.Predict(data.first);
+        idx = node.nodeArray[idx].his.childLeft +
+              node.nodeArray[idx].his.Predict(datapoint.first);
         break;
       case BS_INNER_NODE:
-        idx = entireChild[idx].bs.childLeft +
-              entireChild[idx].bs.Predict(data.first);
+        idx = node.nodeArray[idx].bs.childLeft +
+              node.nodeArray[idx].bs.Predict(datapoint.first);
         break;
       case ARRAY_LEAF_NODE: {
-        auto left = entireChild[idx].array.m_left;
-        auto size = entireChild[idx].array.flagNumber & 0x00FFFFFF;
-        int preIdx = entireChild[idx].array.Predict(data.first);
-        if (entireData[left + preIdx].first == data.first) {
-          entireData[left + preIdx].second = data.second;
-        } else {
-          preIdx = ArraySearch(data.first, preIdx, entireChild[idx].array.error,
-                               left, size);
-          if (preIdx >= left + size || entireData[preIdx].first != data.first)
-            return false;
-
-          entireData[preIdx].second = data.second;
-        }
-        return true;
-      }
-      case GAPPED_ARRAY_LEAF_NODE: {
-        auto left = entireChild[idx].ga.m_left;
-        int preIdx = entireChild[idx].ga.Predict(data.first);
-        int maxIndex = entireChild[idx].ga.maxIndex;
-        if (entireData[left + preIdx].first == data.first) {
-          entireData[left + preIdx].second = data.second;
-          return true;
-        } else {
-          preIdx = GASearch(data.first, preIdx, entireChild[idx].ga.error, left,
-                            maxIndex);
-
-          if (preIdx > left + maxIndex ||
-              entireData[preIdx].first != data.first)
-            return false;
-
-          entireData[preIdx].second = data.second;
-          return true;
-        }
+        return node.nodeArray[idx].cfArray.Update(datapoint, &data);
       }
     }
 
-    type = entireChild[idx].lr.flagNumber >> 24;
+    type = node.nodeArray[idx].lr.flagNumber >> 24;
   }
 }
 

@@ -2,7 +2,7 @@
  * @file dp.h
  * @author Jiaoyi
  * @brief the main function of dynamic programming algorithm
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
@@ -17,8 +17,8 @@
 #include <map>
 #include <vector>
 
-#include "../params.h"
 #include "../func/inlineFunction.h"
+#include "../params.h"
 #include "./dp_inner.h"
 #include "./dp_leaf.h"
 #include "./greedy.h"
@@ -39,9 +39,14 @@ NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
     return nodeCost;
   }
 
-  if (range.initRange.size <= kMaxKeyNum) {
+  double minRatio = 0.9;
+  int maxStoredNum = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
+  if (isPrimary) {
+    maxStoredNum = carmi_params::kMaxLeafNodeSizeExternal;
+  }
+  if (range.initRange.size <= minRatio * maxStoredNum) {
     return DPLeaf(range);
-  } else if (range.initRange.size > carmi_params::kLeafMaxCapacity) {
+  } else if (range.initRange.size > maxStoredNum) {
     return DPInner(range);
   } else {
     auto res1 = DPInner(range);
