@@ -34,7 +34,8 @@ template <typename TYPE>
 double GetNodePredictTime() {
   std::vector<TYPE> node(kModelNumber);
   CARMI<double, double> carmi;
-  carmi.data.InitDataArray(kModelNumber / kSize);
+  carmi.data = DataArrayStructure<double, double>(
+      CFArrayType<double, double>::kMaxBlockNum, kModelNumber / kSize);
   RootType root;
   DataArrayStructure<double, double> data;
   double tmpKeys[6];
@@ -88,7 +89,7 @@ template <typename TYPE>
 double GetBlockSearchTime() {
   CARMI<double, double> carmi;
   LeafSlots<double, double> tmpSlots;
-  for (int i = 0; i < carmi.kMaxDataPointNum; i++) {
+  for (int i = 0; i < CFArrayType<double, double>::kMaxBlockCapacity; i++) {
     tmpSlots.slots[i] = {i, i * 10};
   }
   unsigned seed = std::clock();
@@ -98,8 +99,8 @@ double GetBlockSearchTime() {
   for (int i = 0; i < kModelNumber; i++) {
     data.dataArray.push_back(tmpSlots);
   }
-  std::vector<int> keys(carmi.kMaxDataPointNum);
-  for (int i = 0; i < carmi.kMaxDataPointNum; i++) {
+  std::vector<int> keys(CFArrayType<double, double>::kMaxLeafCapacity);
+  for (int i = 0; i < CFArrayType<double, double>::kMaxLeafCapacity; i++) {
     keys[i] = i;
   }
 
@@ -113,15 +114,15 @@ double GetBlockSearchTime() {
   s = std::clock();
   for (int i = 0; i < end; i++) {
     tmpIdx = idx[i];
-    key = keys[i % carmi.kMaxDataPointNum];
-    res += tmpNode.SearchDataBlock(data.dataArray[tmpIdx], key, 16);
+    key = keys[i % CFArrayType<double, double>::kMaxLeafCapacity];
+    res += tmpNode.SearchDataBlock(data.dataArray[tmpIdx], key);
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
   s = std::clock();
   for (int i = 0; i < end; i++) {
     tmpIdx = idx[i];
-    key = keys[i % carmi.kMaxDataPointNum];
+    key = keys[i % CFArrayType<double, double>::kMaxLeafCapacity];
     find_idx += data.dataArray[tmpIdx].slots[0].first +
                 data.dataArray[tmpIdx].slots[4].first +
                 data.dataArray[tmpIdx].slots[8].first +

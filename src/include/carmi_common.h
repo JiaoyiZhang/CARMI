@@ -126,10 +126,10 @@ class CARMICommon {
         return DBL_MAX;
       }
       int left = currnode->cfArray.m_left;
-      if (left + currblock >= tree->carmi_tree.data.nowDataSize) {
+      if (left + currblock >= tree->carmi_tree.data.usedDatasize) {
         std::cout << "index is: " << left + currblock << std::endl;
         std::cout << "the index is out of range, size:"
-                  << tree->carmi_tree.data.nowDataSize << std::endl;
+                  << tree->carmi_tree.data.usedDatasize << std::endl;
       }
       return tree->carmi_tree.data.dataArray[left + currblock]
           .slots[currslot]
@@ -148,10 +148,10 @@ class CARMICommon {
         return DBL_MAX;
       }
       int left = currnode->cfArray.m_left;
-      if (left + currblock >= tree->carmi_tree.data.nowDataSize) {
+      if (left + currblock >= tree->carmi_tree.data.usedDatasize) {
         std::cout << "index is: " << left + currblock << std::endl;
         std::cout << "the index is out of range, size:"
-                  << tree->carmi_tree.data.nowDataSize << std::endl;
+                  << tree->carmi_tree.data.usedDatasize << std::endl;
       }
       return tree->carmi_tree.data.dataArray[left + currblock]
           .slots[currslot]

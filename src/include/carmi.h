@@ -428,9 +428,6 @@ class CARMI {
   // for carmi_common
   int firstLeaf;  ///< the index of the first leaf node in node
 
-  /// store the index of all empty,blocks(size: 1,2^i, 3*2^i, 4096)
-  std::vector<EmptyBlock> emptyBlocks;
-
   // for carmi_external
   int curr;  ///< the current insert index for external array
 
@@ -477,7 +474,8 @@ CARMI<KeyType, ValueType>::CARMI() {
 
   emptyNode.cfArray = CFArrayType<KeyType, ValueType>();
   reservedSpace = 0;
-  data.InitDataArray(1000);
+  data = DataArrayStructure<KeyType, ValueType>(
+      CFArrayType<KeyType, ValueType>::kMaxBlockNum, 1000);
 }
 
 template <typename KeyType, typename ValueType>
@@ -509,7 +507,8 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
     querySize += insertQuery[i].second;
   }
 
-  data.InitDataArray(initDataset.size());
+  data = DataArrayStructure<KeyType, ValueType>(
+      CFArrayType<KeyType, ValueType>::kMaxBlockNum, initDataset.size());
 }
 
 template <typename KeyType, typename ValueType>

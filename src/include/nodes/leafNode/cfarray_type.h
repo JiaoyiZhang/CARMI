@@ -884,14 +884,14 @@ inline bool CFArrayType<KeyType, ValueType>::StoreData(
       }
     }
 
-    if (m_left + actualNum > static_cast<int>(data->nowDataSize)) {
-      data->nowDataSize = m_left + actualNum;
+    if (m_left + actualNum > static_cast<int>(data->usedDatasize)) {
+      data->usedDatasize = m_left + actualNum;
     }
     if (m_left - *prefetchEnd > 1) {
       if (*prefetchEnd < 0) {
-        data->AddEmptyBlock(0, m_left);
+        data->AddEmptyMemoryBlock(0, m_left);
       } else {
-        data->AddEmptyBlock(*prefetchEnd + 1, m_left - *prefetchEnd - 1);
+        data->AddEmptyMemoryBlock(*prefetchEnd + 1, m_left - *prefetchEnd - 1);
       }
     }
     *prefetchEnd = m_left + actualNum - 1;

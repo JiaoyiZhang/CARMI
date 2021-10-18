@@ -16,7 +16,6 @@
 #include <vector>
 
 #include "../include/carmi.h"
-#include "../include/memoryLayout/datapoint.h"
 #include "../include/nodes/innerNode/bs_model.h"
 #include "../include/nodes/innerNode/his_model.h"
 #include "../include/nodes/innerNode/lr_model.h"

@@ -97,7 +97,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
   if (!isPrimary) {
     int newBlockSize =
         root.fetch_model.PrefetchTrain(prefetchData, CostPerLeaf, checkpoint);
-    data.Resize(newBlockSize);
+    data.dataArray.resize(newBlockSize, LeafSlots<KeyType, ValueType>());
   }
 
   int largerThanGivenArray = 0;
@@ -182,7 +182,7 @@ inline void CARMI<KeyType, ValueType>::Construction() {
   ConstructSubTree(res, subDataset, &nodeCost);
   UpdateLeaf();
 
-  int neededSize = data.nowDataSize + reservedSpace;
+  int neededSize = data.usedDatasize + reservedSpace;
   if (!isPrimary) {
     data.ReleaseUselessMemory(neededSize);
   }

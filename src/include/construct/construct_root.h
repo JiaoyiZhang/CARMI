@@ -102,7 +102,7 @@ TYPE CARMI<KeyType, ValueType>::ConstructRoot(const RootStruct &rootStruct,
 
   root.fetch_model.SetBlockNumber(blockNum);
 
-  data.Resize(blockNum);
+  data.dataArray.resize(blockNum, LeafSlots<KeyType, ValueType>());
   return root;
 }
 
