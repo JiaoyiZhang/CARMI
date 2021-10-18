@@ -24,8 +24,13 @@
 template <typename KeyType, typename ValueType>
 class NodeArrayStructure {
  public:
+  // *** Constructed Types and Constructor
+
+  /// the pair of data points
   typedef std::pair<KeyType, ValueType> DataType;
+  /// the vector of data points, which is the type of dataset
   typedef std::vector<DataType> DataVectorType;
+
   NodeArrayStructure() {
     nowNodeNumber = 0;
     std::vector<BaseNode<KeyType, ValueType>>(4096,
@@ -33,43 +38,55 @@ class NodeArrayStructure {
         .swap(nodeArray);
   }
 
+ public:
+  //*** Public Functions of NodeArrayStructure
+
   /**
-   * @brief allocate a block of memory to store the child nodes of this node
+   * @brief allocate a block of empty memory to store the nodes
    *
-   * @param size the size of the block
-   * @return int: the start index of the allocation
+   * @param size[in] the size of nodes needed to be stored
+   * @return int: the beginning index of this allocated memory
    * @retval -1 allocation fails
    */
   int AllocateNodeMemory(int size);
 
   /**
-   * @brief release useless memory
+   * @brief After the construction of CARMI is completed, the useless memory
+   * exceeding the needed size will be released.
    *
-   * @param neededSize the size of needed memory
+   * @param neededSize[in] the size of needed node blocks
    */
   void ReleaseUselessMemory(int neededSize);
 
-  std::vector<BaseNode<KeyType, ValueType>> nodeArray;  ///< the node array
-  int nowNodeNumber;  ///< the number of inner nodes and leaf nodes
+ public:
+  //*** Public Data Member of Node Array Structure Objects
+
+  /**
+   * @brief the node array mentioned in the paper.
+   *
+   * All tree nodes, including both inner nodes and leaf nodes, are stored in
+   * this node array. Each member occupies a fixed size according to the
+   * BaseNode class.
+   */
+  std::vector<BaseNode<KeyType, ValueType>> nodeArray;
+
+  // the used size of nodeArray
+  int nowNodeNumber;
 };
 
 template <typename KeyType, typename ValueType>
 int NodeArrayStructure<KeyType, ValueType>::AllocateNodeMemory(int size) {
   int newLeft = -1;
   unsigned int tmpSize = nodeArray.size();
-  if (nowNodeNumber + size <= tmpSize) {
-    newLeft = nowNodeNumber;
-    nowNodeNumber += size;
-  } else {
-    BaseNode<KeyType, ValueType> t;
-    while (nowNodeNumber + size > tmpSize) {
-      tmpSize *= 2;
-    }
-    nodeArray.resize(tmpSize, t);
 
-    newLeft = nowNodeNumber;
-    nowNodeNumber += size;
+  // allocation fails, need to expand the nodeArray
+  while (nowNodeNumber + size > tmpSize) {
+    BaseNode<KeyType, ValueType> t;
+    tmpSize *= 2;
+    nodeArray.resize(tmpSize, t);
   }
+  newLeft = nowNodeNumber;
+  nowNodeNumber += size;
   return newLeft;
 }
 

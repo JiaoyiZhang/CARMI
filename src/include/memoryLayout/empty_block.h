@@ -1,42 +1,64 @@
 /**
  * @file empty_block.h
  * @author Jiaoyi
- * @brief the class of empty blocks
+ * @brief the class of empty memory blocks
  * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_DATAMANAGER_EMPTY_BLOCK_H_
-#define SRC_INCLUDE_DATAMANAGER_EMPTY_BLOCK_H_
+#ifndef MEMORYLAYOUT_EMPTY_BLOCK_H_
+#define MEMORYLAYOUT_EMPTY_BLOCK_H_
 #include <iostream>
 #include <set>
 
 /**
- * @brief used to manage empty blocks
+ * @brief Basic class used to manage empty memory blocks.
  *
+ * The basic class used to manage empty memory blocks with the size m_width.
+ * In CARMI, this class can speed up the process of memory allocation, which
+ * only needs to return the first element in m_block.
+ *
+ * This class is used as a member type of the vector of the DataArrayStructure
+ * in data_array.h. Users can customize the granularity of the width of the
+ * empty memory blocks according to the node type them implement. For example,
+ * these can be 1~7 for CF array leaf node. While it can also have a coarser
+ * granularity:2, 4, 8, ..., 512, 1024, 2048.
  */
-class EmptyBlock {
+class EmptyMemoryBlock {
  public:
-  /**
-   * @brief Construct a new Empty Block object
-   *
-   * @param w the width
-   */
-  explicit EmptyBlock(int w) { m_width = w; }
+  //*** Constructor
 
   /**
-   * @brief allocate a block and erase the corresponding key
+   * @brief Construct a new EmptyMemoryBlock object
    *
-   * @param size the size that needs to be allocated
-   * @return int: return the key
+   * @param width[in] the width of this type of empty memory block
+   */
+  explicit EmptyMemoryBlock(int width) { m_width = width; }
+
+ public:
+  //*** Public Functions of EmptyMemoryBlock Objects
+
+  /**
+   * @brief allocate a block of empty memory. If the set of memory blocks of
+   * size m_width has empty blocks available for allocation, that is, there are
+   * still elements in m_block, then return the index of the empty memory block
+   * with the smallest index among all the empty blocks. If there are no empty
+   * blocks, allocation fails and return -1.
+   *
+   * @return int: if allocation is successful, return the smallest element in
+   * m_block, otherwise return -1.
    * @retval -1 allocation fails
    */
-  int allocate() {
-    // if the set is empty, allocation fails
-    if (m_block.empty()) return -1;
-    auto res = *m_block.begin();
+  int Allocate() {
+    // Case 1: if the set is empty, allocation fails
+    if (m_block.empty()) {
+      return -1;
+    }
+    // Case 2: allocation succeeds, return the smallest element of m_block and
+    // erase this block from the empty set
+    int res = *m_block.begin();
     m_block.erase(m_block.begin());
     return res;
   }
@@ -49,7 +71,7 @@ class EmptyBlock {
    * @return int: the size of the empty block after this action
    * @retval -1 fails
    */
-  int addBlock(int idx, int size) {
+  int AddBlock(int idx, int size) {
     if (size < m_width) return -1;
     int newIdx = idx + size - m_width;
     m_block.insert(newIdx);
@@ -57,13 +79,14 @@ class EmptyBlock {
   }
 
   /**
-   * @brief find whether the block of this index is empty
+   * @brief check whether the memory block with the beginning index idx is
+   * empty, return the check result
    *
-   * @param idx the index of this block
+   * @param idx[in] the beginning index of this block
    * @retval true this block is empty
    * @retval false this block is not empty and has been allocated
    */
-  bool find(int idx) {
+  bool IsEmpty(int idx) {
     std::set<int>::iterator it = m_block.find(idx);
     if (it != m_block.end())
       return true;
@@ -71,8 +94,14 @@ class EmptyBlock {
       return false;
   }
 
-  std::set<int> m_block;  ///< the start index of empty blocks
-  int m_width;            ///< the width of each segment
+ public:
+  //*** Public Data Members of EmptyMemoryBlock Objects
+
+  // used to store the beginning indexes of all empty memory blocks with m_width
+  std::set<int> m_block;
+
+  // the width of this empty memory block
+  int m_width;
 };
 
-#endif  // SRC_INCLUDE_DATAMANAGER_EMPTY_BLOCK_H_
+#endif  // MEMORYLAYOUT_EMPTY_BLOCK_H_
