@@ -115,8 +115,8 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   DataVectorType currdata(size, {-1, 0});
   int point_num = 7;
 
-  keys[0] = dataset[0].first;
-  keys[7] = dataset[size - 1].first;
+  keys[0] = dataset[left].first;
+  keys[7] = dataset[left + size - 1].first;
   for (int i = 0, j = left; i < size; i++, j++) {
     currdata[i].second = static_cast<float>(i) / size * (childNumber - 1);
     currdata[i].first = dataset[j].first;
@@ -242,6 +242,8 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
 
     if (p > e) {
       return e;
+    } else if (p < 0) {
+      return 0;
     }
 
   } else if (e == 1) {
@@ -250,20 +252,20 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
     p = slope * (key - keys[0]);
     if (p < 0) {
       p = 0;
+    } else if (p > index[0]) {
+      p = index[0];
     }
   } else {
     float slope = static_cast<float>(index[e - 1] - index[e - 2]) /
                   (keys[e] - keys[e - 1]);
     // intercept = index[e-1] - slope * keys[e]
     p = slope * (key - keys[e]) + index[e - 1];
+    if (p < index[e - 2]) {
+      p = index[e - 2];
+    } else if (p > index[e - 1]) {
+      p = index[e - 1];
+    }
   }
-#ifdef DEBUG
-  if (p < 0) {
-    std::cout << p << std::endl;
-  } else if (p > (flagNumber & 0x00FFFFFF) - 1) {
-    std::cout << p << ",\t" << (flagNumber & 0x00FFFFFF) - 1 << std::endl;
-  }
-#endif  // DEBUG
   return p;
 }
 

@@ -30,7 +30,7 @@ struct SegmentPoint {
   // the key values
   double key[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
   // the corresponding indexes
-  int idx[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+  int idx[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   // the number of blocks
   int blockNum[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 };
