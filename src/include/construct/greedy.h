@@ -35,8 +35,7 @@ void CARMI<KeyType, ValueType>::IsBetterGreedy(int c, double frequency_weight,
   std::vector<IndexPair> perInsertSize(c, emptyRange);
   double space_cost = kBaseNodeSpace * c;
 
-  TYPE currnode;
-  currnode.SetChildNumber(c);
+  TYPE currnode(c);
   currnode.Train(range.left, range.size, initDataset);
   NodePartition<TYPE>(currnode, range, initDataset, &perSize);
   NodePartition<TYPE>(currnode, insertRange, insertQuery, &perInsertSize);

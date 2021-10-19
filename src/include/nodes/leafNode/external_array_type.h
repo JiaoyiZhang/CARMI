@@ -31,10 +31,10 @@ class ExternalArray {
  public:
   // *** Constructed Types and Constructor
 
-  /// the pair of data points
+  // the pair of data points
   typedef std::pair<KeyType, KeyType> DataType;
 
-  /// the vector of data points, which is the type of dataset
+  // the vector of data points, which is the type of dataset
   typedef std::vector<DataType> DataVectorType;
 
   ExternalArray() {
@@ -169,10 +169,10 @@ class ExternalArray {
    */
   int error;
 
-  //   The slope parameter of the linear regression model. (4 bytes)
+  // The slope parameter of the linear regression model. (4 bytes)
   float slope;
 
-  //  The intercept parameter of the linear regression model. (4 bytes)
+  // The intercept parameter of the linear regression model. (4 bytes)
   float intercept;
 
   // Placeholder to make sure that the size of this node is 64 bytes. (44 bytes)

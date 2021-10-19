@@ -26,9 +26,10 @@ class NodeArrayStructure {
  public:
   // *** Constructed Types and Constructor
 
-  /// the pair of data points
+  // the pair of data points
   typedef std::pair<KeyType, ValueType> DataType;
-  /// the vector of data points, which is the type of dataset
+
+  // the vector of data points, which is the type of dataset
   typedef std::vector<DataType> DataVectorType;
 
   NodeArrayStructure() {

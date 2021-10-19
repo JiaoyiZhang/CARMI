@@ -41,8 +41,7 @@ inline double CARMI<KeyType, ValueType>::CalculateCFArrayCost(
     space += givenBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
   } else {
     // cannot be prefetched
-    int neededBlock =
-        CFArrayType<KeyType, ValueType>::CalNeededBlockNum(size);
+    int neededBlock = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(size);
     space += neededBlock * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
     time += carmi_params::kMemoryAccessTime;
   }
@@ -70,8 +69,7 @@ template <typename KeyType, typename ValueType>
 template <typename TYPE>
 TYPE CARMI<KeyType, ValueType>::InnerDivideAll(int c, const DataRange &range,
                                                SubDataset *subDataset) {
-  TYPE currnode;
-  currnode.SetChildNumber(c);
+  TYPE currnode(c);
   int l = range.initRange.left;
   int r = range.initRange.left + range.initRange.size;
   DataVectorType nowDataset(initDataset.begin() + l, initDataset.begin() + r);

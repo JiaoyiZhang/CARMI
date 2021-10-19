@@ -51,9 +51,8 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
         range.initRange.left != -1) {
       int end = range.initRange.left + range.initRange.size;
       prefetchNum += range.initRange.size;
-      int neededBlockNum =
-          CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
-              range.initRange.size + range.insertRange.size);
+      int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
+          range.initRange.size + range.insertRange.size);
       if (i - preI > 10000) {
         checkpoint = prefetchData.size();
       }
@@ -106,10 +105,8 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
 
   for (int i = 0; i < prefetchNode.size(); i++) {
     CFArrayType<KeyType, ValueType> currnode;
-    int neededBlockNum =
-        CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
-            prefetchRange[i].initRange.size +
-            prefetchRange[i].insertRange.size);
+    int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
+        prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size);
     int predictBlockNum = root.fetch_model.PrefetchNum(prefetchNode[i]);
     bool isSuccess = false;
     if (neededBlockNum <= predictBlockNum) {
@@ -121,7 +118,6 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
         int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
         prefetchIndex[j - s] = p;
       }
-
       isSuccess =
           currnode.StoreData(initDataset, prefetchIndex, true, predictBlockNum,
                              s, e - s, &data, &prefetchEnd);
@@ -138,10 +134,9 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
   if (remainingNode.size() > 0) {
     for (int i = 0; i < remainingNode.size(); i++) {
       CFArrayType<KeyType, ValueType> currnode;
-      int neededBlockNum =
-          CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
-              remainingRange[i].initRange.size +
-              remainingRange[i].insertRange.size);
+      int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
+          remainingRange[i].initRange.size +
+          remainingRange[i].insertRange.size);
       std::vector<int> prefetchIndex(remainingRange[i].initRange.size);
       int s = remainingRange[i].initRange.left;
       int e =
@@ -152,9 +147,8 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
         prefetchIndex[j - s] = p;
       }
 
-      auto isSuccess =
-          currnode.StoreData(initDataset, prefetchIndex, isInitMode,
-                             neededBlockNum, s, e - s, &data, &prefetchEnd);
+      currnode.StoreData(initDataset, prefetchIndex, isInitMode, neededBlockNum,
+                         s, e - s, &data, &prefetchEnd);
       node.nodeArray[remainingNode[i]].cfArray = currnode;
       scanLeaf.push_back(remainingNode[i]);
     }

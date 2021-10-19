@@ -31,10 +31,7 @@ std::vector<int> idx(end);
 
 template <typename TYPE>
 double GetNodePredictTime() {
-  std::vector<TYPE> node(kModelNumber);
-  for (int i = 0; i < kModelNumber; i++) {
-    node[i].SetChildNumber(20);
-  }
+  std::vector<TYPE> node(kModelNumber, TYPE(20));
   for (int i = 0; i < end; i++) {
     node[i * block].Train(0, kSize, data);
   }
