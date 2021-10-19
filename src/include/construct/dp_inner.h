@@ -37,10 +37,12 @@ void CARMI<KeyType, ValueType>::ChooseBetterInner(int c,
     NodeCost res;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
-    if (subDataset.subInit[i].size == dataRange.initRange.size) {
+    if (subDataset.subInit[i].size + subDataset.subInsert[i].size ==
+        dataRange.initRange.size + dataRange.insertRange.size) {
       return;
     }
-    if (subDataset.subInit[i].size > carmi_params::kAlgorithmThreshold)
+    if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
+        carmi_params::kAlgorithmThreshold)
       res = GreedyAlgorithm(range);
     else
       res = DP(range);

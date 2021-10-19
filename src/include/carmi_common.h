@@ -47,40 +47,22 @@ class CARMICommon {
    * @brief Construct a new CARMICommon object with the range [first,last)
    *
    * @tparam InputIterator the iterator type of input
-   * @param first the first input iterator
-   * @param last the last input iterator
+   * @param initFirst the first input iterator
+   * @param initLast the last input iterator
+   * @param insertFirst
+   * @param insertLast
    * @param ratio readQuerySize/(readQuerySize+writeQuerySize)
    * @param lambda lambda (time + lambda * space)
    */
   template <typename InputIterator>
-  CARMICommon(const InputIterator &first, const InputIterator &last,
+  CARMICommon(const InputIterator &initFirst, const InputIterator &initLast,
+              const InputIterator &insertFirst, const InputIterator &insertLast,
               double ratio, double lambda) {
     DataVectorType initDataset;
-    PreprocessInput<InputIterator>(first, last, &initDataset);
-    Init(initDataset, ratio, 0, 1, lambda);
-  }
-
-  /**
-   * @brief Construct a new CARMICommon object for the situation that insert
-   * operations are between left to right with the range [first,last)
-   *
-   * @tparam InputIterator the iterator type of input
-   * @param first the first input iterator
-   * @param last the last input iterator
-   * @param ratio readQuerySize/(readQuerySize+writeQuerySize)
-   * @param lambda lambda (time + lambda * space)
-   * @param insert_left the left boundary of the insert operation, the value is
-   * between 0 and 1 (left_index / initDataset.size())
-   * @param insert_right the right boundary of the insert operation, the value
-   * is between 0 and 1 (right_index / initDataset.size())
-   */
-  template <typename InputIterator>
-  CARMICommon(const InputIterator &first, const InputIterator &last,
-              double ratio, double lambda, double insert_left,
-              double insert_right) {
-    DataVectorType initDataset;
-    PreprocessInput<InputIterator>(first, last, &initDataset);
-    Init(initDataset, ratio, insert_left, insert_right, lambda);
+    PreprocessInput<InputIterator>(initFirst, initLast, &initDataset);
+    DataVectorType insertDataset;
+    PreprocessInput<InputIterator>(insertFirst, insertLast, &insertDataset);
+    Init(initDataset, insertDataset, ratio, lambda);
   }
 
   /**
@@ -245,15 +227,12 @@ class CARMICommon {
    * insert_right*dataset.size())
    *
    * @param initDataset the dataset
+   * @param insertDataset
    * @param ratio readQuerySize/(readQuerySize+writeQuerySize)
-   * @param insert_left the left boundary of the insert operation, the value is
-   * between 0 and 1 (left_index / initDataset.size())
-   * @param insert_right the right boundary of the insert operation, the value
-   * is between 0 and 1 (right_index / initDataset.size())
    * @param lambda lambda (time + lambda * space)
    */
-  void Init(DataVectorType initDataset, double ratio, double insert_left,
-            double insert_right, double lambda);
+  void Init(const DataVectorType &initDataset,
+            const DataVectorType &insertDataset, double ratio, double lambda);
 
   // main functions
  public:
@@ -366,32 +345,23 @@ void CARMICommon<KeyType, ValueType>::PreprocessInput(
 }
 
 template <typename KeyType, typename ValueType>
-void CARMICommon<KeyType, ValueType>::Init(DataVectorType initDataset,
-                                           double ratio, double insert_left,
-                                           double insert_right, double rate) {
+void CARMICommon<KeyType, ValueType>::Init(const DataVectorType &initDataset,
+                                           const DataVectorType &insertDataset,
+                                           double ratio, double rate) {
   DataVectorType findQuery = initDataset;
-  DataVectorType insertQuery;
+  DataVectorType insertQuery = insertDataset;
   std::vector<int> insertQueryIndex;
 
   // set the read frequency
   for (int i = 0; i < static_cast<int>(findQuery.size()); i++) {
     findQuery[i].second = 1;
   }
-
-  // split insertQuery
-  if (ratio != 1) {
-    int cnt = round(1.0 / (1.0 - ratio));
-    insert_left = initDataset.size() * insert_left + cnt - 1;
-    insert_right = initDataset.size() * insert_right;
-    for (int j = insert_left; j < insert_right; j += cnt) {
-      insertQuery.push_back({initDataset[j].first, 1});
-      insertQueryIndex.push_back(j);
-    }
+  for (int i = 0; i < static_cast<int>(insertDataset.size()); i++) {
+    insertQuery[i].second = 1;
   }
 
   // construct carmi
-  carmi_tree =
-      carmi_impl(initDataset, findQuery, insertQuery, insertQueryIndex, rate);
+  carmi_tree = carmi_impl(initDataset, findQuery, insertQuery, rate);
   carmi_tree.Construction();
 }
 

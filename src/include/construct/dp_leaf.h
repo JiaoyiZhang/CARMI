@@ -70,14 +70,15 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
   }
 
   // choose a cf array node as the leaf node
-  int leftNum = CFArrayType<KeyType, ValueType>::CalculateNeededBlockNumber(
-      dataRange.initRange.size);
-  int avgSlotNum = std::max(1, dataRange.initRange.size / leftNum + 1);
+  int totalDataNum = dataRange.initRange.size + dataRange.insertRange.size;
+  int blockNum =
+      CFArrayType<KeyType, ValueType>::CalNeededBlockNum(totalDataNum);
+  int avgSlotNum = std::max(1.0, ceil(totalDataNum * 1.0 / blockNum));
   avgSlotNum =
       std::min(avgSlotNum, CFArrayType<KeyType, ValueType>::kMaxBlockCapacity);
 
   double time_cost = carmi_params::kLeafBaseTime;
-  double space_cost = leftNum * carmi_params::kMaxLeafNodeSize;
+  double space_cost = blockNum * carmi_params::kMaxLeafNodeSize;
 
   int end = dataRange.findRange.left + dataRange.findRange.size;
   for (int i = dataRange.findRange.left; i < end; i++) {

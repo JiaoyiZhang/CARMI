@@ -120,12 +120,11 @@ CARMIExternal<KeyType>::CARMIExternal(const void *dataset,
   }
 
   for (int i = 0; i < static_cast<int>(future_insert.size()); i++) {
-    insertQuery[i] = {initDataset[i].first, 1};
-    insertQueryIndex[i] = record_number + i;
+    insertQuery[i] = {future_insert[i], 1};
   }
 
-  carmi_tree = carmi_impl(dataset, initDataset, findQuery, insertQuery,
-                          insertQueryIndex, lambda, record_number, record_len);
+  carmi_tree = carmi_impl(dataset, initDataset, findQuery, insertQuery, lambda,
+                          record_number, record_len);
 
   carmi_tree.Construction();
 }

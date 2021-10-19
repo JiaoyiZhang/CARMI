@@ -46,12 +46,10 @@ class CARMI {
    * @param initData the dataset used to initialize carmi
    * @param findData the read query
    * @param insertData the write query
-   * @param insertIndex the index of each write query
    * @param lambda lambda, used to tradeoff between time and space
    */
-  CARMI(DataVectorType &initData, DataVectorType &findData,
-        DataVectorType &insertData, std::vector<int> &insertIndex,
-        double lambda);
+  CARMI(const DataVectorType &initData, const DataVectorType &findData,
+        const DataVectorType &insertData, double lambda);
 
   /**
    * @brief Construct a new CARMI object for carmi_external
@@ -65,8 +63,8 @@ class CARMI {
    * @param record_number the number of the records
    * @param record_len the length of a record (byte)
    */
-  CARMI(const void *dataset, DataVectorType &initData, DataVectorType &findData,
-        DataVectorType &insertData, std::vector<int> &insertIndex,
+  CARMI(const void *dataset, const DataVectorType &initData,
+        const DataVectorType &findData, const DataVectorType &insertData,
         double lambda, int record_number, int record_len);
 
   // main functions
@@ -248,13 +246,14 @@ class CARMI {
    * @param frequency_weight the frequency weight of these queries
    * @param time_cost the time cost of this node
    * @param range the range of queries
+   * @param insertRange
    * @param optimal_node_struct the optimal setting
    * @param optimalCost the optimal cost
    */
   template <typename TYPE>
   void IsBetterGreedy(int c, double frequency_weight, double time_cost,
-                      const IndexPair &range, TYPE *optimal_node_struct,
-                      NodeCost *optimalCost);
+                      const IndexPair &range, const IndexPair &insertRange,
+                      TYPE *optimal_node_struct, NodeCost *optimalCost);
 
   /**
    * @brief the greedy algorithm
@@ -409,11 +408,6 @@ class CARMI {
   int prefetchEnd;  ///< the last index of prefetched blocks
   double sumDepth;  ///< used to calculate the average depth
 
-  // static const int kMaxDataBlockNum;  ///< the number of union in a leaf node
-  // static const int
-  //     kMaxDataPointNum;  ///< the maximum number of slots in a union
-  // static const int kLeafMaxCapacity;  ///< the max capacity of a leaf node
-
  private:
   CARMIRoot<DataVectorType, KeyType> root;  ///< the root node
   int rootType;                             ///< the type of the root node
@@ -434,8 +428,6 @@ class CARMI {
   DataVectorType initDataset;
   DataVectorType findQuery;
   DataVectorType insertQuery;
-  std::vector<int> insertQueryIndex;
-
   std::map<IndexPair, NodeCost> COST;
   std::map<IndexPair, BaseNode<KeyType, ValueType>> structMap;
   std::vector<int> scanLeaf;
@@ -451,7 +443,6 @@ class CARMI {
   static constexpr IndexPair emptyRange = {-1, 0};
   static constexpr NodeCost emptyCost = {0, 0, 0};
 
-  static constexpr float kDataPointSize = sizeof(DataType) * 1.0 / 1024 / 1024;
   static constexpr double kBaseNodeSpace =
       64.0 / 1024 / 1024;  // MB, the size of a node
   static constexpr double kPLRRootSpace =
@@ -479,10 +470,9 @@ CARMI<KeyType, ValueType>::CARMI() {
 }
 
 template <typename KeyType, typename ValueType>
-CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
-                                 DataVectorType &findData,
-                                 DataVectorType &insertData,
-                                 std::vector<int> &insertIndex, double l)
+CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
+                                 const DataVectorType &findData,
+                                 const DataVectorType &insertData, double l)
 
 {
   isPrimary = false;
@@ -495,7 +485,6 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
   initDataset = std::move(initData);
   findQuery = std::move(findData);
   insertQuery = std::move(insertData);
-  insertQueryIndex = std::move(insertIndex);
   emptyNode.cfArray = CFArrayType<KeyType, ValueType>();
   reservedSpace = insertQuery.size() * 1.0 / initDataset.size() * 4096 * 16;
 
@@ -512,10 +501,10 @@ CARMI<KeyType, ValueType>::CARMI(DataVectorType &initData,
 }
 
 template <typename KeyType, typename ValueType>
-CARMI<KeyType, ValueType>::CARMI(const void *dataset, DataVectorType &initData,
-                                 DataVectorType &findData,
-                                 DataVectorType &insertData,
-                                 std::vector<int> &insertIndex, double l,
+CARMI<KeyType, ValueType>::CARMI(const void *dataset,
+                                 const DataVectorType &initData,
+                                 const DataVectorType &findData,
+                                 const DataVectorType &insertData, double l,
                                  int record_number, int record_len)
 
 {
@@ -533,7 +522,6 @@ CARMI<KeyType, ValueType>::CARMI(const void *dataset, DataVectorType &initData,
   initDataset = std::move(initData);
   findQuery = std::move(findData);
   insertQuery = std::move(insertData);
-  insertQueryIndex = std::move(insertIndex);
 
   reservedSpace =
       static_cast<float>(insertQuery.size()) / initDataset.size() * 4096 * 16;

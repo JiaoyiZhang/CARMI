@@ -26,25 +26,28 @@ void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
                                              double *optimalCost,
                                              RootStruct *rootStruct) {
   std::vector<IndexPair> perSize(c, emptyRange);
+  std::vector<IndexPair> perInsertSize(c, emptyRange);
   double space_cost = kBaseNodeSpace * c;
 
   TYPE root(c);
   root.model.Train(initDataset);
   IndexPair range{0, static_cast<int>(initDataset.size())};
+  IndexPair insertRange{0, static_cast<int>(insertQuery.size())};
   NodePartition<ModelType>(root.model, range, initDataset, &perSize);
+  NodePartition<ModelType>(root.model, insertRange, insertQuery,
+                           &perInsertSize);
+
   for (int i = 0; i < c; i++) {
     int maxLeafCapacity = carmi_params::kMaxLeafNodeSizeExternal;
+    int totalDataNum = perSize[i].size + perInsertSize[i].size;
     if (!isPrimary) {
-      int tmpBlockNum = std::min(
-          static_cast<int>(
-              ceil(perSize[i].size * 1.0 /
-                   CFArrayType<KeyType, ValueType>::kMaxBlockCapacity)),
-          CFArrayType<KeyType, ValueType>::kMaxBlockNum);
+      int tmpBlockNum =
+          CFArrayType<KeyType, ValueType>::CalNeededBlockNum(totalDataNum);
       space_cost +=
           tmpBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
       maxLeafCapacity = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
     }
-    if (perSize[i].size > maxLeafCapacity) {
+    if (totalDataNum > maxLeafCapacity) {
       space_cost += kBaseNodeSpace * kMinChildNumber;
       time_cost += carmi_params::kMemoryAccessTime * perSize[i].size /
                    initDataset.size();
@@ -94,10 +97,10 @@ TYPE CARMI<KeyType, ValueType>::ConstructRoot(const RootStruct &rootStruct,
                            &(subDataset->subInsert));
   int blockNum = 0;
   for (int i = 0; i < rootStruct.rootChildNum; i++) {
-    if (subDataset->subInit[i].size <
+    if (subDataset->subInit[i].size + subDataset->subInsert[i].size <
         CFArrayType<KeyType, ValueType>::kMaxLeafCapacity)
-      blockNum += CFArrayType<KeyType, ValueType>::CalculateNeededBlockNumber(
-          subDataset->subInit[i].size);
+      blockNum += CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
+          subDataset->subInit[i].size + subDataset->subInsert[i].size);
   }
 
   root.fetch_model.SetBlockNumber(blockNum);

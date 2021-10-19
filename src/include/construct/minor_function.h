@@ -42,7 +42,7 @@ inline double CARMI<KeyType, ValueType>::CalculateCFArrayCost(
   } else {
     // cannot be prefetched
     int neededBlock =
-        CFArrayType<KeyType, ValueType>::CalculateNeededBlockNumber(size);
+        CFArrayType<KeyType, ValueType>::CalNeededBlockNum(size);
     space += neededBlock * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
     time += carmi_params::kMemoryAccessTime;
   }

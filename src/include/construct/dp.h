@@ -44,9 +44,10 @@ NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
   if (isPrimary) {
     maxStoredNum = carmi_params::kMaxLeafNodeSizeExternal;
   }
-  if (range.initRange.size <= minRatio * maxStoredNum) {
+  if (range.initRange.size + range.insertRange.size <=
+      minRatio * maxStoredNum) {
     return DPLeaf(range);
-  } else if (range.initRange.size > maxStoredNum) {
+  } else if (range.initRange.size + range.insertRange.size > maxStoredNum) {
     return DPInner(range);
   } else {
     auto res1 = DPInner(range);
