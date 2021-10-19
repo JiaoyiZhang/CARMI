@@ -54,10 +54,12 @@ void PrintAvgTime(double time);
  * @param rate the weight of space
  * @param length the length of range scan
  * @param initDataset
+ * @param insertDataset
  * @param testInsertQuery
  */
 void CoreCARMI(bool isZipfian, double initRatio, double rate,
                const std::vector<int> &length, const DataVecType &initDataset,
+               const DataVecType &insertDataset,
                const DataVecType &testInsertQuery);
 
 /**

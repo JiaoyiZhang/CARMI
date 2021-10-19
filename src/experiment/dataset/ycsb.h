@@ -26,14 +26,14 @@ class YCSBDataset : public BaseDataset {
  public:
   explicit YCSBDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+  void GenerateDataset(DataVecType *initDataset, DataVecType *insertDataset,
+                       DataVecType *testInsertQuery) {
     (*initDataset) = std::vector<DataType>(kDatasetSize);
     int end = round(kTestSize * (1 - proportion));
     (*testInsertQuery) = std::vector<DataType>(end);
 
     DataVecType ds;
-    std::ifstream inFile("../experiment/dataset/newycsbdata.csv",
-                         std::ios::in);
+    std::ifstream inFile("../experiment/dataset/newycsbdata.csv", std::ios::in);
     if (!inFile) {
       std::cout << "open ycsb.csv failed" << std::endl;
       exit(1);

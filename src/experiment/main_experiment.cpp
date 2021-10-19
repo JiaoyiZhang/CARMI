@@ -72,14 +72,14 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
   if (init == kRangeScan) {
     init = kReadHeavy;
   }
-  LognormalDataset logData = LognormalDataset(init);
-  UniformDataset uniData = UniformDataset(init);
-  NormalDataset norData = NormalDataset(init);
-  ExponentialDataset expData = ExponentialDataset(init);
+  LognormalDataset logData(init);
+  UniformDataset uniData(init);
+  NormalDataset norData(init);
+  ExponentialDataset expData(init);
 
   DataVecType initData;
+  DataVecType insertData;
   DataVecType testInsert;
-  std::vector<int> trainInsertIndex;
 
   for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
@@ -90,27 +90,35 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
     outRes << "kRate:" << kRate << std::endl;
     std::cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++"
               << std::endl;
-    uniData.GenerateDataset(&initData, &testInsert);
-    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    uniData.GenerateDataset(&initData, &insertData, &testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, insertData,
+              testInsert);
+    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
+    // testInsert);
 
     std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
               << std::endl;
-    expData.GenerateDataset(&initData, &testInsert);
-    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    expData.GenerateDataset(&initData, &insertData, &testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, insertData,
+              testInsert);
+    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
+    // testInsert);
 
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
               << std::endl;
-    norData.GenerateDataset(&initData, &testInsert);
-    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    norData.GenerateDataset(&initData, &insertData, &testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, insertData,
+              testInsert);
+    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
+    // testInsert);
 
     std::cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++"
               << std::endl;
-    logData.GenerateDataset(&initData, &testInsert);
-    CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
+    logData.GenerateDataset(&initData, &insertData, &testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, insertData,
+              testInsert);
+    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
+    // testInsert);
 
     outRes << std::endl;
   }
@@ -135,14 +143,12 @@ void mainMap(double initRatio, const std::vector<int> &length) {
   if (init == kRangeScan) {
     init = kReadHeavy;
   }
-  LongitudesDataset longData = LongitudesDataset(init);
-  LonglatDataset latData = LonglatDataset(init);
+  LongitudesDataset longData(init);
+  LonglatDataset latData(init);
 
   DataVecType initData;
-  DataVecType trainFind;
-  DataVecType trainInsert;
+  DataVecType insertData;
   DataVecType testInsert;
-  std::vector<int> trainInsertIndex;
 
   for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
@@ -154,15 +160,19 @@ void mainMap(double initRatio, const std::vector<int> &length) {
 
     std::cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++"
               << std::endl;
-    latData.GenerateDataset(&initData, &testInsert);
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
-    // CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    latData.GenerateDataset(&initData, &insertData, &testInsert);
+    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
+    // testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, insertData,
+              testInsert);
 
     std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
               << std::endl;
-    longData.GenerateDataset(&initData, &testInsert);
-    CoreCARMI(true, initRatio, kRate, length, initData, testInsert);
-    // CoreCARMI(false, initRatio, kRate, length, initData, testInsert);
+    longData.GenerateDataset(&initData, &insertData, &testInsert);
+    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
+    // testInsert);
+    CoreCARMI(false, initRatio, kRate, length, initData, insertData,
+              testInsert);
 
     outRes << std::endl;
   }
@@ -188,13 +198,11 @@ void mainYCSB(double initRatio, const std::vector<int> &length) {
   if (init == kRangeScan) {
     init = kReadHeavy;
   }
-  YCSBDataset ycsbData = YCSBDataset(init);
+  YCSBDataset ycsbData(init);
 
   DataVecType initData;
-  DataVecType trainFind;
-  DataVecType trainInsert;
+  DataVecType insertData;
   DataVecType testInsert;
-  std::vector<int> trainInsertIndex;
 
   for (int r = 0; r < static_cast<int>(rate.size()); r++) {
     double kRate;
@@ -205,7 +213,7 @@ void mainYCSB(double initRatio, const std::vector<int> &length) {
     outRes << "kRate:" << kRate << std::endl;
     std::cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++"
               << std::endl;
-    ycsbData.GenerateDataset(&initData, &testInsert);
+    ycsbData.GenerateDataset(&initData, &insertData, &testInsert);
     CoreExternalCARMI(true, initRatio, kRate, length, initData, testInsert);
 
     outRes << std::endl;

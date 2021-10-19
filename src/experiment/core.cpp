@@ -32,6 +32,7 @@ extern std::ofstream outRes;
  */
 void CoreCARMI(bool isZipfian, double initRatio, double rate,
                const std::vector<int> &length, const DataVecType &initDataset,
+               const DataVecType &insertDataset,
                const DataVecType &testInsertQuery) {
   DataVecType init = initDataset;
 
@@ -47,18 +48,14 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
   std::cout << "\nTEST time: " << tmpTime << std::endl;
 #endif
 
-  double l = 0, r = 1;
-  if (initRatio == kWritePartial) {
-    l = 0.6;
-    r = 0.9;
-  }
   double initR = initRatio;
   if (initR == kRangeScan) {
     initR = kReadHeavy;
   }
 
   typedef CARMICommon<KeyType, ValueType> CarmiType;
-  CarmiType carmi(initDataset.begin(), initDataset.end(), initR, rate, l, r);
+  CarmiType carmi(initDataset.begin(), initDataset.end(), insertDataset.begin(),
+                  insertDataset.end(), initR, rate);
 
 #ifdef DEBUG
   time(&timep);

@@ -23,12 +23,13 @@
 class UniformDataset : public BaseDataset {
  public:
   explicit UniformDataset(float initRatio) : BaseDataset(initRatio) {}
-  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+  void GenerateDataset(DataVecType *initDataset, DataVecType *insertDataset,
+                       DataVecType *testInsertQuery) {
     std::default_random_engine generator;
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
 
     SplitInitTest<std::uniform_real_distribution<double>>(
-        distribution, initDataset, testInsertQuery);
+        distribution, initDataset, insertDataset, testInsertQuery);
     return;
   }
 };

@@ -26,7 +26,8 @@ class LongitudesDataset : public BaseDataset {
  public:
   explicit LongitudesDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+  void GenerateDataset(DataVecType *initDataset, DataVecType *insertDataset,
+                       DataVecType *testInsertQuery) {
     DataVecType ds;
     std::ifstream inFile("../experiment/dataset/longitude.csv", std::ios::in);
     if (!inFile) {
@@ -50,7 +51,7 @@ class LongitudesDataset : public BaseDataset {
       }
     }
 
-    SplitInitTest(&ds, initDataset, testInsertQuery);
+    SplitInitTest(&ds, initDataset, insertDataset, testInsertQuery);
   }
 };
 
