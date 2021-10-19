@@ -56,7 +56,7 @@ class CFArrayType {
    * @param size the size of the data points
    * @return int
    */
-  static int CalculateNeededBlockNumber(int size);
+  static int CalNeededBlockNum(int size);
 
   /**
    * @brief extract data points (delete useless gaps and deleted data points)
@@ -178,13 +178,14 @@ class CFArrayType {
    *
    * @param data the data array
    * @param dataset the dataset
+   * @param prefetch
    * @param neededBlockNum the needed number of leaf nodes
    * @param start_idx the start index of data points
    * @param size  the size of data points
    */
   bool CheckIsPrefetch(const DataArrayStructure<KeyType, ValueType> &data,
                        const DataVectorType &dataset,
-                       const std::vector<int> prefetchIndex, int neededLeafNum,
+                       const std::vector<int> prefetchIndex, int neededBlockNum,
                        int left, int size);
 
   /**
@@ -350,17 +351,15 @@ class CFArrayType {
 };
 
 template <typename KeyType, typename ValueType>
-inline int CFArrayType<KeyType, ValueType>::CalculateNeededBlockNumber(
-    int size) {
+inline int CFArrayType<KeyType, ValueType>::CalNeededBlockNum(int size) {
   if (size <= 0) return 0;
+#ifdef CHECK
   if (size > kMaxLeafCapacity) {
-#ifdef DEBUG
     std::cout << "the size is " << size
               << ",\tthe maximum size in a leaf node is " << kMaxLeafCapacity
               << std::endl;
-#endif  // DEBUG
-    return -1;
   }
+#endif  // DEBUG
   int neededBlockNumber = std::min(
       static_cast<int>(ceil(size * 1.0 / kMaxBlockCapacity)), kMaxBlockNum);
 
@@ -399,9 +398,9 @@ inline void CFArrayType<KeyType, ValueType>::Init(
       currdata[actualSize++] = dataset[i];
     }
   }
-  int neededLeafNum = CalculateNeededBlockNumber(size);
+  int neededBlockNum = CalNeededBlockNum(size);
 
-  StoreData(currdata, prefetchIndex, neededLeafNum, 0.9, 0, actualSize, data,
+  StoreData(currdata, prefetchIndex, neededBlockNum, 0.9, 0, actualSize, data,
             0);
 }
 
@@ -621,10 +620,10 @@ inline void CFArrayType<KeyType, ValueType>::Expand(
   int actualSize = 0;
   DataVectorType newDataset =
       ExtractDataset(*data, blockleft, blockright, &actualSize);
-  int neededLeafNum = blockright - blockleft + 1;
+  int neededBlockNum = blockright - blockleft + 1;
   std::vector<int> prefetchIndex(actualSize, 0);
 
-  StoreData(newDataset, prefetchIndex, false, neededLeafNum, 0, actualSize,
+  StoreData(newDataset, prefetchIndex, false, neededBlockNum, 0, actualSize,
             data, 0);
 }
 
@@ -632,19 +631,15 @@ template <typename KeyType, typename ValueType>
 inline bool CFArrayType<KeyType, ValueType>::CheckIsPrefetch(
     const DataArrayStructure<KeyType, ValueType> &data,
     const DataVectorType &dataset, const std::vector<int> prefetchIndex,
-    int neededLeafNum, int left, int size) {
+    int neededBlockNum, int left, int size) {
   int end = left + size;
-  // double predictLeafIdx = root.model.PredictIdx(dataset[left].first);
-  // int leftIdx = root.fetch_model.PrefetchPredict(predictLeafIdx);
   int leftIdx = prefetchIndex[0];
   // check whether these points can be prefetched
-  if (leftIdx + neededLeafNum > data.dataArray.size()) {
+  if (leftIdx + neededBlockNum > data.dataArray.size()) {
     return false;
   }
-  // predictLeafIdx = root.model.PredictIdx(dataset[end - 1].first);
-  // int rightIdx = root.fetch_model.PrefetchPredict(predictLeafIdx);
   int rightIdx = prefetchIndex[size - 1];
-  rightIdx = std::min(leftIdx + neededLeafNum - 1, rightIdx);
+  rightIdx = std::min(leftIdx + neededBlockNum - 1, rightIdx);
   for (int i = leftIdx; i <= rightIdx; i++) {
     if (data.dataArray[i].slots[0].first != DBL_MAX) {
       return false;
@@ -665,11 +660,8 @@ inline bool CFArrayType<KeyType, ValueType>::StorePrevious(
   std::map<KeyType, int> actualIdx;
   *actualBlockNum = 0;
   int leftIdx = prefetchIndex[0];
-  // root.fetch_model.PrefetchPredict(root.model.PredictIdx(dataset[0].first));
   CFArrayType tmpArr;
   for (int i = 0; i < size; i++) {
-    // double predictLeafIdx = root.model.PredictIdx(dataset[i].first);
-    // int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
     int p = prefetchIndex[i];
     p -= leftIdx;
     if (p >= neededBlockNum) {
@@ -721,9 +713,6 @@ inline bool CFArrayType<KeyType, ValueType>::StorePrevious(
   for (int i = 0; i < *actualBlockNum; i++) {
     for (int j = 0; j < kMaxBlockCapacity; j++) {
       if ((*tmpBlockVec)[i].slots[j].first != DBL_MAX) {
-        // double preLeafIdx =
-        //     root.model.PredictIdx((*tmpBlockVec)[i].slots[j].first);
-        // int fetchIdx = root.fetch_model.PrefetchPredict(preLeafIdx);
         int fetchIdx = prefetchIndex[cnt++];
         fetchIdx -= leftIdx;
         if (fetchIdx != i) {
@@ -751,8 +740,6 @@ inline bool CFArrayType<KeyType, ValueType>::StoreSubsequent(
   int leftIdx = prefetchIndex[0];
   CFArrayType tmpArr;
   for (int i = 0; i < size; i++) {
-    // double predictLeafIdx = root.model.PredictIdx(dataset[i].first);
-    // int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
     int p = prefetchIndex[i];
     p -= leftIdx;
     if (p >= neededBlockNum) {
@@ -799,9 +786,6 @@ inline bool CFArrayType<KeyType, ValueType>::StoreSubsequent(
   for (int i = 0; i < *actualBlockNum; i++) {
     for (int j = 0; j < kMaxBlockCapacity; j++) {
       if ((*tmpBlockVec)[i].slots[j].first != DBL_MAX) {
-        // double preLeafIdx =
-        //     root.model.PredictIdx((*tmpBlockVec)[i].slots[j].first);
-        // int fetchIdx = root.fetch_model.PrefetchPredict(preLeafIdx);
         int fetchIdx = prefetchIndex[cnt++];
         fetchIdx -= leftIdx;
         if (fetchIdx != i) {
@@ -818,9 +802,9 @@ inline bool CFArrayType<KeyType, ValueType>::StoreSubsequent(
 template <typename KeyType, typename ValueType>
 inline bool CFArrayType<KeyType, ValueType>::StoreData(
     const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
-    bool isInitMode, int neededLeafNum, int left, int size,
+    bool isInitMode, int neededBlockNum, int left, int size,
     DataArrayStructure<KeyType, ValueType> *data, int *prefetchEnd) {
-  if (neededLeafNum == 0 || size == 0) {
+  if (neededBlockNum == 0 || size == 0) {
     flagNumber = (ARRAY_LEAF_NODE << 24) + 0;
     return true;
   }
@@ -828,33 +812,32 @@ inline bool CFArrayType<KeyType, ValueType>::StoreData(
   int actualNum = 0;
   bool isPossible = true;
   int maxBlockNum = carmi_params::kMaxLeafNodeSize / sizeof(DataType);
-  // double predictLeafIdx = root.model.PredictIdx(dataset[left].first);
-  // int leftIdx = root.fetch_model.PrefetchPredict(predictLeafIdx);
   int leftIdx = prefetchIndex[0];
   // check whether these points can be prefetched
   if (isInitMode) {
-    isPossible = CheckIsPrefetch(*data, dataset, prefetchIndex, neededLeafNum,
+    isPossible = CheckIsPrefetch(*data, dataset, prefetchIndex, neededBlockNum,
                                  left, size);
   }
   if (isInitMode && isPossible) {
     m_left = leftIdx;
 
     DataVectorType tmpDataset(dataset.begin() + left, dataset.begin() + end);
+
     LeafSlots<KeyType, ValueType> tmpSlot;
-    std::vector<LeafSlots<KeyType, ValueType>> prevBlocks(neededLeafNum,
+    std::vector<LeafSlots<KeyType, ValueType>> prevBlocks(neededBlockNum,
                                                           tmpSlot);
     int prevActualNum = 0;
     int prevMissNum = 0;
     bool isPreviousSuccess =
-        StorePrevious(tmpDataset, prefetchIndex, neededLeafNum, &prevBlocks,
+        StorePrevious(tmpDataset, prefetchIndex, neededBlockNum, &prevBlocks,
                       &prevActualNum, &prevMissNum);
 
-    std::vector<LeafSlots<KeyType, ValueType>> nextBlocks(neededLeafNum,
+    std::vector<LeafSlots<KeyType, ValueType>> nextBlocks(neededBlockNum,
                                                           tmpSlot);
     int nextActualNum = 0;
     int nextMissNum = 0;
     bool isNextSuccess =
-        StoreSubsequent(tmpDataset, prefetchIndex, neededLeafNum, &nextBlocks,
+        StoreSubsequent(tmpDataset, prefetchIndex, neededBlockNum, &nextBlocks,
                         &nextActualNum, &nextMissNum);
 
     bool isPrev = true;
@@ -900,18 +883,18 @@ inline bool CFArrayType<KeyType, ValueType>::StoreData(
     // for EXPAND
     int nowBlockNum = flagNumber & 0x00FFFFFF;
     if (nowBlockNum == 0) {
-      m_left = data->AllocateMemory(neededLeafNum);
+      m_left = data->AllocateMemory(neededBlockNum);
     } else {
-      if (nowBlockNum != neededLeafNum) {
+      if (nowBlockNum != neededBlockNum) {
         if (m_left != -1) {
           data->ReleaseMemory(m_left, nowBlockNum);
         }
-        m_left = data->AllocateMemory(neededLeafNum);
+        m_left = data->AllocateMemory(neededBlockNum);
       }
     }
 
     LeafSlots<KeyType, ValueType> tmp;
-    int avg = std::max(1.0, ceil(size * 1.0 / neededLeafNum));
+    int avg = std::max(1.0, ceil(size * 1.0 / neededBlockNum));
     avg = std::min(avg, maxBlockNum);
     CFArrayType tmpArr;
     data->dataArray[m_left] = LeafSlots<KeyType, ValueType>();
