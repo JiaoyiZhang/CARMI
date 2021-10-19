@@ -34,6 +34,7 @@ class BaseDataset {
                      DataVecType *insertDataset, DataVecType *testInsertQuery) {
     (*initDataset) = std::vector<DataType>(kDatasetSize);
     int end = round(kTestSize * (1 - proportion));
+    (*insertDataset) = std::vector<DataType>(end * 10);
     (*testInsertQuery) = std::vector<DataType>(end);
     std::default_random_engine generator;
 
