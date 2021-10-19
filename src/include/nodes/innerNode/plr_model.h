@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_NODES_INNERNODE_PLR_MODEL_H_
-#define SRC_INCLUDE_NODES_INNERNODE_PLR_MODEL_H_
+#ifndef NODES_INNERNODE_PLR_MODEL_H_
+#define NODES_INNERNODE_PLR_MODEL_H_
 
 #include <float.h>
 
@@ -23,47 +23,89 @@
 /**
  * @brief piecewise linear regression inner node
  *
+ * This class is the p. lr inner node, which use a picewise linear regression to
+ * train the model and predict the index of the next node. The CPU time cost of
+ * this node is slightly more than the other nodes, but this node can deal with
+ * the uneven dataset.
+ *
  * @tparam KeyType the type of the keyword
  * @tparam ValueType the type of the value
  */
 template <typename KeyType, typename ValueType>
 class PLRModel {
  public:
+  // *** Constructed Types and Constructor
+
+  // the pair of data points
   typedef std::pair<KeyType, ValueType> DataType;
+
+  // the vector of data points, which is the type of dataset
   typedef std::vector<DataType> DataVectorType;
-  PLRModel() = default;
+
   /**
-   * @brief Set the Child Number object
+   * @brief Construct a new PLRModel object and use c to set its child number
    *
-   * @param c the number of child nodes
+   * @param c [in] the number of its child nodes
    */
-  void SetChildNumber(int c) {
+  explicit PLRModel(int c) {
     childLeft = 0;
     flagNumber = (PLR_INNER_NODE << 24) + c;
   }
 
+ public:
+  // *** Basic Functions of P. LR Inner Node Objects
+
   /**
-   * @brief train the model with this dataset
+   * @brief train the picewise linear regression model
    *
-   * @param left the start index of data points
-   * @param size  the size of data points
-   * @param dataset used to train the model
+   * The training data points are stored in dataset[left, left + size].
+   *
+   * @param left[in] the starting index of data points
+   * @param size[in]  the size of data points
+   * @param dataset[in] used to train the model
    */
   void Train(int left, int size, const DataVectorType &dataset);
 
   /**
-   * @brief predict the position of the given key value
+   * @brief predict the next node which manages the data point corresponding to
+   * the given key value
    *
-   * @param key the given key value
+   * @param key[in] the given key value
    * @return int: the predicted index of next node
    */
   int Predict(KeyType key) const;
 
-  int flagNumber;  ///< 4 Byte (flag + childNumber)
+ public:
+  //*** Public Data Members of P. LR Inner Node Objects
 
-  int childLeft;  ///< 4 Byte, the start index of child nodes
-  int index[6];   ///< 24 Byte, the maximum index of each segment
-  float keys[8];  ///< 32 Byte, the key value of each point
+  /**
+   * @brief A combined integer, composed of the flag of p. lr inner node
+   * (PLR_INNER_NODE, 1 byte) and the number of its child nodes (3 bytes). (This
+   * member is 4 bytes)
+   */
+  int flagNumber;
+
+  /**
+   * @brief The index of its first child node in the node array. All the child
+   * nodes are stored in node[childLeft, childLeft + size]. Through this member
+   * and the right three bytes of flagNumber, all the child nodes can be
+   * accessed. (4 bytes)
+   */
+  int childLeft;
+
+  /**
+   * @brief store the maximum index of each segment, which is used as the
+   * boundary of each segment when predicting the next index. (24 bytes)
+   */
+  int index[6];
+
+  /**
+   * @brief store the key value of the end point in each segment.
+   * When predicting the index of the next node, first perform a binary search
+   * among them to find the segment to which the given key value belongs (32
+   * bytes)
+   */
+  float keys[8];
 };
 
 template <typename KeyType, typename ValueType>
@@ -177,6 +219,7 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
   int s = 0;
   int e = 7;
   int mid;
+  // first perform a binary search among the keys
   while (s < e) {
     mid = (s + e) >> 1;
     if (keys[mid] < key)
@@ -190,27 +233,38 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
   }
 
   int p;
+  // use the params of the segment to predict the index of the next node
   if (e == 7) {
-    e = (flagNumber & 0x00FFFFFF) - 1;               // childNumber
-    float a = (e - index[5]) / (keys[7] - keys[6]);  // a
-    p = a * (key - keys[7]) + e;                     // b=e-a*keys[7], p=ax+b
+    e = (flagNumber & 0x00FFFFFF) - 1;                   // boundary
+    float slope = (e - index[5]) / (keys[7] - keys[6]);  // the slope
+    // intercept = e - slope * keys[7], p = slope * x + intercept
+    p = slope * (key - keys[7]) + e;
 
     if (p > e) {
       return e;
     }
 
   } else if (e == 1) {
-    float a = static_cast<float>(index[0]) / (keys[1] - keys[0]);
-    p = a * (key - keys[0]);  // b = -a * keys[0], p=ax+b
+    float slope = static_cast<float>(index[0]) / (keys[1] - keys[0]);
+    // intercept = -slope * keys[0], p = slope * x + intercept
+    p = slope * (key - keys[0]);
+    if (p < 0) {
+      p = 0;
+    }
   } else {
-    float a = static_cast<float>(index[e - 1] - index[e - 2]) /
-              (keys[e] - keys[e - 1]);
-    p = a * (key - keys[e]) + index[e - 1];  // b=index[e-1]-a*keys[e]
+    float slope = static_cast<float>(index[e - 1] - index[e - 2]) /
+                  (keys[e] - keys[e - 1]);
+    // intercept = index[e-1] - slope * keys[e]
+    p = slope * (key - keys[e]) + index[e - 1];
   }
+#ifdef DEBUG
   if (p < 0) {
-    p = 0;
+    std::cout << p << std::endl;
+  } else if (p > (flagNumber & 0x00FFFFFF) - 1) {
+    std::cout << p << ",\t" << (flagNumber & 0x00FFFFFF) - 1 << std::endl;
   }
+#endif  // DEBUG
   return p;
 }
 
-#endif  // SRC_INCLUDE_NODES_INNERNODE_PLR_MODEL_H_
+#endif  // NODES_INNERNODE_PLR_MODEL_H_

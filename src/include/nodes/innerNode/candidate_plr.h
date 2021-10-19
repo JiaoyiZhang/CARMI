@@ -17,21 +17,22 @@
 #include "../../construct/structures.h"
 #include "../../params.h"
 
-#ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
-#define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
+#ifndef NODES_INNERNODE_CANDIDATE_PLR_H_
+#define NODES_INNERNODE_CANDIDATE_PLR_H_
 
 /**
  * @brief designed for P. LR model
  *
  */
 struct SegmentPoint {
-  double cost;  ///< the current cost
-  double key[12] = {-1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1};  ///< the key values
-  int idx[12] = {-1, -1, -1, -1, -1, -1,
-                 -1, -1, -1, -1, -1, -1};  ///< the corresponding indexes
-  int blockNum[12] = {1, 1, 1, 1, 1, 1,
-                      1, 1, 1, 1, 1, 1};  ///< the number of blocks
+  // the current cost
+  double cost;
+  // the key values
+  double key[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+  // the corresponding indexes
+  int idx[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+  // the number of blocks
+  int blockNum[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 };
 
 /**
@@ -130,12 +131,16 @@ class CandidateCost {
   }
 
  public:
-  std::map<std::pair<int, int>, std::pair<double, double>>
-      theta;               ///< params for the corresponding segment
-  std::vector<double> xx;  ///< the value of key*key
-  std::vector<double> x;   ///< the value of key
-  std::vector<double> px;  ///< the value of y*key
-  std::vector<double> p;   ///< the value of y
+  // params for the corresponding segment
+  std::map<std::pair<int, int>, std::pair<double, double>> theta;
+  //  the value of key*key
+  std::vector<double> xx;
+  // the value of key
+  std::vector<double> x;
+  // the value of y*key
+  std::vector<double> px;
+  // the value of y
+  std::vector<double> p;
 };
 
-#endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_CANDIDATE_PLR_H_
+#endif  // NODES_INNERNODE_CANDIDATE_PLR_H_

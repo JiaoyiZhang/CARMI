@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_NODES_INNERNODE_BS_MODEL_H_
-#define SRC_INCLUDE_NODES_INNERNODE_BS_MODEL_H_
+#ifndef NODES_INNERNODE_BS_MODEL_H_
+#define NODES_INNERNODE_BS_MODEL_H_
 
 #include <algorithm>
 #include <utility>
@@ -20,47 +20,85 @@
 /**
  * @brief binary search inner node
  *
+ * This class is the binary search inner node. Due to the size limit of 64
+ * bytes, we can only store the 14 key values. Thus, this type is not suitable
+ * for nodes with a large number of child nodes. But the bs node can divide
+ * dataset evenly, thus dealing with the uneven dataset.
+ *
  * @tparam KeyType the type of the keyword
  * @tparam ValueType the type of the value
  */
 template <typename KeyType, typename ValueType>
 class BSModel {
  public:
+  // *** Constructed Types and Constructor
+
+  // the pair of data points
   typedef std::pair<KeyType, ValueType> DataType;
+
+  // the vector of data points, which is the type of dataset
   typedef std::vector<DataType> DataVectorType;
-  BSModel() = default;
 
   /**
-   * @brief Set the Child Number object
+   * @brief Construct a new BS Model object and use c to set its child number
    *
-   * @param c the number of child nodes
+   * @param c[in] the number of its child nodes
    */
-  void SetChildNumber(int c) {
+  explicit BSModel(int c) {
     childLeft = 0;
     flagNumber = (BS_INNER_NODE << 24) + std::min(c, 15);
     for (int i = 0; i < 14; i++) index[i] = 0;
   }
 
+ public:
+  // *** Basic Functions of BS Inner Node Objects
+
   /**
-   * @brief train the model with this dataset
+   * @brief train the histogram model
    *
-   * @param left the start index of data points
-   * @param size  the size of data points
-   * @param dataset used to train the model
+   * The training data points are stored in dataset[left, left + size].
+   *
+   * @param left[in] the starting index of data points
+   * @param size[in]  the size of data points
+   * @param dataset[in] used to train the model
    */
   void Train(int left, int size, const DataVectorType &dataset);
 
   /**
-   * @brief predict the position of the given key value
+   * @brief predict the next node which manages the data point corresponding to
+   * the given key value
    *
-   * @param key the given key value
+   * @param key[in] the given key value
    * @return int: the predicted index of next node
    */
   int Predict(double key) const;
 
-  int flagNumber;   ///< 4 Byte (flag + childNumber)
-  int childLeft;    ///< 4 Byte, the start index of child nodes
-  float index[14];  ///< 56 Byte, the minimum values of each segment
+ public:
+  //*** Public Data Members of His Inner Node Objects
+
+  /**
+   * @brief A combined integer, composed of the flag of lr inner node
+   * (HIS_INNER_NODE, 1 byte) and the number of its child nodes (3 bytes). (This
+   * member is 4 bytes)
+   */
+  int flagNumber;
+
+  /**
+   * @brief The index of its first child node in the node array. All the child
+   * nodes are stored in node[childLeft, childLeft + size]. Through this member
+   * and the right three bytes of flagNumber, all the child nodes can be
+   * accessed. (4 bytes)
+   */
+  int childLeft;
+
+  /**
+   * @brief store 14 key values
+   * This bs model divides the key range into 15 intervals. To determine which
+   * branch to go through, perform a binary search among the 14 key values to
+   * locate the corresponding key value interval covering the input key. (56
+   * bytes)
+   */
+  float index[14];
 };
 
 template <typename KeyType, typename ValueType>
@@ -104,4 +142,4 @@ inline int BSModel<KeyType, ValueType>::Predict(double key) const {
   return start_idx;
 }
 
-#endif  // SRC_INCLUDE_NODES_INNERNODE_BS_MODEL_H_
+#endif  // NODES_INNERNODE_BS_MODEL_H_
