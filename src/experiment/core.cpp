@@ -48,14 +48,9 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
   std::cout << "\nTEST time: " << tmpTime << std::endl;
 #endif
 
-  double initR = initRatio;
-  if (initR == kRangeScan) {
-    initR = kReadHeavy;
-  }
-
   typedef CARMICommon<KeyType, ValueType> CarmiType;
   CarmiType carmi(initDataset.begin(), initDataset.end(), insertDataset.begin(),
-                  insertDataset.end(), initR, rate);
+                  insertDataset.end(), rate);
 
 #ifdef DEBUG
   time(&timep);

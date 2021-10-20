@@ -32,8 +32,8 @@ void mainExperiment() {
 
   // write-heavy
   mainSynthetic(kWriteHeavy, length);
-  // mainYCSB(kWriteHeavy, length);
-  // mainMap(kWriteHeavy, length);
+  mainYCSB(kWriteHeavy, length);
+  mainMap(kWriteHeavy, length);
 
   // read-heavy
   mainSynthetic(kReadHeavy, length);
