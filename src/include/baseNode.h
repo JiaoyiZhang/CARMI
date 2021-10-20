@@ -24,47 +24,71 @@
 /**
  * @brief the root type of CARMI
  *
+ * This class inherits PLRType as the root node. When accessing a data point, we
+ * first use the model of the root node to compute the index of the next node.
+ * In the CARMI framework, the object of this class serves as one of its private
+ * members.
+ *
  * @tparam DataVectorType the type of data vector
- * @tparam KeyType  the type of the given key value
+ * @tparam KeyType the type of the given key value
  */
 template <typename DataVectorType, typename KeyType>
 class CARMIRoot : public PLRType<DataVectorType, KeyType> {
  public:
-  CARMIRoot() = default;
+  // *** Constructed Types and Constructor
+
   /**
    * @brief Construct a new CARMIRoot object
-   *
-   * @param t set the type of the root node
    */
-  explicit CARMIRoot(int t) { type = t; }
+  CARMIRoot() = default;
+
+  /**
+   * @brief Copy from a PLRType object to an object of the current class.
+   *
+   * @param currnode[in] the PLRType object
+   * @return CARMIRoot& the object of the current class
+   */
   CARMIRoot& operator=(const PLRType<DataVectorType, KeyType>& currnode) {
     this->PLRType<DataVectorType, KeyType>::model = currnode.model;
     this->PLRType<DataVectorType, KeyType>::fetch_model = currnode.fetch_model;
     this->flagNumber = currnode.flagNumber;
-    this->childLeft = currnode.childLeft;
-    this->type = currnode.flagNumber;
     return *this;
   }
-  int type;  ///< the type of the root node
 };
 
 /**
- * @brief the 64 bytes structure for all types of nodes
+ * @brief the 64 bytes structure for all types of nodes to support the
+ * cache-aware design
+ *
+ * The first byte is always the node type identifier, and the next three bytes
+ * are used to store the number of child nodes (the number of data blocks for
+ * leaf nodes). For inner nodes, the following 4 bytes represent the starting
+ * index of the child nodes in node array. For leaf nodes, they store the
+ * starting index of data blocks in data array instead. The remaining 56 bytes
+ * store additional information depending on the tree node type.
  *
  * @tparam KeyType the type of the given key value
+ * @tparam ValueType the type of the value
  */
 template <typename KeyType, typename ValueType>
 union BaseNode {
-  LRModel<KeyType, ValueType> lr;    ///< linear regression inner node
-  PLRModel<KeyType, ValueType> plr;  ///< piecewise linear regression inner node
-  HisModel<KeyType, ValueType> his;  ///< histogram inner node
-  BSModel<KeyType, ValueType> bs;    ///< binary search inner node
+  // linear regression inner node
+  LRModel<KeyType, ValueType> lr;
+  // piecewise linear regression inner node
+  PLRModel<KeyType, ValueType> plr;
+  // histogram inner node
+  HisModel<KeyType, ValueType> his;
+  // binary search inner node
+  BSModel<KeyType, ValueType> bs;
 
-  CFArrayType<KeyType, ValueType> cfArray;  ///< cache-friendly array leaf node
-  ExternalArray<KeyType> externalArray;     ///< external array leaf node
+  // cache-friendly array leaf node
+  CFArrayType<KeyType, ValueType> cfArray;
+  // external array leaf node
+  ExternalArray<KeyType> externalArray;
 
   BaseNode() {}
   ~BaseNode() {}
+
   BaseNode& operator=(const BaseNode& currnode) {
     if (this != &currnode) {
       this->lr = currnode.lr;

@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_PARAMS_H_
-#define SRC_INCLUDE_PARAMS_H_
+#ifndef PARAMS_H_
+#define PARAMS_H_
 
 #define DEBUG
 // #define Windows
@@ -19,30 +19,42 @@
 #endif  // Windows
 
 namespace carmi_params {
-const int kMaxLeafNodeSize = 256;  // bytes, the size of a union in leaf nodes
+// bytes, the size of a data block in cf array leaf nodes
+const int kMaxLeafNodeSize = 256;
+
+// the maximum number of data points in an external leaf node
 const int kMaxLeafNodeSizeExternal = 1024;
 
+/**
+ * @brief the maximum number of data points which can use the DP algorithm to
+ * construct an inner node. If the size of the sub-dataset exceeds this
+ * parameter, greedy algorithm is used to construct the node.
+ */
 const int kAlgorithmThreshold = 1024;
-const float kRootPrefetchRatio = 0.4;
 
-const double kMemoryAccessTime = 80.09;  // the time cost of memory access
+// the latency of memory access
+const double kMemoryAccessTime = 80.09;
 
-const double kLRRootTime = 12.7013;  // the time cost of lr root
-const double kPLRRootTime = 29.62;   // the time cost of plr root
+// the CPU time cost of lr root
+const double kLRRootTime = 12.7013;
+// the CPU time cost of plr root
+const double kPLRRootTime = 29.62;
 
-const double kLRInnerTime =
-    kMemoryAccessTime + 14.2;  // the time cost of lr inner node
-const double kPLRInnerTime =
-    kMemoryAccessTime + 22.8;  // the time cost of plr inner node
-const double kHisInnerTime =
-    kMemoryAccessTime + 9.8;  // the time cost of his inner node
-const double kBSInnerTime =
-    kMemoryAccessTime + 15.5;  // the time cost of bs inner node
+// the time cost of lr inner node
+const double kLRInnerTime = kMemoryAccessTime + 14.2;
+// the time cost of plr inner node
+const double kPLRInnerTime = kMemoryAccessTime + 22.8;
+// the time cost of his inner node
+const double kHisInnerTime = kMemoryAccessTime + 9.8;
+// the time cost of bs inner node
+const double kBSInnerTime = kMemoryAccessTime + 15.5;
 
-const double kCostMoveTime = 6.25;     // the time cost of moving a data point
-const double kLeafBaseTime = 161.241;  // the basic time cost of a leaf node
-const double kCostBSTime =
-    10.9438;  // the time cost of binary search in a leaf node
+// the time cost of moving a data point
+const double kCostMoveTime = 6.25;
+// the basic time cost of a leaf node
+const double kLeafBaseTime = 161.241;
+// the time cost of a binary search
+const double kCostBSTime = 10.9438;
 }  // namespace carmi_params
 
-#endif  // SRC_INCLUDE_PARAMS_H_
+#endif  // PARAMS_H_

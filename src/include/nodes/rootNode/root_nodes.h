@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_NODES_ROOTNODE_ROOT_NODES_H_
-#define SRC_INCLUDE_NODES_ROOTNODE_ROOT_NODES_H_
+#ifndef NODES_ROOTNODE_ROOT_NODES_H_
+#define NODES_ROOTNODE_ROOT_NODES_H_
 
 #include <fstream>
 #include <vector>
@@ -23,26 +23,60 @@
 /**
  * @brief piecewise linear regression root node
  *
+ * The piecewise linear regression model with five segments to allocate data
+ * points more evenly.
+ *
  * @tparam DataVectorType the type of dataset
  * @tparam KeyType the type of the given key value
  */
 template <typename DataVectorType, typename KeyType>
 class PLRType {
  public:
-  PLRType() = default;
+  // *** Constructed Types and Constructor
+
   /**
    * @brief Construct a new PLRType object
    *
-   * @param child the child number of the root node
+   */
+  PLRType() = default;
+
+  /**
+   * @brief Construct a new PLRType object
+   *
+   * @param child[in] the child number of the root node
    */
   explicit PLRType(int child) {
-    flagNumber = (PLR_ROOT_NODE << 24);
+    flagNumber = PLR_ROOT_NODE;
     model.length = child - 1;
   }
-  PiecewiseLR<DataVectorType, KeyType> model;  ///< the P. LR root model
-  PrefetchPLR<DataVectorType, KeyType>
-      fetch_model;  ///< 20 Byte, the prefetch prediction model
-  int flagNumber;   ///< type
-  int childLeft;    ///< start_index
+
+ public:
+  //*** Public Data Members of P. LR Root Node Objects
+
+  /**
+   * @brief the main root model: piecewise linear regression model with five
+   * segments to allocate the dataset to the child nodes.
+   *
+   * We use this model to predict the index of the next node, and use the raw
+   * output of this model (leaf index before rounding down) as the input to the
+   * prefetch prediction model.
+   */
+  PiecewiseLR<DataVectorType, KeyType> model;
+
+  /**
+   * @brief the prefetch prediction model.
+   *
+   * This model is also a piecewise linear regression model, which uses the
+   * output of the main root model to compute a block index. In this model,
+   * the slope and intercept of each segment are forced to be integers, so that
+   * within each segment, each leaf node is mapped to the same number of data
+   * blocks.
+   */
+  PrefetchPLR<DataVectorType, KeyType> fetch_model;
+
+  /**
+   * @brief the type of the root node: PLR_ROOT_NODE
+   */
+  int flagNumber;
 };
-#endif  // SRC_INCLUDE_NODES_ROOTNODE_ROOT_NODES_H_
+#endif  // NODES_ROOTNODE_ROOT_NODES_H_
