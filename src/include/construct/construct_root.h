@@ -87,7 +87,7 @@ TYPE CARMI<KeyType, ValueType>::ConstructRoot(const RootStruct &rootStruct,
                                               const DataRange &range,
                                               SubDataset *subDataset) {
   TYPE root(rootStruct.rootChildNum);
-  root.childLeft = node.AllocateNodeMemory(rootStruct.rootChildNum);
+  node.AllocateNodeMemory(rootStruct.rootChildNum);
   root.model.Train(initDataset);
 
   NodePartition<ModelType>(root.model, range.initRange, initDataset,

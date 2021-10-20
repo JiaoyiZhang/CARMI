@@ -25,14 +25,13 @@ template <typename KeyType, typename ValueType>
 BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
     const KeyType &key, int *currblock, int *currslot) {
   int idx = 0;
-  int type = rootType;
+  int type = root.flagNumber;
   int fetch_start = 0;
   double fetch_leafIdx;
   while (1) {
     switch (type) {
       case PLR_ROOT_NODE:
-        idx = root.childLeft +
-              root.PLRType<DataVectorType, KeyType>::model.Predict(key);
+        idx = root.PLRType<DataVectorType, KeyType>::model.Predict(key);
         if (isPrimary == false) {
           fetch_leafIdx =
               root.PLRType<DataVectorType, KeyType>::model.PredictIdx(key);

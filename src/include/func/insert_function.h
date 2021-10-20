@@ -24,13 +24,12 @@
 template <typename KeyType, typename ValueType>
 bool CARMI<KeyType, ValueType>::Insert(const DataType &datapoint) {
   int idx = 0;  // idx in the INDEX
-  int type = rootType;
+  int type = root.flagNumber;
   while (1) {
     switch (type) {
       case PLR_ROOT_NODE:
-        idx = root.childLeft +
-              root.PLRType<DataVectorType, KeyType>::model.Predict(
-                  datapoint.first);
+        idx = root.PLRType<DataVectorType, KeyType>::model.Predict(
+            datapoint.first);
         break;
       case LR_INNER_NODE:
         idx = node.nodeArray[idx].lr.childLeft +

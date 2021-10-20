@@ -162,7 +162,6 @@ template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Construction() {
   NodeCost nodeCost = emptyCost;
   RootStruct res = ChooseRoot();
-  rootType = res.rootType;
   SubDataset subDataset = StoreRoot(res, &nodeCost);
 
 #ifdef DEBUG

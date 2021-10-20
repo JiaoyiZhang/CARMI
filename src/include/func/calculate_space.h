@@ -20,7 +20,7 @@ template <typename KeyType, typename ValueType>
 long double CARMI<KeyType, ValueType>::CalculateSpace() const {
   long double space_cost = 0;
 
-  switch (rootType) {
+  switch (root.flagNumber) {
     case PLR_ROOT_NODE:
       space_cost += kPLRRootSpace;
       break;
