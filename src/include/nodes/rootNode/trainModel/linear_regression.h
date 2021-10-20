@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
-#define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
+#ifndef NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
+#define NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
 
 #include <algorithm>
 #include <fstream>
@@ -91,4 +91,4 @@ class LinearRegression {
   double theta1;  ///< the slope
   double theta2;  ///< the intercept
 };
-#endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_
+#endif  // NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_

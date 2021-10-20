@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_PREFETCH_PLR_H_
-#define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_PREFETCH_PLR_H_
+#ifndef NODES_ROOTNODE_TRAINMODEL_PREFETCH_PLR_H_
+#define NODES_ROOTNODE_TRAINMODEL_PREFETCH_PLR_H_
 
 #include <float.h>
 #include <math.h>
@@ -319,4 +319,4 @@ class PrefetchPLR {
   std::vector<std::pair<int, int>> point;  ///< <key, boundary>
   int theta[10][2];                        ///< {slope, intercept}
 };
-#endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_PREFETCH_PLR_H_
+#endif  // NODES_ROOTNODE_TRAINMODEL_PREFETCH_PLR_H_

@@ -33,9 +33,9 @@ class CFArrayType {
  public:
   // *** Constructed Types and Constructor
 
-  /// the pair of data points
+  // the pair of data points
   typedef std::pair<KeyType, ValueType> DataType;
-  /// the vector of data points, which is the type of dataset
+  // the vector of data points, which is the type of dataset
   typedef std::vector<DataType> DataVectorType;
 
   CFArrayType() {
@@ -518,8 +518,13 @@ inline bool CFArrayType<KeyType, ValueType>::Insert(
     // saturated, the rebalance mechanism is triggered. Through this mechnism,
     // we can reallocate the data points evenly to all the data blocks.
     Rebalance(m_left, m_left + nowBlockNum, data);
+  } else if (nowBlockNum == kMaxBlockNum) {
+    // Case 5.2: return false.
+    // If the data blocks have reached the upper limit, this node cannot expand.
+    // Return false directly.
+    return false;
   } else {
-    // Case 5.2: expand.
+    // Case 5.3: expand.
     // This leaf node needs more space to store data points, we can initiate
     // the expand operation to get more data blocks.
     Expand(m_left, m_left + nowBlockNum, data);

@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_
-#define SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_
+#ifndef NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_
+#define NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_
 
 #include <float.h>
 #include <math.h>
@@ -226,4 +226,4 @@ class PiecewiseLR {
   std::vector<std::pair<float, int>> point;  ///< <key, boundary>
   float theta[5][2];                         ///< {theta1, theta2}
 };
-#endif  // SRC_INCLUDE_NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_
+#endif  // NODES_ROOTNODE_TRAINMODEL_PIECEWISELR_H_
