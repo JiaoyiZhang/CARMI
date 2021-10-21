@@ -51,10 +51,10 @@ inline double CARMI<KeyType, ValueType>::CalculateCFArrayCost(
 }
 
 template <typename KeyType, typename ValueType>
-template <typename TYPE>
+template <typename InnerNodeType>
 void CARMI<KeyType, ValueType>::NodePartition(
-    const TYPE &currnode, const IndexPair &range, const DataVectorType &dataset,
-    std::vector<IndexPair> *subData) const {
+    const InnerNodeType &currnode, const IndexPair &range,
+    const DataVectorType &dataset, std::vector<IndexPair> *subData) const {
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = currnode.Predict(dataset[i].first);
@@ -66,20 +66,20 @@ void CARMI<KeyType, ValueType>::NodePartition(
 }
 
 template <typename KeyType, typename ValueType>
-template <typename TYPE>
-TYPE CARMI<KeyType, ValueType>::InnerDivideAll(int c, const DataRange &range,
-                                               SubDataset *subDataset) {
-  TYPE currnode(c);
+template <typename InnerNodeType>
+InnerNodeType CARMI<KeyType, ValueType>::InnerDivideAll(
+    int c, const DataRange &range, SubDataset *subDataset) {
+  InnerNodeType currnode(c);
   int l = range.initRange.left;
   int r = range.initRange.left + range.initRange.size;
   DataVectorType nowDataset(initDataset.begin() + l, initDataset.begin() + r);
   currnode.Train(range.initRange.left, range.initRange.size, initDataset);
 
-  NodePartition<TYPE>(currnode, range.initRange, initDataset,
-                      &(subDataset->subInit));
+  NodePartition<InnerNodeType>(currnode, range.initRange, initDataset,
+                               &(subDataset->subInit));
   subDataset->subFind = subDataset->subInit;
-  NodePartition<TYPE>(currnode, range.insertRange, insertQuery,
-                      &(subDataset->subInsert));
+  NodePartition<InnerNodeType>(currnode, range.insertRange, insertQuery,
+                               &(subDataset->subInsert));
   return currnode;
 }
 

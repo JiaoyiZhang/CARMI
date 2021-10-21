@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_
-#define SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_
+#ifndef FUNC_CALCULATE_SPACE_H_
+#define FUNC_CALCULATE_SPACE_H_
 
 #include <vector>
 
@@ -26,17 +26,16 @@ long double CARMI<KeyType, ValueType>::CalculateSpace() const {
       break;
   }
 
-  space_cost += kBaseNodeSpace * node.nowNodeNumber;
+  space_cost += kBaseNodeSpace * node.nowNodeNumber * 1024 * 1024;
   std::cout << "node.size(): " << node.nodeArray.size()
             << ",\tnowChildNumber:" << node.nowNodeNumber << std::endl;
   std::cout << "data.size(): " << data.dataArray.size()
             << ",\tkMaxLeafNodeSize:" << carmi_params::kMaxLeafNodeSize
             << std::endl;
   if (!isPrimary) {
-    space_cost +=
-        data.dataArray.size() * carmi_params::kMaxLeafNodeSize / 1024 / 1024;
+    space_cost += data.dataArray.size() * carmi_params::kMaxLeafNodeSize;
   }
   return space_cost;
 }
 
-#endif  // SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_
+#endif  // FUNC_CALCULATE_SPACE_H_

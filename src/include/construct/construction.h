@@ -23,16 +23,17 @@
 
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::ConstructSubTree(
-    const RootStruct &rootStruct, const SubDataset &subDataset,
-    NodeCost *nodeCost) {
+    const SubDataset &subDataset, NodeCost *nodeCost) {
   float tmp = 0;
   int preI = 0;
   int checkpoint = -1;
   int dataNum = 0;
   int prefetchNum = 0;
   std::map<int, std::vector<double>> CostPerLeaf;
+  std::vector<int> prefetchNode;
+  std::vector<DataRange> prefetchRange;
 
-  for (int i = 0; i < rootStruct.rootChildNum; i++) {
+  for (int i = 0; i < subDataset.subInit.size(); i++) {
     COST.insert({emptyRange, emptyCost});
 
     NodeCost resChild;
@@ -162,6 +163,7 @@ template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Construction() {
   NodeCost nodeCost = emptyCost;
   RootStruct res = ChooseRoot();
+  // RootStruct res = {0, 904349};
   SubDataset subDataset = StoreRoot(res, &nodeCost);
 
 #ifdef DEBUG
@@ -175,7 +177,7 @@ inline void CARMI<KeyType, ValueType>::Construction() {
   std::cout << "\nTEST time: " << tmpTime << std::endl;
 #endif
 
-  ConstructSubTree(res, subDataset, &nodeCost);
+  ConstructSubTree(subDataset, &nodeCost);
   UpdateLeaf();
 
   int neededSize = data.usedDatasize + reservedSpace;

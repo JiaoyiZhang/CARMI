@@ -30,13 +30,14 @@
 #include "./dp_inner.h"
 
 template <typename KeyType, typename ValueType>
-template <typename TYPE>
-TYPE CARMI<KeyType, ValueType>::StoreInnerNode(const IndexPair &range,
-                                               TYPE *currnode) {
+template <typename InnerNodeType>
+void CARMI<KeyType, ValueType>::StoreInnerNode(const IndexPair &range,
+                                               InnerNodeType *currnode) {
   int optimalChildNumber = currnode->flagNumber & 0x00FFFFFF;
   SubDataset subDataset(optimalChildNumber);
 
-  NodePartition<TYPE>(*currnode, range, initDataset, &(subDataset.subInit));
+  NodePartition<InnerNodeType>(*currnode, range, initDataset,
+                               &(subDataset.subInit));
   currnode->childLeft = node.AllocateNodeMemory(optimalChildNumber);
 
   for (int i = 0; i < optimalChildNumber; i++) {
@@ -44,7 +45,6 @@ TYPE CARMI<KeyType, ValueType>::StoreInnerNode(const IndexPair &range,
                        subDataset.subInsert[i]);
     StoreOptimalNode(currnode->childLeft + i, subRange);
   }
-  return *currnode;
 }
 
 template <typename KeyType, typename ValueType>

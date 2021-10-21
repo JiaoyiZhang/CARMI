@@ -18,20 +18,18 @@
 #include "../carmi.h"
 
 template <typename KeyType, typename ValueType>
-template <typename TYPE>
-void CARMI<KeyType, ValueType>::ChooseBetterInner(int c,
-                                                  double frequency_weight,
-                                                  double time_cost,
-                                                  const DataRange &dataRange,
-                                                  NodeCost *optimalCost,
-                                                  TYPE *optimal_node_struct) {
+template <typename InnerNodeType>
+void CARMI<KeyType, ValueType>::UpdateDPOptSetting(
+    int c, double frequency_weight, const DataRange &dataRange,
+    NodeCost *optimalCost, InnerNodeType *optimal_node_struct) {
   double space_cost = kBaseNodeSpace * c;  // MB
+  double time_cost = InnerNodeType::kTimeCost;
   time_cost = time_cost * frequency_weight;
   double RootCost = time_cost + lambda * space_cost;
   if (RootCost > optimalCost->cost) return;
 
   SubDataset subDataset(c);
-  auto currnode = InnerDivideAll<TYPE>(c, dataRange, &subDataset);
+  auto currnode = InnerDivideAll<InnerNodeType>(c, dataRange, &subDataset);
 
   for (int i = 0; i < c; i++) {
     NodeCost res;
@@ -67,20 +65,20 @@ NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
   int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 4);
   tmpEnd = std::max(tmpEnd, kMinChildNumber);
   for (int c = kMinChildNumber; c <= tmpEnd; c *= 2) {
-    ChooseBetterInner<LRModel<KeyType, ValueType>>(
-        c, frequency_weight, carmi_params::kLRInnerTime, dataRange,
-        &optimalCost, &(optimal_node_struct.lr));
-    ChooseBetterInner<PLRModel<KeyType, ValueType>>(
-        c, frequency_weight, carmi_params::kPLRInnerTime, dataRange,
-        &optimalCost, &(optimal_node_struct.plr));
+    UpdateDPOptSetting<LRModel<KeyType, ValueType>>(c, frequency_weight,
+                                                    dataRange, &optimalCost,
+                                                    &(optimal_node_struct.lr));
+    UpdateDPOptSetting<PLRModel<KeyType, ValueType>>(
+        c, frequency_weight, dataRange, &optimalCost,
+        &(optimal_node_struct.plr));
     if (c <= kHisMaxChildNumber)
-      ChooseBetterInner<HisModel<KeyType, ValueType>>(
-          c, frequency_weight, carmi_params::kHisInnerTime, dataRange,
-          &optimalCost, &(optimal_node_struct.his));
+      UpdateDPOptSetting<HisModel<KeyType, ValueType>>(
+          c, frequency_weight, dataRange, &optimalCost,
+          &(optimal_node_struct.his));
     if (c <= kBSMaxChildNumber)
-      ChooseBetterInner<BSModel<KeyType, ValueType>>(
-          c, frequency_weight, carmi_params::kBSInnerTime, dataRange,
-          &optimalCost, &(optimal_node_struct.bs));
+      UpdateDPOptSetting<BSModel<KeyType, ValueType>>(
+          c, frequency_weight, dataRange, &optimalCost,
+          &(optimal_node_struct.bs));
   }
 
   structMap.insert({dataRange.initRange, optimal_node_struct});

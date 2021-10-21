@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_CONSTRUCT_GREEDY_H_
-#define SRC_INCLUDE_CONSTRUCT_GREEDY_H_
+#ifndef CONSTRUCT_GREEDY_H_
+#define CONSTRUCT_GREEDY_H_
 
 #include <float.h>
 
@@ -24,26 +24,22 @@
 #include "./structures.h"
 
 template <typename KeyType, typename ValueType>
-template <typename TYPE>
-void CARMI<KeyType, ValueType>::IsBetterGreedy(int c, double frequency_weight,
-                                               double time_cost,
-                                               const IndexPair &range,
-                                               const IndexPair &insertRange,
-                                               TYPE *optimal_node_struct,
-                                               NodeCost *optimalCost) {
-  std::vector<IndexPair> perSize(c, emptyRange);
-  std::vector<IndexPair> perInsertSize(c, emptyRange);
+template <typename InnerNodeType>
+void CARMI<KeyType, ValueType>::UpdateGreedyOptSetting(
+    int c, double frequency_weight, const DataRange &range,
+    InnerNodeType *optimal_node_struct, NodeCost *optimalCost) {
+  SubDataset subDataset(c);
   double space_cost = kBaseNodeSpace * c;
+  double time_cost = InnerNodeType::kTimeCost;
 
-  TYPE currnode(c);
-  currnode.Train(range.left, range.size, initDataset);
-  NodePartition<TYPE>(currnode, range, initDataset, &perSize);
-  NodePartition<TYPE>(currnode, insertRange, insertQuery, &perInsertSize);
-  double entropy = CalculateEntropy(range.size, c, perSize);
+  InnerNodeType currnode = InnerDivideAll<InnerNodeType>(c, range, &subDataset);
+  double entropy =
+      CalculateEntropy(range.initRange.size, c, subDataset.subInit);
   double cost = time_cost / entropy;
   for (int i = 0; i < c; i++) {
     int maxLeafCapacity = carmi_params::kMaxLeafNodeSizeExternal;
-    int totalDataNum = perSize[i].size + perInsertSize[i].size;
+    int totalDataNum =
+        subDataset.subInit[i].size + subDataset.subInsert[i].size;
     if (!isPrimary) {
       int tmpBlockNum =
           CFArrayType<KeyType, ValueType>::CalNeededBlockNum(totalDataNum);
@@ -53,8 +49,8 @@ void CARMI<KeyType, ValueType>::IsBetterGreedy(int c, double frequency_weight,
     }
     if (totalDataNum > maxLeafCapacity) {
       space_cost += kBaseNodeSpace * kMinChildNumber;
-      cost += carmi_params::kMemoryAccessTime * perSize[i].size / range.size /
-              entropy;
+      cost += carmi_params::kMemoryAccessTime * subDataset.subInit[i].size /
+              range.initRange.size / entropy;
     }
   }
   cost += lambda * space_cost / frequency_weight / entropy;
@@ -81,20 +77,20 @@ NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
   int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 2);
   tmpEnd = std::max(tmpEnd, kMinChildNumber);
   for (int c = kMinChildNumber; c <= tmpEnd; c *= 2) {
-    IsBetterGreedy<LRModel<KeyType, ValueType>>(
-        c, frequency_weight, carmi_params::kLRInnerTime, dataRange.initRange,
-        dataRange.insertRange, &(optimal_node_struct.lr), &optimalCost);
-    IsBetterGreedy<PLRModel<KeyType, ValueType>>(
-        c, frequency_weight, carmi_params::kPLRInnerTime, dataRange.initRange,
-        dataRange.insertRange, &(optimal_node_struct.plr), &optimalCost);
+    UpdateGreedyOptSetting<LRModel<KeyType, ValueType>>(
+        c, frequency_weight, dataRange, &(optimal_node_struct.lr),
+        &optimalCost);
+    UpdateGreedyOptSetting<PLRModel<KeyType, ValueType>>(
+        c, frequency_weight, dataRange, &(optimal_node_struct.plr),
+        &optimalCost);
     if (c <= kHisMaxChildNumber)
-      IsBetterGreedy<HisModel<KeyType, ValueType>>(
-          c, frequency_weight, carmi_params::kHisInnerTime, dataRange.initRange,
-          dataRange.insertRange, &(optimal_node_struct.his), &optimalCost);
+      UpdateGreedyOptSetting<HisModel<KeyType, ValueType>>(
+          c, frequency_weight, dataRange, &(optimal_node_struct.his),
+          &optimalCost);
     if (c <= kBSMaxChildNumber)
-      IsBetterGreedy<BSModel<KeyType, ValueType>>(
-          c, frequency_weight, carmi_params::kBSInnerTime, dataRange.initRange,
-          dataRange.insertRange, &(optimal_node_struct.bs), &optimalCost);
+      UpdateGreedyOptSetting<BSModel<KeyType, ValueType>>(
+          c, frequency_weight, dataRange, &(optimal_node_struct.bs),
+          &optimalCost);
   }
 
   // construct child
@@ -140,4 +136,4 @@ NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
   nodeCost = {optimalCost.time, optimalCost.space, optimalCost.cost};
   return nodeCost;
 }
-#endif  // SRC_INCLUDE_CONSTRUCT_GREEDY_H_
+#endif  // CONSTRUCT_GREEDY_H_
