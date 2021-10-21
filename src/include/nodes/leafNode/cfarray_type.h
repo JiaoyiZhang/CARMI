@@ -23,7 +23,15 @@
 #include "../../memoryLayout/data_array.h"
 
 /**
- * @brief the structure of cache-friendly array leaf node
+ * @brief The structure of cache-friendly array leaf node, which makes full use
+ * of the cache/prefetch mechanism to speed up the data access.
+ *
+ * The data points are compactly stored in data blocks in a sequential manner in
+ * the CF array leaf nodes. When searching for data points in the CF array leaf
+ * nodes, we first search sequentially in the keywords of each block, and then
+ * search within the block. When we need to insert a given data point, we must
+ * first find the correct position, and then move all the data points by one
+ * cell to make room for the new data point.
  *
  * @tparam KeyType the type of the key value
  * @tparam ValueType the type of the value
@@ -33,9 +41,14 @@ class CFArrayType {
  public:
   // *** Constructed Types and Constructor
 
-  // the pair of data points
+  /**
+   * @brief the pair of data points
+   */
   typedef std::pair<KeyType, ValueType> DataType;
-  // the vector of data points, which is the type of dataset
+
+  /**
+   * @brief the vector of data points, which is the type of dataset
+   */
   typedef std::vector<DataType> DataVectorType;
 
   CFArrayType() {
@@ -53,7 +66,7 @@ class CFArrayType {
   /**
    * @brief Get the actual size of data blocks
    *
-   * @param size the size of the data points
+   * @param size[in] the size of the data points
    * @return int
    */
   static int CalNeededBlockNum(int size);
@@ -61,10 +74,11 @@ class CFArrayType {
   /**
    * @brief extract data points (delete useless gaps and deleted data points)
    *
-   * @param data the data array
-   * @param blockleft the left index of data blocks managed by the leaf node
-   * @param blockright the right index of data blocks managed by the leaf node
-   * @param actualSize the actual size of these data points
+   * @param data[in] the data array
+   * @param blockleft[in] the left index of data blocks managed by the leaf node
+   * @param blockright[in] the right index of data blocks managed by the leaf
+   * node
+   * @param actualSize[out] the actual size of these data points
    * @return DataVectorType : pure data points
    */
   static DataVectorType ExtractDataset(
@@ -77,10 +91,11 @@ class CFArrayType {
   /**
    * @brief initialize cf array node
    *
-   * @param dataset the dataset
-   * @param start_idx the start index of data points
-   * @param size the size of data points
-   * @param data the data array
+   * @param dataset[in] the dataset
+   * @param prefetchIndex[in] the prefetch predicted index of each key value
+   * @param start_idx[in] the start index of data points
+   * @param size[in] the size of data points
+   * @param data[out] the data array
    */
   void Init(const DataVectorType &dataset,
             const std::vector<int> &prefetchIndex, int start_idx, int size,
@@ -100,29 +115,59 @@ class CFArrayType {
   int Find(const DataArrayStructure<KeyType, ValueType> &data,
            const KeyType &key, int *currblock) const;
 
+  /**
+   * @brief Insert the datapoint into this leaf node
+   *
+   * The basic process of the insert operation is similar to the lookup
+   * operation. After finding the correct data block for insertion, we insert
+   * the data point into it. In addition, there are two mechanisms that can be
+   * initiated by the leaf node under certain situations:
+   *
+   * @param datapoint[in] the inserted data point
+   * @param data[out] the data array
+   * @retval true the insert is successful
+   * @retval false the insert fails
+   */
   bool Insert(const DataType &datapoint,
               DataArrayStructure<KeyType, ValueType> *data);
 
+  /**
+   * @brief Update the given data point.
+   *
+   * @param datapoint[in] the updated data point
+   * @param data[out] the data array
+   * @retval true the update is successful
+   * @retval false the update fails
+   */
   bool Update(const DataType &datapoint,
               DataArrayStructure<KeyType, ValueType> *data);
 
+  /**
+   * @brief Delete the record of the given key value
+   *
+   * @param key[in] the given key value
+   * @param data[out] the data array
+   * @return int: the index of the data point in this data block
+   * @retval kMaxBlockCapacity: find the data point unsuccessfully
+   */
   bool Delete(const KeyType &key, DataArrayStructure<KeyType, ValueType> *data);
 
   /**
    * @brief store data points into the data array
    *
-   * @param dataset the dataset
-   * @param isInitMode the current mode
-   * @param neededBlockNum the needed number of leaf nodes
-   * @param start_idx the start index of data points
-   * @param size  the size of data points
-   * @param data the data array
-   * @param prefetchEnd the right index of prefetched blocks in initial mode
+   * @param dataset[in] the dataset
+   * @param prefetchIndex[in] the prefetch predicted index of each key value
+   * @param isInitMode[in] the current construction mode
+   * @param needLeafNum the needed number of leaf nodes
+   * @param start_idx[in] the start index of data points
+   * @param size[in]  the size of data points
+   * @param data[out] the data array
+   * @param prefetchEnd[out] the right index of prefetched blocks in initial
+   * mode
    */
   bool StoreData(const DataVectorType &dataset,
                  const std::vector<int> &prefetchIndex, bool isInitMode,
                  int needLeafNum, int start_idx, int size,
-
                  DataArrayStructure<KeyType, ValueType> *data,
                  int *prefetchEnd);
 
@@ -133,9 +178,9 @@ class CFArrayType {
    * @brief Get the number of data points in data.dataArray[blockleft,
    * blockright)
    *
-   * @param data the data array
-   * @param blockleft the left index of the data blocks
-   * @param blockright the right index of the data blocks
+   * @param data[in] the data array
+   * @param blockleft[in] the left index of the data blocks
+   * @param blockright[in] the right index of the data blocks
    * @return int: the number of data points
    */
   inline int GetDataNum(const DataArrayStructure<KeyType, ValueType> &data,
@@ -176,29 +221,30 @@ class CFArrayType {
   /**
    * @brief check whether this array node can be prefetched
    *
-   * @param data the data array
-   * @param dataset the dataset
-   * @param prefetch
-   * @param neededBlockNum the needed number of leaf nodes
-   * @param start_idx the start index of data points
-   * @param size  the size of data points
+   * @param data[in] the data array
+   * @param dataset[in] the dataset
+   * @param prefetchIndex[in] the prefetch predicted index of each key value
+   * @param neededBlockNum[in] the needed number of leaf nodes
+   * @param start_idx[in] the start index of data points
+   * @param size[in]  the size of data points
    */
   bool CheckIsPrefetch(const DataArrayStructure<KeyType, ValueType> &data,
                        const DataVectorType &dataset,
                        const std::vector<int> prefetchIndex, int neededBlockNum,
-                       int left, int size);
+                       int start_idx, int size);
 
   /**
    * @brief store data points in such a way that extra data points are filled
    * with the previous blocks first
    *
-   * @param dataset the dataset to be stored
-   * @param neededBlockNum the number of needed blocks to store all the data
-   * points
-   * @param tmpBlockVec blocks to store data points
-   * @param actualBlockNum the actual number of used data blocks
-   * @param missNumber the number of data points which are not stored as the
-   * prefetching index
+   * @param dataset[in] the dataset to be stored
+   * @param prefetchIndex[in] the prefetch predicted index of each key value
+   * @param neededBlockNum[in] the number of needed data blocks to store all the
+   * data points
+   * @param tmpBlockVec[out] blocks to store data points
+   * @param actualBlockNum[out] the actual number of used data blocks
+   * @param missNumber[out] the number of data points which are not stored as
+   * the prefetching index
    * @retval true succeeds
    * @return false fails
    */
@@ -212,14 +258,14 @@ class CFArrayType {
    * @brief store data points in such a way that extra data points are filled
    * with the subsequent blocks first
    *
-   * @param root the root node
-   * @param dataset the dataset to be stored
-   * @param neededBlockNum the number of needed blocks to store all the data
-   * points
-   * @param tmpBlockVec blocks to store data points
-   * @param actualBlockNum the actual number of used data blocks
-   * @param missNumber the number of data points which are not stored as the
-   * prefetching index
+   * @param dataset[in] the dataset to be stored
+   * @param prefetchIndex[in] the prefetch predicted index of each key value
+   * @param neededBlockNum[in] the number of needed data blocks to store all the
+   * data points
+   * @param tmpBlockVec[out] blocks to store data points
+   * @param actualBlockNum[out] the actual number of used data blocks
+   * @param missNumber[out] the number of data points which are not stored as
+   * the prefetching index
    * @retval true succeeds
    * @return false fails
    */
@@ -238,9 +284,9 @@ class CFArrayType {
    * collects all data points in all managed data blocks and reallocates them
    * evenly to all these blocks.
    *
-   * @param blockleft the left index of data blocks
-   * @param blockright the right index of data blocks
-   * @param data the data array
+   * @param blockleft[in] the left index of data blocks
+   * @param blockright[in] the right index of data blocks
+   * @param data[out] the data array
    */
   inline void Rebalance(int blockleft, int blockright,
                         DataArrayStructure<KeyType, ValueType> *data);
@@ -251,9 +297,9 @@ class CFArrayType {
    * collect all the data points managed by this leaf node, and then get a new
    * location with more space in the data array.
    *
-   * @param blockleft the left index of data blocks
-   * @param blockright the right index of data blocks
-   * @param data the data array
+   * @param blockleft[in] the left index of data blocks
+   * @param blockright[in] the right index of data blocks
+   * @param data[out] the data array
    */
   inline void Expand(int blockleft, int blockright,
                      DataArrayStructure<KeyType, ValueType> *data);
@@ -261,10 +307,10 @@ class CFArrayType {
   /**
    * @brief insert the given data into a leaf node
    *
-   * @param datapoint the inserted data poinys
-   * @param currblock the index of current structure
-   * @param currBlock the data block where the data will be inserted
-   * @param cfNode the cf array node
+   * @param datapoint[in] the inserted data poinys
+   * @param currblock[in] the index of current structure
+   * @param currBlock[out] the data block where the data will be inserted
+   * @param cfNode[out] the cf array node
    * @retval true succeeds
    * @retval false fails
    */
@@ -276,11 +322,11 @@ class CFArrayType {
   /**
    * @brief insert a data point into the next structure in the leaf node
    *
-   * @param datapoint the data points needed to be inserted
-   * @param nowDataIdx the index of this structure in data
-   * @param currblock the index of the current structure in the leaf node
-   * @param data the data array
-   * @param cfNode the leaf node
+   * @param datapoint[in] the data points needed to be inserted
+   * @param nowDataIdx[in] the index of this structure in data
+   * @param currblock[in] the index of the current structure in the leaf node
+   * @param data[in] the data array
+   * @param cfNode[out] the leaf node
    * @retval true INSERT succeeds
    * @retval false INSERT fails (the next structure is full)
    */
@@ -296,7 +342,6 @@ class CFArrayType {
    * @brief CF array leaf node parameter: The maximum number of data points in
    * each data block, which depends on the carmi_params::kMaxLeafNodeSize and
    * the type of data points.
-   *
    */
   static constexpr int kMaxBlockCapacity =
       carmi_params::kMaxLeafNodeSize / sizeof(DataType);
@@ -413,11 +458,9 @@ inline int CFArrayType<KeyType, ValueType>::Find(
   // currblock is the serial number of this data block in all data blocks
   // managed by this leaf node.
   *currblock = Search(key);
-  // currBlockIdx is the index of this data block in the data array
-  int currBlockIdx = m_left + *currblock;
 
   // Search the data point in this data block
-  int res = SearchDataBlock(data.dataArray[currBlockIdx], key);
+  int res = SearchDataBlock(data.dataArray[m_left + *currblock], key);
 
   // Return the index of the data point. If res is equal to kMaxBlockCapacity,
   // finding the corresponding data point fails.
@@ -441,14 +484,32 @@ inline int CFArrayType<KeyType, ValueType>::SearchDataBlock(
     const LeafSlots<KeyType, ValueType> &currblock, const KeyType &key) const {
   int i = 0;
   if (key <= currblock.slots[kMaxBlockCapacity / 2 - 1].first) {
-    for (; i < kMaxBlockCapacity / 2; i++) {
+    for (; i < kMaxBlockCapacity / 2; i += 4) {
       if (key <= currblock.slots[i].first) {
+        break;
+      }
+      if (key <= currblock.slots[i + 1].first) {
+        break;
+      }
+      if (key <= currblock.slots[i + 2].first) {
+        break;
+      }
+      if (key <= currblock.slots[i + 3].first) {
         break;
       }
     }
   } else {
-    for (i = kMaxBlockCapacity / 2; i < kMaxBlockCapacity; i++) {
+    for (i = kMaxBlockCapacity / 2; i < kMaxBlockCapacity; i += 4) {
       if (key <= currblock.slots[i].first) {
+        break;
+      }
+      if (key <= currblock.slots[i + 1].first) {
+        break;
+      }
+      if (key <= currblock.slots[i + 2].first) {
+        break;
+      }
+      if (key <= currblock.slots[i + 3].first) {
         break;
       }
     }

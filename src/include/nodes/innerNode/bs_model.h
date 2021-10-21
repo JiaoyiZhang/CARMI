@@ -33,10 +33,14 @@ class BSModel {
  public:
   // *** Constructed Types and Constructor
 
-  // the pair of data points
+  /**
+   * @brief the pair of data points
+   */
   typedef std::pair<KeyType, ValueType> DataType;
 
-  // the vector of data points, which is the type of dataset
+  /**
+   * @brief the vector of data points, which is the type of dataset
+   */
   typedef std::vector<DataType> DataVectorType;
 
   /**
@@ -72,6 +76,14 @@ class BSModel {
    * @return int: the predicted index of next node
    */
   int Predict(double key) const;
+
+ public:
+  // *** Static Constant Options and Values of BS Inner Node Objects
+
+  /**
+   * @brief The time cost of the bs inner node.
+   */
+  static constexpr int kTimeCost = carmi_params::kBSInnerTime;
 
  public:
   //*** Public Data Members of His Inner Node Objects

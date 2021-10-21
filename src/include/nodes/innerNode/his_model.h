@@ -36,10 +36,14 @@ class HisModel {
  public:
   // *** Constructed Types and Constructor
 
-  // the pair of data points
+  /**
+   * @brief the pair of data points
+   */
   typedef std::pair<KeyType, ValueType> DataType;
 
-  // the vector of data points, which is the type of dataset
+  /**
+   * @brief the vector of data points, which is the type of dataset
+   */
   typedef std::vector<DataType> DataVectorType;
 
   /**
@@ -76,6 +80,14 @@ class HisModel {
    * @return int: the predicted index of next node
    */
   int Predict(KeyType key) const;
+
+ public:
+  // *** Static Constant Options and Values of His Inner Node Objects
+
+  /**
+   * @brief The time cost of the lr inner node.
+   */
+  static constexpr int kTimeCost = carmi_params::kHisInnerTime;
 
  public:
   //*** Public Data Members of His Inner Node Objects

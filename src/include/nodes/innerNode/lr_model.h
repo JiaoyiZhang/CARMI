@@ -34,10 +34,14 @@ class LRModel {
  public:
   // *** Constructed Types and Constructor
 
-  // the pair of data points
+  /**
+   * @brief the pair of data points
+   */
   typedef std::pair<KeyType, ValueType> DataType;
 
-  // the vector of data points, which is the type of dataset
+  /**
+   * @brief the vector of data points, which is the type of dataset
+   */
   typedef std::vector<DataType> DataVectorType;
 
   /**
@@ -76,6 +80,14 @@ class LRModel {
   int Predict(KeyType key) const;
 
  public:
+  // *** Static Constant Options and Values of LR Inner Node Objects
+
+  /**
+   * @brief The time cost of the lr inner node.
+   */
+  static constexpr int kTimeCost = carmi_params::kLRInnerTime;
+
+ public:
   //*** Public Data Members of LR Inner Node Objects
 
   /**
@@ -93,10 +105,16 @@ class LRModel {
    */
   int childLeft;
 
-  // The slope parameter of the linear regression model. (4 bytes)
+  /**
+   * @brief The slope parameter of the linear regression model. (4 bytes)
+   *
+   */
   float slope;
 
-  // The intercept parameter of the linear regression model. (4 bytes)
+  /**
+   * @brief The intercept parameter of the linear regression model. (4 bytes)
+   *
+   */
   float intercept;
 
   /**

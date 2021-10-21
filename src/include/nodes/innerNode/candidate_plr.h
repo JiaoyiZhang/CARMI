@@ -25,13 +25,28 @@
  *
  */
 struct SegmentPoint {
-  // the current cost
+  /**
+   * @brief the current cost
+   *
+   */
   double cost;
-  // the key values
+
+  /**
+   * @brief the key values
+   *
+   */
   double key[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-  // the corresponding indexes
+
+  /**
+   * @brief the corresponding indexes
+   *
+   */
   int idx[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  // the number of blocks
+
+  /**
+   * @brief the number of blocks
+   *
+   */
   int blockNum[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 };
 
@@ -131,15 +146,34 @@ class CandidateCost {
   }
 
  public:
-  // params for the corresponding segment
+  /**
+   * @brief params for the corresponding segment
+   *
+   */
   std::map<std::pair<int, int>, std::pair<double, double>> theta;
-  //  the value of key*key
+
+  /**
+   * @brief  the value of key*key
+   *
+   */
   std::vector<double> xx;
-  // the value of key
+
+  /**
+   * @brief the value of key
+   *
+   */
   std::vector<double> x;
-  // the value of y*key
+
+  /**
+   * @brief the value of y*key
+   *
+   */
   std::vector<double> px;
-  // the value of y
+
+  /**
+   * @brief the value of y
+   *
+   */
   std::vector<double> p;
 };
 

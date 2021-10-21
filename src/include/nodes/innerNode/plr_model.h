@@ -36,10 +36,14 @@ class PLRModel {
  public:
   // *** Constructed Types and Constructor
 
-  // the pair of data points
+  /**
+   * @brief the pair of data points
+   */
   typedef std::pair<KeyType, ValueType> DataType;
 
-  // the vector of data points, which is the type of dataset
+  /**
+   * @brief the vector of data points, which is the type of dataset
+   */
   typedef std::vector<DataType> DataVectorType;
 
   /**
@@ -74,6 +78,14 @@ class PLRModel {
    * @return int: the predicted index of next node
    */
   int Predict(KeyType key) const;
+
+ public:
+  // *** Static Constant Options and Values of P. LR Inner Node Objects
+
+  /**
+   * @brief The time cost of the p. lr inner node.
+   */
+  static constexpr int kTimeCost = carmi_params::kPLRInnerTime;
 
  public:
   //*** Public Data Members of P. LR Inner Node Objects
