@@ -31,10 +31,16 @@ class ExternalArray {
  public:
   // *** Constructed Types and Constructor
 
-  // the pair of data points
+  /**
+   * @brief the pair of data points
+   *
+   */
   typedef std::pair<KeyType, KeyType> DataType;
 
-  // the vector of data points, which is the type of dataset
+  /**
+   * @brief the vector of data points, which is the type of dataset
+   *
+   */
   typedef std::vector<DataType> DataVectorType;
 
   ExternalArray() {
@@ -51,11 +57,11 @@ class ExternalArray {
   /**
    * @brief extract data points (delete useless gaps and deleted data points)
    *
-   * @param external_data the dataset pointer
-   * @param left the left index of dataset managed by the leaf node
-   * @param right the right index of dataset managed by the leaf node
-   * @param recordLength the length of a record
-   * @param actualSize the actual size of these data points
+   * @param external_data[in] the dataset pointer
+   * @param left[in] the left index of dataset managed by the leaf node
+   * @param right[in] the right index of dataset managed by the leaf node
+   * @param recordLength[in] the length of a record
+   * @param actualSize[out] the actual size of these data points
    * @return DataVectorType : pure data points
    */
   static DataVectorType ExtractDataset(const void *external_data, int left,
@@ -68,10 +74,11 @@ class ExternalArray {
   /**
    * @brief initialize cf array node
    *
-   * @param dataset the dataset
-   * @param start_idx the start index of data points
-   * @param size the size of data points
-   * @param data the data array
+   * @param dataset[in] the dataset
+   * @param prefetchIndex[in] the prefetch predicted index of each key value
+   * @param start_idx[in] the start index of data points
+   * @param size[in] the size of data points
+   * @param data[in] the data array
    */
   void Init(const DataVectorType &dataset,
             const std::vector<int> &prefetchIndex, int start_idx, int size,
@@ -80,21 +87,37 @@ class ExternalArray {
   /**
    * @brief train the external array node
    *
-   * @param start_idx the start index of data points
-   * @param size the size of data points
-   * @param dataset the dataset
+   * @param start_idx[in] the start index of data points
+   * @param size[in] the size of data points
+   * @param dataset[in] the dataset
    */
   void Train(int start_idx, int size, const DataVectorType &dataset);
 
+  /**
+   * @brief Find the data point of the given key value
+   *
+   * @param key[in] the given key value
+   * @param recordLength[in] the length of the record
+   * @param external_data[in] the external data
+   * @return int the position of the record
+   */
   int Find(const KeyType &key, int recordLength,
            const void *external_data) const;
 
+  /**
+   * @brief Insert the key value
+   *
+   * @param datapoint[in] the inserted data point
+   * @param curr[in] the current index of the insert
+   * @retval true the operation is successful
+   * @retval false the operation fails
+   */
   bool Insert(const DataType &datapoint, int *curr);
 
   /**
    * @brief predict the position of the given key value
    *
-   * @param key the given key value
+   * @param key[in] the given key value
    * @return int: the predicted index in the leaf node
    */
   inline int Predict(double key) const {
@@ -113,13 +136,13 @@ class ExternalArray {
   /**
    * @brief the main function of search a record in external array
    *
-   * @param key the key value
-   * @param preIdx the predicted index of this node
-   * @param error the error bound of this node
-   * @param left the left index of this node in the data
-   * @param size the size of this node
-   * @param recordLength the length of a record
-   * @param external_data the external position of dataset
+   * @param key[in] the key value
+   * @param preIdx[in] the predicted index of this node
+   * @param error[in]the error bound of this node
+   * @param left[in] the left index of this node in the data
+   * @param size[in] the size of this node
+   * @param recordLength[in] the length of a record
+   * @param external_data[in] the external position of dataset
    * @return int: the index of the record
    */
   int Search(KeyType key, int preIdx, int error, int left, int size,
@@ -128,11 +151,11 @@ class ExternalArray {
   /**
    * @brief search a key-value through binary search in the external leaf node
    *
-   * @param key the given key value
-   * @param start the start index of the search bounary
-   * @param end the end index of the search boundary
-   * @param recordLength the length of a record
-   * @param external_data the external position of dataset
+   * @param key[in] the given key value
+   * @param start[in] the start index of the search bounary
+   * @param end[in] the end index of the search boundary
+   * @param recordLength[in] the length of a record
+   * @param external_data[in] the external position of dataset
    * @return int: the idx of the first element >= key
    */
   int BinarySearch(KeyType key, int start, int end, int recordLength,
@@ -141,9 +164,9 @@ class ExternalArray {
   /**
    * @brief find the optimal error value from 0 to size
    *
-   * @param start_idx the start index of the data points
-   * @param size the size of the data points
-   * @param dataset the dataset
+   * @param start_idx[in] the start index of the data points
+   * @param size[in] the size of the data points
+   * @param dataset[in] the dataset
    */
   void FindOptError(int start_idx, int size, const DataVectorType &dataset);
 
@@ -169,13 +192,23 @@ class ExternalArray {
    */
   int error;
 
-  // The slope parameter of the linear regression model. (4 bytes)
+  /**
+   * @brief The slope parameter of the linear regression model. (4 bytes)
+   *
+   */
   float slope;
 
-  // The intercept parameter of the linear regression model. (4 bytes)
+  /**
+   * @brief The intercept parameter of the linear regression model. (4 bytes)
+   *
+   */
   float intercept;
 
-  // Placeholder to make sure that the size of this node is 64 bytes. (44 bytes)
+  /**
+   * @brief Placeholder to make sure that the size of this node is 64 bytes. (44
+   * bytes)
+   *
+   */
   float placeholder[11];
 };
 

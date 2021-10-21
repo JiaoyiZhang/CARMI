@@ -24,7 +24,16 @@
 #include "memoryLayout/node_array.h"
 
 /**
- * @brief the common type of CARMI
+ * @brief The specific common version of the CARMI class template.
+ *
+ * The implementation of common CARMI. This class provides users with basic
+ * operations such as find, insert, update, and delete, as well as some basic
+ * operations for the iterator of the CARMI index. Through the functions of
+ * CARMICommon objects, users can construct indexes with good performance for a
+ * given dataset without the need of too much space. In addition, during
+ * initialization, users can set different lambda values to control the
+ * different proportions of time and space costs, so as to achieve a balance
+ * between the time and space cost under the corresponding parameters.
  *
  * @tparam KeyType the type of the key
  * @tparam ValueType the type of the value
@@ -34,15 +43,29 @@ class CARMICommon {
  public:
   // *** Constructed Types
 
-  // the type of implementation of CARMI
+  /**
+   * @brief the type of implementation of CARMI
+   *
+   */
   typedef CARMI<KeyType, ValueType> carmi_impl;
-  // the type of the data point
+
+  /**
+   * @brief the type of the data point
+   *
+   */
   typedef typename CARMI<KeyType, ValueType>::DataType DataType;
-  // the type of the dataset
+
+  /**
+   * @brief the type of the dataset
+   *
+   */
   typedef typename CARMI<KeyType, ValueType>::DataVectorType DataVectorType;
 
  private:
-  // The contained implementation object of CARMI
+  /**
+   * @brief The contained implementation object of CARMI
+   *
+   */
   carmi_impl carmi_tree;
 
  public:
@@ -214,20 +237,32 @@ class CARMICommon {
    public:
     //*** Public Data Members of Iterator Objects
 
-    // the pointer of the carmi tree
+    /**
+     * @brief the pointer of the carmi tree
+     *
+     */
     CARMICommon *tree;
 
-    // the pointer of the current leaf node
+    /**
+     * @brief the pointer of the current leaf node
+     *
+     */
     BaseNode<KeyType, ValueType> *currnode;
 
-    // the index of the current data block in the leaf node
+    /**
+     * @brief the index of the current data block in the leaf node
+     */
     int currblock;
 
-    // the index of the data point in the data block
+    /**
+     * @brief the index of the data point in the data block
+     */
     int currslot;
   };
 
  private:
+  //*** The Private Functions of Constructor
+
   /**
    * @brief preprocess the input dataset between the first iterator and the last
    * iterator
@@ -353,19 +388,17 @@ class CARMICommon {
   long double CalculateSpace() const { return carmi_tree.CalculateSpace(); }
 
   /**
-   * @brief print the structure of carmi
+   * @brief Get the information of the tree node, return the type identifier of
+   * this node, the number of its child nodes and the starting index of the
+   * first child node in the node array.
    *
-   * @param depth[in] the depth of the root node, the value is 1
-   * @param type[in] the root type
-   * @param dataSize[in] the size of the init dataset
-   * @param idx[in] 0
-   * @param depthVec[out] the number of nodes in each depth
-   * @param nodeVec[out] the number of each node type
+   * @param[in] idx the index of the node in the node array
+   * @param[out] childNumber the number of the child nodes of this node
+   * @param[out] childStartIndex the starting index of the first child node
+   * @return int the type identifier of this node
    */
-  void PrintStructure(int depth, NodeType type, int dataSize, int idx,
-                      std::vector<int> *depthVec, std::vector<int> *nodeVec) {
-    carmi_tree.PrintStructure(depth, type, dataSize, idx, depthVec, nodeVec);
-    std::cout << "avg depth is: " << carmi_tree.sumDepth << std::endl;
+  int GetNodeInfo(int idx, int *childNumber, int *childStartIndex) {
+    return carmi_tree.GetNodeInfo(idx, childNumber, childStartIndex);
   }
 };
 

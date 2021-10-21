@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_
-#define SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_
+#ifndef CONSTRUCT_STRUCTURES_H_
+#define CONSTRUCT_STRUCTURES_H_
 
 #include <float.h>
 
@@ -20,18 +20,26 @@
 #include "../params.h"
 
 /**
- * @brief the structure of the information
- * of the root node
- *
+ * @brief Root node settings: the type of root node and the number of child
+ * nodes
  */
 struct RootStruct {
-  int rootType;      ///< the type of the root node
-  int rootChildNum;  ///< the number of the root node's children
+  /**
+   * @brief the type of the root node
+   */
+  int rootType;
+
+  /**
+   * @brief the number of the root node's children
+   *
+   */
+  int rootChildNum;
+
   /**
    * @brief Construct a new Root Struct object
    *
-   * @param t the root type
-   * @param c the child number
+   * @param t[in] the root type
+   * @param c[in] the child number
    */
   RootStruct(int t, int c) {
     rootType = t;
@@ -40,22 +48,44 @@ struct RootStruct {
 };
 
 /**
- * @brief the structure of cost model
- *
+ * @brief the structure of cost model: time cost, space cost and the total cost:
+ * time + lambda * space
  */
 struct NodeCost {
-  double time;   ///< the time cost of tree
-  double space;  ///< the space cost of tree
-  double cost;   ///< the total cost of tree
+  /**
+   * @brief the time cost
+   *
+   */
+  double time;
+
+  /**
+   * @brief the space cost
+   *
+   */
+  double space;
+
+  /**
+   * @brief the total cost
+   *
+   */
+  double cost;
 };
 
 /**
- * @brief the index range of data points
- *
+ * @brief the index range of data points: [left, left + size)
  */
 struct IndexPair {
-  int left;  ///< the start index of data points
-  int size;  ///< the size of data points
+  /**
+   * @brief the start index of data points
+   *
+   */
+  int left;
+
+  /**
+   * @brief the size of data points
+   *
+   */
+  int size;
 
   bool operator<(const IndexPair& a) const {
     if (left == a.left)
@@ -66,28 +96,52 @@ struct IndexPair {
 };
 
 /**
- * @brief the bound ranges of initDataset, findQuery and insertQuery
- *
+ * @brief the index ranges of initDataset, findQuery and insertQuery
  */
 class DataRange {
  public:
-  IndexPair initRange;    ///< the bound range of initDataset
-  IndexPair findRange;    ///< the bound range of findQuery
-  IndexPair insertRange;  ///< the bound range of insertQuery
+  /**
+   * @brief the index range of initDataset
+   *
+   */
+  IndexPair initRange;
+
+  /**
+   * @brief the index range of findQuery
+   *
+   */
+  IndexPair findRange;
+
+  /**
+   * @brief the index range of insertQuery
+   *
+   */
+  IndexPair insertRange;
+
   DataRange(IndexPair init, IndexPair find, IndexPair insert)
       : initRange(init), findRange(find), insertRange(insert) {}
 };
 
 /**
- * @brief the range of subdatasets
- *
+ * @brief the range of each sub-datasets corresponding to the child nodes of the
+ * current nodes
  */
 class SubDataset {
  public:
-  std::vector<IndexPair> subInit;  ///< the IndexPair vector of sub-initDataset
-  std::vector<IndexPair> subFind;  ///< the IndexPair vector of sub-findDataset
-  std::vector<IndexPair>
-      subInsert;  ///< the IndexPair vector of sub-insertDataset
+  /**
+   * @brief the IndexPair vector of sub-initDataset
+   */
+  std::vector<IndexPair> subInit;
+
+  /**
+   * @brief the IndexPair vector of sub-findDataset
+   */
+  std::vector<IndexPair> subFind;
+
+  /**
+   * @brief the IndexPair vector of sub-insertDataset
+   */
+  std::vector<IndexPair> subInsert;
 
   explicit SubDataset(int c)
       : subInit(std::vector<IndexPair>(c, {-1, 0})),
@@ -98,7 +152,6 @@ class SubDataset {
 
 /**
  * @brief enumerate type of all node types
- *
  */
 enum NodeType {
   PLR_ROOT_NODE,
@@ -111,18 +164,24 @@ enum NodeType {
 };
 
 /**
- * @brief a data block
+ * @brief the structure of a data block
  *
- * @tparam KeyType the type of the given key
+ * This structure is designed for the CF array leaf nodes, so as to make better
+ * use of the cache mechanism to speed up data access. The size of this class is
+ * fixed as kMaxLeafNodeSize.
+ *
+ * @tparam KeyType the type of the given key value
  * @tparam ValueType the type of the value
  */
 template <typename KeyType, typename ValueType>
 class LeafSlots {
  public:
-  std::pair<KeyType, ValueType>
-      slots[carmi_params::kMaxLeafNodeSize /
-            sizeof(
-                std::pair<KeyType, ValueType>)];  ///< used to store data points
+  /**
+   * @brief store the data points
+   *
+   */
+  std::pair<KeyType, ValueType> slots[carmi_params::kMaxLeafNodeSize /
+                                      sizeof(std::pair<KeyType, ValueType>)];
 
   LeafSlots() {
     int len =
@@ -144,4 +203,4 @@ class LeafSlots {
     return *this;
   }
 };
-#endif  // SRC_INCLUDE_CONSTRUCT_STRUCTURES_H_
+#endif  // CONSTRUCT_STRUCTURES_H_

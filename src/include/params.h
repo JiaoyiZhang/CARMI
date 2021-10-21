@@ -19,42 +19,72 @@
 #endif  // Windows
 
 namespace carmi_params {
-// bytes, the size of a data block in cf array leaf nodes
-const int kMaxLeafNodeSize = 256;
+/**
+ * @brief bytes, the size of a data block in cf array leaf nodes
+ */
+static constexpr int kMaxLeafNodeSize = 256;
 
-// the maximum number of data points in an external leaf node
-const int kMaxLeafNodeSizeExternal = 1024;
+/**
+ * @brief the maximum number of data points in an external leaf node
+ */
+static constexpr int kMaxLeafNodeSizeExternal = 1024;
 
 /**
  * @brief the maximum number of data points which can use the DP algorithm to
  * construct an inner node. If the size of the sub-dataset exceeds this
  * parameter, greedy algorithm is used to construct the node.
  */
-const int kAlgorithmThreshold = 1024;
+static constexpr int kAlgorithmThreshold = 1024;
 
-// the latency of memory access
-const double kMemoryAccessTime = 80.09;
+/**
+ * @brief the latency of memory access
+ */
+static constexpr double kMemoryAccessTime = 80.09;
 
-// the CPU time cost of lr root
-const double kLRRootTime = 12.7013;
-// the CPU time cost of plr root
-const double kPLRRootTime = 29.62;
+/**
+ * @brief the CPU time cost of lr root
+ */
+static constexpr double kLRRootTime = 12.7013;
 
-// the time cost of lr inner node
-const double kLRInnerTime = kMemoryAccessTime + 14.2;
-// the time cost of plr inner node
-const double kPLRInnerTime = kMemoryAccessTime + 22.8;
-// the time cost of his inner node
-const double kHisInnerTime = kMemoryAccessTime + 9.8;
-// the time cost of bs inner node
-const double kBSInnerTime = kMemoryAccessTime + 15.5;
+/**
+ * @brief the CPU time cost of plr root
+ */
+static constexpr double kPLRRootTime = 29.62;
 
-// the time cost of moving a data point
-const double kCostMoveTime = 6.25;
-// the basic time cost of a leaf node
-const double kLeafBaseTime = 161.241;
-// the time cost of a binary search
-const double kCostBSTime = 10.9438;
+/**
+ * @brief the time cost of lr inner node
+ */
+static constexpr double kLRInnerTime = kMemoryAccessTime + 14.2;
+
+/**
+ * @brief the time cost of plr inner node
+ */
+static constexpr double kPLRInnerTime = kMemoryAccessTime + 22.8;
+
+/**
+ * @brief the time cost of his inner node
+ */
+static constexpr double kHisInnerTime = kMemoryAccessTime + 9.8;
+
+/**
+ * @brief the time cost of bs inner node
+ */
+static constexpr double kBSInnerTime = kMemoryAccessTime + 15.5;
+
+/**
+ * @brief the time cost of moving a data point
+ */
+static constexpr double kCostMoveTime = 6.25;
+
+/**
+ * @brief the basic time cost of a leaf node
+ */
+static constexpr double kLeafBaseTime = 161.241;
+
+/**
+ * @brief the time cost of a binary search
+ */
+static constexpr double kCostBSTime = 10.9438;
 }  // namespace carmi_params
 
 #endif  // PARAMS_H_
