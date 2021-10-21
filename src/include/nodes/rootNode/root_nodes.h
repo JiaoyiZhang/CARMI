@@ -35,6 +35,11 @@ class PLRType {
   // *** Constructed Types and Constructor
 
   /**
+   * @brief The type of the model
+   */
+  typedef PiecewiseLR<DataVectorType, KeyType> ModelType;
+
+  /**
    * @brief Construct a new PLRType object
    *
    */
@@ -49,6 +54,20 @@ class PLRType {
     flagNumber = PLR_ROOT_NODE;
     model.length = child - 1;
   }
+
+  PLRType(int childNumber, const DataVectorType &dataset) {
+    flagNumber = PLR_ROOT_NODE;
+    model.length = childNumber - 1;
+    model.Train(dataset);
+  }
+
+ public:
+  // *** Static Constant Options and Values of PLR Root Node Objects
+
+  /**
+   * @brief The time cost of the plr root node.
+   */
+  static constexpr int kTimeCost = carmi_params::kPLRRootTime;
 
  public:
   //*** Public Data Members of P. LR Root Node Objects
@@ -79,4 +98,5 @@ class PLRType {
    */
   int flagNumber;
 };
+
 #endif  // NODES_ROOTNODE_ROOT_NODES_H_

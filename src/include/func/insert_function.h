@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_FUNC_INSERT_FUNCTION_H_
-#define SRC_INCLUDE_FUNC_INSERT_FUNCTION_H_
+#ifndef FUNC_INSERT_FUNCTION_H_
+#define FUNC_INSERT_FUNCTION_H_
 
 #include <float.h>
 
@@ -82,4 +82,4 @@ bool CARMI<KeyType, ValueType>::Insert(const DataType &datapoint) {
   }
 }
 
-#endif  // SRC_INCLUDE_FUNC_INSERT_FUNCTION_H_
+#endif  // FUNC_INSERT_FUNCTION_H_

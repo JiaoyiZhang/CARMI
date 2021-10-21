@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_FUNC_INLINEFUNCTION_H_
-#define SRC_INCLUDE_FUNC_INLINEFUNCTION_H_
+#ifndef FUNC_INLINEFUNCTION_H_
+#define FUNC_INLINEFUNCTION_H_
 
 #include <float.h>
 
@@ -21,7 +21,7 @@
 #include "../params.h"
 
 template <typename KeyType, typename ValueType>
-template <typename TYPE>
+template <typename LeafNodeType>
 inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
                                              int size, int previousIdx,
                                              int idx) {
@@ -50,7 +50,7 @@ inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
 
   int tmpLeft = left;
   for (int i = 0; i < kInsertNewChildNumber; i++) {
-    TYPE tmpLeaf;
+    LeafNodeType tmpLeaf;
     std::vector<int> prefetchIndex(perSize[i].size);
     int s = perSize[i].left;
     int e = perSize[i].left + perSize[i].size;
@@ -87,4 +87,4 @@ inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
   }
 }
 
-#endif  // SRC_INCLUDE_FUNC_INLINEFUNCTION_H_
+#endif  // FUNC_INLINEFUNCTION_H_

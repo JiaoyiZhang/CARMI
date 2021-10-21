@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_FUNC_FIND_FUNCTION_H_
-#define SRC_INCLUDE_FUNC_FIND_FUNCTION_H_
+#ifndef FUNC_FIND_FUNCTION_H_
+#define FUNC_FIND_FUNCTION_H_
 
 #include <float.h>
 
@@ -39,9 +39,9 @@ BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
                             .PrefetchPredict(fetch_leafIdx);
 #ifdef Ubuntu
           __builtin_prefetch(&data.dataArray[fetch_start], 0, 3);
-          // __builtin_prefetch(&data.dataArray[fetch_start] + 64, 0, 3);
-          // __builtin_prefetch(&data.dataArray[fetch_start] + 128, 0, 3);
-          // __builtin_prefetch(&data.dataArray[fetch_start] + 192, 0, 3);
+          __builtin_prefetch(&data.dataArray[fetch_start] + 64, 0, 3);
+          __builtin_prefetch(&data.dataArray[fetch_start] + 128, 0, 3);
+          __builtin_prefetch(&data.dataArray[fetch_start] + 192, 0, 3);
 #endif
 #ifdef Windows
           _mm_prefetch(static_cast<char *>(
@@ -93,7 +93,7 @@ BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
         return &node.nodeArray[idx];
       }
     }
-  }
+  } 
 }
 
-#endif  // SRC_INCLUDE_FUNC_FIND_FUNCTION_H_
+#endif  // FUNC_FIND_FUNCTION_H_

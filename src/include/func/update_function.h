@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_FUNC_UPDATE_FUNCTION_H_
-#define SRC_INCLUDE_FUNC_UPDATE_FUNCTION_H_
+#ifndef FUNC_UPDATE_FUNCTION_H_
+#define FUNC_UPDATE_FUNCTION_H_
 
 #include <algorithm>
 #include <utility>
@@ -52,4 +52,4 @@ bool CARMI<KeyType, ValueType>::Update(const DataType &datapoint) {
   }
 }
 
-#endif  // SRC_INCLUDE_FUNC_UPDATE_FUNCTION_H_
+#endif  // FUNC_UPDATE_FUNCTION_H_

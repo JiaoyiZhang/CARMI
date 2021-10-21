@@ -99,8 +99,8 @@ double GetBlockSearchTime() {
   for (int i = 0; i < kModelNumber; i++) {
     data.dataArray.push_back(tmpSlots);
   }
-  std::vector<int> keys(CFArrayType<double, double>::kMaxLeafCapacity);
-  for (int i = 0; i < CFArrayType<double, double>::kMaxLeafCapacity; i++) {
+  std::vector<int> keys(CFArrayType<double, double>::kMaxBlockCapacity);
+  for (int i = 0; i < CFArrayType<double, double>::kMaxBlockCapacity; i++) {
     keys[i] = i;
   }
 
@@ -114,7 +114,7 @@ double GetBlockSearchTime() {
   s = std::clock();
   for (int i = 0; i < end; i++) {
     tmpIdx = idx[i];
-    key = keys[i % CFArrayType<double, double>::kMaxLeafCapacity];
+    key = keys[i % CFArrayType<double, double>::kMaxBlockCapacity];
     res += tmpNode.SearchDataBlock(data.dataArray[tmpIdx], key);
   }
   e = std::clock();
@@ -122,7 +122,7 @@ double GetBlockSearchTime() {
   s = std::clock();
   for (int i = 0; i < end; i++) {
     tmpIdx = idx[i];
-    key = keys[i % CFArrayType<double, double>::kMaxLeafCapacity];
+    key = keys[i % CFArrayType<double, double>::kMaxBlockCapacity];
     find_idx += data.dataArray[tmpIdx].slots[0].first +
                 data.dataArray[tmpIdx].slots[4].first +
                 data.dataArray[tmpIdx].slots[8].first +

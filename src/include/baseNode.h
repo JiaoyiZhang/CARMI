@@ -72,18 +72,34 @@ class CARMIRoot : public PLRType<DataVectorType, KeyType> {
  */
 template <typename KeyType, typename ValueType>
 union BaseNode {
-  // linear regression inner node
+  /**
+   * @brief linear regression inner node
+   */
   LRModel<KeyType, ValueType> lr;
-  // piecewise linear regression inner node
+
+  /**
+   * @brief piecewise linear regression inner node
+   */
   PLRModel<KeyType, ValueType> plr;
-  // histogram inner node
+
+  /**
+   * @brief histogram inner node
+   */
   HisModel<KeyType, ValueType> his;
-  // binary search inner node
+
+  /**
+   * @brief binary search inner node
+   */
   BSModel<KeyType, ValueType> bs;
 
-  // cache-friendly array leaf node
+  /**
+   * @brief cache-friendly array leaf node
+   */
   CFArrayType<KeyType, ValueType> cfArray;
-  // external array leaf node
+
+  /**
+   * @brief external array leaf node
+   */
   ExternalArray<KeyType> externalArray;
 
   BaseNode() {}

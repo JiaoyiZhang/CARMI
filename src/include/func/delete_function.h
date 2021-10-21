@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_FUNC_DELETE_FUNCTION_H_
-#define SRC_INCLUDE_FUNC_DELETE_FUNCTION_H_
+#ifndef FUNC_DELETE_FUNCTION_H_
+#define FUNC_DELETE_FUNCTION_H_
 
 #include <algorithm>
 
@@ -50,4 +50,4 @@ bool CARMI<KeyType, ValueType>::Delete(const KeyType &key) {
   }
 }
 
-#endif  // SRC_INCLUDE_FUNC_DELETE_FUNCTION_H_
+#endif  // FUNC_DELETE_FUNCTION_H_
