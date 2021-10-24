@@ -15,7 +15,6 @@
 #include <utility>
 
 #include "../carmi.h"
-#include "inlineFunction.h"
 
 template <typename KeyType, typename ValueType>
 bool CARMI<KeyType, ValueType>::Update(const DataType &datapoint) {

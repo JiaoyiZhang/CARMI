@@ -1,15 +1,15 @@
 /**
- * @file inlineFunction.h
+ * @file split_function.h
  * @author Jiaoyi
- * @brief the inline functions for public functions
+ * @brief the split function for insert function
  * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef FUNC_INLINEFUNCTION_H_
-#define FUNC_INLINEFUNCTION_H_
+#ifndef FUNC_SPLIT_FUNCTION_H_
+#define FUNC_SPLIT_FUNCTION_H_
 
 #include <float.h>
 
@@ -22,22 +22,31 @@
 
 template <typename KeyType, typename ValueType>
 template <typename LeafNodeType>
-inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
-                                             int size, int previousIdx,
-                                             int idx) {
-  int actualSize = 0;
-  DataVectorType tmpDataset;
-  if (isExternal) {
-    tmpDataset = ExternalArray<KeyType>::ExtractDataset(
-        external_data, left, size + left, recordLength, &actualSize);
-  } else {
-    tmpDataset = CFArrayType<KeyType, ValueType>::ExtractDataset(
-        data, left, size + left, &actualSize);
-  }
-
+inline void CARMI<KeyType, ValueType>::Split(int idx) {
+  // get the parameters of this leaf node
+  bool isExternal = node.nodeArray[idx].lr.flagNumber >> 24;
+  int previousIdx = node.nodeArray[idx].cfArray.previousLeaf;
   int nextIdx = node.nodeArray[idx].cfArray.nextLeaf;
 
-  // create a new inner node
+  DataVectorType tmpDataset;
+  int leftIdx;
+  // extract pure data points
+  if (isExternal) {
+    leftIdx = node.nodeArray[idx].externalArray.m_left;
+    int rightIdx =
+        leftIdx + (node.nodeArray[idx].externalArray.flagNumber & 0x00FFFFFF);
+    tmpDataset = ExternalArray<KeyType>::ExtractDataset(external_data, leftIdx,
+                                                        rightIdx, recordLength);
+  } else {
+    leftIdx = node.nodeArray[idx].cfArray.m_left;
+    int rightIdx =
+        leftIdx + (node.nodeArray[idx].cfArray.flagNumber & 0x00FFFFFF);
+    tmpDataset = CFArrayType<KeyType, ValueType>::ExtractDataset(data, leftIdx,
+                                                                 rightIdx);
+  }
+  int actualSize = tmpDataset.size();
+
+  // create a new inner node and store it in the node[idx]
   auto currnode = LRModel<KeyType, ValueType>(kInsertNewChildNumber);
   currnode.childLeft = node.AllocateNodeMemory(kInsertNewChildNumber);
   currnode.Train(0, actualSize, tmpDataset);
@@ -48,7 +57,9 @@ inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
   NodePartition<LRModel<KeyType, ValueType>>(currnode, range, tmpDataset,
                                              &perSize);
 
-  int tmpLeft = left;
+  int tmpLeft = leftIdx;
+  // create kInsertNewChildNumber new leaf nodes and store them in the node
+  // array
   for (int i = 0; i < kInsertNewChildNumber; i++) {
     LeafNodeType tmpLeaf;
     std::vector<int> prefetchIndex(perSize[i].size);
@@ -59,8 +70,7 @@ inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
       int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
       prefetchIndex[j - s] = p;
     }
-    tmpLeaf.Init(tmpDataset, prefetchIndex, perSize[i].left, perSize[i].size,
-                 &data);
+    tmpLeaf.Init(tmpDataset, prefetchIndex, s, perSize[i].size, &data);
     if (isExternal) {
       tmpLeaf.m_left = tmpLeft;
       tmpLeft += perSize[i].size;
@@ -69,6 +79,8 @@ inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
         *(reinterpret_cast<CFArrayType<KeyType, ValueType> *>(&tmpLeaf));
   }
 
+  // if the original leaf node is the cf array leaf node, we need to update the
+  // pointer to the siblings of the new leaf nodes
   if (!isExternal) {
     if (previousIdx >= 0) {
       node.nodeArray[previousIdx].cfArray.nextLeaf = currnode.childLeft;
@@ -87,4 +99,4 @@ inline void CARMI<KeyType, ValueType>::Split(bool isExternal, int left,
   }
 }
 
-#endif  // FUNC_INLINEFUNCTION_H_
+#endif  // FUNC_SPLIT_FUNCTION_H_

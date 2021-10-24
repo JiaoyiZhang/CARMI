@@ -20,6 +20,7 @@
 
 #include "../carmi.h"
 #include "../construct/minor_function.h"
+#include "./split_function.h"
 
 template <typename KeyType, typename ValueType>
 bool CARMI<KeyType, ValueType>::Insert(const DataType &datapoint) {
@@ -71,10 +72,7 @@ bool CARMI<KeyType, ValueType>::Insert(const DataType &datapoint) {
           // if this leaf node cannot accomodate more data points, we need to
           // split it and replace it with a new inner node and several new leaf
           // nodes
-          int previousIdx = node.nodeArray[idx].cfArray.previousLeaf;
-          Split<CFArrayType<KeyType, ValueType>>(
-              false, node.nodeArray[idx].cfArray.m_left,
-              node.nodeArray[idx].cfArray.kMaxBlockNum, previousIdx, idx);
+          Split<CFArrayType<KeyType, ValueType>>(idx);
           idx = node.nodeArray[idx].lr.childLeft +
                 node.nodeArray[idx].lr.Predict(datapoint.first);
         }
@@ -91,9 +89,7 @@ bool CARMI<KeyType, ValueType>::Insert(const DataType &datapoint) {
           // if this leaf node cannot accomodate more data points, we need to
           // split it and replace it with a new inner node and several new leaf
           // nodes
-          int size = node.nodeArray[idx].externalArray.flagNumber & 0x00FFFFFF;
-          Split<ExternalArray<KeyType>>(
-              true, node.nodeArray[idx].externalArray.m_left, size, 0, idx);
+          Split<ExternalArray<KeyType>>(idx);
           idx = node.nodeArray[idx].lr.childLeft +
                 node.nodeArray[idx].lr.Predict(datapoint.first);
         }

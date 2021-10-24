@@ -98,7 +98,7 @@ class CARMI {
   void Construction();
 
  public:
-  // *** Basic Functions of CARMI Objects
+  // *** Basic Public Functions of CARMI Objects
 
   /**
    * @brief find a data point of the given key value and return its position
@@ -117,7 +117,6 @@ class CARMI {
    *
    * @param[in] datapoint the inserted data point
    * @retval true if the insertion is successful
-   * @retval false if the operation fails
    */
   bool Insert(const DataType &datapoint);
 
@@ -126,7 +125,8 @@ class CARMI {
    *
    * @param[in] datapoint the data point needed to be updated
    * @retval true if the operation succeeds
-   * @retval false if the operation fails
+   * @retval false if the operation fails (unable to find the record of the
+   * given key value)
    */
   bool Update(const DataType &datapoint);
 
@@ -135,12 +135,11 @@ class CARMI {
    *
    * @param[in] key the key value of the deleted record
    * @retval true deletion is successful
-   * @retval false the operation fails
    */
   bool Delete(const KeyType &key);
 
  public:
-  // *** Functions of Getting some information of CARMI Objects
+  // *** Functions of Getting Some Information of CARMI Objects
 
   /**
    * @brief calculate the space cost of the CARMI object
@@ -148,19 +147,6 @@ class CARMI {
    * @return long double: the space cost (byte)
    */
   long double CalculateSpace() const;
-
-  /**
-   * @brief Get the Root Type object
-   *
-   * @return int the root type
-   */
-  int GetRootType() { return root.flagNumber; }
-
-  /**
-   * @brief return the information of the tree node
-   *
-   * @param[in] idx  the index of the node
-   */
 
   /**
    * @brief Get the information of the tree node, return the type identifier of
@@ -387,14 +373,10 @@ class CARMI {
    * the sub-dataset, and completely replaces the previous leaf node.
    *
    * @tparam LeafNodeType the type of the current leaf node
-   * @param[in] isExternal check whether the current node is the external array
-   * @param[in] left the left index of the sub-dataset
-   * @param[in] size the size of the sub-dataset
-   * @param[in] previousIdx the index of the previous leaf node
-   * @param[in] idx the index of the current leaf node
+   * @param[in] idx the index of the current leaf node in the node array
    */
   template <typename LeafNodeType>
-  void Split(bool isExternal, int left, int size, int previousIdx, int idx);
+  void Split(int idx);
 
   /**
    * @brief calculate the frequency weight

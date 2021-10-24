@@ -19,7 +19,6 @@
 #include <vector>
 
 #include "../carmi.h"
-#include "./inlineFunction.h"
 
 template <typename KeyType, typename ValueType>
 BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
