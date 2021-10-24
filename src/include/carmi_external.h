@@ -18,8 +18,8 @@
 #include "construct/construction.h"
 #include "func/delete_function.h"
 #include "func/find_function.h"
+#include "func/get_node_info.h"
 #include "func/insert_function.h"
-#include "func/print_structure.h"
 #include "func/update_function.h"
 #include "memoryLayout/node_array.h"
 

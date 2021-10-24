@@ -1,15 +1,15 @@
 /**
- * @file print_structure.h
+ * @file get_node_info.h
  * @author Jiaoyi
- * @brief print the structure of CARMI
+ * @brief get the information of the node in CARMI
  * @version 3.0
- * @date 2021-03-11
+ * @date 2021-10-24
  *
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef FUNC_PRINT_STRUCTURE_H_
-#define FUNC_PRINT_STRUCTURE_H_
+#ifndef FUNC_GET_NODE_INFO_H_
+#define FUNC_GET_NODE_INFO_H_
 #include <vector>
 
 #include "../carmi.h"
@@ -28,4 +28,4 @@ int CARMI<KeyType, ValueType>::GetNodeInfo(int idx, int *childNumber,
   return type;
 }
 
-#endif  // FUNC_PRINT_STRUCTURE_H_
+#endif  // FUNC_GET_NODE_INFO_H_
