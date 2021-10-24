@@ -117,7 +117,7 @@ void CARMI<KeyType, ValueType>::ConstructEmptyNode(const DataRange &range) {
   BaseNode<KeyType, ValueType> optimal_node_struct;
   if (isPrimary) {
     ExternalArray<KeyType> tmp;
-    tmp.Train(range.initRange.left, range.initRange.size, initDataset);
+    tmp.Train(initDataset, range.initRange.left, range.initRange.size);
     optimal_node_struct.externalArray = tmp;
   } else {
     optimal_node_struct.cfArray = CFArrayType<KeyType, ValueType>();

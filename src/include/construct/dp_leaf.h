@@ -17,7 +17,7 @@
 #include <map>
 #include <vector>
 
-#include "../func/inlineFunction.h"
+#include "../carmi.h"
 #include "../params.h"
 #include "./structures.h"
 
@@ -32,7 +32,7 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     nodeCost.space = 0.0;
 
     ExternalArray<KeyType> tmp;
-    tmp.Train(dataRange.initRange.left, dataRange.initRange.size, initDataset);
+    tmp.Train(initDataset, dataRange.initRange.left, dataRange.initRange.size);
     auto error = tmp.error;
     int findEnd = dataRange.findRange.left + dataRange.findRange.size;
     for (int i = dataRange.findRange.left; i < findEnd; i++) {
