@@ -18,21 +18,19 @@
 
 template <typename KeyType, typename ValueType>
 long double CARMI<KeyType, ValueType>::CalculateSpace() const {
-  long double space_cost = 0;
-
-  switch (root.flagNumber) {
-    case PLR_ROOT_NODE:
-      space_cost += kPLRRootSpace;
-      break;
-  }
-
+  // calculate the space of the plr root node
+  long double space_cost = kPLRRootSpace;
+  // calculate the space of the node array
   space_cost += kBaseNodeSpace * node.nowNodeNumber * 1024 * 1024;
+#ifdef DEBUG
   std::cout << "node.size(): " << node.nodeArray.size()
             << ",\tnowChildNumber:" << node.nowNodeNumber << std::endl;
   std::cout << "data.size(): " << data.dataArray.size()
             << ",\tkMaxLeafNodeSize:" << carmi_params::kMaxLeafNodeSize
             << std::endl;
+#endif  // DEBUG
   if (!isPrimary) {
+    // calculate the space of the data array
     space_cost += data.dataArray.size() * carmi_params::kMaxLeafNodeSize;
   }
   return space_cost;
