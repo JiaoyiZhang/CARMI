@@ -47,7 +47,7 @@ class LRModel {
   /**
    * @brief Construct a new LRModel object and use c to set its child number
    *
-   * @param c[in] the number of its child nodes
+   * @param[in] c the number of its child nodes
    */
   explicit LRModel(int c) {
     childLeft = 0;
@@ -64,9 +64,9 @@ class LRModel {
    *
    * The training data points are stored in dataset[left, left + size].
    *
-   * @param left[in] the starting index of data points
-   * @param size[in]  the size of data points
-   * @param dataset[in] used to train the model
+   * @param[in] left the starting index of data points
+   * @param[in] size  the size of data points
+   * @param[in] dataset used to train the model
    */
   void Train(int left, int size, const DataVectorType &dataset);
 
@@ -74,7 +74,7 @@ class LRModel {
    * @brief predict the next node which manages the data point corresponding to
    * the given key value
    *
-   * @param key[in] the given key value
+   * @param[in] key the given key value
    * @return int: the predicted index of next node
    */
   int Predict(KeyType key) const;
@@ -107,20 +107,17 @@ class LRModel {
 
   /**
    * @brief The slope parameter of the linear regression model. (4 bytes)
-   *
    */
   float slope;
 
   /**
    * @brief The intercept parameter of the linear regression model. (4 bytes)
-   *
    */
   float intercept;
 
   /**
    * @brief Placeholder, used to make sure that the size of this node is 64
    * bytes. (48 bytes)
-   *
    */
   int Placeholder[12];
 };
@@ -138,7 +135,7 @@ inline void LRModel<KeyType, ValueType>::Train(int left, int size,
   DataVectorType currdata(size, {DBL_MAX, DBL_MAX});
   for (int i = 0, j = left; i < size; i++, j++) {
     currdata[i].first = dataset[j].first;
-    currdata[i].second = static_cast<double>(i) / size * childNumber;
+    currdata[i].second = static_cast<KeyType>(i) / size * childNumber;
   }
 
   // train the lr model

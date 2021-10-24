@@ -35,7 +35,8 @@ class DataArrayStructure {
   //*** Constructor
 
   /**
-   * @brief Construct a new Data Array Structure object
+   * @brief Construct a new Data Array Structure object, set the usedDatasize
+   * member as 0
    *
    * The externalArray leaf nodes don't need this class.
    */
@@ -45,12 +46,12 @@ class DataArrayStructure {
    * @brief Construct a new Data Array Structure object
    *
    * Initialize dataArray and update its related member variables according to
-   * the size of the initial dataset. In addition, initialize the size of
-   * various empty memory blocks according to the maxBlockNum parameter.
+   * the size of the initial dataset. In addition, initialize the various size
+   * of empty memory blocks according to the maxBlockNum parameter.
    *
-   * @param maxBlockNum[in] the maximum width of the empty memory block, which
+   * @param[in] maxBlockNum the maximum width of the empty memory block, which
    * is equal to the kMaxBlockNum in CF array leaf node.
-   * @param size[in] the size of the init dataset
+   * @param[in] size the size of the init dataset
    */
   DataArrayStructure(int maxBlockNum, int size) {
     usedDatasize = 0;
@@ -81,17 +82,17 @@ class DataArrayStructure {
    * of emptyBlocks[i], return false. In our implementation, this situation will
    * not occur, it is designed for debug.
    *
-   * @param left[in] the beginning idx of this block of empty memory
-   * @param len[in] the length of the empty memory block
+   * @param[in] left the beginning idx of this block of empty memory
+   * @param[in] len the length of the empty memory block
    * @retval true operation is successful
    * @retval false operation is unsuccessful
    */
   bool AddEmptyMemoryBlock(int left, int len);
 
   /**
-   * @brief allocate a block of memory to the leaf node
+   * @brief allocate a block of empty memory to the leaf node
    *
-   * @param neededBlockNumber[in] the number of data blocks needed to be
+   * @param[in] neededBlockNumber the number of data blocks needed to be
    * allocated
    * @return int: return the beginning index of the allocated memory block
    * @retval -1 allocation fails, there are no more empty memory blocks.
@@ -102,8 +103,8 @@ class DataArrayStructure {
    * @brief release the specified space [left, left + size], and insert the left
    * index into emptyBlocks for future reuse.
    *
-   * @param left[in] the left index of the useless memory block
-   * @param size[in] the size of the useless memory block
+   * @param[in] left the left index of the useless memory block
+   * @param[in] size the size of the useless memory block
    */
   void ReleaseMemory(int left, int size);
 
@@ -111,7 +112,7 @@ class DataArrayStructure {
    * @brief After the construction of CARMI is completed, the useless memory
    * exceeding the needed size will be released.
    *
-   * @param neededSize the size of needed data blocks
+   * @param[in] neededSize the size of needed data blocks
    */
   void ReleaseUselessMemory(int neededSize);
 
@@ -121,11 +122,12 @@ class DataArrayStructure {
   /**
    * @brief allocate a block of empty memory to this leaf node
    *
-   * @param idx[out] the width of allocated memory block
+   * @param[in] idx the width of allocated memory block. Based on our design,
+   * the width of the empty memory block is equal to its index.
    * @return int: the beginning index of the allocated memory block
    * @retval -1 allocation fails
    */
-  int AllocateSingleMemory(int *idx);
+  int AllocateSingleMemory(int idx);
 
  public:
   //*** Public Data Member of Data Array Structure Objects
@@ -154,8 +156,10 @@ class DataArrayStructure {
  private:
   //*** Private Data Member of Data Array Structure Objects
 
-  // store the starting index of all empty memory blocks according to different
-  // widths
+  /**
+   * @brief store the starting index of all empty memory blocks according to
+   * different widths
+   */
   std::vector<EmptyMemoryBlock> emptyBlocks;
 };
 
@@ -186,12 +190,16 @@ bool DataArrayStructure<KeyType, ValueType>::AddEmptyMemoryBlock(int left,
 }
 
 template <typename KeyType, typename ValueType>
-int DataArrayStructure<KeyType, ValueType>::AllocateSingleMemory(int *idx) {
+int DataArrayStructure<KeyType, ValueType>::AllocateSingleMemory(int idx) {
   int newLeft = -1;
-  for (int i = *idx; i < static_cast<int>(emptyBlocks.size()); i++) {
+  for (int i = idx; i < static_cast<int>(emptyBlocks.size()); i++) {
     newLeft = emptyBlocks[i].Allocate();
     if (newLeft != -1) {
-      *idx = i;
+      if (i != idx) {
+        // if the needed width is less than block width, insert the rest
+        // empty blocks into the corresponding emptyBlocks
+        AddEmptyMemoryBlock(newLeft + idx, emptyBlocks[i].m_width - idx);
+      }
       break;
     }
   }
@@ -203,21 +211,14 @@ int DataArrayStructure<KeyType, ValueType>::AllocateMemory(
     int neededBlockNumber) {
   int newLeft = -1;
   int idx = neededBlockNumber;
-  newLeft = AllocateSingleMemory(&idx);
+  newLeft = AllocateSingleMemory(idx);
 
   // allocation fails, need to expand the dataArray
   if (newLeft == -1) {
     int oldDatasize = dataArray.size();
     dataArray.resize(oldDatasize * 1.5, LeafSlots<KeyType, ValueType>());
     AddEmptyMemoryBlock(oldDatasize, oldDatasize * 0.5);
-    newLeft = AllocateSingleMemory(&idx);
-  }
-
-  // if the allocated width is less than block width, insert the rest empty
-  // blocks into the corresponding emptyBlocks
-  if (neededBlockNumber < emptyBlocks[idx].m_width) {
-    AddEmptyMemoryBlock(newLeft + neededBlockNumber,
-                        emptyBlocks[idx].m_width - neededBlockNumber);
+    newLeft = AllocateSingleMemory(idx);
   }
 
   // update the right bound (usedDatasize) of data points in the data
@@ -231,6 +232,7 @@ template <typename KeyType, typename ValueType>
 void DataArrayStructure<KeyType, ValueType>::ReleaseMemory(int left, int size) {
   int len = size;
   int idx = 1;
+  // traverse all members and delete all indexes within the range
   while (idx < emptyBlocks.size()) {
     if (emptyBlocks[idx].IsEmpty(left + len)) {
       emptyBlocks[idx].m_block.erase(left + len);

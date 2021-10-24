@@ -49,7 +49,7 @@ class PLRModel {
   /**
    * @brief Construct a new PLRModel object and use c to set its child number
    *
-   * @param c [in] the number of its child nodes
+   * @param[in] c  the number of its child nodes
    */
   explicit PLRModel(int c) {
     childLeft = 0;
@@ -64,9 +64,9 @@ class PLRModel {
    *
    * The training data points are stored in dataset[left, left + size].
    *
-   * @param left[in] the starting index of data points
-   * @param size[in]  the size of data points
-   * @param dataset[in] used to train the model
+   * @param[in] left the starting index of data points
+   * @param[in] size  the size of data points
+   * @param[in] dataset used to train the model
    */
   void Train(int left, int size, const DataVectorType &dataset);
 
@@ -74,7 +74,7 @@ class PLRModel {
    * @brief predict the next node which manages the data point corresponding to
    * the given key value
    *
-   * @param key[in] the given key value
+   * @param[in] key the given key value
    * @return int: the predicted index of next node
    */
   int Predict(KeyType key) const;
@@ -129,12 +129,16 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
 
   keys[0] = dataset[left].first;
   keys[7] = dataset[left + size - 1].first;
+  // construct the training dataset, x is the key value in the dataset, y is the
+  // corresponding ratio of index in the childNumber
   for (int i = 0, j = left; i < size; i++, j++) {
     currdata[i].second = static_cast<float>(i) / size * (childNumber - 1);
     currdata[i].first = dataset[j].first;
   }
 
   int cand_size = std::min(size, 100);
+  // store the index and data points of candidate points into cand_index and
+  // cand_point to speed up the dp algorithm
   DataVectorType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost<DataVectorType, DataType> cand_cost;
@@ -159,6 +163,7 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   std::vector<SegmentPoint> tmpp(cand_size, tmp);
   std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
 
+  // initialize the dp[0]
   for (int j = 1; j < cand_size; j++) {
     dp[0][j].cost = cand_cost.Entropy(0, cand_index[j]);
     dp[0][j].key[0] = cand_point[0].first;
@@ -169,6 +174,7 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
     dp[0][j].idx[point_num] = cand_index[cand_size - 1];
   }
 
+  // use dp algorithm to calculate the optimal cost in each situation
   for (int i = 2; i < point_num; i++) {
     for (int j = i + 1; j < cand_size - 1; j++) {
       SegmentPoint opt;
@@ -207,6 +213,7 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
     }
   }
 
+  // find the optimal setting and store the params into keys and index
   SegmentPoint opt;
   opt.cost = -DBL_MAX;
   opt.idx[point_num] = cand_index[cand_size - 1];

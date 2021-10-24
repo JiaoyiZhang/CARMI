@@ -49,7 +49,11 @@ class HisModel {
   /**
    * @brief Construct a new His Model object and use c to set its child number
    *
-   * @param c[in] the number of its child nodes
+   * This model is a histogram model, whose number of segments is equal to the
+   * value of c. We use two vector (base and offset) to store the first index of
+   * each group and the difference between them separately.
+   *
+   * @param[in] c the number of its child nodes
    */
   explicit HisModel(int c) {
     childLeft = 0;
@@ -66,9 +70,9 @@ class HisModel {
    *
    * The training data points are stored in dataset[left, left + size].
    *
-   * @param left[in] the starting index of data points
-   * @param size[in]  the size of data points
-   * @param dataset[in] used to train the model
+   * @param[in] left the starting index of data points
+   * @param[in] size  the size of data points
+   * @param[in] dataset used to train the model
    */
   void Train(int left, int size, const DataVectorType &dataset);
 
@@ -76,7 +80,7 @@ class HisModel {
    * @brief predict the next node which manages the data point corresponding to
    * the given key value
    *
-   * @param key[in] the given key value
+   * @param[in] key the given key value
    * @return int: the predicted index of next node
    */
   int Predict(KeyType key) const;
@@ -85,7 +89,7 @@ class HisModel {
   // *** Static Constant Options and Values of His Inner Node Objects
 
   /**
-   * @brief The time cost of the lr inner node.
+   * @brief The time cost of the his inner node.
    */
   static constexpr int kTimeCost = carmi_params::kHisInnerTime;
 
@@ -93,7 +97,7 @@ class HisModel {
   //*** Public Data Members of His Inner Node Objects
 
   /**
-   * @brief A combined integer, composed of the flag of lr inner node
+   * @brief A combined integer, composed of the flag of his inner node
    * (HIS_INNER_NODE, 1 byte) and the number of its child nodes (3 bytes). (This
    * member is 4 bytes)
    */

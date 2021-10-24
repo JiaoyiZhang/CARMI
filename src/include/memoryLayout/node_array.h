@@ -26,12 +26,21 @@ class NodeArrayStructure {
  public:
   // *** Constructed Types and Constructor
 
-  // the pair of data points
+  /**
+   * @brief the pair of data points
+   */
   typedef std::pair<KeyType, ValueType> DataType;
 
-  // the vector of data points, which is the type of dataset
+  /**
+   * @brief the vector of data points, which is the type of dataset
+   */
   typedef std::vector<DataType> DataVectorType;
 
+  /**
+   * @brief Construct a new Node Array Structure object
+   * Initialize the nowNodeNumber with 0 and construct 4096 empty members of
+   * BaseNode vector
+   */
   NodeArrayStructure() {
     nowNodeNumber = 0;
     std::vector<BaseNode<KeyType, ValueType>>(4096,
@@ -45,7 +54,7 @@ class NodeArrayStructure {
   /**
    * @brief allocate a block of empty memory to store the nodes
    *
-   * @param size[in] the size of nodes needed to be stored
+   * @param[in] size the size of nodes needed to be stored
    * @return int: the beginning index of this allocated memory
    * @retval -1 allocation fails
    */
@@ -55,7 +64,7 @@ class NodeArrayStructure {
    * @brief After the construction of CARMI is completed, the useless memory
    * exceeding the needed size will be released.
    *
-   * @param neededSize[in] the size of needed node blocks
+   * @param[in] neededSize the size of needed node blocks
    */
   void ReleaseUselessMemory(int neededSize);
 
@@ -71,7 +80,9 @@ class NodeArrayStructure {
    */
   std::vector<BaseNode<KeyType, ValueType>> nodeArray;
 
-  // the used size of nodeArray
+  /**
+   * @brief the used size of nodeArray
+   */
   int nowNodeNumber;
 };
 

@@ -31,9 +31,10 @@ class EmptyMemoryBlock {
   //*** Constructor
 
   /**
-   * @brief Construct a new EmptyMemoryBlock object
+   * @brief Construct a new EmptyMemoryBlock object, set the width of the empty
+   * memory block
    *
-   * @param width[in] the width of this type of empty memory block
+   * @param[in] width the width of this type of empty memory block
    */
   explicit EmptyMemoryBlock(int width) { m_width = width; }
 
@@ -64,12 +65,13 @@ class EmptyMemoryBlock {
   }
 
   /**
-   * @brief add the corresponding empty blocks
+   * @brief add the corresponding empty blocks (insert the left index of the
+   * block into the m_block set)
    *
-   * @param idx the index of blocks
-   * @param size the size of blocks
+   * @param[in] idx the index of blocks
+   * @param[in] size the size of blocks
    * @return int: the size of the empty block after this action
-   * @retval -1 fails
+   * @retval -1 fails, the given size is unequal to the m_width
    */
   int AddBlock(int idx, int size) {
     if (size < m_width) return -1;
@@ -82,7 +84,7 @@ class EmptyMemoryBlock {
    * @brief check whether the memory block with the beginning index idx is
    * empty, return the check result
    *
-   * @param idx[in] the beginning index of this block
+   * @param[in] idx the beginning index of this block
    * @retval true this block is empty
    * @retval false this block is not empty and has been allocated
    */
@@ -97,10 +99,15 @@ class EmptyMemoryBlock {
  public:
   //*** Public Data Members of EmptyMemoryBlock Objects
 
-  // used to store the beginning indexes of all empty memory blocks with m_width
+  /**
+   * @brief used to store the beginning indexes of all empty memory blocks with
+   * m_width
+   */
   std::set<int> m_block;
 
-  // the width of this empty memory block
+  /**
+   * @brief the width of this empty memory block
+   */
   int m_width;
 };
 

@@ -46,12 +46,18 @@ class BSModel {
   /**
    * @brief Construct a new BS Model object and use c to set its child number
    *
-   * @param c[in] the number of its child nodes
+   * This model is a binary search model, which performs binary search between
+   * the index vector to find the index of the given key value, and the size of
+   * index must be less than 14 due to the limit of 64 bytes.
+   *
+   * @param[in] c the number of its child nodes
    */
   explicit BSModel(int c) {
     childLeft = 0;
     flagNumber = (BS_INNER_NODE << 24) + std::min(c, 15);
-    for (int i = 0; i < 14; i++) index[i] = 0;
+    for (int i = 0; i < 14; i++) {
+      index[i] = 0;
+    }
   }
 
  public:
@@ -62,9 +68,9 @@ class BSModel {
    *
    * The training data points are stored in dataset[left, left + size].
    *
-   * @param left[in] the starting index of data points
-   * @param size[in]  the size of data points
-   * @param dataset[in] used to train the model
+   * @param[in] left the starting index of data points
+   * @param[in] size the size of data points
+   * @param[in] dataset used to train the model
    */
   void Train(int left, int size, const DataVectorType &dataset);
 
@@ -72,10 +78,10 @@ class BSModel {
    * @brief predict the next node which manages the data point corresponding to
    * the given key value
    *
-   * @param key[in] the given key value
+   * @param[in] key the given key value
    * @return int: the predicted index of next node
    */
-  int Predict(double key) const;
+  int Predict(KeyType key) const;
 
  public:
   // *** Static Constant Options and Values of BS Inner Node Objects
@@ -89,8 +95,8 @@ class BSModel {
   //*** Public Data Members of His Inner Node Objects
 
   /**
-   * @brief A combined integer, composed of the flag of lr inner node
-   * (HIS_INNER_NODE, 1 byte) and the number of its child nodes (3 bytes). (This
+   * @brief A combined integer, composed of the flag of bs inner node
+   * (BS_INNER_NODE, 1 byte) and the number of its child nodes (3 bytes). (This
    * member is 4 bytes)
    */
   int flagNumber;
@@ -104,7 +110,7 @@ class BSModel {
   int childLeft;
 
   /**
-   * @brief store 14 key values
+   * @brief store at most 14 key values
    * This bs model divides the key range into 15 intervals. To determine which
    * branch to go through, perform a binary search among the 14 key values to
    * locate the corresponding key value interval covering the input key. (56
@@ -118,32 +124,28 @@ inline void BSModel<KeyType, ValueType>::Train(int left, int size,
                                                const DataVectorType &dataset) {
   if (size == 0) return;
   int childNumber = flagNumber & 0x00FFFFFF;
+  // calculate the value of the segment
   float value = static_cast<float>(size) / childNumber;
   int cnt = 1;
   int start = std::min(static_cast<float>(left), left + value * cnt - 1);
   int end = left + size;
+  // store the minimum value of each segment
   for (int i = start; i < end; i += value) {
-    if (cnt >= childNumber) break;
-    if (dataset[i].first != -DBL_MAX) {
-      index[cnt - 1] = static_cast<int>(dataset[i].first);
-      index[cnt - 1] += static_cast<float>(dataset[i].first - index[cnt - 1]);
-    } else {
-      for (int j = i + 1; j < end; j++) {
-        if (dataset[j].first != -DBL_MAX) {
-          index[cnt - 1] = dataset[i].first;
-          break;
-        }
-      }
+    if (cnt >= childNumber) {
+      break;
     }
+    index[cnt - 1] += static_cast<float>(dataset[i].first);
     cnt++;
   }
 }
 
 template <typename KeyType, typename ValueType>
-inline int BSModel<KeyType, ValueType>::Predict(double key) const {
+inline int BSModel<KeyType, ValueType>::Predict(KeyType key) const {
   int start_idx = 0;
+  // get the maximum index
   int end_idx = (flagNumber & 0x00FFFFFF) - 1;
   int mid;
+  // perform binary search between the index vector
   while (start_idx < end_idx) {
     mid = (start_idx + end_idx) >> 1;
     if (index[mid] < key)
