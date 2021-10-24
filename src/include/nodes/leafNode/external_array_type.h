@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
-#define SRC_INCLUDE_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
+#ifndef NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
+#define NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
 
 #include <math.h>
 
@@ -57,28 +57,28 @@ class ExternalArray {
   /**
    * @brief extract data points (delete useless gaps and deleted data points)
    *
-   * @param external_data[in] the dataset pointer
-   * @param left[in] the left index of dataset managed by the leaf node
-   * @param right[in] the right index of dataset managed by the leaf node
-   * @param recordLength[in] the length of a record
-   * @param actualSize[out] the actual size of these data points
+   * @param[in] external_data the dataset pointer
+   * @param[in] left the left index of dataset managed by the leaf node
+   * @param[in] right the right index of dataset managed by the leaf node
+   * @param[in] recordLength the length of a record
    * @return DataVectorType : pure data points
    */
   static DataVectorType ExtractDataset(const void *external_data, int left,
-                                       int right, int recordLength,
-                                       int *actualSize);
+                                       int right, int recordLength);
 
  public:
   // *** Basic Functions of External Array Leaf Objects
 
   /**
-   * @brief initialize cf array node
+   * @brief initialize the external array node
    *
-   * @param dataset[in] the dataset
-   * @param prefetchIndex[in] the prefetch predicted index of each key value
-   * @param start_idx[in] the start index of data points
-   * @param size[in] the size of data points
-   * @param data[in] the data array
+   * @param[in] dataset the dataset
+   * @param[in] prefetchIndex this parameter is to be consistent with the cf
+   * leaf node. It is useless here.
+   * @param[in] start_idx the starting index of data points in the dataset
+   * @param[in] size the size of data points
+   * @param[in] data this parameter is to be consistent with the cf leaf
+   * node. It is useless here.
    */
   void Init(const DataVectorType &dataset,
             const std::vector<int> &prefetchIndex, int start_idx, int size,
@@ -87,18 +87,18 @@ class ExternalArray {
   /**
    * @brief train the external array node
    *
-   * @param start_idx[in] the start index of data points
-   * @param size[in] the size of data points
-   * @param dataset[in] the dataset
+   * @param[in] dataset the dataset
+   * @param[in] start_idx the start index of data points in the dataset
+   * @param[in] size the size of data points
    */
-  void Train(int start_idx, int size, const DataVectorType &dataset);
+  void Train(const DataVectorType &dataset, int start_idx, int size);
 
   /**
    * @brief Find the data point of the given key value
    *
-   * @param key[in] the given key value
-   * @param recordLength[in] the length of the record
-   * @param external_data[in] the external data
+   * @param[in] key the given key value
+   * @param[in] recordLength the length of the record
+   * @param[in] external_data the external data
    * @return int the position of the record
    */
   int Find(const KeyType &key, int recordLength,
@@ -107,17 +107,17 @@ class ExternalArray {
   /**
    * @brief Insert the key value
    *
-   * @param datapoint[in] the inserted data point
-   * @param curr[in] the current index of the insert
+   * @param[in] datapoint the inserted data point
+   * @param[inout] curr the current index of the insert
    * @retval true the operation is successful
    * @retval false the operation fails
    */
   bool Insert(const DataType &datapoint, int *curr);
 
   /**
-   * @brief predict the position of the given key value
+   * @brief use the lr model to predict the position of the given key value
    *
-   * @param key[in] the given key value
+   * @param[in] key the given key value
    * @return int: the predicted index in the leaf node
    */
   inline int Predict(double key) const {
@@ -136,37 +136,37 @@ class ExternalArray {
   /**
    * @brief the main function of search a record in external array
    *
-   * @param key[in] the key value
-   * @param preIdx[in] the predicted index of this node
-   * @param error[in]the error bound of this node
-   * @param left[in] the left index of this node in the data
-   * @param size[in] the size of this node
-   * @param recordLength[in] the length of a record
-   * @param external_data[in] the external position of dataset
+   * @param key the key value
+   * @param preIdx the predicted index of this node
+   * @param recordLength the length of a record
+   * @param external_data the external position of dataset
    * @return int: the index of the record
    */
-  int Search(KeyType key, int preIdx, int error, int left, int size,
-             int recordLength, const void *external_data) const;
+  int Search(KeyType key, int preIdx, int recordLength,
+             const void *external_data) const;
 
   /**
    * @brief search a key-value through binary search in the external leaf node
    *
-   * @param key[in] the given key value
-   * @param start[in] the start index of the search bounary
-   * @param end[in] the end index of the search boundary
-   * @param recordLength[in] the length of a record
-   * @param external_data[in] the external position of dataset
+   * @param key the given key value
+   * @param start the start index of the search bounary
+   * @param end the end index of the search boundary
+   * @param recordLength the length of a record
+   * @param external_data the external position of dataset
    * @return int: the idx of the first element >= key
    */
   int BinarySearch(KeyType key, int start, int end, int recordLength,
                    const void *external_data) const;
 
+ private:
+  //*** Private Sub-Functions of Train Function
+
   /**
    * @brief find the optimal error value from 0 to size
    *
-   * @param start_idx[in] the start index of the data points
-   * @param size[in] the size of the data points
-   * @param dataset[in] the dataset
+   * @param start_idx the start index of the data points
+   * @param size the size of the data points
+   * @param dataset the dataset
    */
   void FindOptError(int start_idx, int size, const DataVectorType &dataset);
 
@@ -194,20 +194,17 @@ class ExternalArray {
 
   /**
    * @brief The slope parameter of the linear regression model. (4 bytes)
-   *
    */
   float slope;
 
   /**
    * @brief The intercept parameter of the linear regression model. (4 bytes)
-   *
    */
   float intercept;
 
   /**
    * @brief Placeholder to make sure that the size of this node is 64 bytes. (44
    * bytes)
-   *
    */
   float placeholder[11];
 };
@@ -215,17 +212,13 @@ class ExternalArray {
 template <typename KeyType>
 typename ExternalArray<KeyType>::DataVectorType
 ExternalArray<KeyType>::ExtractDataset(const void *external_data, int left,
-                                       int right, int recordLength,
-                                       int *actualSize) {
-  *actualSize = 0;
-  int size = right - left;
-  int maxBlockNum = carmi_params::kMaxLeafNodeSize / sizeof(DataType);
-  DataVectorType currdata(size, {DBL_MAX, DBL_MAX});
+                                       int right, int recordLength) {
+  DataVectorType currdata;
   for (int i = left; i < right; i++) {
     KeyType tmpKey = *reinterpret_cast<const KeyType *>(
         static_cast<const char *>(external_data) + i * recordLength);
     if (tmpKey != DBL_MAX) {
-      currdata[(*actualSize)++] = {tmpKey, tmpKey};
+      currdata.push_back({tmpKey, tmpKey});
     }
   }
   return currdata;
@@ -238,12 +231,12 @@ inline void ExternalArray<KeyType>::Init(
   m_left = start_idx;
   if (size == 0) return;
 
-  Train(start_idx, size, dataset);
+  Train(dataset, start_idx, size);
 }
 
 template <typename KeyType>
-inline void ExternalArray<KeyType>::Train(int start_idx, int size,
-                                          const DataVectorType &dataset) {
+inline void ExternalArray<KeyType>::Train(const DataVectorType &dataset,
+                                          int start_idx, int size) {
   DataVectorType currdata(size, {DBL_MAX, DBL_MAX});
   int end = start_idx + size;
   for (int i = start_idx, j = 0; i < end; i++, j++) {
@@ -255,6 +248,7 @@ inline void ExternalArray<KeyType>::Train(int start_idx, int size,
   if ((flagNumber & 0x00FFFFFF) != size) {
     flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + size;
   }
+  // train the lr model
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   for (int i = 0; i < size; i++) {
     t1 += dataset[i].first * dataset[i].first;
@@ -262,6 +256,7 @@ inline void ExternalArray<KeyType>::Train(int start_idx, int size,
     t3 += dataset[i].first * dataset[i].second;
     t4 += dataset[i].second;
   }
+  // update the parameters
   if (t1 * size - t2 * t2) {
     slope = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
     intercept = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
@@ -269,6 +264,7 @@ inline void ExternalArray<KeyType>::Train(int start_idx, int size,
     slope = 0;
     intercept = 0;
   }
+  // update the error parameter
   FindOptError(0, size, currdata);
 }
 
@@ -277,8 +273,6 @@ inline int ExternalArray<KeyType>::Find(const KeyType &key, int recordLength,
                                         const void *external_data) const {
   // Use the lr model to predict the position of the data point.
   int preIdx = Predict(key);
-  // Get the size of data points in this leaf node.
-  int size = flagNumber & 0x00FFFFFF;
 
   // Case 1: the predicted position is right.
   // Find the data point successfully and return the predicted index directly
@@ -290,13 +284,13 @@ inline int ExternalArray<KeyType>::Find(const KeyType &key, int recordLength,
 
   // Case 2: the predicted position is inaccurate.
   // Use binary search to find the accurate position.
-  preIdx =
-      Search(key, preIdx, error, m_left, size, recordLength, external_data);
+  preIdx = Search(key, preIdx, recordLength, external_data);
 
   // Case 2.1: find the data point unsuccessfully, return 0.
-  if (preIdx >= m_left + size || *reinterpret_cast<const KeyType *>(
-                                     static_cast<const char *>(external_data) +
-                                     preIdx * recordLength) != key) {
+  if (preIdx >= m_left + (flagNumber & 0x00FFFFFF) ||
+      *reinterpret_cast<const KeyType *>(
+          static_cast<const char *>(external_data) + preIdx * recordLength) !=
+          key) {
     return 0;
   }
 
@@ -315,35 +309,42 @@ bool ExternalArray<KeyType>::Insert(const DataType &datapoint, int *curr) {
     return false;
   }
 
+  // Case 2: this node is empty
+  // use this data point to train the lr model
   if (size == 0) {
     m_left = *curr;
     DataVectorType trainData(1, datapoint);
-    Train(0, 1, trainData);
+    Train(trainData, 0, 1);
   }
-
+  // Case 3: update the parameters and return the current index of the insert
   flagNumber++;
   (*curr)++;
   return true;
 }
 
 template <typename KeyType>
-inline int ExternalArray<KeyType>::Search(KeyType key, int preIdx, int error,
-                                          int left, int size, int recordLength,
+inline int ExternalArray<KeyType>::Search(KeyType key, int preIdx,
+                                          int recordLength,
                                           const void *external_data) const {
-  int start = std::max(0, preIdx - error) + left;
-  int end = std::min(std::max(0, size - 1), preIdx + error) + left;
+  int start = std::max(0, preIdx - error) + m_left;
+  int size = flagNumber & 0x00FFFFFF;
+  int end = std::min(std::max(0, size - 1), preIdx + error) + m_left;
   start = std::min(start, end);
   int res;
+  // search between [m_left, start]
   if (key <=
       *reinterpret_cast<const KeyType *>(
           static_cast<const char *>(external_data) + start * recordLength))
-    res = BinarySearch(key, left, start, recordLength, external_data);
+    res = BinarySearch(key, m_left, start, recordLength, external_data);
+  // search between [start, end]
   else if (key <=
            *reinterpret_cast<const KeyType *>(
                static_cast<const char *>(external_data) + end * recordLength))
     res = BinarySearch(key, start, end, recordLength, external_data);
+  // search between [end, m_left + size - 1]
   else
-    res = BinarySearch(key, end, left + size - 1, recordLength, external_data);
+    res =
+        BinarySearch(key, end, m_left + size - 1, recordLength, external_data);
   return res;
 }
 
@@ -398,4 +399,4 @@ void ExternalArray<KeyType>::FindOptError(int start_idx, int size,
   }
 }
 
-#endif  // SRC_INCLUDE_NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
+#endif  // NODES_LEAFNODE_EXTERNAL_ARRAY_TYPE_H_
