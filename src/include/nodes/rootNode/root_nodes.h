@@ -26,6 +26,11 @@
  * The piecewise linear regression model with five segments to allocate data
  * points more evenly.
  *
+ * Since the root node is always in the cache, we do not limit its size here.
+ * We use a five-segment P. LR model, occupying 76 bytes. In addition, in
+ * order to support the prefetch function, we additional add a prefetch
+ * prediction model to speed up the process of accessing a data point.
+ *
  * @tparam DataVectorType the type of dataset
  * @tparam KeyType the type of the given key value
  */
@@ -35,34 +40,36 @@ class PLRType {
   // *** Constructed Types and Constructor
 
   /**
-   * @brief The type of the model
+   * @brief The type of the model: piecewise linear regression
    */
   typedef PiecewiseLR<DataVectorType, KeyType> ModelType;
 
   /**
-   * @brief Construct a new PLRType object
-   *
+   * @brief Construct a new PLRType object with the default constructor
    */
   PLRType() = default;
 
   /**
-   * @brief Construct a new PLRType object
+   * @brief Construct a new PLRType object and train the plr model with the
+   * given dataset.
    *
-   * @param child[in] the child number of the root node
+   * PLR root node uses a piecewise linear regression model to predict the index
+   * of the next node. When finding the position of the data point, we first
+   * find the first breakpoint greater than or equal to the given key value, and
+   * then use the corresponding model parameters for calculation and boundary
+   * processing.
+   *
+   * @param[in] childNum the number of the child nodes in the root node
+   * @param[in] dataset the dataset used to train the plr model of the root node
    */
-  explicit PLRType(int child) {
+  PLRType(int childNum, const DataVectorType &dataset) {
     flagNumber = PLR_ROOT_NODE;
-    model.length = child - 1;
-  }
-
-  PLRType(int childNumber, const DataVectorType &dataset) {
-    flagNumber = PLR_ROOT_NODE;
-    model.length = childNumber - 1;
+    model.maxChildIdx = childNum - 1;
     model.Train(dataset);
   }
 
  public:
-  // *** Static Constant Options and Values of PLR Root Node Objects
+  // *** Static Constant Options and Values of P. LR Root Node Objects
 
   /**
    * @brief The time cost of the plr root node.
@@ -78,7 +85,7 @@ class PLRType {
    *
    * We use this model to predict the index of the next node, and use the raw
    * output of this model (leaf index before rounding down) as the input to the
-   * prefetch prediction model.
+   * prefetch prediction model. (72 bytes)
    */
   PiecewiseLR<DataVectorType, KeyType> model;
 
@@ -91,10 +98,10 @@ class PLRType {
    * within each segment, each leaf node is mapped to the same number of data
    * blocks.
    */
-  PrefetchPLR<DataVectorType, KeyType> fetch_model;
+  PrefetchPLR fetch_model;
 
   /**
-   * @brief the type of the root node: PLR_ROOT_NODE
+   * @brief the type of the root node: PLR_ROOT_NODE (4 bytes)
    */
   int flagNumber;
 };
