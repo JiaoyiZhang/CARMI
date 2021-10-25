@@ -38,8 +38,8 @@ struct RootStruct {
   /**
    * @brief Construct a new Root Struct object
    *
-   * @param t[in] the root type
-   * @param c[in] the child number
+   * @param[in] t the root type
+   * @param[in] c the child number
    */
   RootStruct(int t, int c) {
     rootType = t;

@@ -45,7 +45,7 @@ class CARMIRoot : public PLRType<DataVectorType, KeyType> {
   /**
    * @brief Copy from a PLRType object to an object of the current class.
    *
-   * @param currnode[in] the PLRType object
+   * @param[in] currnode the PLRType object
    * @return CARMIRoot& the object of the current class
    */
   CARMIRoot& operator=(const PLRType<DataVectorType, KeyType>& currnode) {

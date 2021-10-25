@@ -136,10 +136,10 @@ class ExternalArray {
   /**
    * @brief the main function of search a record in external array
    *
-   * @param key the key value
-   * @param preIdx the predicted index of this node
-   * @param recordLength the length of a record
-   * @param external_data the external position of dataset
+   * @param[in] key the key value
+   * @param[in] preIdx the predicted index of this node
+   * @param[in] recordLength the length of a record
+   * @param[in] external_data the external position of dataset
    * @return int: the index of the record
    */
   int Search(KeyType key, int preIdx, int recordLength,
@@ -148,11 +148,11 @@ class ExternalArray {
   /**
    * @brief search a key-value through binary search in the external leaf node
    *
-   * @param key the given key value
-   * @param start the start index of the search bounary
-   * @param end the end index of the search boundary
-   * @param recordLength the length of a record
-   * @param external_data the external position of dataset
+   * @param[in] key the given key value
+   * @param[in] start the start index of the search bounary
+   * @param[in] end the end index of the search boundary
+   * @param[in] recordLength the length of a record
+   * @param[in] external_data the external position of dataset
    * @return int: the idx of the first element >= key
    */
   int BinarySearch(KeyType key, int start, int end, int recordLength,
@@ -164,9 +164,9 @@ class ExternalArray {
   /**
    * @brief find the optimal error value from 0 to size
    *
-   * @param start_idx the start index of the data points
-   * @param size the size of the data points
-   * @param dataset the dataset
+   * @param[in] start_idx the start index of the data points
+   * @param[in] size the size of the data points
+   * @param[in] dataset the dataset
    */
   void FindOptError(int start_idx, int size, const DataVectorType &dataset);
 
