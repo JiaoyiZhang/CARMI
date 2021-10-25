@@ -36,8 +36,8 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     auto error = tmp.error;
     int findEnd = dataRange.findRange.left + dataRange.findRange.size;
     for (int i = dataRange.findRange.left; i < findEnd; i++) {
-      auto predict = tmp.Predict(findQuery[i].first) + dataRange.findRange.left;
-      auto d = abs(i - predict);
+      int predict = tmp.Predict(findQuery[i].first) + dataRange.findRange.left;
+      int d = abs(i - predict);
       nodeCost.time +=
           (carmi_params::kLeafBaseTime * findQuery[i].second) / querySize;
       if (d <= error)

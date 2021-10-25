@@ -60,7 +60,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
           std::max(1.0, ceil((range.initRange.size + range.insertRange.size) *
                              1.0 / neededBlockNum));
       for (int j = range.initRange.left, k = 1; j < end; j++, k++) {
-        double preIdx = root.model.PredictIdx(initDataset[j].first);
+        double preIdx = root.model.Predict(initDataset[j].first);
         prefetchData.push_back({preIdx, tmp});
         if (k == avg || j == end - 1) {
           k = 0;
@@ -111,7 +111,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
       int s = prefetchRange[i].initRange.left;
       int e = prefetchRange[i].initRange.left + prefetchRange[i].initRange.size;
       for (int j = s; j < e; j++) {
-        double predictLeafIdx = root.model.PredictIdx(initDataset[j].first);
+        double predictLeafIdx = root.model.Predict(initDataset[j].first);
         int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
         prefetchIndex[j - s] = p;
       }
@@ -139,7 +139,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
       int e =
           remainingRange[i].initRange.left + remainingRange[i].initRange.size;
       for (int j = s; j < e; j++) {
-        double predictLeafIdx = root.model.PredictIdx(initDataset[j].first);
+        double predictLeafIdx = root.model.Predict(initDataset[j].first);
         int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
         prefetchIndex[j - s] = p;
       }
@@ -158,8 +158,8 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Construction() {
   NodeCost nodeCost = emptyCost;
-  RootStruct res = ChooseRoot();
-  // RootStruct res = {0, 904349};
+  // RootStruct res = ChooseRoot();
+  RootStruct res = {0, 904349};
   SubDataset subDataset = StoreRoot(res, &nodeCost);
 
 #ifdef DEBUG

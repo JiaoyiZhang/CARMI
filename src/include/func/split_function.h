@@ -66,7 +66,7 @@ inline void CARMI<KeyType, ValueType>::Split(int idx) {
     int s = perSize[i].left;
     int e = perSize[i].left + perSize[i].size;
     for (int j = s; j < e; j++) {
-      double predictLeafIdx = root.model.PredictIdx(tmpDataset[j].first);
+      double predictLeafIdx = root.model.Predict(tmpDataset[j].first);
       int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
       prefetchIndex[j - s] = p;
     }

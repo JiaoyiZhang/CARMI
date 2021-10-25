@@ -33,18 +33,18 @@ BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
         // Case 0: this node is the plr root node
         // use the plr root node to find the index of the next node and prefetch
         // the data block
-        idx = root.PLRType<DataVectorType, KeyType>::model.Predict(key);
         if (isPrimary == false) {
           fetch_leafIdx =
-              root.PLRType<DataVectorType, KeyType>::model.PredictIdx(key);
+              root.PLRType<DataVectorType, KeyType>::model.Predict(key);
+          idx = fetch_leafIdx;
           fetch_start = root.PLRType<DataVectorType, KeyType>::fetch_model
                             .PrefetchPredict(fetch_leafIdx);
 #ifdef Ubuntu
           // the instructions of prefetching in Ubuntu
           __builtin_prefetch(&data.dataArray[fetch_start], 0, 3);
-          __builtin_prefetch(&data.dataArray[fetch_start] + 64, 0, 3);
-          __builtin_prefetch(&data.dataArray[fetch_start] + 128, 0, 3);
-          __builtin_prefetch(&data.dataArray[fetch_start] + 192, 0, 3);
+          // __builtin_prefetch(&data.dataArray[fetch_start] + 64, 0, 3);
+          // __builtin_prefetch(&data.dataArray[fetch_start] + 128, 0, 3);
+          // __builtin_prefetch(&data.dataArray[fetch_start] + 192, 0, 3);
 #endif
 #ifdef Windows
           // the instructions of prefetching in Windows
@@ -64,6 +64,8 @@ BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
                            192,
                        _MM_HINT_T1);
 #endif
+        } else {
+          idx = root.PLRType<DataVectorType, KeyType>::model.Predict(key);
         }
         type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;

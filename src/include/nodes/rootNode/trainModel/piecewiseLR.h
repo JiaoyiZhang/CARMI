@@ -66,23 +66,12 @@ class PiecewiseLR {
   void Train(const DataVectorType &dataset);
 
   /**
-   * @brief predict the next node of the given key value
-   *
-   * @param[in] key the given key value
-   * @return int: the rounded index of the next node
-   */
-  int Predict(KeyType key) const {
-    int p = PredictIdx(key);
-    return p;
-  }
-
-  /**
    * @brief output the unrounded index of the next node of the given key value
    *
    * @param[in] key the given key value
    * @return double: the unrounded index
    */
-  inline double PredictIdx(KeyType key) const;
+  inline double Predict(KeyType key) const;
 
  private:
   // *** Static Constant Options and Values of P. LR Model Objects
@@ -233,9 +222,8 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
 }
 
 template <typename DataVectorType, typename KeyType>
-inline double PiecewiseLR<DataVectorType, KeyType>::PredictIdx(
-    KeyType key) const {
-  double p = maxChildIdx;
+inline double PiecewiseLR<DataVectorType, KeyType>::Predict(KeyType key) const {
+  double p = 0;
   if (key <= point[0].first) {
     p = theta[0][0] * key + theta[0][1];
     if (p < 0)
@@ -250,6 +238,7 @@ inline double PiecewiseLR<DataVectorType, KeyType>::PredictIdx(
           p = point[i - 1].second + 1;
         else if (p > point[i].second)
           p = point[i].second;
+        break;
       }
     }
   } else {

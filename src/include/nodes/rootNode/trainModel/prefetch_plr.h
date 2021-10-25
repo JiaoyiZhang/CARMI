@@ -63,10 +63,11 @@ class PrefetchPLR {
   /**
    * @brief train this prefetch prediction model
    *
-   * @param dataset the dataset used to train this model, each pair is: {the
+   * @param[in] dataset the dataset used to train this model, each pair is: {the
    * unrounded leaf node index of each key value, the index of the data block}
-   * @param LeafCost the cost of each leaf node, each member is: {the rounded
-   * leaf node index, the costs of this node in different number of data blocks}
+   * @param[in] LeafCost the cost of each leaf node, each member is: {the
+   * rounded leaf node index, the costs of this node in different number of data
+   * blocks}
    * @return int: the new blockNumber
    */
   int PrefetchTrain(const std::vector<std::pair<double, int>> &dataset,
@@ -98,12 +99,12 @@ class PrefetchPLR {
    * @brief Get the optimal cost of this segment in different numbers of
    * allocated data blocks, whose range is [leftCandidateID, rightCandidateID)
    *
-   * @param CostCandidate the vector used to store costs of the candidate
+   * @param[in] CostCandidate the vector used to store costs of the candidate
    * points, each is the vector of cost in different numbers of allocated data
    * blocks
-   * @param leftCandidateID the leaf index in CostCandidate
-   * @param rightCandidateID the right index in CostCandidate
-   * @param maxBlockNum the maximum number of data blocks
+   * @param[in] leftCandidateID the leaf index in CostCandidate
+   * @param[in] rightCandidateID the right index in CostCandidate
+   * @param[in] maxBlockNum the maximum number of data blocks
    * @return std::pair<int, double>: {optimal block number, optimal cost}
    */
   inline std::pair<int, double> GetCost(

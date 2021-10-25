@@ -48,7 +48,7 @@ class LinearRegression {
   /**
    * @brief use the given dataset to train the lr model
    *
-   * @param dataset the original dataset, each data point is: {key, value}
+   * @param[in] dataset the original dataset, each data point is: {key, value}
    */
   void Train(const DataVectorType &dataset) {
     int idx = 0;
@@ -74,23 +74,12 @@ class LinearRegression {
   }
 
   /**
-   * @brief predict the next node of the given key value
-   *
-   * @param[in] key the given key value
-   * @return int: the rounded index of the next node
-   */
-  int Predict(KeyType key) const {
-    int p = PredictIdx(key);
-    return p;
-  }
-
-  /**
    * @brief output the unrounded index of the next node of the given key value
    *
    * @param[in] key the given key value
    * @return double: the unrounded index
    */
-  inline double PredictIdx(KeyType key) const {
+  inline double Predict(KeyType key) const {
     // predict the index of the next node using the lr model
     double p = slope * key + intercept;
     // boundary processing
