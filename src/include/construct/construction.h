@@ -24,14 +24,15 @@
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::ConstructSubTree(
     const SubDataset &subDataset, NodeCost *nodeCost) {
-  float tmp = 0;
-  int preI = 0;
-  int checkpoint = -1;
-  int dataNum = 0;
+  int tmp = 0;
   int prefetchNum = 0;
   std::map<int, std::vector<double>> CostPerLeaf;
   std::vector<int> prefetchNode;
   std::vector<DataRange> prefetchRange;
+
+  // used to train the prefetch prediction model,each  element is <leaf node id,
+  // block number>
+  std::vector<std::pair<double, int>> prefetchData;
 
   for (int i = 0; i < subDataset.subInit.size(); i++) {
     COST.insert({emptyRange, emptyCost});
@@ -54,9 +55,6 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
       prefetchNum += range.initRange.size;
       int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
           range.initRange.size + range.insertRange.size);
-      if (i - preI > 10000) {
-        checkpoint = prefetchData.size();
-      }
 
       int avg =
           std::max(1.0, ceil((range.initRange.size + range.insertRange.size) *
@@ -68,11 +66,9 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
           k = 0;
           tmp++;
         }
-        preI = i;
       }
       prefetchNode.push_back(i);
       prefetchRange.push_back(range);
-      dataNum += range.initRange.size;
     } else {
       StoreOptimalNode(i, range);
     }
@@ -100,7 +96,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
   }
   if (!isPrimary) {
     int newBlockSize =
-        root.fetch_model.PrefetchTrain(prefetchData, CostPerLeaf, checkpoint);
+        root.fetch_model.PrefetchTrain(prefetchData, CostPerLeaf);
     data.dataArray.resize(newBlockSize, LeafSlots<KeyType, ValueType>());
   }
 

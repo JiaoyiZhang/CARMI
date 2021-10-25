@@ -104,8 +104,11 @@ class CARMI {
    * @brief find a data point of the given key value and return its position
    *
    * @param[in] key the given key value
-   * @param[out] currblock the index of the data block of the returned leaf node
-   * @param[out] currslot the index of the data point in the data block
+   * @param[out] currblock the index of the data block of the returned leaf
+   * node, useless in the external array leaf node
+   * @param[out] currslot (1) the index of the data point in the data block in
+   * the cf array leaf node; (2) the index of the data point in the external
+   * array leaf node
    * @return BaseNode<KeyType, ValueType>*: the leaf node which manages this
    * data point
    */
@@ -578,11 +581,6 @@ class CARMI {
    */
   std::vector<int> scanLeaf;
 
-  /**
-   * @brief the dataset used to train the prefetch prediction model, each
-   * element is <leaf node id, block number>
-   */
-  std::vector<std::pair<double, double>> prefetchData;
 
   /**
    * @brief the index of leaf nodes

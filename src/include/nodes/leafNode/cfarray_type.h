@@ -420,13 +420,13 @@ class CFArrayType {
 template <typename KeyType, typename ValueType>
 inline int CFArrayType<KeyType, ValueType>::CalNeededBlockNum(int size) {
   if (size <= 0) return 0;
-#ifdef DEBUG
+#ifdef CHECK
   if (size > kMaxLeafCapacity) {
     std::cout << "the size is " << size
               << ",\tthe maximum size in a leaf node is " << kMaxLeafCapacity
               << std::endl;
   }
-#endif  // DEBUG
+#endif  // CHECK
   int neededBlockNumber = std::min(
       static_cast<int>(ceil(size * 1.0 / kMaxBlockCapacity)), kMaxBlockNum);
 

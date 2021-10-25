@@ -29,8 +29,7 @@ void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
   double space_cost = kBaseNodeSpace * c;
   double time_cost = RootNodeType::kTimeCost;
 
-  RootNodeType tmpRoot(c);
-  tmpRoot.model.Train(initDataset);
+  RootNodeType tmpRoot(c, initDataset);
   IndexPair range{0, static_cast<int>(initDataset.size())};
   IndexPair insertRange{0, static_cast<int>(insertQuery.size())};
   NodePartition<typename RootNodeType::ModelType>(tmpRoot.model, range,

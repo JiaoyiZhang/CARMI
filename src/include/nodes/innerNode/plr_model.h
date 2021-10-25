@@ -66,7 +66,8 @@ class PLRModel {
    *
    * @param[in] left the starting index of data points
    * @param[in] size  the size of data points
-   * @param[in] dataset used to train the model
+   * @param[in] dataset used to train the model, each data point in the dataset
+   * is composed of the key value and the value.
    */
   void Train(int left, int size, const DataVectorType &dataset);
 
