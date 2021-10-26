@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_
-#define SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_
+#ifndef CONSTRUCT_MINOR_FUNCTION_H_
+#define CONSTRUCT_MINOR_FUNCTION_H_
 #include <algorithm>
 #include <utility>
 #include <vector>
@@ -17,36 +17,65 @@
 #include "../carmi.h"
 
 template <typename KeyType, typename ValueType>
+double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
+    const DataRange &dataRange) {
+  float frequency = 0.0;
+  // count the frequency of findQuery
+  int findEnd = dataRange.findRange.left + dataRange.findRange.size;
+  for (int i = dataRange.findRange.left; i < findEnd; i++)
+    frequency += findQuery[i].second;
+  // count the frequency  of insertQuery
+  int insertEnd = dataRange.insertRange.left + dataRange.insertRange.size;
+  for (int i = dataRange.insertRange.left; i < insertEnd; i++)
+    frequency += insertQuery[i].second;
+  // calculate the weighted frequency of this sub-dataset
+  double frequency_weight = frequency / querySize;
+  return frequency_weight;
+}
+
+template <typename KeyType, typename ValueType>
 double CARMI<KeyType, ValueType>::CalculateEntropy(
-    int size, int childNum, const std::vector<IndexPair> &perSize) const {
-  double entropy = 0.0;
-  if (size == 0) {
+    const std::vector<IndexPair> &perSize) const {
+  // the sum of -size(i)*log(size(i))
+  double slogs = 0.0;
+  // the total size of the dataset
+  int n = 0;
+  for (int i = 0; i < perSize.size(); i++) {
+    n += perSize[i].size;
+    if (perSize[i].size != 0)
+      slogs += perSize[i].size * 1.0 * (-log2(perSize[i].size));
+  }
+  if (n == 0) {
     return DBL_MAX;
   }
-  for (int i = 0; i < childNum; i++) {
-    auto p = static_cast<float>(perSize[i].size) / size;
-    if (p != 0) entropy += p * (-log2(p));
-  }
+
+  double entropy = slogs / n + log2(n);
   return entropy;
 }
 
 template <typename KeyType, typename ValueType>
-inline double CARMI<KeyType, ValueType>::CalculateCFArrayCost(
-    int size, int totalSize, int givenBlockNum) {
-  double space = kBaseNodeSpace;
-  double time = carmi_params::kLeafBaseTime;
-  if (givenBlockNum * CFArrayType<KeyType, ValueType>::kMaxBlockCapacity >=
-      size) {
-    // can be prefetched
-    space += givenBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
-  } else {
-    // cannot be prefetched
-    int neededBlock = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(size);
-    space += neededBlock * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
-    time += carmi_params::kMemoryAccessTime;
+std::vector<double> CARMI<KeyType, ValueType>::CalculateCFArrayCost(
+    int size, int totalPrefetchedNum) {
+  std::vector<double> cost(CFArrayType<KeyType, ValueType>::kMaxBlockNum, 0);
+  for (int k = 0; k < CFArrayType<KeyType, ValueType>::kMaxBlockNum; k++) {
+    double space = kBaseNodeSpace;
+    double time = carmi_params::kLeafBaseTime;
+    if ((k + 1) * CFArrayType<KeyType, ValueType>::kMaxBlockCapacity >= size) {
+      // Case 1: these data points can be prefetched, then the space cost is the
+      // space cost of allocated data blocks and the time cost does not increase
+      space += (k + 1) * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
+    } else {
+      // Case 2: these data points cannot be prefetched, then the space cost is
+      // the space cost of actually needed data blocks and the time cost should
+      // include the latency of a memory access
+      int neededBlock =
+          CFArrayType<KeyType, ValueType>::CalNeededBlockNum(size);
+      space += neededBlock * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
+      time += carmi_params::kMemoryAccessTime;
+    }
+    time *= size * 1.0 / totalPrefetchedNum;
+    cost[k] = time + lambda * space;
   }
-  time *= size * 1.0 / totalSize;
-  double cost = time + lambda * space;
   return cost;
 }
 
@@ -58,9 +87,11 @@ void CARMI<KeyType, ValueType>::NodePartition(
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = currnode.Predict(dataset[i].first);
+    // if this sub-dataset is newly divided, store its leaf index in the dataset
     if ((*subData)[p].left == -1) {
       (*subData)[p].left = i;
     }
+    // count the size of this sub-dataset
     (*subData)[p].size++;
   }
 }
@@ -68,16 +99,15 @@ void CARMI<KeyType, ValueType>::NodePartition(
 template <typename KeyType, typename ValueType>
 template <typename InnerNodeType>
 InnerNodeType CARMI<KeyType, ValueType>::InnerDivideAll(
-    int c, const DataRange &range, SubDataset *subDataset) {
+    const DataRange &range, int c, SubDataset *subDataset) {
   InnerNodeType currnode(c);
-  int l = range.initRange.left;
-  int r = range.initRange.left + range.initRange.size;
-  DataVectorType nowDataset(initDataset.begin() + l, initDataset.begin() + r);
   currnode.Train(range.initRange.left, range.initRange.size, initDataset);
-
+  // split initDataset into c sub-datasets
   NodePartition<InnerNodeType>(currnode, range.initRange, initDataset,
                                &(subDataset->subInit));
+  // split findQuery into c sub-datasets
   subDataset->subFind = subDataset->subInit;
+  // split insertQuery into c sub-datasets
   NodePartition<InnerNodeType>(currnode, range.insertRange, insertQuery,
                                &(subDataset->subInsert));
   return currnode;
@@ -98,31 +128,4 @@ void CARMI<KeyType, ValueType>::UpdateLeaf() {
   std::vector<int>().swap(scanLeaf);
 }
 
-template <typename KeyType, typename ValueType>
-double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
-    const DataRange &dataRange) {
-  float frequency = 0.0;
-  int findEnd = dataRange.findRange.left + dataRange.findRange.size;
-  for (int l = dataRange.findRange.left; l < findEnd; l++)
-    frequency += findQuery[l].second;
-  int insertEnd = dataRange.insertRange.left + dataRange.insertRange.size;
-  for (int l = dataRange.insertRange.left; l < insertEnd; l++)
-    frequency += insertQuery[l].second;
-  double frequency_weight = frequency / querySize;
-  return frequency_weight;
-}
-
-template <typename KeyType, typename ValueType>
-void CARMI<KeyType, ValueType>::ConstructEmptyNode(const DataRange &range) {
-  BaseNode<KeyType, ValueType> optimal_node_struct;
-  if (isPrimary) {
-    ExternalArray<KeyType> tmp;
-    tmp.Train(initDataset, range.initRange.left, range.initRange.size);
-    optimal_node_struct.externalArray = tmp;
-  } else {
-    optimal_node_struct.cfArray = CFArrayType<KeyType, ValueType>();
-  }
-  structMap.insert({range.initRange, optimal_node_struct});
-}
-
-#endif  // SRC_INCLUDE_CONSTRUCT_MINOR_FUNCTION_H_
+#endif  // CONSTRUCT_MINOR_FUNCTION_H_

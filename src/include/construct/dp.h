@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_CONSTRUCT_DP_H_
-#define SRC_INCLUDE_CONSTRUCT_DP_H_
+#ifndef CONSTRUCT_DP_H_
+#define CONSTRUCT_DP_H_
 
 #include <float.h>
 
@@ -26,12 +26,27 @@
 template <typename KeyType, typename ValueType>
 NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
   NodeCost nodeCost;
+  // Case 1: the dataset is empty, construct an empty node and return directly
   if (range.initRange.size == 0) {
     nodeCost = emptyCost;
-    ConstructEmptyNode(range);
+    // Construct an empty leaf node when the sub-dataset is empty and store
+    // it in the structMap. The type of this leaf node depends on the isPrimary
+    // parameter, if it is true, construct an external array leaf node,
+    // otherwise, construct a cache-friendly array leaf node.
+    BaseNode<KeyType, ValueType> optimal_node_struct;
+    if (isPrimary) {
+      ExternalArray<KeyType> tmp;
+      tmp.Train(initDataset, range.initRange.left, range.initRange.size);
+      optimal_node_struct.externalArray = tmp;
+    } else {
+      optimal_node_struct.cfArray = CFArrayType<KeyType, ValueType>();
+    }
+    structMap.insert({range.initRange, optimal_node_struct});
     return nodeCost;
   }
 
+  // Case 2: the sub-dataset has been solved before, return the minimum cost
+  // directly
   auto it = COST.find(range.initRange);
   if (it != COST.end()) {
     nodeCost = it->second;
@@ -39,23 +54,30 @@ NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
   }
 
   double minRatio = 0.9;
+  // record the maximum capacity of the leaf node
   int maxStoredNum = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
   if (isPrimary) {
     maxStoredNum = carmi_params::kMaxLeafNodeSizeExternal;
   }
   if (range.initRange.size + range.insertRange.size <=
       minRatio * maxStoredNum) {
+    // Case 3: if the size is smaller than the threshold, directly construct a
+    // leaf node
     return DPLeaf(range);
   } else if (range.initRange.size + range.insertRange.size > maxStoredNum) {
+    // Case 4: if the size is larger than the maximum capacity of a leaf node,
+    // directly construct an inner node
     return DPInner(range);
   } else {
-    auto res1 = DPInner(range);
-    auto res0 = DPLeaf(range);
-    if (res0.space * lambda + res0.time > res1.space * lambda + res1.time)
-      return res1;
+    // Case 5: construct a leaf node and an inner node respectively, and choose
+    // the setting with a lower cost
+    auto resInner = DPInner(range);
+    auto resLeaf = DPLeaf(range);
+    if (resInner.cost > resLeaf.cost)
+      return resLeaf;
     else
-      return res0;
+      return resInner;
   }
 }
 
-#endif  // SRC_INCLUDE_CONSTRUCT_DP_H_
+#endif  // CONSTRUCT_DP_H_

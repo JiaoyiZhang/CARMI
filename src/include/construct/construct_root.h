@@ -21,32 +21,44 @@
 
 template <typename KeyType, typename ValueType>
 template <typename RootNodeType>
-void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
-                                             double *optimalCost,
-                                             RootStruct *rootStruct) {
-  std::vector<IndexPair> perSize(c, emptyRange);
-  std::vector<IndexPair> perInsertSize(c, emptyRange);
+void CARMI<KeyType, ValueType>::UpdateRootOptSetting(int c, double *optimalCost,
+                                                     RootStruct *rootStruct) {
+  // calculate the basic space cost of the c child nodes of the root node
   double space_cost = kBaseNodeSpace * c;
+  // calculate the time cost of the root node
   double time_cost = RootNodeType::kTimeCost;
 
+  // train this type of the root node
   RootNodeType tmpRoot(c, initDataset);
   IndexPair range{0, static_cast<int>(initDataset.size())};
   IndexPair insertRange{0, static_cast<int>(insertQuery.size())};
+  // initialize the variables that store the range of each sub-dataset
+  std::vector<IndexPair> perSize(c, emptyRange);
+  std::vector<IndexPair> perInsertSize(c, emptyRange);
+  // split initDataset into c sub-datasets
   NodePartition<typename RootNodeType::ModelType>(tmpRoot.model, range,
                                                   initDataset, &perSize);
+  // split insertDataset into c sub-datasets
   NodePartition<typename RootNodeType::ModelType>(tmpRoot.model, insertRange,
                                                   insertQuery, &perInsertSize);
 
+  int maxLeafCapacity = carmi_params::kMaxLeafNodeSizeExternal;
+  if (!isPrimary) {
+    maxLeafCapacity = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
+  }
   for (int i = 0; i < c; i++) {
-    int maxLeafCapacity = carmi_params::kMaxLeafNodeSizeExternal;
     int totalDataNum = perSize[i].size + perInsertSize[i].size;
+    // if leaf nodes are cf array leaf nodes, add the space cost of data
+    // blocks to the total space cost
     if (!isPrimary) {
       int tmpBlockNum =
           CFArrayType<KeyType, ValueType>::CalNeededBlockNum(totalDataNum);
       space_cost +=
           tmpBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
-      maxLeafCapacity = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
     }
+    // if the total number of data points exceeds the maximum capacity of the
+    // leaf node, the current node needs at least kMinChildNumber inner nodes to
+    // manage the data points together
     if (totalDataNum > maxLeafCapacity) {
       space_cost += kBaseNodeSpace * kMinChildNumber;
       time_cost += carmi_params::kMemoryAccessTime * perSize[i].size /
@@ -54,45 +66,51 @@ void CARMI<KeyType, ValueType>::IsBetterRoot(int c, NodeType type,
     }
   }
 
+  // calculate the entropy of the root node
   double entropy = CalculateEntropy(initDataset.size(), c, perSize);
   double cost = (time_cost + static_cast<float>(lambda * space_cost)) / entropy;
 
+  // if the current cost is smaller than the optimal cost, update the optimal
+  // cost and root setting
   if (cost <= *optimalCost) {
     *optimalCost = cost;
     rootStruct->rootChildNum = c;
-    rootStruct->rootType = type;
+    rootStruct->rootType = tmpRoot.flagNumber;
   }
 }
 
 template <typename KeyType, typename ValueType>
 RootStruct CARMI<KeyType, ValueType>::ChooseRoot() {
   double OptimalValue = DBL_MAX;
-  RootStruct rootStruct(0, 0);
+  RootStruct rootStruct(PLR_ROOT_NODE, kMinChildNumber);
   int minNum =
       std::max(kMinChildNumber, static_cast<int>(initDataset.size() / 1024));
   int maxNum =
       std::max(kMinChildNumber, static_cast<int>(initDataset.size() / 2));
+
+  // Calculate the cost of different settings and choose the optimal setting
   for (int c = minNum; c <= maxNum; c *= 1.3) {
-    IsBetterRoot<PLRType<DataVectorType, KeyType>>(c * 1.001, PLR_ROOT_NODE,
-                                                   &OptimalValue, &rootStruct);
+    UpdateRootOptSetting<PLRType<DataVectorType, KeyType>>(
+        c * 1.001, &OptimalValue, &rootStruct);
   }
+  // return the optimal root setting
   return rootStruct;
 }
 
 template <typename KeyType, typename ValueType>
-SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct,
-                                                NodeCost *nodeCost) {
+SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct) {
   SubDataset subDataset(rootStruct.rootChildNum);
+  // allocate a block of empty memory for these child nodes
   node.AllocateNodeMemory(rootStruct.rootChildNum);
   DataRange range({0, static_cast<int>(initDataset.size())},
                   {0, static_cast<int>(findQuery.size())},
                   {0, static_cast<int>(insertQuery.size())});
   switch (rootStruct.rootType) {
     case PLR_ROOT_NODE: {
-      nodeCost->time = carmi_params::kPLRRootTime;
-      nodeCost->space += sizeof(PLRType<DataVectorType, KeyType>);
+      // construct the root node and train the model
       root = PLRType<DataVectorType, KeyType>(rootStruct.rootChildNum,
                                               initDataset);
+      // split the dataset
       NodePartition<typename PLRType<DataVectorType, KeyType>::ModelType>(
           root.model, range.initRange, initDataset, &(subDataset.subInit));
       subDataset.subFind = subDataset.subInit;
@@ -101,6 +119,7 @@ SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct,
       break;
     }
   }
+  // roughly calculate the number of needed data blocks
   int blockNum = 0;
   for (int i = 0; i < rootStruct.rootChildNum; i++) {
     if (subDataset.subInit[i].size + subDataset.subInsert[i].size <
@@ -109,7 +128,9 @@ SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct,
           subDataset.subInit[i].size + subDataset.subInsert[i].size);
   }
 
+  // update the block number of the prefetch prediction model
   root.fetch_model.SetBlockNumber(blockNum);
+  // update the size of the data array
   data.dataArray.resize(blockNum, LeafSlots<KeyType, ValueType>());
   return subDataset;
 }

@@ -20,53 +20,39 @@
 #include "../params.h"
 
 /**
- * @brief Root node settings: the type of root node and the number of child
+ * @brief Root node settings: the type of the root node and the number of child
  * nodes
  */
 struct RootStruct {
   /**
-   * @brief the type of the root node
+   * @brief the type identifier of the root node
    */
   int rootType;
 
   /**
-   * @brief the number of the root node's children
-   *
+   * @brief the number of its child nodes
    */
   int rootChildNum;
-
-  /**
-   * @brief Construct a new Root Struct object
-   *
-   * @param[in] t the root type
-   * @param[in] c the child number
-   */
-  RootStruct(int t, int c) {
-    rootType = t;
-    rootChildNum = c;
-  }
 };
 
 /**
- * @brief the structure of cost model: time cost, space cost and the total cost:
- * time + lambda * space
+ * @brief three parts of the cost: time cost, space cost and the total cost.
+ *
+ * The total cost  = time cost + lambda * space cost.
  */
 struct NodeCost {
   /**
    * @brief the time cost
-   *
    */
   double time;
 
   /**
    * @brief the space cost
-   *
    */
   double space;
 
   /**
-   * @brief the total cost
-   *
+   * @brief the total cost: time cost + lambda * space cost.
    */
   double cost;
 };
@@ -76,14 +62,12 @@ struct NodeCost {
  */
 struct IndexPair {
   /**
-   * @brief the start index of data points
-   *
+   * @brief the left index of data points in the dataset
    */
   int left;
 
   /**
    * @brief the size of data points
-   *
    */
   int size;
 
@@ -96,53 +80,77 @@ struct IndexPair {
 };
 
 /**
- * @brief the index ranges of initDataset, findQuery and insertQuery
+ * @brief the index ranges of sub-initDataset, sub-findQuery and
+ * sub-insertQuery: {initDataset: {left, size}, findQuery: {left, size},
+ * insertQuery: {left, size}}
  */
 class DataRange {
  public:
   /**
-   * @brief the index range of initDataset
-   *
+   * @brief the index range of initDataset: {the left index of the sub-dataset
+   * in the initDataset, the size of the sub-dataset}
    */
   IndexPair initRange;
 
   /**
-   * @brief the index range of findQuery
-   *
+   * @brief the index range of findQuery: {the left index of the sub-dataset
+   * in the findQuery, the size of the sub-dataset}
    */
   IndexPair findRange;
 
   /**
-   * @brief the index range of insertQuery
-   *
+   * @brief the index range of insertQuery: {the left index of the sub-dataset
+   * in the insertQuery, the size of the sub-dataset}
    */
   IndexPair insertRange;
 
+  /**
+   * @brief Construct a new Data Range object
+   *
+   * @param init the index range of sub-initDataset: {the left index of the
+   * sub-dataset in the initDataset, the size of the sub-dataset}
+   * @param find the index range of sub-findQuery: {the left index of the
+   * sub-dataset in the findQuery, the size of the sub-dataset}
+   * @param insert the index range of sub-insertQuery: {the left index of the
+   * sub-dataset in the insertQuery, the size of the sub-dataset}
+   */
   DataRange(IndexPair init, IndexPair find, IndexPair insert)
       : initRange(init), findRange(find), insertRange(insert) {}
 };
 
 /**
- * @brief the range of each sub-datasets corresponding to the child nodes of the
- * current nodes
+ * @brief the starting index and size of sub-dataset in each child node, each
+ * element is: {the vector of the sub-initDataset, the vector of the
+ * sub-findDataset, the vector of sub-insertDataset}. Each sub-dataset is
+ * represented by: {left, size}, which means the range of it in the dataset is
+ * [left, left + size).
  */
 class SubDataset {
  public:
   /**
-   * @brief the IndexPair vector of sub-initDataset
+   * @brief the IndexPair vector of sub-initDataset, each element is: {the left
+   * index of the sub-dataset in the initDataset, the size of the sub-dataset}
    */
   std::vector<IndexPair> subInit;
 
   /**
-   * @brief the IndexPair vector of sub-findDataset
+   * @brief the IndexPair vector of sub-findDataset, each element is: {the left
+   * index of the sub-dataset in the findDataset, the size of the sub-dataset}
    */
   std::vector<IndexPair> subFind;
 
   /**
-   * @brief the IndexPair vector of sub-insertDataset
+   * @brief the IndexPair vector of sub-insertDataset, each element is: {the
+   * left index of the sub-dataset in the insertDataset, the size of the
+   * sub-dataset}
    */
   std::vector<IndexPair> subInsert;
 
+  /**
+   * @brief Construct a new SubDataset object and the size of the vector is c
+   *
+   * @param c the size of the vector
+   */
   explicit SubDataset(int c)
       : subInit(std::vector<IndexPair>(c, {-1, 0})),
         subFind(std::vector<IndexPair>(c, {-1, 0})),
@@ -177,12 +185,17 @@ template <typename KeyType, typename ValueType>
 class LeafSlots {
  public:
   /**
-   * @brief store the data points
-   *
+   * @brief the structure of a data block which actually stores the data points,
+   * the size of it is determined by the kMaxLeafNodeSize and the type of the
+   * data point. Each element in slots is: {key value, value}.
    */
   std::pair<KeyType, ValueType> slots[carmi_params::kMaxLeafNodeSize /
                                       sizeof(std::pair<KeyType, ValueType>)];
 
+  /**
+   * @brief Construct a new Leaf Slots object and set the default value of each
+   * element to the pair of {DBL_MAX, DBL_MAX}
+   */
   LeafSlots() {
     int len =
         carmi_params::kMaxLeafNodeSize / sizeof(std::pair<KeyType, ValueType>);
@@ -196,8 +209,7 @@ class LeafSlots {
       int len = carmi_params::kMaxLeafNodeSize /
                 sizeof(std::pair<KeyType, ValueType>);
       for (int i = 0; i < len; i++) {
-        this->slots[i].first = currnode.slots[i].first;
-        this->slots[i].second = currnode.slots[i].second;
+        this->slots[i] = currnode.slots[i];
       }
     }
     return *this;

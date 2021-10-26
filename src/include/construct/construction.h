@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_CONSTRUCT_CONSTRUCTION_H_
-#define SRC_INCLUDE_CONSTRUCT_CONSTRUCTION_H_
+#ifndef CONSTRUCT_CONSTRUCTION_H_
+#define CONSTRUCT_CONSTRUCTION_H_
 
 #include <algorithm>
 #include <iomanip>
@@ -23,16 +23,19 @@
 
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::ConstructSubTree(
-    const SubDataset &subDataset, NodeCost *nodeCost) {
-  int tmp = 0;
+    const SubDataset &subDataset) {
+  int nowBlockIdx = 0;
+  // the number of data points which can be prefetched
   int prefetchNum = 0;
-  std::map<int, std::vector<double>> CostPerLeaf;
+  // the index of all leaf nodes which can be prefetched
   std::vector<int> prefetchNode;
+  // the range of all leaf nodes which can be prefetched
   std::vector<DataRange> prefetchRange;
-
-  // used to train the prefetch prediction model,each  element is <leaf node id,
+  // used to train the prefetch prediction model, each element is <leaf node id,
   // block number>
   std::vector<std::pair<double, int>> prefetchData;
+  // the cost of all leaf nodes in different allocated number of data blocks
+  std::map<int, std::vector<double>> CostPerLeaf;
 
   for (int i = 0; i < subDataset.subInit.size(); i++) {
     COST.insert({emptyRange, emptyCost});
@@ -41,93 +44,93 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
 
+    // choose the suitable algorithm to construct the sub-tree according to the
+    // size of the sub-dataset
     if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
         carmi_params::kAlgorithmThreshold)
       resChild = GreedyAlgorithm(range);
     else
       resChild = DP(range);
 
-    // for prefetch
     auto it = structMap.find(range.initRange);
+    // if this node is the cf array leaf node, prepare for the prefetch function
     if ((it->second.cfArray.flagNumber >> 24) == ARRAY_LEAF_NODE &&
         range.initRange.left != -1) {
       int end = range.initRange.left + range.initRange.size;
       prefetchNum += range.initRange.size;
       int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
           range.initRange.size + range.insertRange.size);
-
       int avg =
           std::max(1.0, ceil((range.initRange.size + range.insertRange.size) *
                              1.0 / neededBlockNum));
+      // construct the prefetch dataset: {the unrounded leaf node index, the
+      // index of the data block}
       for (int j = range.initRange.left, k = 1; j < end; j++, k++) {
         double preIdx = root.model.Predict(initDataset[j].first);
-        prefetchData.push_back({preIdx, tmp});
+        prefetchData.push_back({preIdx, nowBlockIdx});
         if (k == avg || j == end - 1) {
           k = 0;
-          tmp++;
+          nowBlockIdx++;
         }
       }
+      // add this node to the prefetchNode/Range
       prefetchNode.push_back(i);
       prefetchRange.push_back(range);
     } else {
-      StoreOptimalNode(i, range);
+      // store the other optimal sub-trees
+      StoreOptimalNode(range, i);
     }
-
-    nodeCost->cost += resChild.space * lambda + resChild.time;
-    nodeCost->time += resChild.time;
-    nodeCost->space += resChild.space;
 
     std::map<IndexPair, NodeCost>().swap(COST);
     std::map<IndexPair, BaseNode<KeyType, ValueType>>().swap(structMap);
   }
 
-  for (int i = 0; i < prefetchNode.size(); i++) {
-    // calculate the cost of this array
-    std::vector<double> cost(CFArrayType<KeyType, ValueType>::kMaxBlockCapacity,
-                             0);
-    for (int k = 0; k < CFArrayType<KeyType, ValueType>::kMaxBlockCapacity;
-         k++) {
-      double tmp_cost = CalculateCFArrayCost(
-          prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size,
-          prefetchNum, k + 1);
-      cost[k] = tmp_cost;
-    }
-    CostPerLeaf.insert({prefetchNode[i], cost});
-  }
   if (!isPrimary) {
+    // calculate the cost of all prefetched leaf nodes in different number of
+    // data blocks
+    for (int i = 0; i < prefetchNode.size(); i++) {
+      std::vector<double> cost = CalculateCFArrayCost(
+          prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size,
+          prefetchNum);
+      CostPerLeaf.insert({prefetchNode[i], cost});
+    }
     int newBlockSize =
         root.fetch_model.PrefetchTrain(prefetchData, CostPerLeaf);
     data.dataArray.resize(newBlockSize, LeafSlots<KeyType, ValueType>());
+
+    // store the leaf nodes which can be prefetched
+    for (int i = 0; i < prefetchNode.size(); i++) {
+      CFArrayType<KeyType, ValueType> currnode;
+      int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
+          prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size);
+      int predictBlockNum = root.fetch_model.PrefetchNum(prefetchNode[i]);
+      bool isSuccess = false;
+      if (neededBlockNum <= predictBlockNum) {
+        std::vector<int> prefetchIndex(prefetchRange[i].initRange.size);
+        int s = prefetchRange[i].initRange.left;
+        int e =
+            prefetchRange[i].initRange.left + prefetchRange[i].initRange.size;
+        for (int j = s; j < e; j++) {
+          double predictLeafIdx = root.model.Predict(initDataset[j].first);
+          int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
+          prefetchIndex[j - s] = p;
+        }
+        isSuccess =
+            currnode.StoreData(initDataset, prefetchIndex, true,
+                               predictBlockNum, s, e - s, &data, &prefetchEnd);
+      }
+      if (!isSuccess) {
+        remainingNode.push_back(prefetchNode[i]);
+        remainingRange.push_back(prefetchRange[i]);
+      } else {
+        node.nodeArray[prefetchNode[i]].cfArray = currnode;
+        scanLeaf.push_back(prefetchNode[i]);
+      }
+    }
   }
 
-  for (int i = 0; i < prefetchNode.size(); i++) {
-    CFArrayType<KeyType, ValueType> currnode;
-    int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
-        prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size);
-    int predictBlockNum = root.fetch_model.PrefetchNum(prefetchNode[i]);
-    bool isSuccess = false;
-    if (neededBlockNum <= predictBlockNum) {
-      std::vector<int> prefetchIndex(prefetchRange[i].initRange.size);
-      int s = prefetchRange[i].initRange.left;
-      int e = prefetchRange[i].initRange.left + prefetchRange[i].initRange.size;
-      for (int j = s; j < e; j++) {
-        double predictLeafIdx = root.model.Predict(initDataset[j].first);
-        int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
-        prefetchIndex[j - s] = p;
-      }
-      isSuccess =
-          currnode.StoreData(initDataset, prefetchIndex, true, predictBlockNum,
-                             s, e - s, &data, &prefetchEnd);
-    }
-    if (!isSuccess) {
-      remainingNode.push_back(prefetchNode[i]);
-      remainingRange.push_back(prefetchRange[i]);
-    } else {
-      node.nodeArray[prefetchNode[i]].cfArray = currnode;
-      scanLeaf.push_back(prefetchNode[i]);
-    }
-  }
   isInitMode = false;
+  // store the remaining node which cannot be prefetched
   if (remainingNode.size() > 0) {
     for (int i = 0; i < remainingNode.size(); i++) {
       CFArrayType<KeyType, ValueType> currnode;
@@ -157,10 +160,11 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
 
 template <typename KeyType, typename ValueType>
 inline void CARMI<KeyType, ValueType>::Construction() {
-  NodeCost nodeCost = emptyCost;
+  // choose the optimal setting of the root node
   // RootStruct res = ChooseRoot();
   RootStruct res = {0, 904349};
-  SubDataset subDataset = StoreRoot(res, &nodeCost);
+  // construct and store the root node, obtain the range of each sub-dataset
+  SubDataset subDataset = StoreRoot(res);
 
 #ifdef DEBUG
   std::cout << std::endl;
@@ -173,9 +177,11 @@ inline void CARMI<KeyType, ValueType>::Construction() {
   std::cout << "\nTEST time: " << tmpTime << std::endl;
 #endif
 
-  ConstructSubTree(subDataset, &nodeCost);
+  // construct each sub-tree
+  ConstructSubTree(subDataset);
   UpdateLeaf();
 
+  // release useless memory
   int neededSize = data.usedDatasize + reservedSpace;
   if (!isPrimary) {
     data.ReleaseUselessMemory(neededSize);
@@ -191,4 +197,4 @@ inline void CARMI<KeyType, ValueType>::Construction() {
   DataVectorType().swap(insertQuery);
 }
 
-#endif  // SRC_INCLUDE_CONSTRUCT_CONSTRUCTION_H_
+#endif  // CONSTRUCT_CONSTRUCTION_H_
