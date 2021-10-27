@@ -214,8 +214,6 @@ inline int HisModel<KeyType, ValueType>::Predict(KeyType key) const {
   else if (idx >= childNumber)
     idx = childNumber - 1;
 
-  // get the basic index
-  int index = base[(idx >> 4)];
   // count the number of bits in the offset table
   int tmp = offset[(idx >> 4)] >> (15 - (idx & 0x0000000F));
   tmp = (tmp & 0x55555555) + ((tmp >> 1) & 0x55555555);
@@ -224,8 +222,7 @@ inline int HisModel<KeyType, ValueType>::Predict(KeyType key) const {
   tmp = (tmp & 0x00ff00ff) + ((tmp >> 8) & 0x00ff00ff);
 
   // add them together to get the index of the next node
-  index += tmp;
-  return index;
+  return base[(idx >> 4)] + tmp;
 }
 
 #endif  // NODES_INNERNODE_HIS_MODEL_H_

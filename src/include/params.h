@@ -79,19 +79,19 @@ static constexpr double kLRInnerTime = kMemoryAccessTime + 5.23;
  * @brief The time cost of the plr inner node including the latency of
  * memory access and the CPU time
  */
-static constexpr double kPLRInnerTime = kMemoryAccessTime + 22.8;
+static constexpr double kPLRInnerTime = kMemoryAccessTime + 24.21;
 
 /**
  * @brief The time cost of the his inner node including the latency of
  * memory access and the CPU time
  */
-static constexpr double kHisInnerTime = kMemoryAccessTime + 9.8;
+static constexpr double kHisInnerTime = kMemoryAccessTime + 18.44;
 
 /**
  * @brief The time cost of the bs inner node including the latency of
  * memory access and the CPU time
  */
-static constexpr double kBSInnerTime = kMemoryAccessTime + 15.5;
+static constexpr double kBSInnerTime = kMemoryAccessTime + 36.38;
 
 /**
  * @brief The time cost of moving a data point

@@ -252,10 +252,10 @@ inline void ExternalArray<KeyType>::Train(const DataVectorType &dataset,
   // train the lr model
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   for (int i = 0; i < size; i++) {
-    t1 += dataset[i].first * dataset[i].first;
-    t2 += dataset[i].first;
-    t3 += dataset[i].first * dataset[i].second;
-    t4 += dataset[i].second;
+    t1 += currdata[i].first * currdata[i].first;
+    t2 += currdata[i].first;
+    t3 += currdata[i].first * currdata[i].second;
+    t4 += currdata[i].second;
   }
   // update the parameters
   if (t1 * size - t2 * t2) {
