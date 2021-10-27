@@ -21,112 +21,66 @@
 #define NODES_INNERNODE_CANDIDATE_PLR_H_
 
 /**
- * @brief designed for P. LR model
- *
+ * @brief designed for piecewise linear regression model. This structure records
+ * all the contents that need to be stored in the training process of piecewise
+ * linear function, which is the item in the dp table.
  */
 struct SegmentPoint {
   /**
    * @brief the current cost
-   *
    */
   double cost;
 
   /**
    * @brief the key values
-   *
    */
   double key[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 
   /**
    * @brief the corresponding indexes
-   *
    */
   int idx[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   /**
-   * @brief the number of blocks
-   *
+   * @brief the number of blocks for the dp table in the prefetch prediction
+   * model
    */
   int blockNum[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 };
 
 /**
- * @brief designed for P. LR model
+ * @brief designed for piecewise linear regression model.
  *
- * @tparam DataVectorType the vector type of the dataset
- * @tparam DataType the type of a data point
+ * This class stores the cost between each candidate point, the parameters of
+ * the line segment between two points, entropy, etc. in the process of dynamic
+ * programming algorithm in P. LR model, which is used to assist and  accelerate
+ * the dp algorithm.
+ *
+ * @tparam DataVectorType the vector type of the dataset, each element is a
+ * pair: {key, value}
  */
-template <typename DataVectorType, typename DataType>
+template <typename DataVectorType>
 class CandidateCost {
  public:
-  CandidateCost() {}
   /**
-   * @brief store params for each segment
+   * @brief Construct a new empty Candidate Cost object
+   */
+  CandidateCost() {}
+
+  /**
+   * @brief store the slope and intercept of each segment
    *
-   * @param dataset the dataset
-   * @param index the indexes of candidates
+   * @param[in] dataset the given dataset, each element is: {key value, y}
+   * @param[in] index the indexes of candidates
    */
   void StoreTheta(const DataVectorType &dataset,
                   const std::vector<int> &index) {
-    StoreValue(dataset, index);
-    for (int i = 0; i < index.size() - 1; i++) {
-      for (int j = i + 1; j < index.size(); j++) {
-        int l = index[i];
-        int r = index[j];
-        auto tmp_theta = TrainLR(i, j, r - l);
-        theta.insert({{l, r}, tmp_theta});
-      }
-    }
-  }
-
-  /**
-   * @brief calculate the entropy of each segment
-   *
-   * @param leftIdx the left index of the sub-dataset
-   * @param rightIdx the right-index of the sub-dataset
-   * @return double: entropy
-   */
-  double Entropy(int leftIdx, int rightIdx) {
-    auto tmp_theta = theta.find({leftIdx, rightIdx});
-    double a = tmp_theta->second.first;
-    double entropy = log2(a) * (rightIdx - leftIdx);
-    return entropy;
-  }
-
-  /**
-   * @brief train the params of the segment
-   *
-   * @param left the left index of the sub-dataset
-   * @param right the right index of the sub-dataset
-   * @param size the size of the sub-dataset
-   * @return std::pair<double, double>: the slope and intercept
-   */
-  std::pair<double, double> TrainLR(int left, int right, int size) {
-    double theta1 = 0.0001, theta2 = 0.666;
-    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
-    t1 = xx[right] - xx[left];
-    t2 = x[right] - x[left];
-    t3 = px[right] - px[left];
-    t4 = p[right] - p[left];
-
-    theta1 = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
-    theta2 = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
-
-    return {theta1, theta2};
-  }
-
-  /**
-   * @brief store the value of each segment
-   *
-   * @param dataset the original dataset
-   * @param index the corresponding indexes in the dataset
-   */
-  void StoreValue(const DataVectorType &dataset,
-                  const std::vector<int> &index) {
-    xx = std::vector<double>(index.size(), 0);
-    x = std::vector<double>(index.size(), 0);
-    px = std::vector<double>(index.size(), 0);
-    p = std::vector<double>(index.size(), 0);
+    // store the value of each segment for least squares, used to speed up the
+    // training process of the linear regression
+    std::vector<double> xx(index.size(), 0);
+    std::vector<double> x(index.size(), 0);
+    std::vector<double> px(index.size(), 0);
+    std::vector<double> p(index.size(), 0);
     xx[0] = 0.0;
     x[0] = 0.0;
     px[0] = 0.0;
@@ -143,38 +97,49 @@ class CandidateCost {
       px[i] += px[i - 1];
       p[i] += p[i - 1];
     }
+
+    // store the parameters of each segment
+    for (int i = 0; i < index.size() - 1; i++) {
+      for (int j = i + 1; j < index.size(); j++) {
+        int tmpSize = index[j] - index[i];
+
+        double theta1 = 0.0001, theta2 = 0.666;
+        double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+        t1 = xx[j] - xx[i];
+        t2 = x[j] - x[i];
+        t3 = px[j] - px[i];
+        t4 = p[j] - p[i];
+
+        theta1 = (t3 * tmpSize - t2 * t4) / (t1 * tmpSize - t2 * t2);
+        theta2 = (t1 * t4 - t2 * t3) / (t1 * tmpSize - t2 * t2);
+
+        theta.insert({{index[i], index[j]}, {theta1, theta2}});
+      }
+    }
+  }
+
+  /**
+   * @brief calculate the entropy of each segment
+   *
+   * @param[in] leftIdx the left index of the sub-dataset
+   * @param[in] rightIdx the right-index of the sub-dataset
+   * @return double: entropy
+   */
+  double Entropy(int leftIdx, int rightIdx) {
+    auto tmp_theta = theta.find({leftIdx, rightIdx});
+    double a = tmp_theta->second.first;
+    double entropy = log2(a) * (rightIdx - leftIdx);
+    return entropy;
   }
 
  public:
+  //*** Private Data Members of CandidatePLR Objects
   /**
-   * @brief params for the corresponding segment
-   *
+   * @brief params for the corresponding segment, each element is {{the index of
+   * the left candidate points in the dataset, the index of the right candidate
+   * points in the dataset}, {the slope, the intercept}}
    */
   std::map<std::pair<int, int>, std::pair<double, double>> theta;
-
-  /**
-   * @brief  the value of key*key
-   *
-   */
-  std::vector<double> xx;
-
-  /**
-   * @brief the value of key
-   *
-   */
-  std::vector<double> x;
-
-  /**
-   * @brief the value of y*key
-   *
-   */
-  std::vector<double> px;
-
-  /**
-   * @brief the value of y
-   *
-   */
-  std::vector<double> p;
 };
 
 #endif  // NODES_INNERNODE_CANDIDATE_PLR_H_
