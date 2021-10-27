@@ -73,6 +73,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
           nowBlockIdx++;
         }
       }
+      scanLeaf.push_back(i);
       // add this node to the prefetchNode/Range
       prefetchNode.push_back(i);
       prefetchRange.push_back(range);
@@ -123,7 +124,6 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
         remainingRange.push_back(prefetchRange[i]);
       } else {
         node.nodeArray[prefetchNode[i]].cfArray = currnode;
-        scanLeaf.push_back(prefetchNode[i]);
       }
     }
   }
@@ -149,7 +149,6 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
       currnode.StoreData(initDataset, prefetchIndex, isInitMode, neededBlockNum,
                          s, &data, &prefetchEnd);
       node.nodeArray[remainingNode[i]].cfArray = currnode;
-      scanLeaf.push_back(remainingNode[i]);
     }
   }
 
@@ -178,11 +177,11 @@ inline void CARMI<KeyType, ValueType>::Construction() {
 
   // construct each sub-tree
   ConstructSubTree(subDataset);
-  UpdateLeaf();
 
   // release useless memory
   int neededSize = data.usedDatasize + reservedSpace;
   if (!isPrimary) {
+    UpdateLeaf();
     data.ReleaseUselessMemory(neededSize);
   }
 

@@ -94,6 +94,9 @@ void CARMI<KeyType, ValueType>::StoreOptimalNode(const DataRange &range,
       // Case 5: the optimal node is cf array leaf node, store its information
       // in the remainingNode for future processing due to the prefetching
       // mechanism
+      if (range.initRange.left != -1) {
+        scanLeaf.push_back(storeIdx);
+      }
       remainingNode.push_back(storeIdx);
       remainingRange.push_back(range);
       break;
