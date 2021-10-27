@@ -24,21 +24,28 @@
 #include "memoryLayout/node_array.h"
 
 /**
- * @brief The specific external version of the CARMI class template.
+ * @brief The specific external version of the CARMI class template. External
+ * CARMI only stores the pointer of the position of external data points in the
+ * index structure.
  *
  * The implementation of the external CARMI. This class is designed for primary
  * index structures, where the original data points are already sorted according
  * to the key value and stored in an external location. In such a case, we only
- * need to store pointers to external locations in the leaf node.
+ * need to store the pointer to external locations.
  *
  * This class provides users with basic operations such as find, insert, update,
- * and delete, as well as some basic operations for the iterator of the CARMI
- * index. Through the functions of CARMICommon objects, users can construct
- * indexes with good performance for a given dataset without the need of too
- * much space. In addition, during initialization, users can set different
- * lambda values to control the different proportions of time and space costs,
- * so as to achieve a balance between the time and space cost under the
- * corresponding parameters.
+ * and delete and so on. Users can automatically obtain the optimal indexes with
+ * good performance for a given dataset without the need of manual tuning. In
+ * addition, during initialization, users can set different lambda values to
+ * control the different proportions of time and space costs, so as to achieve a
+ * balance between the time and space cost under the corresponding parameters.
+ *
+ * The hybrid construction algorithm in CARMI can automatically construct the
+ * optimal index structures under various datasets with the help of the given
+ * historical find/insert queries. If there are no historical queries, users
+ * only need to pass in the empty objects of the approriate type and CARMI will
+ * default to a read-only workload to construct the optimal index structure
+ * using the initDataset.
  *
  * @tparam KeyType the type of the given key value
  */
@@ -53,12 +60,13 @@ class CARMIExternal {
   typedef CARMI<KeyType, KeyType> carmi_impl;
 
   /**
-   * @brief the type of the data point
+   * @brief the type of the data point: {key, value}
    */
   typedef typename CARMI<KeyType, KeyType>::DataType DataType;
 
   /**
-   * @brief the type of the dataset
+   * @brief the type of the dataset [{key_0, value_0}, {key_1, value_1}, ...,
+   * {key_n, value_n}]. The dataset has been sorted.
    */
   typedef typename CARMI<KeyType, KeyType>::DataVectorType DataVectorType;
 
@@ -70,15 +78,23 @@ class CARMIExternal {
 
  public:
   /**
-   * @brief Construct a new CARMIExternal object
+   * @brief Construct a new CARMIExternal object.
    *
-   * @param dataset[in] the dataset used to construct the index
-   * @param future_insert[in] the array of keywords that may be inserted in the
-   * future to reserve space for them
-   * @param record_number[in] the number of the records
-   * @param record_len[in] the length of a record (byte)
-   * @param lambda[in] lambda (time + lambda * space), used to tradeoff between
-   * time and space cost
+   * The CARMI index structure can achieve a good performance under the
+   * time/space setting based on the lambda parameter. The goal of the hybrid
+   * construction algorithm is to minimize the total cost of historical access
+   * and insert queries, which is: the average time cost of each query + lambda
+   * times the space cost of the index tree.
+   *
+   * @param[in] dataset the pointer to the external dataset used to construct
+   * the index and the historical find queries
+   * @param[in] future_insert the array of keywords that may be inserted in
+   * the future to reserve space for them, which is also the historical insert
+   * queries
+   * @param[in] record_number the number of the records
+   * @param[in] record_len the length of a record (byte)
+   * @param[in] lambda lambda (time + lambda * space), used to tradeoff
+   * between time and space cost
    */
   CARMIExternal(const void *dataset, const std::vector<KeyType> future_insert,
                 int record_number, int record_len, double lambda) {
@@ -94,7 +110,7 @@ class CARMIExternal {
   /**
    * @brief find the corresponding iterator of the given key
    *
-   * @param key[in] the given key value
+   * @param[in] key the given key value
    * @return void *: the pointer of the data point
    */
   const void *Find(const KeyType &key) {
@@ -110,7 +126,7 @@ class CARMIExternal {
   /**
    * @brief insert the given key into carmi
    *
-   * @param key[in] the given key value
+   * @param[in] key the given key value
    */
   void Insert(const KeyType &key) { carmi_tree.Insert({key, key}); }
 
