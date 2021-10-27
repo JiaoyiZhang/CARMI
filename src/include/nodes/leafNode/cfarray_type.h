@@ -116,12 +116,12 @@ class CFArrayType {
    *
    * @param[in] dataset the dataset
    * @param[in] prefetchIndex the prefetch predicted index of each key value
-   * @param[in] start_idx the starting index of data points
-   * @param[in] size the size of data points
+   * @param[in] start_idx the starting index of data points, the size of data
+   * points is equal to the size of the prefetchIndex vector
    * @param[in] data the data array
    */
   void Init(const DataVectorType &dataset,
-            const std::vector<int> &prefetchIndex, int start_idx, int size,
+            const std::vector<int> &prefetchIndex, int start_idx,
             DataArrayStructure<KeyType, ValueType> *data);
 
   /**
@@ -196,7 +196,6 @@ class CFArrayType {
    * store them evenly in these data blocks.
    * @param[in] neededBlockNum the number of needed data blocks
    * @param[in] left the left index of these data points in the dataset
-   * @param[in] size the size of data points needed to be stored in data array
    * @param[inout] data the data array
    * @param[inout] prefetchEnd the right index of prefetched blocks in initial
    * mode, this parameter is useless if the isInitMode is false.
@@ -207,7 +206,7 @@ class CFArrayType {
    */
   bool StoreData(const DataVectorType &dataset,
                  const std::vector<int> &prefetchIndex, bool isInitMode,
-                 int neededBlockNum, int left, int size,
+                 int neededBlockNum, int left,
                  DataArrayStructure<KeyType, ValueType> *data,
                  int *prefetchEnd);
 
@@ -302,18 +301,14 @@ class CFArrayType {
    * @brief check whether these data points can be stored as prefetched
    *
    * @param[in] data the data array
-   * @param[in] dataset the dataset
    * @param[in] prefetchIndex the prefetch predicted index of each key value
    * @param[in] neededBlockNum the needed number of data blocks
-   * @param[in] start_idx the starting index of data points in the dataset
-   * @param[in] size  the size of data points
    * @retval true these data points can be stored as prefetched
    * @return false these data points cannot be stored as prefetched
    */
   bool CheckIsPrefetch(const DataArrayStructure<KeyType, ValueType> &data,
-                       const DataVectorType &dataset,
                        const std::vector<int> &prefetchIndex,
-                       int neededBlockNum, int start_idx, int size);
+                       int neededBlockNum);
 
   /**
    * @brief store data points in such a way that extra data points are filled
@@ -467,10 +462,10 @@ CFArrayType<KeyType, ValueType>::ExtractDataset(
 template <typename KeyType, typename ValueType>
 inline void CFArrayType<KeyType, ValueType>::Init(
     const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
-    int start_idx, int size, DataArrayStructure<KeyType, ValueType> *data) {
+    int start_idx, DataArrayStructure<KeyType, ValueType> *data) {
+  int size = prefetchIndex.size();
   int neededBlockNum = CalNeededBlockNum(size);
-  StoreData(dataset, prefetchIndex, false, neededBlockNum, start_idx, size,
-            data, 0);
+  StoreData(dataset, prefetchIndex, false, neededBlockNum, start_idx, data, 0);
 }
 
 template <typename KeyType, typename ValueType>
@@ -573,8 +568,6 @@ inline bool CFArrayType<KeyType, ValueType>::Insert(
 template <typename KeyType, typename ValueType>
 inline bool CFArrayType<KeyType, ValueType>::Update(
     const DataType &datapoint, DataArrayStructure<KeyType, ValueType> *data) {
-  // Get the number of data blocks
-  int nowBlockNum = flagNumber & 0x00FFFFFF;
   // Find the corresponding data block which stores this data point.
   int currBlockIdx = m_left + Search(datapoint.first);
   // Search the data point in this data block
@@ -696,8 +689,7 @@ inline void CFArrayType<KeyType, ValueType>::Rebalance(
   std::vector<int> prefetchIndex(newDataset.size(), 0);
 
   // store data points
-  StoreData(newDataset, prefetchIndex, false, nowBlockNum, 0, newDataset.size(),
-            data, 0);
+  StoreData(newDataset, prefetchIndex, false, nowBlockNum, 0, data, 0);
 }
 
 template <typename KeyType, typename ValueType>
@@ -710,8 +702,7 @@ inline void CFArrayType<KeyType, ValueType>::Expand(
   std::vector<int> prefetchIndex(newDataset.size(), 0);
 
   // store data points
-  StoreData(newDataset, prefetchIndex, false, neededBlockNum, 0,
-            newDataset.size(), data, 0);
+  StoreData(newDataset, prefetchIndex, false, neededBlockNum, 0, data, 0);
 }
 
 template <typename KeyType, typename ValueType>
@@ -819,17 +810,15 @@ inline bool CFArrayType<KeyType, ValueType>::InsertNextBlock(
 template <typename KeyType, typename ValueType>
 inline bool CFArrayType<KeyType, ValueType>::CheckIsPrefetch(
     const DataArrayStructure<KeyType, ValueType> &data,
-    const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
-    int neededBlockNum, int left, int size) {
+    const std::vector<int> &prefetchIndex, int neededBlockNum) {
   // check whether these points can be prefetched
-  int end = left + size;
   int leftIdx = prefetchIndex[0];
   // Case 1: the needed data blocks exceed the exsiting data array
   // return false directly
   if (leftIdx + neededBlockNum > data.dataArray.size()) {
     return false;
   }
-  int rightIdx = prefetchIndex[size - 1];
+  int rightIdx = prefetchIndex[prefetchIndex.size() - 1];
   rightIdx = std::min(leftIdx + neededBlockNum - 1, rightIdx);
   // Case 2: if the predicted data blocks have been used before, return false
   for (int i = leftIdx; i <= rightIdx; i++) {
@@ -992,9 +981,10 @@ inline bool CFArrayType<KeyType, ValueType>::StoreSubsequent(
 template <typename KeyType, typename ValueType>
 inline bool CFArrayType<KeyType, ValueType>::StoreData(
     const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
-    bool isInitMode, int neededBlockNum, int left, int size,
+    bool isInitMode, int neededBlockNum, int left,
     DataArrayStructure<KeyType, ValueType> *data, int *prefetchEnd) {
   // if the dataset is empty, return true directly
+  int size = prefetchIndex.size();
   if (neededBlockNum == 0 || size == 0) {
     flagNumber = (ARRAY_LEAF_NODE << 24) + 0;
     return true;
@@ -1005,8 +995,7 @@ inline bool CFArrayType<KeyType, ValueType>::StoreData(
   int leftIdx = prefetchIndex[0];
   if (isInitMode) {
     // check whether these points can be prefetched
-    isPossible = CheckIsPrefetch(*data, dataset, prefetchIndex, neededBlockNum,
-                                 left, size);
+    isPossible = CheckIsPrefetch(*data, prefetchIndex, neededBlockNum);
   }
   if (isInitMode && isPossible) {
     // if the current status is init mode and these data points can be stored as

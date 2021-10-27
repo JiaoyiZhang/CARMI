@@ -75,13 +75,13 @@ class ExternalArray {
    * @param[in] dataset the dataset
    * @param[in] prefetchIndex this parameter is to be consistent with the cf
    * leaf node. It is useless here.
-   * @param[in] start_idx the starting index of data points in the dataset
-   * @param[in] size the size of data points
+   * @param[in] start_idx the starting index of data points in the dataset, the
+   * size of the sub-dataset is equal to the size of the prefetchIndex vector
    * @param[in] data this parameter is to be consistent with the cf leaf
    * node. It is useless here.
    */
   void Init(const DataVectorType &dataset,
-            const std::vector<int> &prefetchIndex, int start_idx, int size,
+            const std::vector<int> &prefetchIndex, int start_idx,
             DataArrayStructure<KeyType, KeyType> *data);
 
   /**
@@ -227,8 +227,9 @@ ExternalArray<KeyType>::ExtractDataset(const void *external_data, int left,
 template <typename KeyType>
 inline void ExternalArray<KeyType>::Init(
     const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
-    int start_idx, int size, DataArrayStructure<KeyType, KeyType> *data) {
+    int start_idx, DataArrayStructure<KeyType, KeyType> *data) {
   m_left = start_idx;
+  int size = prefetchIndex.size();
   if (size == 0) return;
 
   Train(dataset, start_idx, size);
