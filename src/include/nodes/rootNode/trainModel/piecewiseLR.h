@@ -122,7 +122,7 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
   int cand_size = std::min(size, 1000);
   DataVectorType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
-  CandidateCost<DataVectorType, std::pair<KeyType, double>> cand_cost;
+  CandidateCost<DataVectorType> cand_cost;
   float seg = size * 1.0 / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
     if (i * seg >= size) {

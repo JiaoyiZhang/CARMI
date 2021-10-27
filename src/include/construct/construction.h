@@ -37,7 +37,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
   // the cost of all leaf nodes in different allocated number of data blocks
   std::map<int, std::vector<double>> CostPerLeaf;
 
-  for (int i = 0; i < subDataset.subInit.size(); i++) {
+  for (int i = 0; i < static_cast<int>(subDataset.subInit.size()); i++) {
     COST.insert({emptyRange, emptyCost});
 
     NodeCost resChild;
@@ -115,9 +115,8 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
           int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
           prefetchIndex[j - s] = p;
         }
-        isSuccess =
-            currnode.StoreData(initDataset, prefetchIndex, true,
-                               predictBlockNum, s, e - s, &data, &prefetchEnd);
+        isSuccess = currnode.StoreData(initDataset, prefetchIndex, true,
+                                       predictBlockNum, s, &data, &prefetchEnd);
       }
       if (!isSuccess) {
         remainingNode.push_back(prefetchNode[i]);
@@ -148,7 +147,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
       }
 
       currnode.StoreData(initDataset, prefetchIndex, isInitMode, neededBlockNum,
-                         s, e - s, &data, &prefetchEnd);
+                         s, &data, &prefetchEnd);
       node.nodeArray[remainingNode[i]].cfArray = currnode;
       scanLeaf.push_back(remainingNode[i]);
     }

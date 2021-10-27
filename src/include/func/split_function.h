@@ -70,7 +70,7 @@ inline void CARMI<KeyType, ValueType>::Split(int idx) {
       int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
       prefetchIndex[j - s] = p;
     }
-    tmpLeaf.Init(tmpDataset, prefetchIndex, s, perSize[i].size, &data);
+    tmpLeaf.Init(tmpDataset, prefetchIndex, s, &data);
     if (isExternal) {
       tmpLeaf.m_left = tmpLeft;
       tmpLeft += perSize[i].size;

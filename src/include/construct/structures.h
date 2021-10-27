@@ -33,6 +33,17 @@ struct RootStruct {
    * @brief the number of its child nodes
    */
   int rootChildNum;
+
+  /**
+   * @brief Construct a new Root Struct object and set the values
+   *
+   * @param[in] type the type of the root node
+   * @param[in] c the number of child nodes
+   */
+  RootStruct(int type, int c) {
+    rootType = type;
+    rootChildNum = c;
+  }
 };
 
 /**
@@ -107,12 +118,12 @@ class DataRange {
   /**
    * @brief Construct a new Data Range object
    *
-   * @param init the index range of sub-initDataset: {the left index of the
+   * @param[in] init the index range of sub-initDataset: {the left index of the
    * sub-dataset in the initDataset, the size of the sub-dataset}
-   * @param find the index range of sub-findQuery: {the left index of the
+   * @param[in] find the index range of sub-findQuery: {the left index of the
    * sub-dataset in the findQuery, the size of the sub-dataset}
-   * @param insert the index range of sub-insertQuery: {the left index of the
-   * sub-dataset in the insertQuery, the size of the sub-dataset}
+   * @param[in] insert the index range of sub-insertQuery: {the left index of
+   * the sub-dataset in the insertQuery, the size of the sub-dataset}
    */
   DataRange(IndexPair init, IndexPair find, IndexPair insert)
       : initRange(init), findRange(find), insertRange(insert) {}
@@ -149,7 +160,7 @@ class SubDataset {
   /**
    * @brief Construct a new SubDataset object and the size of the vector is c
    *
-   * @param c the size of the vector
+   * @param[in] c the size of the vector
    */
   explicit SubDataset(int c)
       : subInit(std::vector<IndexPair>(c, {-1, 0})),

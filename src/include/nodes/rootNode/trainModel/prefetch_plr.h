@@ -158,7 +158,7 @@ inline int PrefetchPLR::PrefetchTrain(
   std::vector<std::pair<double, int>> candidates;
   for (int i = 0; i < size; i += seg_len) {
     candidates.push_back(dataset[i]);
-    if (candidates.size() == candidate_size) {
+    if (static_cast<int>(candidates.size()) == candidate_size) {
       break;
     }
   }

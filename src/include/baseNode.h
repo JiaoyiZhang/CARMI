@@ -38,12 +38,12 @@ class CARMIRoot : public PLRType<DataVectorType, KeyType> {
   // *** Constructed Types and Constructor
 
   /**
-   * @brief Construct a new CARMIRoot object
+   * @brief Construct a new CARMIRoot object with the default constructor
    */
   CARMIRoot() = default;
 
   /**
-   * @brief Copy from a PLRType object to an object of the current class.
+   * @brief Copy from a PLRType object to an object of the current object.
    *
    * @param[in] currnode the PLRType object
    * @return CARMIRoot& the object of the current class
