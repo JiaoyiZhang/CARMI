@@ -99,7 +99,7 @@ class ExternalArray {
    * @param[in] key the given key value
    * @param[in] recordLength the length of the record
    * @param[in] external_data the external data
-   * @return int the position of the record
+   * @return int the position of the record in the external dataset
    */
   int Find(const KeyType &key, int recordLength,
            const void *external_data) const;
@@ -280,7 +280,7 @@ inline int ExternalArray<KeyType>::Find(const KeyType &key, int recordLength,
   if (*reinterpret_cast<const KeyType *>(
           static_cast<const char *>(external_data) +
           (m_left + preIdx) * recordLength) == key) {
-    return preIdx;
+    return m_left + preIdx;
   }
 
   // Case 2: the predicted position is inaccurate.
@@ -288,15 +288,13 @@ inline int ExternalArray<KeyType>::Find(const KeyType &key, int recordLength,
   preIdx = Search(key, preIdx, recordLength, external_data);
 
   // Case 2.1: find the data point unsuccessfully, return 0.
-  if (preIdx >= m_left + (flagNumber & 0x00FFFFFF) ||
-      *reinterpret_cast<const KeyType *>(
-          static_cast<const char *>(external_data) + preIdx * recordLength) !=
-          key) {
-    return 0;
+  if (preIdx >= m_left + (flagNumber & 0x00FFFFFF)) {
+    return -1;
   }
 
-  // Case 2.2: find the data poin successfully, return its index in this node.
-  return preIdx - m_left;
+  // Case 2.2: find the data poin successfully, return its index in the external
+  // dataset.
+  return preIdx;
 }
 
 template <typename KeyType>

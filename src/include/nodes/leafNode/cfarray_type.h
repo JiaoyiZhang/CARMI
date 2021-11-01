@@ -118,7 +118,7 @@ class CFArrayType {
    * @param[in] prefetchIndex the prefetch predicted index of each key value
    * @param[in] start_idx the starting index of data points, the size of data
    * points is equal to the size of the prefetchIndex vector
-   * @param[in] data the data array
+   * @param[inout] data the data array
    */
   void Init(const DataVectorType &dataset,
             const std::vector<int> &prefetchIndex, int start_idx,
@@ -147,11 +147,14 @@ class CFArrayType {
    * initiated by the leaf node under certain situations:
    *
    * @param[in] datapoint the inserted data point
+   * @param[out] currblock the index of the data block
+   * @param[out] currslot the index of the data point in the data block in
+   * the cf array leaf node
    * @param[inout] data the data array after the insert
    * @retval true the insert is successful
    * @retval false the insert fails
    */
-  bool Insert(const DataType &datapoint,
+  bool Insert(const DataType &datapoint, int *currblock, int *currslot,
               DataArrayStructure<KeyType, ValueType> *data);
 
   /**
@@ -180,10 +183,26 @@ class CFArrayType {
    * corresponding data point, return true directly.
    *
    * @param[in] key the given key value
+   * @param[out] cnt the number of deleted data points
    * @param[inout] data the data array after the delete
    * @retval true the delete is successful
    */
-  bool Delete(const KeyType &key, DataArrayStructure<KeyType, ValueType> *data);
+  bool Delete(const KeyType &key, int *cnt,
+              DataArrayStructure<KeyType, ValueType> *data);
+
+  /**
+   * @brief Delete the data point at the given position
+   *
+   * @param[in] key the given key value
+   * @param[in] currblock the index of the data block of the leaf node
+   * @param[in] currslot the index of the data point in the data block in
+   * the cf array leaf node
+   * @param[inout] data the data array after the delete
+   * @retval true if the operation succeeds
+   * @retval false if the operation fails (the given position is invalid)
+   */
+  bool DeleteSingleData(const KeyType &key, int currblock, int currslot,
+                        DataArrayStructure<KeyType, ValueType> *data);
 
   /**
    * @brief store data points into the data array
@@ -199,8 +218,8 @@ class CFArrayType {
    * @param[inout] data the data array
    * @param[inout] prefetchEnd the right index of prefetched blocks in initial
    * mode, this parameter is useless if the isInitMode is false.
-   * @return true store data points in the data array successfully
-   * @return false store data points unsuccessfully, this status only occurs in
+   * @retval true store data points in the data array successfully
+   * @retval false store data points unsuccessfully, this status only occurs in
    * the init mode and the given data blocks cannot accomodate these data
    * points.
    */
@@ -275,24 +294,30 @@ class CFArrayType {
    * @param[in] currBlockIdx the index of the current data blocks in this node
    * @param[inout] currBlock the data block into which the data point will be
    * inserted
-   * @retval true this operation is successful
-   * @retval false if this data block is full, return false
+   * @retval true this operation is successful and the second value is the
+   * position of the inserted data point
+   * @retval false if this data block is full, return false and the second value
+   * is useless
    */
-  bool InsertDataBlock(const DataType &datapoint, int currBlockIdx,
-                       LeafSlots<KeyType, ValueType> *currBlock);
+  std::pair<bool, int> InsertDataBlock(
+      const DataType &datapoint, int currBlockIdx,
+      LeafSlots<KeyType, ValueType> *currBlock);
 
   /**
    * @brief insert a data point into the next data block in the leaf node
    *
-   * @param[in] datapoint the data points needed to be inserted
+   * @param[in] currdata the data points needed to be inserted
    * @param[in] currBlockIdx the index of the current data block in the leaf
    * node
    * @param[inout] data the data array
-   * @retval true INSERT succeeds
-   * @retval false INSERT fails (the next structure is full)
+   * @retval true this operation is successful and the second value is the
+   * position of the inserted data point
+   * @retval false if this data block is full, return false and the second value
+   * is useless
    */
-  inline bool InsertNextBlock(const DataType &currdata, int currBlockIdx,
-                              DataArrayStructure<KeyType, ValueType> *data);
+  inline std::pair<bool, int> InsertNextBlock(
+      const DataType &currdata, int currBlockIdx,
+      DataArrayStructure<KeyType, ValueType> *data);
 
  private:
   //*** Private Sub-Functions of StoreData
@@ -304,7 +329,7 @@ class CFArrayType {
    * @param[in] prefetchIndex the prefetch predicted index of each key value
    * @param[in] neededBlockNum the needed number of data blocks
    * @retval true these data points can be stored as prefetched
-   * @return false these data points cannot be stored as prefetched
+   * @retval false these data points cannot be stored as prefetched
    */
   bool CheckIsPrefetch(const DataArrayStructure<KeyType, ValueType> &data,
                        const std::vector<int> &prefetchIndex,
@@ -323,7 +348,7 @@ class CFArrayType {
    * @param[out] missNumber the number of data points which are not stored as
    * the prefetching index
    * @retval true these data points have been stored as prefetched
-   * @return false the given data blocks cannot accomodate these data points
+   * @retval false the given data blocks cannot accomodate these data points
    */
   inline bool StorePrevious(
       const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
@@ -339,12 +364,12 @@ class CFArrayType {
    * @param[in] prefetchIndex the prefetch predicted index of each key value
    * @param[in] neededBlockNum the number of needed data blocks to store all the
    * data points
-   * @param[in] tmpBlockVec blocks to store data points
-   * @param[in] actualBlockNum the actual number of used data blocks
-   * @param[in] missNumber the number of data points which are not stored as
+   * @param[out] tmpBlockVec blocks to store data points
+   * @param[out] actualBlockNum the actual number of used data blocks
+   * @param[out] missNumber the number of data points which are not stored as
    * the prefetching index
    * @retval true these data points have been stored as prefetched
-   * @return false the given data blocks cannot accomodate these data points
+   * @retval false the given data blocks cannot accomodate these data points
    */
   inline bool StoreSubsequent(
       const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
@@ -488,7 +513,8 @@ inline int CFArrayType<KeyType, ValueType>::Find(
 
 template <typename KeyType, typename ValueType>
 inline bool CFArrayType<KeyType, ValueType>::Insert(
-    const DataType &datapoint, DataArrayStructure<KeyType, ValueType> *data) {
+    const DataType &datapoint, int *currblock, int *currslot,
+    DataArrayStructure<KeyType, ValueType> *data) {
   int nowBlockNum = flagNumber & 0x00FFFFFF;
   // Case 1: insert fails.
   // If there is no empty position for the newly inserted data point,
@@ -506,6 +532,7 @@ inline bool CFArrayType<KeyType, ValueType>::Insert(
     m_left = data->AllocateMemory(1);
     data->dataArray[m_left].slots[0] = datapoint;
     slotkeys[0] = datapoint.first + 1;
+    *currblock = 0;
     flagNumber++;
     return true;
   }
@@ -515,10 +542,12 @@ inline bool CFArrayType<KeyType, ValueType>::Insert(
   // point. currblock is the serial number of this data block in all data blocks
   // managed by this leaf node. Then insert the data point into this data block,
   // return directly if successful.
-  int currblock = Search(datapoint.first);
-  bool isSuccess = InsertDataBlock(datapoint, currblock,
-                                   &(data->dataArray[m_left + currblock]));
+  *currblock = Search(datapoint.first);
+  auto tmpRes = InsertDataBlock(datapoint, *currblock,
+                                &(data->dataArray[m_left + *currblock]));
+  bool isSuccess = tmpRes.first;
   if (isSuccess) {
+    *currslot = tmpRes.second;
     return true;
   }
 
@@ -528,11 +557,14 @@ inline bool CFArrayType<KeyType, ValueType>::Insert(
   // If inserting into the current data block fails, and there is an empty
   // position in the next data block, insert into the next data block.
   // Return directly if successful.
-  if (currblock < nowBlockNum - 1 && data->dataArray[m_left + currblock + 1]
-                                             .slots[kMaxBlockCapacity - 1]
-                                             .first == DBL_MAX) {
-    isSuccess = InsertNextBlock(datapoint, currblock, data);
+  if (*currblock < nowBlockNum - 1 && data->dataArray[m_left + *currblock + 1]
+                                              .slots[kMaxBlockCapacity - 1]
+                                              .first == DBL_MAX) {
+    tmpRes = InsertNextBlock(datapoint, *currblock, data);
+    isSuccess = tmpRes.first;
     if (isSuccess) {
+      *currblock = (*currblock) + 1;
+      *currslot = tmpRes.second;
       return true;
     }
   }
@@ -558,10 +590,11 @@ inline bool CFArrayType<KeyType, ValueType>::Insert(
   }
   // After the corresponding mechnism, there are some empty positions for the
   // inserted data point.
-  currblock = Search(datapoint.first);
-  isSuccess = InsertDataBlock(datapoint, currblock,
-                              &(data->dataArray[m_left + currblock]));
-
+  *currblock = Search(datapoint.first);
+  tmpRes = InsertDataBlock(datapoint, *currblock,
+                           &(data->dataArray[m_left + *currblock]));
+  isSuccess = tmpRes.first;
+  *currslot = tmpRes.second;
   return isSuccess;
 }
 
@@ -583,7 +616,8 @@ inline bool CFArrayType<KeyType, ValueType>::Update(
 
 template <typename KeyType, typename ValueType>
 inline bool CFArrayType<KeyType, ValueType>::Delete(
-    const KeyType &key, DataArrayStructure<KeyType, ValueType> *data) {
+    const KeyType &key, int *cnt,
+    DataArrayStructure<KeyType, ValueType> *data) {
   // Get the number of data blocks
   int nowBlockNum = flagNumber & 0x00FFFFFF;
   // Find the corresponding data block which stores this data point.
@@ -625,6 +659,33 @@ inline bool CFArrayType<KeyType, ValueType>::Delete(
       }
       break;
     }
+  }
+  *cnt = deletedCnt;
+  return true;
+}
+
+template <typename KeyType, typename ValueType>
+inline bool CFArrayType<KeyType, ValueType>::DeleteSingleData(
+    const KeyType &key, int currblock, int currslot,
+    DataArrayStructure<KeyType, ValueType> *data) {
+  // Get the number of data blocks
+  int nowBlockNum = flagNumber & 0x00FFFFFF;
+  int blockIdx = m_left + currblock;
+
+  // Case 1: the given position is invalid
+  if (currblock < 0 || currblock >= nowBlockNum || currslot < 0 ||
+      currslot >= kMaxBlockCapacity ||
+      data->dataArray[blockIdx].slots[currslot].first != key) {
+    return false;
+  }
+
+  // Case 2: delete the data point
+  data->dataArray[blockIdx].slots[currslot] = {DBL_MAX, DBL_MAX};
+  currslot++;
+  while (currslot < kMaxBlockCapacity &&
+         data->dataArray[blockIdx].slots[currslot].first != DBL_MAX) {
+    data->dataArray[blockIdx].slots[currslot - 1] =
+        data->dataArray[blockIdx].slots[currslot];
   }
   return true;
 }
@@ -706,12 +767,12 @@ inline void CFArrayType<KeyType, ValueType>::Expand(
 }
 
 template <typename KeyType, typename ValueType>
-bool CFArrayType<KeyType, ValueType>::InsertDataBlock(
+std::pair<bool, int> CFArrayType<KeyType, ValueType>::InsertDataBlock(
     const DataType &currdata, int currBlockIdx,
     LeafSlots<KeyType, ValueType> *currBlock) {
   // Case 1: this data block is full, return false directly
   if (currBlock->slots[kMaxBlockCapacity - 1].first != DBL_MAX) {
-    return false;
+    return {false, 0};
   }
   // Case 2: this first slot in the currBlock is empty, insert the data point
   // into it and update the slotkeys, then return true directly
@@ -722,7 +783,7 @@ bool CFArrayType<KeyType, ValueType>::InsertDataBlock(
     } else {
       slotkeys[currBlockIdx - 1] = currdata.first;
     }
-    return true;
+    return {true, 0};
   }
   // Case 3: insert the data point into other slots
   // first find the position to be inserted
@@ -738,7 +799,7 @@ bool CFArrayType<KeyType, ValueType>::InsertDataBlock(
         slotkeys[0] = currdata.first + 1;
       }
     }
-    return true;
+    return {true, res};
   }
   // Case 3.2: this slot is not empty
   // We first need to make room for the inserted data point
@@ -763,21 +824,23 @@ bool CFArrayType<KeyType, ValueType>::InsertDataBlock(
       slotkeys[0] = currdata.first + 1;
     }
   }
-  return true;
+  return {true, res};
 }
 
 template <typename KeyType, typename ValueType>
-inline bool CFArrayType<KeyType, ValueType>::InsertNextBlock(
+inline std::pair<bool, int> CFArrayType<KeyType, ValueType>::InsertNextBlock(
     const DataType &currdata, int currBlockIdx,
     DataArrayStructure<KeyType, ValueType> *data) {
   int nowDataIdx = m_left + currBlockIdx;
+  int currslot = 0;
   // Case 1: the key value of the inserted data point is larger than the last
   // data point in the current data block, insert the given data point into
   // the next data block
   if (currdata.first >=
       data->dataArray[nowDataIdx].slots[kMaxBlockCapacity - 1].first) {
-    InsertDataBlock(currdata, currBlockIdx + 1,
-                    &data->dataArray[nowDataIdx + 1]);
+    auto res = InsertDataBlock(currdata, currBlockIdx + 1,
+                               &data->dataArray[nowDataIdx + 1]);
+    currslot = res.second;
   } else {
     // Case 2: the key value of the inserted data point is smaller than the last
     // data point in the current data block, insert the last data point in the
@@ -789,6 +852,7 @@ inline bool CFArrayType<KeyType, ValueType>::InsertNextBlock(
     for (int i = kMaxBlockCapacity - 1; i >= 0; i--) {
       if (i == 0) {
         data->dataArray[nowDataIdx].slots[0] = currdata;
+        currslot = 0;
         if (currBlockIdx != 0)
           slotkeys[currBlockIdx - 1] =
               data->dataArray[nowDataIdx].slots[0].first;
@@ -798,13 +862,14 @@ inline bool CFArrayType<KeyType, ValueType>::InsertNextBlock(
             data->dataArray[nowDataIdx].slots[i - 1];
       } else {
         data->dataArray[nowDataIdx].slots[i] = currdata;
+        currslot = i;
         break;
       }
     }
   }
   // update the slotkeys
   slotkeys[currBlockIdx] = data->dataArray[nowDataIdx + 1].slots[0].first;
-  return true;
+  return {true, currslot};
 }
 
 template <typename KeyType, typename ValueType>
@@ -848,7 +913,8 @@ inline bool CFArrayType<KeyType, ValueType>::StorePrevious(
     if (p >= neededBlockNum) {
       p = neededBlockNum - 1;
     }
-    auto insertSuccess = InsertDataBlock(dataset[i], 0, &(*tmpBlockVec)[p]);
+    auto tmpRes = InsertDataBlock(dataset[i], 0, &(*tmpBlockVec)[p]);
+    bool insertSuccess = tmpRes.first;
     DataType nowDatapoint = dataset[i];
     DataType preDatapoint;
     std::vector<LeafSlots<KeyType, ValueType>> tmp = *tmpBlockVec;
@@ -865,7 +931,8 @@ inline bool CFArrayType<KeyType, ValueType>::StorePrevious(
       if (p < 0) {
         break;
       }
-      insertSuccess = InsertDataBlock(preDatapoint, 0, &(*tmpBlockVec)[p]);
+      tmpRes = InsertDataBlock(preDatapoint, 0, &(*tmpBlockVec)[p]);
+      insertSuccess = tmpRes.first;
       nowDatapoint = preDatapoint;
     }
     // insert into the subsequent block
@@ -874,7 +941,8 @@ inline bool CFArrayType<KeyType, ValueType>::StorePrevious(
       while (p + 1 < neededBlockNum && !insertSuccess) {
         *tmpBlockVec = tmp;
         p++;
-        insertSuccess = InsertDataBlock(dataset[i], 0, &(*tmpBlockVec)[p]);
+        tmpRes = InsertDataBlock(dataset[i], 0, &(*tmpBlockVec)[p]);
+        insertSuccess = tmpRes.first;
       }
     }
     if (insertSuccess) {
@@ -925,13 +993,15 @@ inline bool CFArrayType<KeyType, ValueType>::StoreSubsequent(
     if (p >= neededBlockNum) {
       p = neededBlockNum - 1;
     }
-    auto insertSuccess = InsertDataBlock(dataset[i], 0, &(*tmpBlockVec)[p]);
+    auto tmpRes = InsertDataBlock(dataset[i], 0, &(*tmpBlockVec)[p]);
+    bool insertSuccess = tmpRes.first;
     DataType nowDatapoint = dataset[i];
     DataType preDatapoint;
     // insert into the subsequent block
     while (!insertSuccess && p + 1 < neededBlockNum) {
       p++;
-      insertSuccess = InsertDataBlock(dataset[i], 0, &(*tmpBlockVec)[p]);
+      tmpRes = InsertDataBlock(dataset[i], 0, &(*tmpBlockVec)[p]);
+      insertSuccess = tmpRes.first;
     }
 
     // insert into the previous block
@@ -945,7 +1015,8 @@ inline bool CFArrayType<KeyType, ValueType>::StoreSubsequent(
       if (p < 0) {
         break;
       }
-      insertSuccess = InsertDataBlock(preDatapoint, 0, &(*tmpBlockVec)[p]);
+      tmpRes = InsertDataBlock(preDatapoint, 0, &(*tmpBlockVec)[p]);
+      insertSuccess = tmpRes.first;
       nowDatapoint = preDatapoint;
     }
 

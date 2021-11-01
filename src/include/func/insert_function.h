@@ -23,7 +23,9 @@
 #include "./split_function.h"
 
 template <typename KeyType, typename ValueType>
-bool CARMI<KeyType, ValueType>::Insert(const DataType &datapoint) {
+std::pair<BaseNode<KeyType, ValueType> *, bool>
+CARMI<KeyType, ValueType>::Insert(const DataType &datapoint, int *currblock,
+                                  int *currslot) {
   int idx = 0;  // idx in the node array
   int type = root.flagNumber;
   while (1) {
@@ -65,9 +67,11 @@ bool CARMI<KeyType, ValueType>::Insert(const DataType &datapoint) {
       case ARRAY_LEAF_NODE: {
         // Case 5: this node is the cache-friendly array leaf node
         // insert the data point in the cf leaf node
-        bool isSuccess = node.nodeArray[idx].cfArray.Insert(datapoint, &data);
+        bool isSuccess = node.nodeArray[idx].cfArray.Insert(
+            datapoint, currblock, currslot, &data);
         if (isSuccess) {
-          return true;
+          currsize++;
+          return {&node.nodeArray[idx], true};
         } else {
           // if this leaf node cannot accomodate more data points, we need to
           // split it and replace it with a new inner node and several new leaf
@@ -82,9 +86,11 @@ bool CARMI<KeyType, ValueType>::Insert(const DataType &datapoint) {
         // Case 6: this node is the external array leaf node
         // insert the key value of the data point in the external leaf node
         bool isSuccess =
-            node.nodeArray[idx].externalArray.Insert(datapoint, &curr);
+            node.nodeArray[idx].externalArray.Insert(datapoint, &currsize);
+
         if (isSuccess) {
-          return true;
+          *currslot = currsize;
+          return {&node.nodeArray[idx], true};
         } else {
           // if this leaf node cannot accomodate more data points, we need to
           // split it and replace it with a new inner node and several new leaf

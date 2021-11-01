@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 
+#include "./base_node.h"
 #include "./params.h"
-#include "baseNode.h"
 #include "construct/structures.h"
 #include "memoryLayout/data_array.h"
 #include "memoryLayout/node_array.h"
@@ -60,6 +60,21 @@ class CARMI {
    */
   typedef std::vector<DataType> DataVectorType;
 
+  /**
+   * @brief the type of the key value vector: [key_0, key_1, ..., key_n].
+   */
+  typedef std::vector<KeyType> KeyVectorType;
+
+  /**
+   * @brief the type of the historical queries vector: [{key_0, times_0},
+   * {key_1, times_1}, ..., {key_n, times_n}]. The second object means the
+   * accessed times of  the key value in the historical access queries.
+   */
+  typedef std::vector<std::pair<KeyType, int>> QueryType;
+
+  /**
+   * @brief Construct a new empty CARMI object
+   */
   CARMI();
 
   /**
@@ -106,14 +121,14 @@ class CARMI {
    * @param[in] findData the vector of find dataset, used as historical find
    * queries to assist in constructing index. Each element is: {key value,
    * the visited times of this data point}
-   * @param[in] insertData the vector of insert dataset, used as historical
-   * insert queries to assist in constructing index. Each element is: {key
-   * value, the inserted times of this data point}
+   * @param[in] insertData the key vector of insert dataset, used as historical
+   * insert queries to assist in constructing index. Each element is the key
+   * value.
    * @param[in] lambda cost = time + lambda * space, used to tradeoff between
    * time and space cost
    */
-  CARMI(const DataVectorType &initData, const DataVectorType &findData,
-        const DataVectorType &insertData, double lambda);
+  CARMI(const DataVectorType &initData, const QueryType &findData,
+        const KeyVectorType &insertData, double lambda);
 
   /**
    * @brief Construct a new CARMI object, which uses a hybrid construction
@@ -165,8 +180,17 @@ class CARMI {
    * @param[in] record_number the number of all the records
    * @param[in] record_len the length of a record
    */
-  CARMI(const void *dataset, const std::vector<KeyType> &insertData,
-        double lambda, int record_number, int record_len);
+  CARMI(const void *dataset, const KeyVectorType &insertData, double lambda,
+        int record_number, int record_len);
+
+  /**
+   * @brief Removes all elements
+   */
+  void clear() {
+    data = DataArrayStructure<KeyType, ValueType>(
+        CFArrayType<KeyType, ValueType>::kMaxBlockNum, 1000);
+    node = NodeArrayStructure<KeyType, ValueType>();
+  }
 
   /**
    * @brief The main function of index construction.
@@ -200,9 +224,17 @@ class CARMI {
    * @brief insert a data point
    *
    * @param[in] datapoint the inserted data point
-   * @retval true if the insertion is successful
+   * @param[out] currblock the index of the data block of the returned leaf
+   * node, useless in the external array leaf node
+   * @param[out] currslot (1) the index of the data point in the data block in
+   * the cf array leaf node; (2) the index of the data point in the external
+   * array leaf node
+   * @return std::pair<BaseNode<KeyType, ValueType>*, bool> the first element is
+   * the leaf node which manages this data point and the pair::second element in
+   * the pair is set to true if a new element was inserted.
    */
-  bool Insert(const DataType &datapoint);
+  std::pair<BaseNode<KeyType, ValueType> *, bool> Insert(
+      const DataType &datapoint, int *currblock, int *currslot);
 
   /**
    * @brief update a data point of the given key
@@ -215,12 +247,30 @@ class CARMI {
   bool Update(const DataType &datapoint);
 
   /**
-   * @brief delete the record of the given key
+   * @brief delete all the records of the given key
    *
    * @param[in] key the key value of the deleted record
+   * @param[out] cnt the number of deleted data points
    * @retval true deletion is successful
    */
-  bool Delete(const KeyType &key);
+  bool Delete(const KeyType &key, int *cnt);
+
+  /**
+   * @brief delete a data point
+   *
+   * @param[in] key the key value of the deleted record
+   * @param[in] currnode the leaf node
+   * @param[in] currblock the index of the data block of the leaf node
+   * @param[in] currslot the index of the data point in the data block in
+   * the cf array leaf node
+   * @retval true if the operation succeeds
+   * @retval false if the operation fails (the given position is invalid)
+   */
+  bool DeleteSingleData(const KeyType &key,
+                        const BaseNode<KeyType, ValueType> &currnode,
+                        int currblock, int currslot) {
+    return currnode.DeleteSingleData(key, currblock, currslot, &data);
+  }
 
  public:
   // *** Functions of Getting Some Information of CARMI Objects
@@ -228,9 +278,9 @@ class CARMI {
   /**
    * @brief calculate the space cost of the CARMI object
    *
-   * @return long double: the space cost (byte)
+   * @return long long: the space cost (byte)
    */
-  long double CalculateSpace() const;
+  long long CalculateSpace() const;
 
   /**
    * @brief Get the information of the tree node, return the type identifier of
@@ -526,7 +576,7 @@ class CARMI {
    * @param[in] totalPrefetchedNum the total size of the data points which can
    * be prefetched
    * @return std::vector<double> the vector of all cost, each element is the
-   * total cost: time + kRate * space
+   * total cost: time + lambda * space
    */
   std::vector<double> CalculateCFArrayCost(int size, int totalPrefetchedNum);
 
@@ -547,6 +597,25 @@ class CARMI {
   template <typename InnerNodeType>
   void NodePartition(const InnerNodeType &node, const IndexPair &range,
                      const DataVectorType &dataset,
+                     std::vector<IndexPair> *subData) const;
+
+  /**
+   * @brief use this node to split the data points of the given dataset and
+   * return the range of each sub-dataset
+   *
+   * @tparam InnerNodeType the type of this node
+   * @param[in] node the current node used to split dataset
+   * @param[in] range the range of these data points in the sub-dataset:
+   * {the left index of the sub-dataset in the dataset, the size of the
+   * sub-dataset}
+   * @param[in] dataset the dataset needed to be divided
+   * @param[out] subData the range of each sub-dataset after being split, each
+   * element is: {the left index of each sub-dataset in the dataset, the size of
+   * each sub-dataset}
+   */
+  template <typename InnerNodeType>
+  void NodePartition(const InnerNodeType &node, const IndexPair &range,
+                     const KeyVectorType &dataset,
                      std::vector<IndexPair> *subData) const;
 
   /**
@@ -585,25 +654,34 @@ class CARMI {
   NodeArrayStructure<KeyType, ValueType> node;
 
   /**
-   * @brief designed for carmi_common objects, used to manage data points
+   * @brief used to manage and store data points
    */
   DataArrayStructure<KeyType, ValueType> data;
 
   /**
-   * @brief designed for carmi_external objects, the location of the external
-   * dataset
+   * @brief the pointer to the location of the external dataset
    */
   const void *external_data;
 
   /**
-   * @brief designed for carmi_external objects, the length of a record
+   * @brief the length of a record of the external dataset (in byte)
    */
   int recordLength;
 
   /**
-   * @brief designed for calculating the avg depth
+   * @brief the index of the first leaf node
    */
-  double sumDepth;
+  int firstLeaf;
+
+  /**
+   * @brief the index of the last leaf node
+   */
+  int lastLeaf;
+
+  /**
+   * @brief the current size of data points
+   */
+  int currsize;
 
  private:
   //*** Private Data Members of CARMI Objects
@@ -614,90 +692,104 @@ class CARMI {
   CARMIRoot<DataVectorType, KeyType> root;
 
   /**
-   * @brief designed for carmi_common, the last index of the prefetched data
-   * block
-   */
-  int prefetchEnd;
-
-  /**
    * @brief the parameter of the cost model: cost = time + lambda * space
    */
   double lambda;
 
   /**
-   * @brief the total frequency of queries
+   * @brief whether this carmi is a primary index
+   */
+  bool isPrimary;
+
+ private:
+  //*** Private Data Members of CARMI Objects for Construction
+
+  /**
+   * @brief designed for carmi_common, the last index of the prefetched data
+   * block. This parameter is useless after the index is constructed.
+   */
+  int prefetchEnd;
+
+  /**
+   * @brief the total frequency of queries. This parameter is useless after the
+   * index is constructed.
    */
   int querySize;
 
   /**
-   * @brief the space needed to be reserved for the future inserts
+   * @brief the space needed to be reserved for the future inserts. This
+   * parameter is useless after the index is constructed. This parameter is
+   * useless after the index is constructed.
    */
   int reservedSpace;
 
   /**
-   * @brief whether this carmi is a primary inde
-   */
-  bool isPrimary;
-
-  /**
-   * @brief the status of the construction: init mode or reconstruction mode
+   * @brief the init mode that we store leaf nodes according to the prefetch
+   * prediction model, and the other modes that leaf nodes are not stored
+   * according to the model. This parameter is useless after the index is
+   * constructed.
    */
   bool isInitMode;
 
   /**
-   * @brief designed for carmi_common objects, the index of the first leaf node
-   */
-  int firstLeaf;
-
-  /**
-   * @brief designed for carmi_external, the current insert index for external
-   * array
-   */
-  int curr;
-
-  /**
-   * @brief the initialized dataset
+   * @brief the initialized dataset. This parameter is useless after the index
+   * is constructed. Each element is: {key, value}.
    */
   DataVectorType initDataset;
 
   /**
-   * @brief the historical find queries
+   * @brief the historical find queries. This parameter is useless after the
+   * index is constructed. Each element is: {key value, the visited times of
+   * this data point}
    */
-  DataVectorType findQuery;
+  QueryType findQuery;
 
   /**
-   * @brief the historical insert queries
+   * @brief the historical insert queries. This parameter is useless after the
+   * index is constructed. Each element is: {key value, the inserted times of
+   * this data point}
    */
-  DataVectorType insertQuery;
+  KeyVectorType insertQuery;
 
   /**
    * @brief the cost of different sub-datasets, used for the memorized dp
-   * algorithm
+   * algorithm. Each element is: {{the left index in the initDataset, the size
+   * of the sub-dataset}, {the time cost, the space cost, the total cost}}. This
+   * parameter is useless after the index is constructed.
    */
   std::map<IndexPair, NodeCost> COST;
 
   /**
-   * @brief the optimal nodes corresponding to the sub-datasets
+   * @brief the optimal nodes corresponding to the sub-datasets. Each element
+   * is: {{the left index in the initDataset, the size of the sub-dataset}, the
+   * optimal node structure}. This parameter is useless after the index is
+   * constructed.
    */
   std::map<IndexPair, BaseNode<KeyType, ValueType>> structMap;
 
   /**
-   * @brief the order of leaf nodes
+   * @brief the order of leaf nodes. This parameter is useless after the index
+   * is constructed.
    */
   std::vector<int> scanLeaf;
 
   /**
-   * @brief the index of leaf nodes
+   * @brief the index of leaf nodes which cannot be stored as the prefetch
+   * prediction model. This parameter is useless after the index is constructed.
    */
   std::vector<int> remainingNode;
 
   /**
-   * @brief the range of the sub-datasets whose nodes are leaf nodes
+   * @brief the range of the sub-datasets whose nodes are leaf nodes and these
+   * leaf nodes cannot be stored as the prefetch prediction model. This
+   * parameter is useless after the index is constructed. This parameter is
+   * useless after the index is constructed.
    */
   std::vector<DataRange> remainingRange;
 
   /**
-   * @brief the empty leaf node
+   * @brief the empty leaf node. This parameter is useless after the index is
+   * constructed.
    */
   BaseNode<KeyType, ValueType> emptyNode;
 
@@ -705,12 +797,15 @@ class CARMI {
   // *** Static Constant Options and Values of CARMI
 
   /**
-   * @brief the empty range
+   * @brief the empty range. This parameter is useless after the index is
+   * constructed.
    */
   static constexpr IndexPair emptyRange = {-1, 0};
 
   /**
-   * @brief the empty cost of space, time and total cost are all 0
+   * @brief the empty cost of space, time and total cost are all 0. This
+   * parameter is useless after the index is constructed. This parameter is
+   * useless after the index is constructed.
    */
   static constexpr NodeCost emptyCost = {0, 0, 0};
 
@@ -751,7 +846,7 @@ CARMI<KeyType, ValueType>::CARMI() {
   // set the default values to the variables
   isPrimary = false;
   firstLeaf = -1;
-  sumDepth = 0;
+  lastLeaf = 0;
   isInitMode = true;
   prefetchEnd = -1;
 
@@ -763,22 +858,27 @@ CARMI<KeyType, ValueType>::CARMI() {
 
 template <typename KeyType, typename ValueType>
 CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
-                                 const DataVectorType &findData,
-                                 const DataVectorType &insertData, double l) {
+                                 const QueryType &findData,
+                                 const KeyVectorType &insertData, double l) {
   // set the default values to the variables
   isPrimary = false;
   lambda = l;
   firstLeaf = -1;
-  sumDepth = 0;
+  lastLeaf = 0;
   isInitMode = true;
   prefetchEnd = -1;
+  currsize = initDataset.size();
 
   // generate initDataset, findQuery, insertQuery
   initDataset = std::move(initData);
   findQuery = std::move(findData);
   if (findData.size() == 0) {
     // default to a read-only workload to construct the optimal index structure.
-    findQuery = initDataset;
+    findQuery.resize(initData.size());
+    for (int i = 0; i < static_cast<int>(findQuery.size()); i++) {
+      findQuery[i].first = initDataset[i].first;
+      findQuery[i].second = 1;
+    }
   }
   insertQuery = std::move(insertData);
   emptyNode.cfArray = CFArrayType<KeyType, ValueType>();
@@ -789,9 +889,7 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
   for (int i = 0; i < static_cast<int>(findQuery.size()); i++) {
     querySize += findQuery[i].second;
   }
-  for (int i = 0; i < static_cast<int>(insertQuery.size()); i++) {
-    querySize += insertQuery[i].second;
-  }
+  querySize += insertQuery.size();
 
   data = DataArrayStructure<KeyType, ValueType>(
       CFArrayType<KeyType, ValueType>::kMaxBlockNum, initDataset.size());
@@ -799,12 +897,11 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
 
 template <typename KeyType, typename ValueType>
 CARMI<KeyType, ValueType>::CARMI(const void *dataset,
-                                 const std::vector<KeyType> &insertData,
-                                 double l, int record_number, int record_len) {
+                                 const KeyVectorType &insertData, double l,
+                                 int record_number, int record_len) {
   // set the default values to the variables
   recordLength = record_len;
-  curr = record_number;
-  sumDepth = 0;
+  currsize = record_number;
   isInitMode = true;
   isPrimary = true;
   lambda = l;
@@ -830,10 +927,7 @@ CARMI<KeyType, ValueType>::CARMI(const void *dataset,
     querySize++;
   }
 
-  for (int i = 0; i < static_cast<int>(insertData.size()); i++) {
-    insertQuery[i] = {insertData[i], 1};
-    querySize++;
-  }
+  querySize += insertQuery.size();
 
   reservedSpace =
       static_cast<float>(insertQuery.size()) / initDataset.size() * 4096 * 16;

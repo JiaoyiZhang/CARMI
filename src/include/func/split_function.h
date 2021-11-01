@@ -78,6 +78,9 @@ inline void CARMI<KeyType, ValueType>::Split(int idx) {
     node.nodeArray[currnode.childLeft + i].cfArray =
         *(reinterpret_cast<CFArrayType<KeyType, ValueType> *>(&tmpLeaf));
   }
+  if (idx == lastLeaf) {
+    lastLeaf = currnode.childLeft + kInsertNewChildNumber - 1;
+  }
 
   // if the original leaf node is the cf array leaf node, we need to update the
   // pointer to the siblings of the new leaf nodes
