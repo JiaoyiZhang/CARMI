@@ -74,7 +74,7 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     // calculate the time cost of insert operations
     end = dataRange.insertRange.left + dataRange.insertRange.size;
     for (int i = dataRange.insertRange.left; i < end; i++) {
-      nodeCost.time += insertQuery[i].second * 1.0 / querySize *
+      nodeCost.time += 1.0 / querySize *
                        ((log2(avgSlotNum) * carmi_params::kCostBSTime) +
                         (1 + avgSlotNum) / 2.0 * carmi_params::kCostMoveTime);
     }

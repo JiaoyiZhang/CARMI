@@ -16,7 +16,7 @@
 #include "../carmi.h"
 
 template <typename KeyType, typename ValueType>
-bool CARMI<KeyType, ValueType>::Delete(const KeyType &key) {
+bool CARMI<KeyType, ValueType>::Delete(const KeyType &key, int *cnt) {
   int idx = 0;  // idx in the node array
   int type = root.flagNumber;
   while (1) {
@@ -57,7 +57,7 @@ bool CARMI<KeyType, ValueType>::Delete(const KeyType &key) {
       case ARRAY_LEAF_NODE: {
         // Case 5: this node is the cache-friendly array leaf node
         // Delete the data point in the cf leaf node
-        return node.nodeArray[idx].cfArray.Delete(key, &data);
+        return node.nodeArray[idx].cfArray.Delete(key, cnt, &data);
       }
     }
 

@@ -14,8 +14,8 @@
 #include <iostream>
 #include <random>
 
-#include "../include/carmi_common.h"
-#include "../include/carmi_external.h"
+#include "../include/carmi_external_map.h"
+#include "../include/carmi_map.h"
 const float kWriteHeavy = 0.5;  // write-heavy workload
 
 void TestCarmi() {
@@ -26,12 +26,13 @@ void TestCarmi() {
     initDataset[i].first = i * 2;
   }
   double rate = 0.1;  // cost = time + rate * space
+  std::vector<std::pair<double, double>> tmpinsert;
 
-  CARMICommon<double, double> carmi(initDataset.begin(), initDataset.end(),
-                                    initRatio, rate);
+  CARMIMap<double, double> carmi(initDataset.begin(), initDataset.end(),
+                                 tmpinsert.begin(), tmpinsert.end(), rate);
 
   // find the value of the given key
-  auto it = carmi.Find(initDataset[0].first);
+  auto it = carmi.find(initDataset[0].first);
   std::cout << "1.  FIND is successful, the value of the given key is: "
             << it.data() << std::endl;
   std::cout << "    Current and all subsequent key-value pairs:";
@@ -42,10 +43,10 @@ void TestCarmi() {
 
   // insert a data point
   std::pair<double, double> data = {5, 500};
-  auto res = carmi.Insert(data);
+  auto res = carmi.insert(data);
   std::cout << "2.  INSERT is successful!" << std::endl;
 
-  it = carmi.Find(data.first);
+  it = carmi.find(data.first);
   std::cout
       << "    FIND after INSERT is successful, the value of the given key is: "
       << it.data() << std::endl;
@@ -55,28 +56,13 @@ void TestCarmi() {
   }
   std::cout << std::endl;
 
-  // update the value of the given key
-  res = carmi.Update({initDataset[0].first, 5000});
-  if (res)
-    std::cout << "3.  UPDATE is successful!" << std::endl;
-  else
-    std::cout << "  UPDATE failed!" << std::endl;
-  it = carmi.Find(initDataset[0].first);
-  std::cout
-      << "    FIND after UPDATE is successful, the value of the given key is: "
-      << it.data() << std::endl;
-  std::cout << "      Current and all subsequent key-value pairs:";
-  for (; it != carmi.end(); ++it) {
-    std::cout << "{" << it.key() << ", " << it.data() << "}  ";
-  }
-  std::cout << std::endl;
   // delete the record of the given key
-  res = carmi.Delete(initDataset[0].first);
-  if (res)
+  int cnt = carmi.erase(initDataset[0].first);
+  if (cnt != 0)
     std::cout << "4.  DELETE is successful!" << std::endl;
   else
     std::cout << "  DELETE failed!" << std::endl;
-  it = carmi.Find(initDataset[0].first);
+  it = carmi.find(initDataset[0].first);
   if (it.data() == DBL_MIN) {
     std::cout << "    FIND after DELETE failed." << std::endl;
   }
@@ -101,27 +87,33 @@ void TestExternalCarmi() {
     j += 2;  // due to <double, double>
   }
   double maxKey = initDataset[initDataset.size() - 1].first;
-  std::vector<double> futureInsertKey(1, maxKey + 1);
+  std::vector<double> futureinsertKey(1, maxKey + 1);
 
-  CARMIExternal<double> carmi(externalDataset, futureInsertKey,
-                              initDataset.size(), record_size, rate);
+  CARMIExternalMap<double> carmi(externalDataset, futureinsertKey,
+                                 initDataset.size(), record_size, rate);
 
   // find the value of the given key
-  const double *ptr =
-      static_cast<const double *>(carmi.Find(initDataset[4].first));
-  std::cout << "1.  FIND is successful, the given key is: " << *ptr
-            << ",\tthe value is: " << *(ptr + 1) << std::endl;
+  auto it = carmi.find(initDataset[4].first);
+  std::cout << "1.  FIND is successful, the given key is: " << it.key()
+            << ",\tthe value is: " << it.data()[0] << std::endl;
+  // const double *ptr =
+  //     static_cast<const double *>(carmi.find(initDataset[4].first));
+  // std::cout << "1.  FIND is successful, the given key is: " << *ptr
+  //           << ",\tthe value is: " << *(ptr + 1) << std::endl;
 
   // insert data into the external array
-  *(externalDataset + size * 2) = futureInsertKey[0];
+  *(externalDataset + size * 2) = futureinsertKey[0];
   *(externalDataset + size * 2 + 1) = 100;
 
   // insert a data point
-  carmi.Insert(futureInsertKey[0]);  // insert key into carmi
+  carmi.insert(futureinsertKey[0]);  // insert key into carmi
   std::cout << "2.  INSERT is successful!" << std::endl;
-  ptr = static_cast<const double *>(carmi.Find(futureInsertKey[0]));
-  std::cout << "      FIND is successful, the given key is: " << *ptr
-            << ",\tthe value is: " << *(ptr + 1) << std::endl;
+  it = carmi.find(futureinsertKey[0]);
+  std::cout << "      FIND is successful, the given key is: " << it.key()
+            << ",\tthe value is: " << it.data()[0] << std::endl;
+  // ptr = static_cast<const double *>(carmi.find(futureinsertKey[0]));
+  // std::cout << "      FIND is successful, the given key is: " << *ptr
+  //           << ",\tthe value is: " << *(ptr + 1) << std::endl;
 }
 
 int main() {

@@ -81,7 +81,8 @@
         "bit": "cpp",
         "memory_resource": "cpp",
         "variant": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "bitset": "cpp"
     },
     "C_Cpp.default.configurationProvider": "go2sh.cmake-integration"
 }

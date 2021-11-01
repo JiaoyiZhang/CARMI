@@ -25,9 +25,7 @@ double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
   for (int i = dataRange.findRange.left; i < findEnd; i++)
     frequency += findQuery[i].second;
   // count the frequency  of insertQuery
-  int insertEnd = dataRange.insertRange.left + dataRange.insertRange.size;
-  for (int i = dataRange.insertRange.left; i < insertEnd; i++)
-    frequency += insertQuery[i].second;
+  frequency += dataRange.insertRange.size;
   // calculate the weighted frequency of this sub-dataset
   double frequency_weight = frequency / querySize;
   return frequency_weight;
@@ -87,6 +85,23 @@ void CARMI<KeyType, ValueType>::NodePartition(
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = currnode.Predict(dataset[i].first);
+    // if this sub-dataset is newly divided, store its leaf index in the dataset
+    if ((*subData)[p].left == -1) {
+      (*subData)[p].left = i;
+    }
+    // count the size of this sub-dataset
+    (*subData)[p].size++;
+  }
+}
+
+template <typename KeyType, typename ValueType>
+template <typename InnerNodeType>
+void CARMI<KeyType, ValueType>::NodePartition(
+    const InnerNodeType &currnode, const IndexPair &range,
+    const KeyVectorType &dataset, std::vector<IndexPair> *subData) const {
+  int end = range.left + range.size;
+  for (int i = range.left; i < end; i++) {
+    int p = currnode.Predict(dataset[i]);
     // if this sub-dataset is newly divided, store its leaf index in the dataset
     if ((*subData)[p].left == -1) {
       (*subData)[p].left = i;

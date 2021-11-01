@@ -74,6 +74,7 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
         }
       }
       scanLeaf.push_back(i);
+      lastLeaf = i;
       // add this node to the prefetchNode/Range
       prefetchNode.push_back(i);
       prefetchRange.push_back(range);
@@ -191,8 +192,8 @@ inline void CARMI<KeyType, ValueType>::Construction() {
   }
   prefetchEnd = -1;
   DataVectorType().swap(initDataset);
-  DataVectorType().swap(findQuery);
-  DataVectorType().swap(insertQuery);
+  QueryType().swap(findQuery);
+  KeyVectorType().swap(insertQuery);
 }
 
 #endif  // CONSTRUCT_CONSTRUCTION_H_

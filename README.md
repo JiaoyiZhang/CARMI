@@ -67,10 +67,10 @@ bool CARMI<KeyType, ValueType>::Delete(double key);
 In this project, we include the CARMI header files, the source code of the experimental part and the baseline. The description of each file in CARMI's header file is as follows:
 
 - **include**
-  - baseNode.h  *( the union structure of all nodes )*
+  - base_node.h  *( the union structure of all nodes )*
   - carmi.h  *( the implementation class of CARMI )*
-  - carmi_common.h  *( the CARMI class for common use )*
-  - carmi_external.h  *( the CARMI class for external situation )*
+  - carmi_map.h  *( the CARMI map class for common use )*
+  - carmi_external_map.h  *( the CARMI map class for the dataset stored in the external position )*
   - **construct**  *( files used to construct the index )*
     - construction.h *( the main function of our algorithm )*
     - construct_root.h *( use the optimal root node to construct child nodes )*
@@ -106,9 +106,9 @@ In this project, we include the CARMI header files, the source code of the exper
     - insert_function.h
     - delete_function.h
     - update_function.h
-    - inlineFunction.h
+    - split_function.h
     - calculate_space.h
-    - print_structure.h
+    - get_node_info.h
 
 ## Dependencies
 

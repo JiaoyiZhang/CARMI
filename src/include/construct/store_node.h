@@ -107,7 +107,7 @@ void CARMI<KeyType, ValueType>::StoreOptimalNode(const DataRange &range,
       ExternalArray<KeyType> currnode = it->second.externalArray;
       int size = range.initRange.size;
       if (size <= 0)
-        currnode.m_left = curr;
+        currnode.m_left = currsize;
       else
         currnode.m_left = range.initRange.left;
       node.nodeArray[storeIdx].externalArray = currnode;
@@ -116,6 +116,9 @@ void CARMI<KeyType, ValueType>::StoreOptimalNode(const DataRange &range,
   }
   if (type >= ARRAY_LEAF_NODE && firstLeaf == -1) {
     firstLeaf = storeIdx;
+  }
+  if (type >= ARRAY_LEAF_NODE) {
+    lastLeaf = storeIdx;
   }
 }
 

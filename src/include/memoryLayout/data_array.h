@@ -84,10 +84,8 @@ class DataArrayStructure {
    *
    * @param[in] left the beginning idx of this block of empty memory
    * @param[in] len the length of the empty memory block
-   * @retval true operation is successful
-   * @retval false operation is unsuccessful
    */
-  bool AddEmptyMemoryBlock(int left, int len);
+  void AddEmptyMemoryBlock(int left, int len);
 
   /**
    * @brief allocate a block of empty memory to the leaf node
@@ -143,7 +141,7 @@ class DataArrayStructure {
   std::vector<LeafSlots<KeyType, ValueType>> dataArray;
 
   /**
-   * @brief the used size of dataArray
+   * @brief the used size of dataArray.
    *
    * The used size of dataArray, which is represented by the index of the last
    * used element in the dataArray plus one. It is worth noting that even if
@@ -164,10 +162,10 @@ class DataArrayStructure {
 };
 
 template <typename KeyType, typename ValueType>
-bool DataArrayStructure<KeyType, ValueType>::AddEmptyMemoryBlock(int left,
+void DataArrayStructure<KeyType, ValueType>::AddEmptyMemoryBlock(int left,
                                                                  int len) {
-  // Case 1: len is equal to 0, return true directly
-  if (len == 0) return true;
+  // Case 1: len is equal to 0, return directly
+  if (len == 0) return;
   int res = 0;
   // Case 2: split the block into several small blocks and store them in the
   // corresponding members of emptyBlocks
@@ -180,13 +178,11 @@ bool DataArrayStructure<KeyType, ValueType>::AddEmptyMemoryBlock(int left,
         break;
       }
     }
-    // Case 2.1: there are no more blocks, return true
+    // Case 2.1: there are no more blocks, return
     if (res == 0) {
-      return true;
+      return;
     }
   }
-  // Case 3: the operation fails, return false
-  return false;
 }
 
 template <typename KeyType, typename ValueType>
