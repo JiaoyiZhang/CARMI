@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef SRC_EXPERIMENT_EXPERIMENT_PARAMS_H_
-#define SRC_EXPERIMENT_EXPERIMENT_PARAMS_H_
+#ifndef EXPERIMENT_EXPERIMENT_PARAMS_H_
+#define EXPERIMENT_EXPERIMENT_PARAMS_H_
 
 #define PARAM_ZIPFIAN 0.99
 #define DEBUG
@@ -27,7 +27,7 @@ typedef std::vector<DataType> DataVecType;
 static bool kPrimaryIndex = false;
 
 const int kDatasetSize =
-    1024.0 / sizeof(DataType) * 1024 * 1024;  // 1 GB / 16 byte
+    1024.0 / sizeof(DataType) * 1024 * 1024;  // 1 GB / 16 bytec
 const float kTestSize = 100000.0;
 const float kMaxValue = 100000000;
 
@@ -49,4 +49,4 @@ const std::vector<double> rate1 = {0.01, 0.02, 0.025, 0.03, 0.05, 0.1};  // 0.5
 
 const int kRMIInnerChild = 32;
 
-#endif  // SRC_EXPERIMENT_EXPERIMENT_PARAMS_H_
+#endif  // EXPERIMENT_EXPERIMENT_PARAMS_H_

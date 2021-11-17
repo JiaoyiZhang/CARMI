@@ -18,8 +18,6 @@ extern std::ofstream outRes;
 
 /**
  * @brief test all datasets and workloads
- *
- * @param thre the kAlgorithmThreshold
  */
 void mainExperiment() {
   // for range scan
@@ -58,9 +56,8 @@ void mainExperiment() {
 /**
  * @brief test the synthetic datasets
  *
- * @param initRatio the workload type
- * @param thre the kAlgorithmThreshold
- * @param length the length of range scan
+ * @param[in] initRatio the workload type
+ * @param[in] length the length of range scan
  */
 void mainSynthetic(double initRatio, const std::vector<int> &length) {
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
@@ -127,9 +124,8 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
 /**
  * @brief test the map datasets
  *
- * @param initRatio the workload type
- * @param thre the kAlgorithmThreshold
- * @param length the length of range scan
+ * @param[in] initRatio the workload type
+ * @param[in] length the length of range scan
  */
 void mainMap(double initRatio, const std::vector<int> &length) {
   std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"
@@ -181,9 +177,8 @@ void mainMap(double initRatio, const std::vector<int> &length) {
 /**
  * @brief test the YCSB datasets
  *
- * @param initRatio the workload type
- * @param thre the kAlgorithmThreshold
- * @param length the length of range scan
+ * @param[in] initRatio the workload type
+ * @param[in] length the length of range scan
  */
 void mainYCSB(double initRatio, const std::vector<int> &length) {
   kPrimaryIndex = true;

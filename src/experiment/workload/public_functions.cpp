@@ -19,11 +19,11 @@
 /**
  * @brief prepare query workloads
  *
- * @param findQueryset
- * @param insertDataset
- * @param findQuery
- * @param insertQuery
- * @param index
+ * @param[in] findQueryset
+ * @param[in] insertDataset
+ * @param[inout] findQuery
+ * @param[inout] insertQuery
+ * @param[inout] index
  */
 void InitTestSet(const DataVecType &findQueryset,
                  const DataVecType &insertDataset, DataVecType *findQuery,
@@ -55,7 +55,7 @@ void InitTestSet(const DataVecType &findQueryset,
 /**
  * @brief print the average time of the workload
  *
- * @param time
+ * @param[in] time
  */
 void PrintAvgTime(double time) {
   std::cout << "average time:" << time * kSecondToNanosecond / kTestSize

@@ -13,8 +13,8 @@
 
 #include <vector>
 
-#include "../include/carmi_common.h"
-#include "../include/carmi_external.h"
+#include "../include/carmi_external_map.h"
+#include "../include/carmi_map.h"
 #include "./workload/workloads.h"
 #include "./workload/workloads_external.h"
 #include "dataset/exponential_distribution.h"
@@ -28,12 +28,12 @@
 /**
  * @brief prepare query workloads
  *
- * @param Ratio the ratio of find queries
- * @param findQueryset
- * @param insertDataset
- * @param findQuery
- * @param insertQuery
- * @param index
+ * @param[in] Ratio the ratio of find queries
+ * @param[in] findQueryset
+ * @param[in] insertDataset
+ * @param[inout] findQuery
+ * @param[inout] insertQuery
+ * @param[inout] index
  */
 void InitTestSet(double Ratio, const DataVecType &findQueryset,
                  const DataVecType &insertDataset, DataVecType *findQuery,
@@ -42,20 +42,20 @@ void InitTestSet(double Ratio, const DataVecType &findQueryset,
 /**
  * @brief print the average time of the workload
  *
- * @param time
+ * @param[in] time
  */
 void PrintAvgTime(double time);
 
 /**
  * @brief the function of using CARMI
  *
- * @param isZipfian whether to use zipfian access during the test
- * @param initRatio the workload type
- * @param rate the weight of space
- * @param length the length of range scan
- * @param initDataset
- * @param insertDataset
- * @param testInsertQuery
+ * @param[in] isZipfian whether to use zipfian access during the test
+ * @param[in] initRatio the workload type
+ * @param[in] rate the weight of space
+ * @param[in] length the length of range scan
+ * @param[in] initDataset
+ * @param[in] insertDataset
+ * @param[in] testInsertQuery
  */
 void CoreCARMI(bool isZipfian, double initRatio, double rate,
                const std::vector<int> &length, const DataVecType &initDataset,
@@ -65,12 +65,12 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
 /**
  * @brief the function of using external CARMI
  *
- * @param isZipfian whether to use zipfian access during the test
- * @param initRatio the workload type
- * @param rate the weight of space
- * @param length the length of range scan
- * @param initDataset
- * @param testInsertQuery
+ * @param[in] isZipfian whether to use zipfian access during the test
+ * @param[in] initRatio the workload type
+ * @param[in] rate the weight of space
+ * @param[in] length the length of range scan
+ * @param[in] initDataset
+ * @param[in] testInsertQuery
  */
 void CoreExternalCARMI(bool isZipfian, double initRatio, double rate,
                        const std::vector<int> &length,

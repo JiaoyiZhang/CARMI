@@ -10,11 +10,9 @@
  */
 #include <vector>
 
-#include "../include/carmi_common.h"
-#include "../include/carmi_external.h"
 #include "../include/construct/construction.h"
 #include "../include/func/calculate_space.h"
-#include "../include/func/print_structure.h"
+#include "../include/func/get_node_info.h"
 #include "./experiment_params.h"
 #include "./functions.h"
 
@@ -23,12 +21,12 @@ extern std::ofstream outRes;
 /**
  * @brief the function of using CARMI
  *
- * @param isZipfian whether to use zipfian access during the test
- * @param initRatio the workload type
- * @param rate the weight of space
- * @param length the length of range scan
- * @param initDataset
- * @param testInsertQuery
+ * @param[in] isZipfian whether to use zipfian access during the test
+ * @param[in] initRatio the workload type
+ * @param[in] rate the weight of space
+ * @param[in] length the length of range scan
+ * @param[in] initDataset
+ * @param[in] testInsertQuery
  */
 void CoreCARMI(bool isZipfian, double initRatio, double rate,
                const std::vector<int> &length, const DataVecType &initDataset,
@@ -48,7 +46,7 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
   std::cout << "\nTEST time: " << tmpTime << std::endl;
 #endif
 
-  typedef CARMICommon<KeyType, ValueType> CarmiType;
+  typedef CARMIMap<KeyType, ValueType> CarmiType;
   CarmiType carmi(initDataset.begin(), initDataset.end(), insertDataset.begin(),
                   insertDataset.end(), rate);
 
@@ -59,9 +57,10 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
   std::cout << "finish time: " << tmpTime1 << std::endl;
 
   std::cout << "\nprint the space:" << std::endl;
-  auto space = carmi.CalculateSpace();
+  auto space = carmi.CalculateSpace() / 1024.0 / 1024.0;
   outRes << space << ",";
   std::cout << space << " MB\n";
+
 #endif
 
   if (initRatio == kWriteHeavy)
@@ -81,15 +80,41 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
                                   &carmi);  // range scan
 }
 
+template <typename KeyType, typename ValueType>
+class ExternalDataType {
+ public:
+  typedef ValueType ValueType_;
+  ExternalDataType() {
+    k = 0;
+    v = 0;
+  }
+  explicit ExternalDataType(KeyType key, ValueType_ value) {
+    k = key;
+    v = value;
+  }
+  const KeyType &key() const { return k; }
+  const ValueType_ &data() const { return v; }
+
+  bool operator<(const ExternalDataType &a) const {
+    if (k == a.k) {
+      return v < a.v;
+    }
+    return k < a.k;
+  }
+
+  KeyType k;
+  ValueType_ v;
+};
+
 /**
  * @brief the function of using external CARMI
  *
- * @param isZipfian whether to use zipfian access during the test
- * @param initRatio the workload type
- * @param rate the weight of space
- * @param length the length of range scan
- * @param initDataset
- * @param testInsertQuery
+ * @param[in] isZipfian whether to use zipfian access during the test
+ * @param[in] initRatio the workload type
+ * @param[in] rate the weight of space
+ * @param[in] length the length of range scan
+ * @param[in] initDataset
+ * @param[in] testInsertQuery
  */
 void CoreExternalCARMI(bool isZipfian, double initRatio, double rate,
                        const std::vector<int> &length,
@@ -110,7 +135,8 @@ void CoreExternalCARMI(bool isZipfian, double initRatio, double rate,
 
   KeyType *externalDataset;
   const int record_size = sizeof(KeyType) + sizeof(ValueType);
-  typedef CARMIExternal<KeyType> CarmiType;
+  typedef CARMIExternalMap<KeyType, ExternalDataType<KeyType, ValueType>>
+      CarmiType;
   int extLen = initDataset.size() * 2 + kTestSize * 2;
   externalDataset = new KeyType[extLen];
   for (int i = 0, j = 0; i < static_cast<int>(initDataset.size()); i++) {
@@ -134,15 +160,19 @@ void CoreExternalCARMI(bool isZipfian, double initRatio, double rate,
 #endif
 
   if (initRatio == kWriteHeavy)
-    WorkloadA<KeyType>(isZipfian, init, testInsertQuery,
-                       &carmi);  // write-heavy
+    WorkloadA<KeyType, ExternalDataType<KeyType, ValueType>>(
+        isZipfian, init, testInsertQuery,
+        &carmi);  // write-heavy
   else if (initRatio == kReadHeavy)
-    WorkloadB<KeyType>(isZipfian, init, testInsertQuery,
-                       &carmi);  // read-heavy
+    WorkloadB<KeyType, ExternalDataType<KeyType, ValueType>>(
+        isZipfian, init, testInsertQuery,
+        &carmi);  // read-heavy
   else if (initRatio == kReadOnly)
-    WorkloadC<KeyType>(isZipfian, init,
-                       &carmi);  // read-only
+    WorkloadC<KeyType, ExternalDataType<KeyType, ValueType>>(
+        isZipfian, init,
+        &carmi);  // read-only
   else if (initRatio == kRangeScan)
-    WorkloadE<KeyType>(isZipfian, init, testInsertQuery, length,
-                       &carmi);  // range scan
+    WorkloadE<KeyType, ExternalDataType<KeyType, ValueType>>(
+        isZipfian, init, testInsertQuery, length,
+        &carmi);  // range scan
 }
