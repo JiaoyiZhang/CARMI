@@ -12,20 +12,31 @@
 #define PARAMS_H_
 
 #define DEBUG
-// #define Windows
 
-#ifndef Windows
-#define Ubuntu
-#endif  // Windows
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#if TARGET_OS_OSX == 1
+#define CATCH_PLATFORM_MAC
+#elif TARGET_OS_IPHONE == 1
+#define CATCH_PLATFORM_IPHONE
+#endif
+
+#elif defined(linux) || defined(__linux) || defined(__linux__)
+#define CATCH_PLATFORM_LINUX
+
+#elif defined(WIN32) || defined(__WIN32__) || defined(_WIN32) || \
+    defined(_MSC_VER) || defined(__MINGW32__)
+#define CATCH_PLATFORM_WINDOWS
+#endif
 
 /**
- * @brief The parameters in the CARMI framework. For the first three parameters,
- * they are the maximum capacity of the cf array leaf node and external array
- * leaf node we have provided in the source code, and the boundary value for
- * switching between the dynamic programming algorithm and the greedy node
- * selection algorithm. Users can change their values according to the actual
+ * @brief These are parameters in the CARMI framework. The first three
+ * parameters are the maximum capacity of the cf array leaf node and external
+ * array leaf node we have provided in the source code, and the boundary value
+ * for switching between the dynamic programming algorithm and the greedy node
+ * selection algorithm. Users can change their values according to their actual
  * needs. As for the parameters of the time costs of different nodes, users can
- * use our profiler to obtain them on their own machine.
+ * use our profiler to obtain them on their machine.
  */
 namespace carmi_params {
 /**
@@ -38,8 +49,8 @@ static constexpr int kMaxLeafNodeSize = 256;
 /**
  * @brief The maximum number of data points in an external leaf node.
  * This value is generally an integer multiple of 2. Since the external dataset
- * is not stored in our index structure, the value here can be larger to reduce
- * the space cost. Reference values are: 512, 1024, 2048, and so on.
+ * is not stored in our index structure, the value can be larger to reduce the
+ * space cost. Reference values are 512, 1024, 2048, and so on.
  */
 static constexpr int kMaxLeafNodeSizeExternal = 1024;
 
@@ -50,7 +61,7 @@ static constexpr int kMaxLeafNodeSizeExternal = 1024;
  * node.
  * This value needs to be greater than or equal to the first two parameters.
  */
-static constexpr int kAlgorithmThreshold = 1024;
+static constexpr int kAlgorithmThreshold = 10240;
 
 /**
  * @brief The latency of a memory access
