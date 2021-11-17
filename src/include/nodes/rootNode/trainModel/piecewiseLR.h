@@ -46,12 +46,13 @@ class PiecewiseLR {
    */
   PiecewiseLR() {
     for (int i = 0; i < SegmentNumber - 1; i++) {
-      point.push_back({-1, 0});
+      point.push_back({0, 0});
     }
     for (int i = 0; i < SegmentNumber; i++) {
       theta[i][0] = 0.0001;
       theta[i][1] = 0.666;
     }
+    maxChildIdx = 2;
   }
 
  public:
@@ -112,9 +113,12 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
   // construct the training dataset, x is the key value in the dataset, y is the
   // corresponding ratio of index in the maxChildIdx
   int size = dataset.size();
+  if (size == 0) {
+    return;
+  }
   DataVectorType currdata = dataset;
   for (int i = 0; i < size; i++) {
-    currdata[i].second = static_cast<double>(i) / size * maxChildIdx;
+    currdata[i].second = i * 1.0 / size * maxChildIdx;
   }
 
   // store the index and data points of candidate points into cand_index and
@@ -157,10 +161,10 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
 
   // use dp algorithm to calculate the optimal cost in each situation
   for (int i = 2; i < SegmentNumber; i++) {
-    for (int j = i + 1; j < cand_size - 1; j++) {
+    for (int j = i; j < cand_size - 1; j++) {
       SegmentPoint opt;
       opt.cost = -DBL_MAX;
-      for (int k = i; k < j; k++) {
+      for (int k = i - 1; k < j; k++) {
         double res = -DBL_MAX;
         if (i < SegmentNumber - 1) {
           res = dp[0][k].cost + cand_cost.Entropy(cand_index[k], cand_index[j]);

@@ -341,7 +341,7 @@ inline int PrefetchPLR::PrefetchNum(double unroundedLeafIdx) const {
     for (int j = 1; j < SegmentNumber - 1; j++) {
       if (unroundedLeafIdx < point[j].first) {
         p = theta[j][0];
-        return p;
+        break;
       }
     }
   } else {

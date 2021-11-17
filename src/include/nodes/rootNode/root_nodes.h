@@ -11,6 +11,7 @@
 #ifndef NODES_ROOTNODE_ROOT_NODES_H_
 #define NODES_ROOTNODE_ROOT_NODES_H_
 
+#include <algorithm>
 #include <fstream>
 #include <vector>
 
@@ -23,13 +24,13 @@
 /**
  * @brief piecewise linear regression root node
  *
- * The piecewise linear regression model with five segments to allocate data
+ * The piecewise linear regression model with five segments can allocate data
  * points more evenly.
  *
- * Since the root node is always in the cache, we do not limit its size here.
- * We use a five-segment P. LR model, occupying 76 bytes. In addition, in
- * order to support the prefetch function, we additional add a prefetch
- * prediction model to speed up the process of accessing a data point.
+ * Since the root node is always in the cache, we do not limit its size here. We
+ * use a five-segment P. LR model, occupying 76 bytes. In addition, to support
+ * the prefetch function, we add a prefetch prediction model to speed up the
+ * process of accessing a data point.
  *
  * @tparam DataVectorType the type of dataset
  * @tparam KeyType the type of the given key value
@@ -56,15 +57,15 @@ class PLRType {
    * PLR root node uses a piecewise linear regression model to predict the index
    * of the next node. When finding the position of the data point, we first
    * find the first breakpoint greater than or equal to the given key value, and
-   * then use the corresponding model parameters for calculation and boundary
-   * processing.
+   * then use the corresponding model parameters for the calculation and
+   * boundary processing.
    *
    * @param[in] childNum the number of the child nodes in the root node
    * @param[in] dataset the dataset used to train the plr model of the root node
    */
   PLRType(int childNum, const DataVectorType &dataset) {
     flagNumber = PLR_ROOT_NODE;
-    model.maxChildIdx = childNum - 1;
+    model.maxChildIdx = std::max(2, childNum - 1);
     model.Train(dataset);
   }
 
