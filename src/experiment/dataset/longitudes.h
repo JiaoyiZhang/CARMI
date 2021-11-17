@@ -2,7 +2,7 @@
  * @file longitudes.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-16
  *
  * @copyright Copyright (c) 2021
@@ -26,12 +26,12 @@ class LongitudesDataset : public BaseDataset {
  public:
   explicit LongitudesDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+  void GenerateDataset(DataVecType *initDataset, DataVecType *insertDataset,
+                       DataVecType *testInsertQuery) {
     DataVecType ds;
-    std::ifstream inFile("../src/experiment/dataset/longitude.csv",
-                         std::ios::in);
+    std::ifstream inFile("../experiment/dataset/longitude.csv", std::ios::in);
     if (!inFile) {
-      std::cout << "打开文件失败！" << std::endl;
+      std::cout << "open longitude.csv failed" << std::endl;
       exit(1);
     }
     std::string line;
@@ -46,13 +46,12 @@ class LongitudesDataset : public BaseDataset {
       double k = stod(key);
       double v = stod(value);
       ds.push_back({k, v});
-      if (ds.size() == kDatasetSize + kTestSize * (1 - proportion)) {
+      if (ds.size() == kDatasetSize + round(kTestSize * (1 - proportion))) {
         break;
       }
     }
-    std::cout << "longitude size:" << ds.size() << std::endl;
 
-    SplitInitTest(&ds, initDataset, testInsertQuery);
+    SplitInitTest(&ds, initDataset, insertDataset, testInsertQuery);
   }
 };
 

@@ -2,23 +2,21 @@
  * @file workloads_external.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-26
  *
  * @copyright Copyright (c) 2021
  *
  */
 
-#ifndef SRC_EXPERIMENT_WORKLOAD_WORKLOADS_EXTERNAL_H_
-#define SRC_EXPERIMENT_WORKLOAD_WORKLOADS_EXTERNAL_H_
+#ifndef EXPERIMENT_WORKLOAD_WORKLOADS_EXTERNAL_H_
+#define EXPERIMENT_WORKLOAD_WORKLOADS_EXTERNAL_H_
 
 #include <ctime>
 #include <utility>
 #include <vector>
 
-#include "../../include/carmi_external.h"
-#include "../../include/func/find_function.h"
-#include "../../include/func/insert_function.h"
+#include "../../include/carmi_external_map.h"
 #include "../functions.h"
 #include "./public_functions.h"
 #include "./zipfian.h"
@@ -30,38 +28,37 @@ extern std::ofstream outRes;
  * a mix of 50/50 reads and writes
  *
  * @tparam KeyType
- * @param isZipfian whether to use zipfian access during the test
- * @param findDataset
- * @param insertDataset
- * @param carmi
+ * @param[in] isZipfian whether to use zipfian access during the test
+ * @param[in] findDataset
+ * @param[in] insertDataset
+ * @param[inout] carmi
  */
-template <typename KeyType>
+template <typename KeyType, typename ExternalType>
 void WorkloadA(bool isZipfian, const DataVecType &findDataset,
                const DataVecType &insertDataset,
-               CARMIExternal<KeyType> *carmi) {
+               CARMIExternalMap<KeyType, ExternalType> *carmi) {
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kWriteHeavy;
-  InitTestSet(kWriteHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   std::clock_t s, e;
   double tmp;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      carmi->Find(findQuery[index[i]].first);
+      carmi->find(findQuery[index[i]].first);
       std::pair<KeyType, std::vector<KeyType>> data = {
           insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->Insert(data.first);
+      carmi->insert(data.first);
     }
   } else {
     for (int i = 0; i < end; i++) {
-      carmi->Find(findQuery[i].first);
+      carmi->find(findQuery[i].first);
       std::pair<KeyType, std::vector<KeyType>> data = {
           insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->Insert(data.first);
+      carmi->insert(data.first);
     }
   }
   e = std::clock();
@@ -91,20 +88,19 @@ void WorkloadA(bool isZipfian, const DataVecType &findDataset,
  * a mix of 95/5 reads and writes
  *
  * @tparam KeyType
- * @param isZipfian whether to use zipfian access during the test
- * @param findDataset
- * @param insertDataset
- * @param carmi
+ * @param[in] isZipfian whether to use zipfian access during the test
+ * @param[in] findDataset
+ * @param[in] insertDataset
+ * @param[inout] carmi
  */
-template <typename KeyType>
+template <typename KeyType, typename ExternalType>
 void WorkloadB(bool isZipfian, const DataVecType &findDataset,
                const DataVecType &insertDataset,
-               CARMIExternal<KeyType> *carmi) {
+               CARMIExternalMap<KeyType, ExternalType> *carmi) {
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
@@ -115,21 +111,22 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19; j++) {
-        carmi->Find(findQuery[index[findCnt]].first);
+        carmi->find(findQuery[index[findCnt]].first);
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
           insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->Insert(data.first);
+      carmi->insert(data.first);
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        carmi->Find(findQuery[findCnt++].first);
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
+        carmi->find(findQuery[findCnt++].first);
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
           insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->Insert(data.first);
+      carmi->insert(data.first);
     }
   }
   e = std::clock();
@@ -145,7 +142,9 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) findCnt++;
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++)
+        findCnt++;
       std::pair<KeyType, std::vector<KeyType>> data = {
           insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
     }
@@ -161,30 +160,29 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
  * @brief read only workload for external CARMI, 100% read
  *
  * @tparam KeyType
- * @param isZipfian whether to use zipfian access during the test
- * @param findDataset
- * @param carmi
+ * @param[in] isZipfian whether to use zipfian access during the test
+ * @param[in] findDataset
+ * @param[inout] carmi
  */
-template <typename KeyType>
+template <typename KeyType, typename ExternalType>
 void WorkloadC(bool isZipfian, const DataVecType &findDataset,
-               CARMIExternal<KeyType> *carmi) {
+               CARMIExternalMap<KeyType, ExternalType> *carmi) {
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kReadOnly;
-  InitTestSet(kReadOnly, findDataset, DataVecType(), &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, DataVecType(), &findQuery, &insertQuery, &index);
 
   std::clock_t s, e;
   double tmp;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      carmi->Find(findQuery[index[i]].first);
+      carmi->find(findQuery[index[i]].first);
     }
   } else {
     for (int i = 0; i < end; i++) {
-      carmi->Find(findQuery[i].first);
+      carmi->find(findQuery[i].first);
     }
   }
   e = std::clock();
@@ -210,48 +208,57 @@ void WorkloadC(bool isZipfian, const DataVecType &findDataset,
  * a mix of 95/5 reads and writes
  *
  * @tparam KeyType
- * @param isZipfian whether to use zipfian access during the test
- * @param findDataset
- * @param insertDataset
- * @param length
- * @param carmi
+ * @param[in] isZipfian whether to use zipfian access during the test
+ * @param[in] findDataset
+ * @param[in] insertDataset
+ * @param[in] length
+ * @param[inout] carmi
  */
-template <typename KeyType>
+template <typename KeyType, typename ExternalType>
 void WorkloadE(bool isZipfian, const DataVecType &findDataset,
                const DataVecType &insertDataset, const std::vector<int> &length,
-               CARMIExternal<KeyType> *carmi) {
+               CARMIExternalMap<KeyType, ExternalType> *carmi) {
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(kReadHeavy, findDataset, insertDataset, &findQuery, &insertQuery,
-              &index);
+  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
 
-  DataVecType ret(100, {-1, -1});
+  std::vector<std::pair<KeyType, std::vector<KeyType>>> ret(100, {-1, {-1}});
   std::clock_t s, e;
   double tmp;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < index.size(); j++) {
-        auto it = carmi->Find(findQuery[index[findCnt]].first);
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(index.size()); j++) {
+        auto it = carmi->find(findQuery[index[findCnt]].first);
+
+        for (int l = 0; l < length[index[findCnt]]; l++) {
+          // ret[l] = *it;
+          it++;
+        }
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
           insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->Insert(data.first);
+      carmi->insert(data.first);
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        auto it = carmi->Find(findQuery[findCnt].first);
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
+        auto it = carmi->find(findQuery[findCnt].first);
+        for (int l = 0; l < length[findCnt]; l++) {
+          // ret[l] = *it;
+          it++;
+        }
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
           insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->Insert(data.first);
+      carmi->insert(data.first);
     }
   }
   e = std::clock();
@@ -261,7 +268,9 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < index.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(index.size()); j++) {
+        for (int l = 0; l < length[index[findCnt]]; l++) {
+        }
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
@@ -269,7 +278,10 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
     }
   } else {
     for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
+      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
+           j++) {
+        for (int l = 0; l < length[findCnt]; l++) {
+        }
         findCnt++;
       }
       std::pair<KeyType, std::vector<KeyType>> data = {
@@ -282,4 +294,4 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
 
   PrintAvgTime(tmp);
 }
-#endif  // SRC_EXPERIMENT_WORKLOAD_WORKLOADS_EXTERNAL_H_
+#endif  // EXPERIMENT_WORKLOAD_WORKLOADS_EXTERNAL_H_

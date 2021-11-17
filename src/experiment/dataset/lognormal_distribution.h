@@ -2,17 +2,16 @@
  * @file lognormal_distribution.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-16
  *
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_EXPERIMENT_DATASET_LOGNORMAL_DISTRIBUTION_H_
-#define SRC_EXPERIMENT_DATASET_LOGNORMAL_DISTRIBUTION_H_
+#ifndef EXPERIMENT_DATASET_LOGNORMAL_DISTRIBUTION_H_
+#define EXPERIMENT_DATASET_LOGNORMAL_DISTRIBUTION_H_
 
 #include <algorithm>
-
 #include <iostream>
 #include <random>
 #include <utility>
@@ -24,14 +23,15 @@ class LognormalDataset : public BaseDataset {
  public:
   explicit LognormalDataset(float initRatio) : BaseDataset(initRatio) {}
 
-  void GenerateDataset(DataVecType *initDataset, DataVecType *testInsertQuery) {
+  void GenerateDataset(DataVecType *initDataset, DataVecType *insertDataset,
+                       DataVecType *testInsertQuery) {
     // create dataset randomly
     std::default_random_engine generator;
-    std::lognormal_distribution<double> distribution(0.0, 2.0);
+    std::lognormal_distribution<double> distribution(0.0, 1.0);
 
     SplitInitTest<std::lognormal_distribution<double>>(
-        distribution, initDataset, testInsertQuery);
+        distribution, initDataset, insertDataset, testInsertQuery);
   }
 };
 
-#endif  // SRC_EXPERIMENT_DATASET_LOGNORMAL_DISTRIBUTION_H_
+#endif  // EXPERIMENT_DATASET_LOGNORMAL_DISTRIBUTION_H_

@@ -2,35 +2,39 @@
  * @file calculate_space.h
  * @author Jiaoyi
  * @brief calculate the space of CARMI
- * @version 0.1
+ * @version 3.0
  * @date 2021-03-11
  *
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_
-#define SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_
+#ifndef FUNC_CALCULATE_SPACE_H_
+#define FUNC_CALCULATE_SPACE_H_
 
 #include <vector>
 
 #include "../carmi.h"
+#include "../params.h"
 
-template <typename KeyType, typename ValueType>
-long double CARMI<KeyType, ValueType>::CalculateSpace() const {
-  long double space_cost = 0;
-
-  switch (rootType) {
-    case LR_ROOT_NODE:
-      space_cost += kLRRootSpace;
-      break;
-  }
-
-  space_cost += kBaseNodeSpace * nowChildNumber;
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+long long CARMI<KeyType, ValueType, Compare, Alloc>::CalculateSpace() const {
+  // calculate the space of the plr root node
+  long long space_cost = kPLRRootSpace * 1024 * 1024;
+  // calculate the space of the node array
+  space_cost += kBaseNodeSpace * node.nowNodeNumber * 1024 * 1024;
+#ifdef DEBUG
+  std::cout << "node.size(): " << node.nodeArray.size()
+            << ",\tnowChildNumber:" << node.nowNodeNumber << std::endl;
+  std::cout << "data.size(): " << data.dataArray.size()
+            << ",\tkMaxLeafNodeSize:" << carmi_params::kMaxLeafNodeSize
+            << std::endl;
+#endif  // DEBUG
   if (!isPrimary) {
-    space_cost += entireData.size() * kDataPointSize;
+    // calculate the space of the data array
+    space_cost += data.dataArray.size() * carmi_params::kMaxLeafNodeSize;
   }
-
   return space_cost;
 }
 
-#endif  // SRC_INCLUDE_FUNC_CALCULATE_SPACE_H_
+#endif  // FUNC_CALCULATE_SPACE_H_

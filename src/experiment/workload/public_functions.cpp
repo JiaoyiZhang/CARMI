@@ -3,7 +3,7 @@
  * @file public_functions.cpp
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-04-07
  *
  * @copyright Copyright (c) 2021
@@ -19,17 +19,16 @@
 /**
  * @brief prepare query workloads
  *
- * @param Ratio the ratio of find queries
- * @param findQueryset
- * @param insertDataset
- * @param findQuery
- * @param insertQuery
- * @param index
+ * @param[in] findQueryset
+ * @param[in] insertDataset
+ * @param[inout] findQuery
+ * @param[inout] insertQuery
+ * @param[inout] index
  */
-void InitTestSet(double Ratio, const DataVecType &findQueryset,
+void InitTestSet(const DataVecType &findQueryset,
                  const DataVecType &insertDataset, DataVecType *findQuery,
                  DataVecType *insertQuery, std::vector<int> *index) {
-  (*findQuery) = findQueryset;  // -> findQueryset
+  (*findQuery) = findQueryset;
   (*insertQuery) = insertDataset;
 
   std::default_random_engine engine;
@@ -44,11 +43,10 @@ void InitTestSet(double Ratio, const DataVecType &findQueryset,
     shuffle((*insertQuery).begin(), (*insertQuery).end(), engine);
   }
 
-  int end = round(kTestSize * Ratio);
   Zipfian zip;
   zip.InitZipfian(PARAM_ZIPFIAN, (*findQuery).size());
-  *index = std::vector<int>(end, 0);
-  for (int i = 0; i < end; i++) {
+  *index = std::vector<int>(kTestSize, 0);
+  for (int i = 0; i < kTestSize; i++) {
     int idx = zip.GenerateNextIndex();
     (*index)[i] = idx;
   }
@@ -57,7 +55,7 @@ void InitTestSet(double Ratio, const DataVecType &findQueryset,
 /**
  * @brief print the average time of the workload
  *
- * @param time
+ * @param[in] time
  */
 void PrintAvgTime(double time) {
   std::cout << "average time:" << time * kSecondToNanosecond / kTestSize

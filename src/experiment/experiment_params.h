@@ -2,15 +2,15 @@
  * @file experiment_params.h
  * @author Jiaoyi
  * @brief
- * @version 0.1
+ * @version 3.0
  * @date 2021-05-19
  *
  * @copyright Copyright (c) 2021
  *
  */
 
-#ifndef SRC_EXPERIMENT_EXPERIMENT_PARAMS_H_
-#define SRC_EXPERIMENT_EXPERIMENT_PARAMS_H_
+#ifndef EXPERIMENT_EXPERIMENT_PARAMS_H_
+#define EXPERIMENT_EXPERIMENT_PARAMS_H_
 
 #define PARAM_ZIPFIAN 0.99
 #define DEBUG
@@ -27,7 +27,7 @@ typedef std::vector<DataType> DataVecType;
 static bool kPrimaryIndex = false;
 
 const int kDatasetSize =
-    1024.0 / sizeof(DataType) * 1024 * 1024;  // 1 GB / 16 byte
+    1024.0 / sizeof(DataType) * 1024 * 1024;  // 1 GB / 16 bytec
 const float kTestSize = 100000.0;
 const float kMaxValue = 100000000;
 
@@ -40,11 +40,13 @@ const float kRangeScan = 2;
 const float kSecondToNanosecond = 1000000000.0;
 
 #ifdef DEBUG
-const float Density[1] = {0.5};  // size / capacity
+const std::vector<double> rate = {0.025};
+const std::vector<double> rate1 = {0.025};
 #else
-const float Density[5] = {0.5, 0.6, 0.7, 0.8, 0.9};  // size / capacity
+const std::vector<double> rate = {0.01, 0.02, 0.025, 0.03, 0.05, 0.1};
+const std::vector<double> rate1 = {0.01, 0.02, 0.025, 0.03, 0.05, 0.1};  // 0.5
 #endif  // !DEBUG
 
 const int kRMIInnerChild = 32;
 
-#endif  // SRC_EXPERIMENT_EXPERIMENT_PARAMS_H_
+#endif  // EXPERIMENT_EXPERIMENT_PARAMS_H_
