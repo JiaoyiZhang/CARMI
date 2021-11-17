@@ -68,6 +68,32 @@ void TestCarmi() {
   }
 }
 
+template <typename KeyType, typename ValueType>
+class ExternalDataType {
+ public:
+  typedef ValueType ValueType_;
+  ExternalDataType() {
+    k = 0;
+    v = 0;
+  }
+  explicit ExternalDataType(KeyType key, ValueType_ value) {
+    k = key;
+    v = value;
+  }
+  const KeyType &key() const { return k; }
+  const ValueType_ &data() const { return v; }
+
+  bool operator<(const ExternalDataType &a) const {
+    if (k == a.k) {
+      return v < a.v;
+    }
+    return k < a.k;
+  }
+
+  KeyType k;
+  ValueType_ v;
+};
+
 void TestExternalCarmi() {
   // generate datasets
   int initRatio = kWriteHeavy;
@@ -89,13 +115,13 @@ void TestExternalCarmi() {
   double maxKey = initDataset[initDataset.size() - 1].first;
   std::vector<double> futureinsertKey(1, maxKey + 1);
 
-  CARMIExternalMap<double> carmi(externalDataset, futureinsertKey,
-                                 initDataset.size(), record_size, rate);
+  CARMIExternalMap<double, ExternalDataType<double, double>> carmi(
+      externalDataset, futureinsertKey, initDataset.size(), record_size, rate);
 
   // find the value of the given key
   auto it = carmi.find(initDataset[4].first);
   std::cout << "1.  FIND is successful, the given key is: " << it.key()
-            << ",\tthe value is: " << it.data()[0] << std::endl;
+            << ",\tthe value is: " << it.data() << std::endl;
   // const double *ptr =
   //     static_cast<const double *>(carmi.find(initDataset[4].first));
   // std::cout << "1.  FIND is successful, the given key is: " << *ptr
@@ -110,7 +136,7 @@ void TestExternalCarmi() {
   std::cout << "2.  INSERT is successful!" << std::endl;
   it = carmi.find(futureinsertKey[0]);
   std::cout << "      FIND is successful, the given key is: " << it.key()
-            << ",\tthe value is: " << it.data()[0] << std::endl;
+            << ",\tthe value is: " << it.data() << std::endl;
   // ptr = static_cast<const double *>(carmi.find(futureinsertKey[0]));
   // std::cout << "      FIND is successful, the given key is: " << *ptr
   //           << ",\tthe value is: " << *(ptr + 1) << std::endl;
