@@ -14,6 +14,8 @@
 #include <float.h>
 
 #include <algorithm>
+#include <functional>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -22,9 +24,9 @@
 /**
  * @brief linear regression inner node
  *
- * This class is the lr inner node, which use a linear regression to train the
- * model and predict the index of the next node. The CPU time cost of this
- * node is less than the other nodes.
+ * This class is the LR inner node, which uses linear regression to train the
+ * model and predict the index of the next node. The CPU time cost of this node
+ * is less than the other nodes.
  *
  * @tparam KeyType the type of the keyword
  * @tparam ValueType the type of the value
@@ -53,7 +55,7 @@ class LRModel {
     childLeft = 0;
     slope = 0;
     intercept = 0;
-    flagNumber = (LR_INNER_NODE << 24) + c;
+    flagNumber = (LR_INNER_NODE << 24) + std::max(std::min(c, 0x00FFFFFF), 2);
   }
 
  public:
@@ -127,15 +129,19 @@ inline void LRModel<KeyType, ValueType>::Train(int left, int size,
                                                const DataVectorType &dataset) {
   // Case 1: the dataset is empty, return directly
   if (size == 0) return;
+  if (left < 0 || size < 0 || left + size > dataset.size()) {
+    throw std::out_of_range(
+        "LRModel::Train: the range of training dataset is invalid.");
+  }
 
   // Case 2: use the dataset to train the model
   // extract data points from dataset[left, left + size] and use their processed
   // relative index as y to train
   int childNumber = flagNumber & 0x00FFFFFF;
-  DataVectorType currdata(size, {DBL_MAX, DBL_MAX});
+  std::vector<std::pair<KeyType, double>> currdata(size);
   for (int i = 0, j = left; i < size; i++, j++) {
     currdata[i].first = dataset[j].first;
-    currdata[i].second = static_cast<KeyType>(i) / size * childNumber;
+    currdata[i].second = i * 1.0 / size * childNumber;
   }
 
   // train the lr model
@@ -166,6 +172,6 @@ inline int LRModel<KeyType, ValueType>::Predict(KeyType key) const {
     p = 0;
   else if (p >= bound)
     p = bound - 1;
-  return p;
+  return p + childLeft;
 }
 #endif  // NODES_INNERNODE_LR_MODEL_H_

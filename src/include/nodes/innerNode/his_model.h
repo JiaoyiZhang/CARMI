@@ -14,6 +14,8 @@
 #include <math.h>
 
 #include <algorithm>
+#include <functional>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -22,7 +24,7 @@
 /**
  * @brief histogram inner node
  *
- * This class is the his inner node, which use a histogram to train the model
+ * This class is the His inner node, which uses a histogram to train the model
  * and predict the index of the next node. In order to manage more child nodes
  * without exceeding the size limit of 64 bytes, we use the starting index of
  * each group and the relative difference in bits to represent the index of each
@@ -50,16 +52,20 @@ class HisModel {
    * @brief Construct a new His Model object and use c to set its child number
    *
    * This model is a histogram model, whose number of segments is equal to the
-   * value of c. We use two vector (base and offset) to store the first index of
-   * each group and the difference between them separately.
+   * value of c. We use two vectors (base and offset) to store the first index
+   * of each group and the difference between them separately.
    *
    * @param[in] c the number of its child nodes
    */
   explicit HisModel(int c) {
     childLeft = 0;
-    flagNumber = (HIS_INNER_NODE << 24) + std::min(c, 256);
+    flagNumber = (HIS_INNER_NODE << 24) + std::max(2, std::min(c, 256));
     minValue = 0;
     divisor = 1;
+    for (int i = 0; i < 16; i++) {
+      base[i] = 0;
+      offset[i] = 0;
+    }
   }
 
  public:
@@ -135,8 +141,8 @@ class HisModel {
   /**
    * @brief Each bit of offset represents the difference (0 or 1) between the
    * index of the current bucket and the previous bucket. After obtaining the
-   * basic index, then count the number of bits in the offset table, and finally
-   * add them together to get the index of the next node. (32 bytes)
+   * basic index, count the number of bits in the offset table and add them
+   * together to get the index of the next node. (32 bytes)
    */
   unsigned short offset[16];
 };
@@ -145,6 +151,10 @@ template <typename KeyType, typename ValueType>
 inline void HisModel<KeyType, ValueType>::Train(int left, int size,
                                                 const DataVectorType &dataset) {
   if (size == 0) return;
+  if (left < 0 || size < 0 || left + size > dataset.size()) {
+    throw std::out_of_range(
+        "HisModel::Train: the range of training dataset is invalid.");
+  }
 
   // calculate divisor
   int end = left + size;
@@ -163,10 +173,9 @@ inline void HisModel<KeyType, ValueType>::Train(int left, int size,
 
   // normalize table
   std::vector<double> index(childNumber, 0);
-  index[0] = static_cast<double>(table[0]) / size * (childNumber - 1);
+  index[0] = table[0] * 1.0 / size * (childNumber - 1);
   for (int i = 1; i < childNumber; i++) {
-    index[i] =
-        static_cast<double>(table[i]) / size * (childNumber - 1) + index[i - 1];
+    index[i] = table[i] * 1.0 / size * (childNumber - 1) + index[i - 1];
   }
 
   table[0] = round(index[0]);
@@ -222,7 +231,7 @@ inline int HisModel<KeyType, ValueType>::Predict(KeyType key) const {
   tmp = (tmp & 0x00ff00ff) + ((tmp >> 8) & 0x00ff00ff);
 
   // add them together to get the index of the next node
-  return base[(idx >> 4)] + tmp;
+  return static_cast<int>(base[(idx >> 4)]) + tmp + childLeft;
 }
 
 #endif  // NODES_INNERNODE_HIS_MODEL_H_

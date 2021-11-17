@@ -14,6 +14,8 @@
 #include <float.h>
 
 #include <algorithm>
+#include <functional>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -23,10 +25,10 @@
 /**
  * @brief piecewise linear regression inner node
  *
- * This class is the p. lr inner node, which use a picewise linear regression to
- * train the model and predict the index of the next node. The CPU time cost of
- * this node is slightly more than the other nodes, but this node can deal with
- * the uneven dataset.
+ * This class is the p. lr inner node, which uses a piecewise linear regression
+ * to train the model and predict the index of the next node. The CPU time cost
+ * of this node is slightly more than the other nodes, but this node can deal
+ * with the uneven dataset.
  *
  * @tparam KeyType the type of the keyword
  * @tparam ValueType the type of the value
@@ -53,7 +55,13 @@ class PLRModel {
    */
   explicit PLRModel(int c) {
     childLeft = 0;
-    flagNumber = (PLR_INNER_NODE << 24) + c;
+    for (int i = 0; i < 6; i++) {
+      index[i] = std::ceil(c / 6.0) * i;
+    }
+    for (int i = 0; i < 8; i++) {
+      keys[i] = i;
+    }
+    flagNumber = (PLR_INNER_NODE << 24) + std::max(std::min(c, 0x00FFFFFF), 2);
   }
 
  public:
@@ -107,16 +115,15 @@ class PLRModel {
   int childLeft;
 
   /**
-   * @brief store the maximum index of each segment, which is used as the
+   * @brief Store the maximum index of each segment, which is used as the
    * boundary of each segment when predicting the next index. (24 bytes)
    */
   int index[6];
 
   /**
-   * @brief store the key value of the end point in each segment.
-   * When predicting the index of the next node, first perform a binary search
-   * among them to find the segment to which the given key value belongs (32
-   * bytes)
+   * @brief Store the key value of the endpoint in each segment. When predicting
+   * the index of the next node, first perform a binary search among them to
+   * find the segment to which the given key value belongs (32 bytes)
    */
   float keys[8];
 };
@@ -125,7 +132,15 @@ template <typename KeyType, typename ValueType>
 inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
                                                 const DataVectorType &dataset) {
   int childNumber = flagNumber & 0x00FFFFFF;
-  DataVectorType currdata(size, {-1, 0});
+  if (size == 0) {
+    return;
+  }
+  if (left < 0 || size < 0 || left + size > dataset.size()) {
+    throw std::out_of_range(
+        "PLRModel::Train: the range of training dataset is invalid.");
+  }
+  typedef std::vector<std::pair<KeyType, double>> TrainType;
+  TrainType currdata(size);
   int point_num = 7;
 
   keys[0] = dataset[left].first;
@@ -140,7 +155,7 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   int cand_size = std::min(size, 100);
   // store the index and data points of candidate points into cand_index and
   // cand_point to speed up the dp algorithm
-  DataVectorType cand_point(cand_size, {0, 0});
+  TrainType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost<DataVectorType> cand_cost;
   float seg = size * 1.0 / cand_size;
@@ -177,10 +192,10 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
 
   // use dp algorithm to calculate the optimal cost in each situation
   for (int i = 2; i < point_num; i++) {
-    for (int j = i + 1; j < cand_size - 1; j++) {
+    for (int j = i; j < cand_size - 1; j++) {
       SegmentPoint opt;
       opt.cost = -DBL_MAX;
-      for (int k = i; k < j; k++) {
+      for (int k = i - 1; k < j; k++) {
         double res = -DBL_MAX;
         if (i < point_num - 1) {
           res = dp[0][k].cost + cand_cost.Entropy(cand_index[k], cand_index[j]);
@@ -229,6 +244,10 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
     }
   }
   for (int i = 1; i < point_num; i++) {
+    if (opt.key[i] == -1) {
+      opt.key[i] = opt.key[i - 1];
+      opt.idx[i] = opt.idx[i - 1];
+    }
     keys[i] = opt.key[i];
     index[i - 1] = currdata[opt.idx[i]].second;
   }
@@ -248,45 +267,53 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
       e = mid;
   }
 
-  if (e == 0) {
-    return 0;
+  int p = 0;
+  switch (e) {
+    case 1: {
+      float slope = static_cast<float>(index[0]) / (keys[1] - keys[0]);
+      // intercept = -slope * keys[0], p = slope * x + intercept
+      p = slope * (key - keys[0]);
+      if (p < 0) {
+        p = 0;
+      } else if (p > index[0]) {
+        p = index[0];
+      }
+      break;
+    }
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6: {
+      float slope = static_cast<float>(index[e - 1] - index[e - 2]) /
+                    (keys[e] - keys[e - 1]);
+      // intercept = index[e-1] - slope * keys[e]
+      p = slope * (key - keys[e]) + index[e - 1];
+      if (p < index[e - 2]) {
+        p = index[e - 2];
+      } else if (p > index[e - 1]) {
+        p = index[e - 1];
+      }
+      break;
+    }
+    case 7: {
+      e = (flagNumber & 0x00FFFFFF) - 1;                   // boundary
+      float slope = (e - index[5]) / (keys[7] - keys[6]);  // the slope
+      // intercept = e - slope * keys[7], p = slope * x + intercept
+      p = slope * (key - keys[7]) + e;
+
+      if (p > e) {
+        p = e;
+      } else if (p < index[5]) {
+        p = index[5];
+      }
+      break;
+    }
+    default: {
+      break;
+    }
   }
-
-  int p;
-  // use the params of the segment to predict the index of the next node
-  if (e == 7) {
-    e = (flagNumber & 0x00FFFFFF) - 1;                   // boundary
-    float slope = (e - index[5]) / (keys[7] - keys[6]);  // the slope
-    // intercept = e - slope * keys[7], p = slope * x + intercept
-    p = slope * (key - keys[7]) + e;
-
-    if (p > e) {
-      return e;
-    } else if (p < 0) {
-      return 0;
-    }
-
-  } else if (e == 1) {
-    float slope = static_cast<float>(index[0]) / (keys[1] - keys[0]);
-    // intercept = -slope * keys[0], p = slope * x + intercept
-    p = slope * (key - keys[0]);
-    if (p < 0) {
-      p = 0;
-    } else if (p > index[0]) {
-      p = index[0];
-    }
-  } else {
-    float slope = static_cast<float>(index[e - 1] - index[e - 2]) /
-                  (keys[e] - keys[e - 1]);
-    // intercept = index[e-1] - slope * keys[e]
-    p = slope * (key - keys[e]) + index[e - 1];
-    if (p < index[e - 2]) {
-      p = index[e - 2];
-    } else if (p > index[e - 1]) {
-      p = index[e - 1];
-    }
-  }
-  return p;
+  return p + childLeft;
 }
 
 #endif  // NODES_INNERNODE_PLR_MODEL_H_

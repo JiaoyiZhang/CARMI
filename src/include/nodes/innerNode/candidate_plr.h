@@ -21,9 +21,9 @@
 #define NODES_INNERNODE_CANDIDATE_PLR_H_
 
 /**
- * @brief designed for piecewise linear regression model. This structure records
- * all the contents that need to be stored in the training process of piecewise
- * linear function, which is the item in the dp table.
+ * @brief Designed for the piecewise linear regression model. This structure
+ * records all the contents that need to be stored in the training process of
+ * the piecewise linear function, which is the item in the dp table.
  */
 struct SegmentPoint {
   /**
@@ -52,9 +52,9 @@ struct SegmentPoint {
  * @brief designed for piecewise linear regression model.
  *
  * This class stores the cost between each candidate point, the parameters of
- * the line segment between two points, entropy, etc. in the process of dynamic
- * programming algorithm in P. LR model, which is used to assist and  accelerate
- * the dp algorithm.
+ * the line segment between two points, entropy, and so on in the process of
+ * dynamic programming algorithm in P. LR model, which is used to assist and
+ * accelerate the DP algorithm.
  *
  * @tparam DataVectorType the vector type of the dataset, each element is a
  * pair: {key, value}
@@ -77,10 +77,10 @@ class CandidateCost {
                   const std::vector<int> &index) {
     // store the value of each segment for least squares, used to speed up the
     // training process of the linear regression
-    std::vector<double> xx(index.size(), 0);
-    std::vector<double> x(index.size(), 0);
-    std::vector<double> px(index.size(), 0);
-    std::vector<double> p(index.size(), 0);
+    std::vector<long double> xx(index.size(), 0);
+    std::vector<long double> x(index.size(), 0);
+    std::vector<long double> px(index.size(), 0);
+    std::vector<long double> p(index.size(), 0);
     xx[0] = 0.0;
     x[0] = 0.0;
     px[0] = 0.0;
@@ -104,14 +104,28 @@ class CandidateCost {
         int tmpSize = index[j] - index[i];
 
         double theta1 = 0.0001, theta2 = 0.666;
-        double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+        long double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
         t1 = xx[j] - xx[i];
         t2 = x[j] - x[i];
         t3 = px[j] - px[i];
         t4 = p[j] - p[i];
-
-        theta1 = (t3 * tmpSize - t2 * t4) / (t1 * tmpSize - t2 * t2);
-        theta2 = (t1 * t4 - t2 * t3) / (t1 * tmpSize - t2 * t2);
+        if (t1 * tmpSize - t2 * t2 == 0) {
+          if (dataset[index[j]].first - dataset[index[i]].first == 0) {
+            theta1 = 0;
+            theta2 = dataset[index[j]].second;
+          } else {
+            theta1 = (dataset[index[j]].second - dataset[index[i]].second) /
+                     (dataset[index[j]].first - dataset[index[i]].first);
+            theta2 =
+                dataset[index[j]].second - theta1 * dataset[index[j]].first;
+          }
+        } else {
+          theta1 = (t3 * tmpSize - t2 * t4) / (t1 * tmpSize - t2 * t2);
+          theta2 = (t1 * t4 - t2 * t3) / (t1 * tmpSize - t2 * t2);
+        }
+        if (theta1 <= 0) {
+          theta1 = std::abs(theta1);
+        }
 
         theta.insert({{index[i], index[j]}, {theta1, theta2}});
       }
@@ -128,7 +142,10 @@ class CandidateCost {
   double Entropy(int leftIdx, int rightIdx) {
     auto tmp_theta = theta.find({leftIdx, rightIdx});
     double a = tmp_theta->second.first;
-    double entropy = log2(a) * (rightIdx - leftIdx);
+    double entropy = -DBL_MAX;
+    if (a > 0) {
+      entropy = log2(a) * (rightIdx - leftIdx);
+    }
     return entropy;
   }
 

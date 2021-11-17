@@ -20,9 +20,11 @@
 
 #include "../carmi.h"
 
-template <typename KeyType, typename ValueType>
-BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
-    const KeyType &key, int *currblock, int *currslot) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+BaseNode<KeyType, ValueType, Compare, Alloc> *
+CARMI<KeyType, ValueType, Compare, Alloc>::Find(const KeyType &key,
+                                                int *currblock, int *currslot) {
   int idx = 0;
   int type = root.flagNumber;
   int fetch_start = 0;
@@ -39,14 +41,13 @@ BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
           idx = fetch_leafIdx;
           fetch_start = root.PLRType<DataVectorType, KeyType>::fetch_model
                             .PrefetchPredict(fetch_leafIdx);
-#ifdef Ubuntu
+#if defined(CATCH_PLATFORM_LINUX) || defined(CATCH_PLATFORM_MAC)
           // the instructions of prefetching in Ubuntu
           __builtin_prefetch(&data.dataArray[fetch_start], 0, 3);
           // __builtin_prefetch(&data.dataArray[fetch_start] + 64, 0, 3);
           // __builtin_prefetch(&data.dataArray[fetch_start] + 128, 0, 3);
           // __builtin_prefetch(&data.dataArray[fetch_start] + 192, 0, 3);
-#endif
-#ifdef Windows
+#elif defined(CATCH_PLATFORM_WINDOWS)
           // the instructions of prefetching in Windows
           _mm_prefetch(static_cast<char *>(
                            static_cast<void *>(&data.dataArray[fetch_start])),
@@ -73,32 +74,28 @@ BaseNode<KeyType, ValueType> *CARMI<KeyType, ValueType>::Find(
         // Case 1: this node is the lr inner node
         // use the predict function of lr inner node to obtain the index of the
         // next node
-        idx = node.nodeArray[idx].lr.childLeft +
-              node.nodeArray[idx].lr.Predict(key);
+        idx = node.nodeArray[idx].lr.Predict(key);
         type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case PLR_INNER_NODE:
         // Case 2: this node is the plr inner node
         // use the predict function of plr inner node to obtain the index of the
         // next node
-        idx = node.nodeArray[idx].plr.childLeft +
-              node.nodeArray[idx].plr.Predict(key);
+        idx = node.nodeArray[idx].plr.Predict(key);
         type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case HIS_INNER_NODE:
         // Case 3: this node is the his inner node
         // use the predict function of his inner node to obtain the index of the
         // next node
-        idx = node.nodeArray[idx].his.childLeft +
-              node.nodeArray[idx].his.Predict(key);
+        idx = node.nodeArray[idx].his.Predict(key);
         type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case BS_INNER_NODE:
         // Case 4: this node is the bs inner node
         // use the predict function of bs inner node to obtain the index of the
         // next node
-        idx = node.nodeArray[idx].bs.childLeft +
-              node.nodeArray[idx].bs.Predict(key);
+        idx = node.nodeArray[idx].bs.Predict(key);
         type = node.nodeArray[idx].lr.flagNumber >> 24;
         break;
       case ARRAY_LEAF_NODE: {

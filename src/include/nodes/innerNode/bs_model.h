@@ -12,6 +12,8 @@
 #define NODES_INNERNODE_BS_MODEL_H_
 
 #include <algorithm>
+#include <functional>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -22,8 +24,8 @@
  *
  * This class is the binary search inner node. Due to the size limit of 64
  * bytes, we can only store the 14 key values. Thus, this type is not suitable
- * for nodes with a large number of child nodes. But the bs node can divide
- * dataset evenly, thus dealing with the uneven dataset.
+ * for nodes with a large number of child nodes. However, the bs node can divide
+ * the dataset evenly, thus dealing with the uneven dataset.
  *
  * @tparam KeyType the type of the keyword
  * @tparam ValueType the type of the value
@@ -46,17 +48,17 @@ class BSModel {
   /**
    * @brief Construct a new BS Model object and use c to set its child number
    *
-   * This model is a binary search model, which performs binary search between
+   * This model is a binary search model, which performs a binary search between
    * the index vector to find the index of the given key value, and the size of
-   * index must be less than 14 due to the limit of 64 bytes.
+   * the index must be less than 14 due to the limit of 64 bytes.
    *
    * @param[in] c the number of its child nodes
    */
   explicit BSModel(int c) {
     childLeft = 0;
-    flagNumber = (BS_INNER_NODE << 24) + std::min(c, 15);
+    flagNumber = (BS_INNER_NODE << 24) + std::max(2, std::min(c, 15));
     for (int i = 0; i < 14; i++) {
-      index[i] = 0;
+      keys[i] = 0;
     }
   }
 
@@ -116,13 +118,18 @@ class BSModel {
    * locate the corresponding key value interval covering the input key. (56
    * bytes)
    */
-  float index[14];
+  float keys[14];
 };
 
 template <typename KeyType, typename ValueType>
 inline void BSModel<KeyType, ValueType>::Train(int left, int size,
                                                const DataVectorType &dataset) {
   if (size == 0) return;
+  if (left < 0 || size < 0 || left + size > dataset.size()) {
+    throw std::out_of_range(
+        "BSModel::Train: the range of training dataset is invalid.");
+  }
+
   int childNumber = flagNumber & 0x00FFFFFF;
   // calculate the value of the segment
   float value = static_cast<float>(size) / childNumber;
@@ -134,7 +141,7 @@ inline void BSModel<KeyType, ValueType>::Train(int left, int size,
     if (cnt >= childNumber) {
       break;
     }
-    index[cnt - 1] += static_cast<float>(dataset[i].first);
+    keys[cnt - 1] += static_cast<float>(dataset[i].first);
     cnt++;
   }
 }
@@ -148,12 +155,12 @@ inline int BSModel<KeyType, ValueType>::Predict(KeyType key) const {
   // perform binary search between the index vector
   while (start_idx < end_idx) {
     mid = (start_idx + end_idx) >> 1;
-    if (index[mid] < key)
+    if (keys[mid] < key)
       start_idx = mid + 1;
     else
       end_idx = mid;
   }
-  return start_idx;
+  return start_idx + childLeft;
 }
 
 #endif  // NODES_INNERNODE_BS_MODEL_H_
