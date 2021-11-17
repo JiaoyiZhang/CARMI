@@ -8,33 +8,32 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef DATAMANAGER_NODE_ARRAY_H_
-#define DATAMANAGER_NODE_ARRAY_H_
+#ifndef MEMORYLAYOUT_NODE_ARRAY_H_
+#define MEMORYLAYOUT_NODE_ARRAY_H_
+#include <functional>
 #include <iostream>
+#include <memory>
 #include <utility>
 #include <vector>
 
 #include "../base_node.h"
+
 /**
  * @brief the structure of node array
  *
  * @tparam KeyType the type of the keyword
  * @tparam ValueType the type of the value
+ * @tparam Compare A binary predicate that takes two element keys as arguments
+ * and returns a bool.
+ * @tparam Alloc Type of the allocator object used to define the storage
+ * allocation model.
  */
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType,
+          typename Compare = std::less<KeyType>,
+          typename Alloc = std::allocator<LeafSlots<KeyType, ValueType>>>
 class NodeArrayStructure {
  public:
   // *** Constructed Types and Constructor
-
-  /**
-   * @brief the pair of data points
-   */
-  typedef std::pair<KeyType, ValueType> DataType;
-
-  /**
-   * @brief the vector of data points, which is the type of dataset
-   */
-  typedef std::vector<DataType> DataVectorType;
 
   /**
    * @brief Construct a new Node Array Structure object
@@ -43,8 +42,8 @@ class NodeArrayStructure {
    */
   NodeArrayStructure() {
     nowNodeNumber = 0;
-    std::vector<BaseNode<KeyType, ValueType>>(4096,
-                                              BaseNode<KeyType, ValueType>())
+    std::vector<BaseNode<KeyType, ValueType, Compare, Alloc>>(
+        4096, BaseNode<KeyType, ValueType, Compare, Alloc>())
         .swap(nodeArray);
   }
 
@@ -56,7 +55,6 @@ class NodeArrayStructure {
    *
    * @param[in] size the size of nodes needed to be stored
    * @return int: the beginning index of this allocated memory
-   * @retval -1 allocation fails
    */
   int AllocateNodeMemory(int size);
 
@@ -78,7 +76,7 @@ class NodeArrayStructure {
    * this node array. Each member occupies a fixed size according to the
    * BaseNode class.
    */
-  std::vector<BaseNode<KeyType, ValueType>> nodeArray;
+  std::vector<BaseNode<KeyType, ValueType, Compare, Alloc>> nodeArray;
 
   /**
    * @brief the used size of nodeArray
@@ -86,14 +84,20 @@ class NodeArrayStructure {
   int nowNodeNumber;
 };
 
-template <typename KeyType, typename ValueType>
-int NodeArrayStructure<KeyType, ValueType>::AllocateNodeMemory(int size) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+int NodeArrayStructure<KeyType, ValueType, Compare, Alloc>::AllocateNodeMemory(
+    int size) {
+  if (size < 0) {
+    throw std::invalid_argument(
+        "NodeArrayStructure::AllocateNodeMemory: the size is less than 0.");
+  }
   int newLeft = -1;
   unsigned int tmpSize = nodeArray.size();
 
   // allocation fails, need to expand the nodeArray
   while (nowNodeNumber + size > tmpSize) {
-    BaseNode<KeyType, ValueType> t;
+    BaseNode<KeyType, ValueType, Compare, Alloc> t;
     tmpSize *= 2;
     nodeArray.resize(tmpSize, t);
   }
@@ -102,12 +106,17 @@ int NodeArrayStructure<KeyType, ValueType>::AllocateNodeMemory(int size) {
   return newLeft;
 }
 
-template <typename KeyType, typename ValueType>
-void NodeArrayStructure<KeyType, ValueType>::ReleaseUselessMemory(
-    int neededSize) {
-  std::vector<BaseNode<KeyType, ValueType>> tmp(nodeArray.begin(),
-                                                nodeArray.begin() + neededSize);
-  std::vector<BaseNode<KeyType, ValueType>>().swap(nodeArray);
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+void NodeArrayStructure<KeyType, ValueType, Compare,
+                        Alloc>::ReleaseUselessMemory(int neededSize) {
+  if (neededSize < 0) {
+    throw std::invalid_argument(
+        "NodeArrayStructure::ReleaseUselessMemory: the size is less than 0.");
+  }
+  std::vector<BaseNode<KeyType, ValueType, Compare, Alloc>> tmp(
+      nodeArray.begin(), nodeArray.begin() + neededSize);
+  std::vector<BaseNode<KeyType, ValueType, Compare, Alloc>>().swap(nodeArray);
   nodeArray = tmp;
 }
-#endif  // DATAMANAGER_NODE_ARRAY_H_
+#endif  // MEMORYLAYOUT_NODE_ARRAY_H_

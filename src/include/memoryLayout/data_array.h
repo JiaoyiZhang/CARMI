@@ -11,7 +11,11 @@
 
 #ifndef MEMORYLAYOUT_DATA_ARRAY_H_
 #define MEMORYLAYOUT_DATA_ARRAY_H_
+
 #include <algorithm>
+#include <functional>
+#include <memory>
+#include <utility>
 #include <vector>
 
 #include "../construct/structures.h"
@@ -21,16 +25,30 @@
 /**
  * @brief the structure of data array, used to store data points in CARMI.
  *
- * The basic class used to store data points in CARMI. This class includes the
+ * This class is used to store data points in CARMI. This class includes the
  * management of the data array mentioned in the paper, including modifying the
  * size of the data array, allocating or releasing a contiguous memory space for
- * the leaf node and so on.
+ * the leaf node, and so on.
  *
  * @tparam KeyType the type of the keyword
  * @tparam ValueType the type of the value
+ * @tparam Alloc Type of the allocator object used to define the storage
+ * allocation model.
  */
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType,
+          typename Alloc = std::allocator<LeafSlots<KeyType, ValueType>>>
 class DataArrayStructure {
+ private:
+  /**
+   * @brief Define an related allocator for the leaf_node structs.
+   */
+  typedef typename Alloc::template rebind<DataArrayStructure>::other alloc_type;
+
+  /**
+   * @brief The allocator for data vector.
+   */
+  Alloc m_allocator;
+
  public:
   //*** Constructor
 
@@ -54,11 +72,15 @@ class DataArrayStructure {
    * @param[in] size the size of the init dataset
    */
   DataArrayStructure(int maxBlockNum, int size) {
+    if (maxBlockNum <= 0) {
+      throw std::logic_error(
+          "DataArrayStructure: the maximum block number is invalid.");
+    }
     usedDatasize = 0;
     int totalDataSize =
         std::max(64.0, size / carmi_params::kMaxLeafNodeSize * 1.5);
-    std::vector<LeafSlots<KeyType, ValueType>>().swap(dataArray);
-    dataArray = std::vector<LeafSlots<KeyType, ValueType>>(
+    std::vector<LeafSlots<KeyType, ValueType>, Alloc>().swap(dataArray);
+    dataArray = std::vector<LeafSlots<KeyType, ValueType>, Alloc>(
         totalDataSize, LeafSlots<KeyType, ValueType>());
 
     std::vector<EmptyMemoryBlock>().swap(emptyBlocks);
@@ -74,13 +96,9 @@ class DataArrayStructure {
    * @brief add empty memory blocks ([left, left + len]) with the length len
    * into emptyBlocks
    *
-   * This function will split the empty memory block of length len into
+   * This function will split the empty memory block with the given length into
    * different small blocks and store them in the corresponding members of
    * emptyBlocks, thus realizing classification management.
-   *
-   * If the size of the last remaining memory fragment does not match any width
-   * of emptyBlocks[i], return false. In our implementation, this situation will
-   * not occur, it is designed for debug.
    *
    * @param[in] left the beginning idx of this block of empty memory
    * @param[in] len the length of the empty memory block
@@ -127,6 +145,13 @@ class DataArrayStructure {
    */
   int AllocateSingleMemory(int idx);
 
+  /**
+   * @brief Return the data allocator
+   *
+   * @return alloc_type
+   */
+  alloc_type data_allocator() { return alloc_type(m_allocator); }
+
  public:
   //*** Public Data Member of Data Array Structure Objects
 
@@ -138,16 +163,15 @@ class DataArrayStructure {
    * LeafSlots class. Data blocks managed by the same leaf node are stored in
    * adjacent locations.
    */
-  std::vector<LeafSlots<KeyType, ValueType>> dataArray;
+  std::vector<LeafSlots<KeyType, ValueType>, Alloc> dataArray;
 
   /**
    * @brief the used size of dataArray.
    *
    * The used size of dataArray, which is represented by the index of the last
    * used element in the dataArray plus one. It is worth noting that even if
-   * there are some gaps in the middle that have not been used, because there
-   * are some used parts behind them, we also include their size in this
-   * parameter.
+   * some gaps in the middle have not been used, because there are some used
+   * parts behind them, we also include their size in this parameter.
    */
   int usedDatasize;
 
@@ -161,11 +185,15 @@ class DataArrayStructure {
   std::vector<EmptyMemoryBlock> emptyBlocks;
 };
 
-template <typename KeyType, typename ValueType>
-void DataArrayStructure<KeyType, ValueType>::AddEmptyMemoryBlock(int left,
-                                                                 int len) {
+template <typename KeyType, typename ValueType, typename Alloc>
+void DataArrayStructure<KeyType, ValueType, Alloc>::AddEmptyMemoryBlock(
+    int left, int len) {
   // Case 1: len is equal to 0, return directly
-  if (len == 0) return;
+  if (len <= 0) return;
+  if (left < 0 || left + len > dataArray.size()) {
+    throw std::out_of_range(
+        "DataArrayStructure::AddEmptyMemoryBlock: the range is invalid.");
+  }
   int res = 0;
   // Case 2: split the block into several small blocks and store them in the
   // corresponding members of emptyBlocks
@@ -185,8 +213,13 @@ void DataArrayStructure<KeyType, ValueType>::AddEmptyMemoryBlock(int left,
   }
 }
 
-template <typename KeyType, typename ValueType>
-int DataArrayStructure<KeyType, ValueType>::AllocateSingleMemory(int idx) {
+template <typename KeyType, typename ValueType, typename Alloc>
+int DataArrayStructure<KeyType, ValueType, Alloc>::AllocateSingleMemory(
+    int idx) {
+  if (idx < 0 || idx > emptyBlocks[emptyBlocks.size() - 1].m_width) {
+    throw std::invalid_argument(
+        "DataArrayStructure::AllocateSingleMemory: the idx is invalid.");
+  }
   int newLeft = -1;
   for (int i = idx; i < static_cast<int>(emptyBlocks.size()); i++) {
     newLeft = emptyBlocks[i].Allocate();
@@ -202,8 +235,8 @@ int DataArrayStructure<KeyType, ValueType>::AllocateSingleMemory(int idx) {
   return newLeft;
 }
 
-template <typename KeyType, typename ValueType>
-int DataArrayStructure<KeyType, ValueType>::AllocateMemory(
+template <typename KeyType, typename ValueType, typename Alloc>
+int DataArrayStructure<KeyType, ValueType, Alloc>::AllocateMemory(
     int neededBlockNumber) {
   int newLeft = -1;
   int idx = neededBlockNumber;
@@ -224,8 +257,14 @@ int DataArrayStructure<KeyType, ValueType>::AllocateMemory(
   return newLeft;
 }
 
-template <typename KeyType, typename ValueType>
-void DataArrayStructure<KeyType, ValueType>::ReleaseMemory(int left, int size) {
+template <typename KeyType, typename ValueType, typename Alloc>
+void DataArrayStructure<KeyType, ValueType, Alloc>::ReleaseMemory(int left,
+                                                                  int size) {
+  if (left < 0 || size < 0 || left + size > dataArray.size()) {
+    throw std::out_of_range(
+        "DataArrayStructure::ReleaseMemory: the empty memory block is "
+        "invalid.");
+  }
   int len = size;
   int idx = 1;
   // traverse all members and delete all indexes within the range
@@ -241,14 +280,19 @@ void DataArrayStructure<KeyType, ValueType>::ReleaseMemory(int left, int size) {
   AddEmptyMemoryBlock(left, len);
 }
 
-template <typename KeyType, typename ValueType>
-void DataArrayStructure<KeyType, ValueType>::ReleaseUselessMemory(
+template <typename KeyType, typename ValueType, typename Alloc>
+void DataArrayStructure<KeyType, ValueType, Alloc>::ReleaseUselessMemory(
     int neededSize) {
+  if (neededSize < 0) {
+    throw std::invalid_argument(
+        "DataArrayStructure::ReleaseUselessMemory: the useless memory block is "
+        "invalid.");
+  }
   // release the useless memory of dataArray
   if (neededSize < static_cast<int>(dataArray.size())) {
-    std::vector<LeafSlots<KeyType, ValueType>> tmpEntireData(
+    std::vector<LeafSlots<KeyType, ValueType>, Alloc> tmpEntireData(
         dataArray.begin(), dataArray.begin() + neededSize);
-    std::vector<LeafSlots<KeyType, ValueType>>().swap(dataArray);
+    std::vector<LeafSlots<KeyType, ValueType>, Alloc>().swap(dataArray);
     dataArray = tmpEntireData;
   }
 

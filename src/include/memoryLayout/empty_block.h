@@ -10,21 +10,22 @@
  */
 #ifndef MEMORYLAYOUT_EMPTY_BLOCK_H_
 #define MEMORYLAYOUT_EMPTY_BLOCK_H_
+
 #include <iostream>
 #include <set>
 
 /**
  * @brief Basic class used to manage empty memory blocks.
  *
- * The basic class used to manage empty memory blocks with the size m_width.
+ * This class is used to manage empty memory blocks with the size m_width.
  * In CARMI, this class can speed up the process of memory allocation, which
  * only needs to return the first element in m_block.
  *
  * This class is used as a member type of the vector of the DataArrayStructure
  * in data_array.h. Users can customize the granularity of the width of the
- * empty memory blocks according to the node type them implement. For example,
- * these can be 1~7 for CF array leaf node. While it can also have a coarser
- * granularity:2, 4, 8, ..., 512, 1024, 2048.
+ * empty memory blocks according to the node type they implement. For example,
+ * these can be 1~7 for the CF array leaf node. At the same time, it can also
+ * have a coarser granularity:2, 4, 8, ..., 512, 1024, 2048.
  */
 class EmptyMemoryBlock {
  public:
@@ -42,11 +43,11 @@ class EmptyMemoryBlock {
   //*** Public Functions of EmptyMemoryBlock Objects
 
   /**
-   * @brief allocate a block of empty memory. If the set of memory blocks of
-   * size m_width has empty blocks available for allocation, that is, there are
-   * still elements in m_block, then return the index of the empty memory block
+   * @brief Allocate a block of empty memory. If the set of memory blocks of
+   * size m_width has empty blocks available for allocation, which means there
+   * are still elements in m_block, then return the empty memory block index
    * with the smallest index among all the empty blocks. If there are no empty
-   * blocks, allocation fails and return -1.
+   * blocks, allocation fails, and this function returns -1.
    *
    * @return int: if allocation is successful, return the smallest element in
    * m_block, otherwise return -1.
@@ -71,7 +72,6 @@ class EmptyMemoryBlock {
    * @param[in] idx the index of blocks
    * @param[in] size the size of blocks
    * @return int: the size of the empty block after this action
-   * @retval -1 fails, the given size is unequal to the m_width
    */
   int AddBlock(int idx, int size) {
     if (size < m_width) return -1;

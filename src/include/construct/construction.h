@@ -21,8 +21,9 @@
 #include "./construct_root.h"
 #include "./structures.h"
 
-template <typename KeyType, typename ValueType>
-inline void CARMI<KeyType, ValueType>::ConstructSubTree(
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+inline void CARMI<KeyType, ValueType, Compare, Alloc>::ConstructSubTree(
     const SubDataset &subDataset) {
   int nowBlockIdx = 0;
   // the number of data points which can be prefetched
@@ -58,8 +59,9 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
         range.initRange.left != -1) {
       int end = range.initRange.left + range.initRange.size;
       prefetchNum += range.initRange.size;
-      int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
-          range.initRange.size + range.insertRange.size);
+      int neededBlockNum =
+          CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+              range.initRange.size + range.insertRange.size);
       int avg =
           std::max(1.0, ceil((range.initRange.size + range.insertRange.size) *
                              1.0 / neededBlockNum));
@@ -78,13 +80,20 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
       // add this node to the prefetchNode/Range
       prefetchNode.push_back(i);
       prefetchRange.push_back(range);
+      if (firstLeaf == -1 && range.initRange.size > 0) {
+        firstLeaf = i;
+      }
+      if (range.initRange.size > 0) {
+        lastLeaf = i;
+      }
     } else {
       // store the other optimal sub-trees
       StoreOptimalNode(range, i);
     }
 
     std::map<IndexPair, NodeCost>().swap(COST);
-    std::map<IndexPair, BaseNode<KeyType, ValueType>>().swap(structMap);
+    std::map<IndexPair, BaseNode<KeyType, ValueType, Compare, Alloc>>().swap(
+        structMap);
   }
 
   if (!isPrimary) {
@@ -102,9 +111,11 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
 
     // store the leaf nodes which can be prefetched
     for (int i = 0; i < prefetchNode.size(); i++) {
-      CFArrayType<KeyType, ValueType> currnode;
-      int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
-          prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size);
+      CFArrayType<KeyType, ValueType, Compare, Alloc> currnode;
+      int neededBlockNum =
+          CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+              prefetchRange[i].initRange.size +
+              prefetchRange[i].insertRange.size);
       int predictBlockNum = root.fetch_model.PrefetchNum(prefetchNode[i]);
       bool isSuccess = false;
       if (neededBlockNum <= predictBlockNum) {
@@ -133,10 +144,11 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
   // store the remaining node which cannot be prefetched
   if (remainingNode.size() > 0) {
     for (int i = 0; i < remainingNode.size(); i++) {
-      CFArrayType<KeyType, ValueType> currnode;
-      int neededBlockNum = CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
-          remainingRange[i].initRange.size +
-          remainingRange[i].insertRange.size);
+      CFArrayType<KeyType, ValueType, Compare, Alloc> currnode;
+      int neededBlockNum =
+          CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+              remainingRange[i].initRange.size +
+              remainingRange[i].insertRange.size);
       std::vector<int> prefetchIndex(remainingRange[i].initRange.size);
       int s = remainingRange[i].initRange.left;
       int e =
@@ -157,11 +169,12 @@ inline void CARMI<KeyType, ValueType>::ConstructSubTree(
   std::vector<DataRange>().swap(remainingRange);
 }
 
-template <typename KeyType, typename ValueType>
-inline void CARMI<KeyType, ValueType>::Construction() {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+inline void CARMI<KeyType, ValueType, Compare, Alloc>::Construction() {
   // choose the optimal setting of the root node
-  // RootStruct res = ChooseRoot();
-  RootStruct res = {0, 904349};
+  RootStruct res = ChooseRoot();
+  // RootStruct res = {0, 904349};
   // construct and store the root node, obtain the range of each sub-dataset
   SubDataset subDataset = StoreRoot(res);
 
