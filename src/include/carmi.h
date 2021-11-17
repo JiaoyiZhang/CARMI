@@ -14,7 +14,9 @@
 #include <float.h>
 
 #include <algorithm>
+#include <functional>
 #include <map>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -35,42 +37,107 @@
  *
  * This class contains the specific implementation of all the basic functions of
  * the CARMI framework, including the basic operations and construction of the
- * index, and supports two different types of CARMI: (1) Common CARMI that needs
- * to actually store and manage data points in the index structure and (2)
- * External CARMI that only stores the pointer of the position of external data
- * points in the index structure
+ * index, and supports two different types of CARMI: (1) CARMI that needs to
+ * store and manage data points in the index structure and (2) External CARMI
+ * that only stores the pointer of the position of external data points in the
+ * index structure
  *
- * @tparam KeyType the type of the keyword
- * @tparam ValueType the type of the value
+ * @tparam KeyType Type of keys.
+ * @tparam ValueType Type of values of data points.
+ * @tparam Compare A binary predicate that takes two element keys as arguments
+ * and returns a bool.
+ * @tparam Alloc Type of the allocator object used to define the storage
+ * allocation model.
  */
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType,
+          typename Compare = std::less<KeyType>,
+          typename Alloc = std::allocator<LeafSlots<KeyType, ValueType>>>
 class CARMI {
  public:
   // *** Constructed Types and Constructor
 
   /**
-   * @brief the pair of data points: {key, value}
+   * @brief The pair of data points: {key, value}
    */
   typedef std::pair<KeyType, ValueType> DataType;
 
   /**
-   * @brief the vector of data points, which is the type of dataset: [{key_0,
+   * @brief The vector of data points, which is the type of dataset: [{key_0,
    * value_0}, {key_1, value_1}, ..., {key_n, value_n}]. The dataset has been
    * sorted.
    */
   typedef std::vector<DataType> DataVectorType;
 
   /**
-   * @brief the type of the key value vector: [key_0, key_1, ..., key_n].
+   * @brief The type of the key value vector: [key_0, key_1, ..., key_n].
    */
   typedef std::vector<KeyType> KeyVectorType;
 
   /**
-   * @brief the type of the historical queries vector: [{key_0, times_0},
+   * @brief The type of the historical queries vector: [{key_0, times_0},
    * {key_1, times_1}, ..., {key_n, times_n}]. The second object means the
-   * accessed times of  the key value in the historical access queries.
+   * accessed times of the key value in the historical access queries.
    */
   typedef std::vector<std::pair<KeyType, int>> QueryType;
+
+  Compare key_less_ = Compare();
+  Alloc allocator_ = Alloc();
+
+ public:
+  // *** Key and Value Comparison Function Objects
+
+  /**
+   * @brief Gets the allocator object.
+   *
+   * @return Alloc
+   */
+  Alloc get_allocator() const { return allocator_; }
+
+  /**
+   * @brief Returns a copy of the comparison object used by the container
+   * to compare keys.
+   *
+   * @return Compare
+   */
+  Compare key_comp() const { return key_less_; }
+
+  /**
+   * @brief A class that uses the internal comparison object to generate
+   * the appropriate comparison functional class.
+   */
+  class value_compare {
+   protected:
+    Compare comp;
+    explicit value_compare(Compare c) : comp(c) {}
+
+   public:
+    /**
+     * @brief Compare two elements to get whether the key of the first one
+     * goes before the second.
+     *
+     * @param[in] x the first object
+     * @param[in] y the second object
+     * @retval true the key of the first argument is considered to go
+     * before that of the second
+     * @retval false the key of the first argument is considered to go
+     * after that of the second
+     */
+    bool operator()(const DataType &x, const DataType &y) const {
+      return comp(x.first, y.first);
+    }
+  };
+
+  /**
+   * @brief Returns a comparison object that can be used to compare two
+   * elements to get whether the key of the first one goes before the
+   * second.
+   *
+   * @return value_compare The comparison object for element values.
+   */
+  value_compare value_comp() const { return value_compare(key_less_); }
+
+ public:
+  // *** Constructors and Destructor
 
   /**
    * @brief Construct a new empty CARMI object
@@ -93,28 +160,28 @@ class CARMI {
    * (1) Among them, initDataset is used to train the model in each node,
    * representing the data points that have been stored before in the database
    * in the historical queries, and each element of it is a pair of data points:
-   * {key, value}. Therefore, in the process of constructing the index, the data
-   * points of initDataset will be actually stored in the part of the index tree
+   * {key, value}. Therefore, during constructing the index, the data points of
+   * initDataset will be actually stored in the part of the index tree
    * responsible for managing data points.
    *
    * (2) findQuery represents the key values of all data points that have been
    * accessed in the history queries and the number of times it has been
    * visited. Each element is a pair: {key value of this data point, the visited
-   * times}. This dataset is used for the calculation of the cost model.
+   * times}. This dataset is used to calculate the cost model.
    *
    * (3) Similarly, insertQuery represents the data points inserted in the
    * history queries. Each element is a pair: {key value of this data point, the
    * inserted times}. In the future, there may be similar values ​​inserted
-   * at similar positions. Therefore, in addition to the calculation of the cost
-   * model, this dataset is also used for reserving the space for future insert
-   * operations in a similar location.
+   * at similar positions. Therefore, in addition to calculating the cost model,
+   * this dataset is also used to reserve the space for future insert operations
+   * in a similar location.
    *
-   * (4) The last parameter lambda is used to tradeoff between the time cost and
-   * the space cost in the cost model. The CARMI index structure can achieve a
-   * good performance under this time/space setting. The goal of the
-   * construction algorithm is to minimize the total cost of historical access
-   * and insert queries, which is: the average time cost of each query + lambda
-   * times the space cost of the index tree.
+   * (4) The last parameter lambda is used to tradeoff between the time and
+   * space cost in the cost model. The CARMI index structure can achieve good
+   * performance under this time/space setting. The goal of the construction
+   * algorithm is to minimize the total cost of historical access and insert
+   * queries, which is: the average time cost of each query + lambda times the
+   * space cost of the index tree.
    *
    * @param[in] initData the vector of init dataset, used to train models and
    * construct the index tree. Each element is: {key, value}
@@ -123,7 +190,7 @@ class CARMI {
    * the visited times of this data point}
    * @param[in] insertData the key vector of insert dataset, used as historical
    * insert queries to assist in constructing index. Each element is the key
-   * value.
+   * value to be inserted.
    * @param[in] lambda cost = time + lambda * space, used to tradeoff between
    * time and space cost
    */
@@ -138,11 +205,11 @@ class CARMI {
    * This function is designed for the primary indexes that store data points
    * externally. In other words, in this case, the CARMI index structure will
    * not actually store these data points, but only store the position of the
-   * first data point of the dataset. User passes in the pointer to this
-   * position, the length of a record, and the total number of records to
-   * represent the dataset that needs to be indexed. This function will
-   * automatically generate the initDataset, findQuery, and insertQuery required
-   * by the algorithm based on the parameters passed in.
+   * first data point of the dataset. Users pass in three parameters: a pointer
+   * to an external dataset, the length of a record, and the total number of
+   * records to represent this dataset. This function will automatically
+   * generate the initDataset, findQuery, and insertQuery required by the
+   * algorithm based on the parameters.
    *
    * (1) We can obtain the initDataset from the pointer to the dataset and store
    * them in the form of a vector, each element is a pair of data points: {key,
@@ -158,18 +225,25 @@ class CARMI {
    * data point in initDataset is accessed once to generate this dataset.
    *
    * (3) Similarly, insertQuery represents the data points inserted in the
-   * history queries. Each element is a pair: {key value of each data point in
-   * insertData, the inserted times with the default value is 1}. In the future,
-   * there may be similar values ​​inserted at similar positions. Therefore,
-   * in addition to the calculation of the cost model, this dataset is also used
-   * for reserving the space for future insert operations in a similar location.
+   * history queries. Each element is the key value. In the future, there may be
+   * similar values ​​inserted at similar positions. Therefore, in addition
+   * to calculating the cost model, insertQuery is also used to reserve the
+   * space for future insert operations in a similar location.
    *
-   * (4) The third parameter lambda is used to tradeoff between the time cost
-   * and the space cost in the cost model. The CARMI index structure can achieve
-   * a good performance under this time/space setting. The goal of the
-   * construction algorithm is to minimize the total cost of historical access
-   * and insert queries, which is: the average time cost of each query + lambda
-   * times the space cost of the index tree.
+   * (4) The third parameter lambda is used to tradeoff between the time and
+   * space cost in the cost model. The CARMI index structure can achieve good
+   * performance under this time/space setting. The goal of the construction
+   * algorithm is to minimize the total cost of historical access and insert
+   * queries, which is: the average time cost of each query + lambda times the
+   * space cost of the index tree.
+   *
+   * (5) record_number refers to the number of all records in the external
+   * dataset. A key value and its corresponding payload form a record.
+   *
+   * (6) record_len refers to the length of this record, including the key value
+   * and payload, in bytes. For example, if the key value of a record in an
+   * external dataset is an object of type double, and the value is ten objects
+   * of type float, then the length of the data record is 48 bytes.
    *
    * @param[in] dataset the pointer of the dataset
    * @param[in] insertData the vector of insert dataset, used as historical
@@ -178,7 +252,8 @@ class CARMI {
    * @param[in] lambda cost = time + lambda * space, used to tradeoff between
    * time and space cost
    * @param[in] record_number the number of all the records
-   * @param[in] record_len the length of a record
+   * @param[in] record_len the length of a record, in bytes (including the key
+   * value and the payload)
    */
   CARMI(const void *dataset, const KeyVectorType &insertData, double lambda,
         int record_number, int record_len);
@@ -187,9 +262,9 @@ class CARMI {
    * @brief Removes all elements
    */
   void clear() {
-    data = DataArrayStructure<KeyType, ValueType>(
-        CFArrayType<KeyType, ValueType>::kMaxBlockNum, 1000);
-    node = NodeArrayStructure<KeyType, ValueType>();
+    data = DataArrayStructure<KeyType, ValueType, Alloc>(
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockNum, 1000);
+    node = NodeArrayStructure<KeyType, ValueType, Compare, Alloc>();
   }
 
   /**
@@ -214,14 +289,15 @@ class CARMI {
    * @param[out] currslot (1) the index of the data point in the data block in
    * the cf array leaf node; (2) the index of the data point in the external
    * array leaf node
-   * @return BaseNode<KeyType, ValueType>*: the leaf node which manages this
-   * data point
+   * @return BaseNode<KeyType, ValueType, Compare, Alloc>*: the leaf node which
+   * manages this data point
    */
-  BaseNode<KeyType, ValueType> *Find(const KeyType &key, int *currblock,
-                                     int *currslot);
+  BaseNode<KeyType, ValueType, Compare, Alloc> *Find(const KeyType &key,
+                                                     int *currblock,
+                                                     int *currslot);
 
   /**
-   * @brief insert a data point
+   * @brief Insert a data point.
    *
    * @param[in] datapoint the inserted data point
    * @param[out] currblock the index of the data block of the returned leaf
@@ -229,34 +305,25 @@ class CARMI {
    * @param[out] currslot (1) the index of the data point in the data block in
    * the cf array leaf node; (2) the index of the data point in the external
    * array leaf node
-   * @return std::pair<BaseNode<KeyType, ValueType>*, bool> the first element is
-   * the leaf node which manages this data point and the pair::second element in
-   * the pair is set to true if a new element was inserted.
+   * @return std::pair<BaseNode<KeyType, ValueType, Compare, Alloc>*, bool> the
+   * first element is the leaf node which manages this data point and the
+   * pair::second element in the pair is set to true if a new element was
+   * inserted.
    */
-  std::pair<BaseNode<KeyType, ValueType> *, bool> Insert(
+  std::pair<BaseNode<KeyType, ValueType, Compare, Alloc> *, bool> Insert(
       const DataType &datapoint, int *currblock, int *currslot);
 
   /**
-   * @brief update a data point of the given key
-   *
-   * @param[in] datapoint the data point needed to be updated
-   * @retval true if the operation succeeds
-   * @retval false if the operation fails (unable to find the record of the
-   * given key value)
-   */
-  bool Update(const DataType &datapoint);
-
-  /**
-   * @brief delete all the records of the given key
+   * @brief Delete all the records of the given key.
    *
    * @param[in] key the key value of the deleted record
    * @param[out] cnt the number of deleted data points
    * @retval true deletion is successful
    */
-  bool Delete(const KeyType &key, int *cnt);
+  bool Delete(const KeyType &key, size_t *cnt);
 
   /**
-   * @brief delete a data point
+   * @brief Delete a data point.
    *
    * @param[in] key the key value of the deleted record
    * @param[in] currnode the leaf node
@@ -266,9 +333,10 @@ class CARMI {
    * @retval true if the operation succeeds
    * @retval false if the operation fails (the given position is invalid)
    */
-  bool DeleteSingleData(const KeyType &key,
-                        const BaseNode<KeyType, ValueType> &currnode,
-                        int currblock, int currslot) {
+  bool DeleteSingleData(
+      const KeyType &key,
+      const BaseNode<KeyType, ValueType, Compare, Alloc> &currnode,
+      int currblock, int currslot) {
     return currnode.DeleteSingleData(key, currblock, currslot, &data);
   }
 
@@ -276,7 +344,7 @@ class CARMI {
   // *** Functions of Getting Some Information of CARMI Objects
 
   /**
-   * @brief calculate the space cost of the CARMI object
+   * @brief Calculate the space cost of the CARMI object.
    *
    * @return long long: the space cost (byte)
    */
@@ -324,8 +392,8 @@ class CARMI {
    * @brief The main function of selecting the optimal root node setting.
    *
    * This function will generate many different combinations of node settings as
-   * the input of the UpdateRootOptSetting function, find the optimal
-   * root node from them, and finally return the optimal root node.
+   * the input of the UpdateRootOptSetting function, find the optimal root node
+   * from them, and return the optimal root node.
    *
    * @return the type and childNumber of the optimal root: {the number of the
    * child nodes, the type of the root node}
@@ -354,7 +422,7 @@ class CARMI {
   //*** Main Private Function of Constructing Child Nodes of the Root Node
 
   /**
-   * @brief The main function of constructing each subtree using dp/greedy
+   * @brief The main function of constructing each subtree using the DP/greedy
    * algorithm.
    *
    * This function recursively constructs the optimal sub-index tree for each
@@ -377,13 +445,13 @@ class CARMI {
   //*** Private Functions of Dynamic Programming Algorithm
 
   /**
-   * @brief The main function of dynamic programming algorithm to construct the
-   * optimal sub-index tree.
+   * @brief The main function of the dynamic programming algorithm to construct
+   * the optimal sub-index tree.
    *
-   * This function is the outer interface of the dynamic programming algorithm.
-   * It compares the size of the dataset with the parameters, and chooses
-   * appropriate algorithm to construct a leaf node, an inner node, or both, and
-   * choose the better one from them. Finally, the cost of the sub-tree
+   * This function is the external interface of the dynamic programming
+   * algorithm. It compares the size of the dataset with the parameters, chooses
+   * an appropriate algorithm to construct a leaf node, an inner node, or both,
+   * and chooses the better one from them. Finally, the cost of the sub-tree
    * corresponding to the sub-dataset is returned.
    *
    * @param[in] range the range of the sub-dataset: {{the left index in the
@@ -398,10 +466,10 @@ class CARMI {
   /**
    * @brief Traverse all possible settings to find the optimal inner node.
    *
-   * This function generates a variety of different inner node settings
-   * according to the given sub-dataset, and then call the UpdateDPOptSetting
-   * function to calculate their costs, select the optimal settings for this
-   * sub-dataset and return the minimum cost.
+   * This function generates various inner node settings according to the given
+   * sub-dataset, then calls the UpdateDPOptSetting function to calculate their
+   * costs, select the optimal settings for this sub-dataset, and return the
+   * minimum cost.
    *
    * @param[in] range the range of the sub-dataset: {initDataset: {left, size},
    * findQuery: {left, size}, insertQuery: {left, size}}
@@ -414,8 +482,8 @@ class CARMI {
    * @brief Construct a leaf node directly.
    *
    * This function constructs a leaf node directly as the current node and
-   * return its cost. Based on our current implementation, the type of the leaf
-   * node depends on the isPrimary parameter, if it is true, construct an
+   * returns its cost. Based on our current implementation, the type of the leaf
+   * node depends on the isPrimary parameter. If it is true, construct an
    * external array leaf node, otherwise, construct a cache-friendly array leaf
    * node.
    *
@@ -459,10 +527,10 @@ class CARMI {
   //*** Private Functions of Greedy Node Selection Algorithm
 
   /**
-   * @brief The main function of greedy node selection algorithm to construct
-   * the optimal sub-index tree.
+   * @brief The main function of the greedy node selection algorithm to
+   * construct the optimal sub-index tree.
    *
-   * This function is the outer interface of the greedy node selection
+   * This function is the external interface of the greedy node selection
    * algorithm. It uses the local information to construct the current inner
    * node. The cost of the sub-tree corresponding to the sub-dataset is
    * returned.
@@ -475,14 +543,14 @@ class CARMI {
   NodeCost GreedyAlgorithm(const DataRange &dataRange);
 
   /**
-   * @brief Update the optimal setting of the inner node using greedy node
+   * @brief Update the optimal setting of the inner node using the greedy node
    * selection algorithm for the range of the sub-dataset.
    *
    * Generate a temporary inner node with c child nodes according to the current
    * node setting and calculate the corresponding time cost, space cost and
    * entropy to get the cost of this setting. If the cost is less than the
    * optimal cost, update the optimal cost value and the optimal node struct,
-   * otherwise return directly.
+   * otherwise, return directly.
    *
    * cost = (time_cost + lambda * space_cost / frequency_weight) / entropy
    *
@@ -506,9 +574,9 @@ class CARMI {
   /**
    * @brief The main function of storing the optimal tree nodes.
    *
-   * This function uses the range of the initDataset to find the setting of the
-   * current optimal node and recursively stores its child nodes, and then,
-   * stores this node in the storeIdx-th position of the node array.
+   * This function uses the range of the initDataset to find the optimal setting
+   * of the current node and recursively stores its child nodes, then stores
+   * this node in the storeIdx-th position of the node array.
    *
    * @param[in] range the range of data points: {initDataset: {left,
    * size}, findQuery: {left, size}, insertQuery: {left, size}}
@@ -533,7 +601,7 @@ class CARMI {
   //*** Private Minor Functions to Favour the Above Functions
 
   /**
-   * @brief split the current leaf node into an inner node and several leaf
+   * @brief Split the current leaf node into an inner node and several leaf
    * nodes.
    *
    * This function will be triggered when the leaf node cannot accommodate more
@@ -547,8 +615,8 @@ class CARMI {
   void Split(int idx);
 
   /**
-   * @brief calculate the frequency weight of the sub-dataset whose range is
-   * represented by dataRange
+   * @brief Calculate the frequency weight of the sub-dataset whose range is
+   * represented by dataRange.
    *
    * @param[in] dataRange the range of data points: {initDataset: {left,
    * size}, findQuery: {left, size}, insertQuery: {left, size}}
@@ -557,7 +625,7 @@ class CARMI {
   double CalculateFrequencyWeight(const DataRange &dataRange);
 
   /**
-   * @brief calculate the entropy of this node.
+   * @brief Calculate the entropy of this node.
    *
    * Entropy = the sum of -pi*log(pi), where pi is the ratio of the size of each
    * sub-dataset in the total size
@@ -569,8 +637,8 @@ class CARMI {
   double CalculateEntropy(const std::vector<IndexPair> &perSize) const;
 
   /**
-   * @brief calculate the costs of cf array node in different numbers of
-   * allocated data blocks
+   * @brief Calculate the costs of the cf array node in different numbers of
+   * allocated data blocks.
    *
    * @param[in] size the size of these data points
    * @param[in] totalPrefetchedNum the total size of the data points which can
@@ -581,15 +649,16 @@ class CARMI {
   std::vector<double> CalculateCFArrayCost(int size, int totalPrefetchedNum);
 
   /**
-   * @brief use this node to split the data points of the given dataset and
-   * return the range of each sub-dataset
+   * @brief Use this node to split the data points of the given dataset and
+   * return the range of each sub-dataset.
    *
    * @tparam InnerNodeType the type of this node
    * @param[in] node the current node used to split dataset
    * @param[in] range the range of these data points in the sub-dataset:
    * {the left index of the sub-dataset in the dataset, the size of the
    * sub-dataset}
-   * @param[in] dataset the dataset needed to be divided
+   * @param[in] dataset the dataset needed to be divided, each element is the
+   * pair: {key, value}
    * @param[out] subData the range of each sub-dataset after being split, each
    * element is: {the left index of each sub-dataset in the dataset, the size of
    * each sub-dataset}
@@ -600,15 +669,17 @@ class CARMI {
                      std::vector<IndexPair> *subData) const;
 
   /**
-   * @brief use this node to split the data points of the given dataset and
-   * return the range of each sub-dataset
+   * @brief Use this node to split the data points of the given dataset and
+   * return the range of each sub-dataset. This dataset only includes the key
+   * values.
    *
    * @tparam InnerNodeType the type of this node
    * @param[in] node the current node used to split dataset
    * @param[in] range the range of these data points in the sub-dataset:
    * {the left index of the sub-dataset in the dataset, the size of the
    * sub-dataset}
-   * @param[in] dataset the dataset needed to be divided
+   * @param[in] dataset the dataset needed to be divided, each element is the
+   * key value
    * @param[out] subData the range of each sub-dataset after being split, each
    * element is: {the left index of each sub-dataset in the dataset, the size of
    * each sub-dataset}
@@ -641,7 +712,7 @@ class CARMI {
                                SubDataset *subDataset);
 
   /**
-   * @brief update the previousLeaf and nextLeaf of each leaf node
+   * @brief Update the previousLeaf and nextLeaf of each leaf node.
    */
   void UpdateLeaf();
 
@@ -649,37 +720,37 @@ class CARMI {
   //*** Public Data Members of CARMI Objects
 
   /**
-   * @brief used to manage all nodes
+   * @brief Used to manage all nodes.
    */
-  NodeArrayStructure<KeyType, ValueType> node;
+  NodeArrayStructure<KeyType, ValueType, Compare, Alloc> node;
 
   /**
-   * @brief used to manage and store data points
+   * @brief Used to manage and store data points.
    */
-  DataArrayStructure<KeyType, ValueType> data;
+  DataArrayStructure<KeyType, ValueType, Alloc> data;
 
   /**
-   * @brief the pointer to the location of the external dataset
+   * @brief The pointer to the location of the external dataset.
    */
   const void *external_data;
 
   /**
-   * @brief the length of a record of the external dataset (in byte)
+   * @brief The length of a record of the external dataset, in bytes.
    */
   int recordLength;
 
   /**
-   * @brief the index of the first leaf node
+   * @brief The index of the first leaf node.
    */
   int firstLeaf;
 
   /**
-   * @brief the index of the last leaf node
+   * @brief The index of the last leaf node.
    */
   int lastLeaf;
 
   /**
-   * @brief the current size of data points
+   * @brief The current size of data points.
    */
   int currsize;
 
@@ -687,17 +758,17 @@ class CARMI {
   //*** Private Data Members of CARMI Objects
 
   /**
-   * @brief the root node
+   * @brief The root node.
    */
   CARMIRoot<DataVectorType, KeyType> root;
 
   /**
-   * @brief the parameter of the cost model: cost = time + lambda * space
+   * @brief The parameter of the cost model: cost = time + lambda * space
    */
   double lambda;
 
   /**
-   * @brief whether this carmi is a primary index
+   * @brief Used to indicate whether the current CARMI is a primary index.
    */
   bool isPrimary;
 
@@ -705,54 +776,52 @@ class CARMI {
   //*** Private Data Members of CARMI Objects for Construction
 
   /**
-   * @brief designed for carmi_common, the last index of the prefetched data
-   * block. This parameter is useless after the index is constructed.
+   * @brief The last index of the prefetched data block. This parameter is
+   * useless after the index is constructed.
    */
   int prefetchEnd;
 
   /**
-   * @brief the total frequency of queries. This parameter is useless after the
+   * @brief The total frequency of queries. This parameter is useless after the
    * index is constructed.
    */
   int querySize;
 
   /**
-   * @brief the space needed to be reserved for the future inserts. This
-   * parameter is useless after the index is constructed. This parameter is
-   * useless after the index is constructed.
+   * @brief The space needed to be reserved for the future inserts. This
+   * parameter is useless after the index is constructed.
    */
   int reservedSpace;
 
   /**
-   * @brief the init mode that we store leaf nodes according to the prefetch
-   * prediction model, and the other modes that leaf nodes are not stored
-   * according to the model. This parameter is useless after the index is
-   * constructed.
+   * @brief Used to indicate whether the current mode is the init mode. The init
+   * mode is that we store leaf nodes according to the prefetch prediction
+   * model, and the other modes are that leaf nodes are not stored according to
+   * the model. This parameter is useless after the index is constructed.
    */
   bool isInitMode;
 
   /**
-   * @brief the initialized dataset. This parameter is useless after the index
+   * @brief The initialized dataset. This parameter is useless after the index
    * is constructed. Each element is: {key, value}.
    */
   DataVectorType initDataset;
 
   /**
-   * @brief the historical find queries. This parameter is useless after the
+   * @brief The historical find queries. This parameter is useless after the
    * index is constructed. Each element is: {key value, the visited times of
-   * this data point}
+   * this data point}.
    */
   QueryType findQuery;
 
   /**
-   * @brief the historical insert queries. This parameter is useless after the
-   * index is constructed. Each element is: {key value, the inserted times of
-   * this data point}
+   * @brief The historical insert queries. This parameter is useless after the
+   * index is constructed. Each element is the key value.
    */
   KeyVectorType insertQuery;
 
   /**
-   * @brief the cost of different sub-datasets, used for the memorized dp
+   * @brief The cost of different sub-datasets, used for the memorized DP
    * algorithm. Each element is: {{the left index in the initDataset, the size
    * of the sub-dataset}, {the time cost, the space cost, the total cost}}. This
    * parameter is useless after the index is constructed.
@@ -760,89 +829,88 @@ class CARMI {
   std::map<IndexPair, NodeCost> COST;
 
   /**
-   * @brief the optimal nodes corresponding to the sub-datasets. Each element
+   * @brief The optimal nodes corresponding to the sub-datasets. Each element
    * is: {{the left index in the initDataset, the size of the sub-dataset}, the
    * optimal node structure}. This parameter is useless after the index is
    * constructed.
    */
-  std::map<IndexPair, BaseNode<KeyType, ValueType>> structMap;
+  std::map<IndexPair, BaseNode<KeyType, ValueType, Compare, Alloc>> structMap;
 
   /**
-   * @brief the order of leaf nodes. This parameter is useless after the index
+   * @brief The order of leaf nodes. This parameter is useless after the index
    * is constructed.
    */
   std::vector<int> scanLeaf;
 
   /**
-   * @brief the index of leaf nodes which cannot be stored as the prefetch
+   * @brief The index of leaf nodes which cannot be stored as the prefetch
    * prediction model. This parameter is useless after the index is constructed.
    */
   std::vector<int> remainingNode;
 
   /**
-   * @brief the range of the sub-datasets whose nodes are leaf nodes and these
+   * @brief The range of the sub-datasets whose nodes are leaf nodes and these
    * leaf nodes cannot be stored as the prefetch prediction model. This
-   * parameter is useless after the index is constructed. This parameter is
-   * useless after the index is constructed.
+   * parameter is useless after the index is constructed.
    */
   std::vector<DataRange> remainingRange;
 
   /**
-   * @brief the empty leaf node. This parameter is useless after the index is
+   * @brief The empty leaf node. This parameter is useless after the index is
    * constructed.
    */
-  BaseNode<KeyType, ValueType> emptyNode;
+  BaseNode<KeyType, ValueType, Compare, Alloc> emptyNode;
 
  private:
   // *** Static Constant Options and Values of CARMI
 
   /**
-   * @brief the empty range. This parameter is useless after the index is
+   * @brief The empty range. This parameter is useless after the index is
    * constructed.
    */
   static constexpr IndexPair emptyRange = {-1, 0};
 
   /**
-   * @brief the empty cost of space, time and total cost are all 0. This
-   * parameter is useless after the index is constructed. This parameter is
-   * useless after the index is constructed.
+   * @brief The empty cost of space, time and total cost are all 0. This
+   * parameter is useless after the index is constructed.
    */
   static constexpr NodeCost emptyCost = {0, 0, 0};
 
   /**
-   * @brief the size of a node, in MB
+   * @brief The size of a node, in MB.
    */
   static constexpr double kBaseNodeSpace = 64.0 / 1024 / 1024;
 
   /**
-   * @brief the space cost of p. lr root node
+   * @brief The space cost of the p. lr root node, in MB.
    */
   static constexpr double kPLRRootSpace =
       sizeof(PLRType<DataVectorType, KeyType>) / 1024.0 / 1024.0;
 
   /**
-   * @brief the maximum child number in histogram inner nodes
+   * @brief The maximum child number in the histogram inner nodes.
    */
   static constexpr int kHisMaxChildNumber = 256;
 
   /**
-   * @brief the maximum child number in bs inner nodes
+   * @brief The maximum child number in the bs inner nodes.
    */
   static constexpr int kBSMaxChildNumber = 16;
 
   /**
-   * @brief the minimum child number of inner nodes
+   * @brief The minimum child number of inner nodes.
    */
   static constexpr int kMinChildNumber = 16;
 
   /**
-   * @briefthe number of new leaf nodes when splitting
+   * @brief The number of new leaf nodes when splitting a leaf node.
    */
   static constexpr int kInsertNewChildNumber = 16;
 };
 
-template <typename KeyType, typename ValueType>
-CARMI<KeyType, ValueType>::CARMI() {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+CARMI<KeyType, ValueType, Compare, Alloc>::CARMI() {
   // set the default values to the variables
   isPrimary = false;
   firstLeaf = -1;
@@ -850,16 +918,33 @@ CARMI<KeyType, ValueType>::CARMI() {
   isInitMode = true;
   prefetchEnd = -1;
 
-  emptyNode.cfArray = CFArrayType<KeyType, ValueType>();
+  key_less_ = Compare();
+  allocator_ = Alloc();
+
+  emptyNode.cfArray = CFArrayType<KeyType, ValueType, Compare, Alloc>();
   reservedSpace = 0;
-  data = DataArrayStructure<KeyType, ValueType>(
-      CFArrayType<KeyType, ValueType>::kMaxBlockNum, 1000);
+  data = DataArrayStructure<KeyType, ValueType, Alloc>(
+      CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockNum, 1000);
 }
 
-template <typename KeyType, typename ValueType>
-CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
-                                 const QueryType &findData,
-                                 const KeyVectorType &insertData, double l) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
+    const DataVectorType &initData, const QueryType &findData,
+    const KeyVectorType &insertData, double l) {
+  if (carmi_params::kMaxLeafNodeSize <= 0 &&
+      (carmi_params::kMaxLeafNodeSize % 64 != 0)) {
+    throw std::logic_error(
+        "carmi_params::kMaxLeafNodeSize does not meet the logic requirements.");
+  }
+  if (carmi_params::kAlgorithmThreshold < carmi_params::kMaxLeafNodeSize ||
+      carmi_params::kAlgorithmThreshold <
+          carmi_params::kMaxLeafNodeSizeExternal) {
+    throw std::logic_error(
+        "carmi_params::kAlgorithmThreshold does not meet the logic "
+        "requirements.");
+  }
+
   // set the default values to the variables
   isPrimary = false;
   lambda = l;
@@ -867,11 +952,11 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
   lastLeaf = 0;
   isInitMode = true;
   prefetchEnd = -1;
-  currsize = initDataset.size();
 
   // generate initDataset, findQuery, insertQuery
   initDataset = std::move(initData);
   findQuery = std::move(findData);
+  currsize = initDataset.size();
   if (findData.size() == 0) {
     // default to a read-only workload to construct the optimal index structure.
     findQuery.resize(initData.size());
@@ -881,7 +966,7 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
     }
   }
   insertQuery = std::move(insertData);
-  emptyNode.cfArray = CFArrayType<KeyType, ValueType>();
+  emptyNode.cfArray = CFArrayType<KeyType, ValueType, Compare, Alloc>();
   reservedSpace = insertQuery.size() * 1.0 / initDataset.size() * 4096 * 16;
 
   // calculate the total number of queries
@@ -891,14 +976,29 @@ CARMI<KeyType, ValueType>::CARMI(const DataVectorType &initData,
   }
   querySize += insertQuery.size();
 
-  data = DataArrayStructure<KeyType, ValueType>(
-      CFArrayType<KeyType, ValueType>::kMaxBlockNum, initDataset.size());
+  data = DataArrayStructure<KeyType, ValueType, Alloc>(
+      CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockNum,
+      initDataset.size());
 }
 
-template <typename KeyType, typename ValueType>
-CARMI<KeyType, ValueType>::CARMI(const void *dataset,
-                                 const KeyVectorType &insertData, double l,
-                                 int record_number, int record_len) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
+    const void *dataset, const KeyVectorType &insertData, double l,
+    int record_number, int record_len) {
+  if (carmi_params::kMaxLeafNodeSize <= 0 &&
+      (carmi_params::kMaxLeafNodeSize % 64 != 0)) {
+    throw std::logic_error(
+        "carmi_params::kMaxLeafNodeSize does not meet the logic requirements.");
+  }
+  if (carmi_params::kAlgorithmThreshold < carmi_params::kMaxLeafNodeSize ||
+      carmi_params::kAlgorithmThreshold <
+          carmi_params::kMaxLeafNodeSizeExternal) {
+    throw std::logic_error(
+        "carmi_params::kAlgorithmThreshold does not meet the logic "
+        "requirements.");
+  }
+
   // set the default values to the variables
   recordLength = record_len;
   currsize = record_number;
@@ -910,11 +1010,11 @@ CARMI<KeyType, ValueType>::CARMI(const void *dataset,
   // store the pointer to the dataset
   external_data = dataset;
 
-  emptyNode.externalArray = ExternalArray<KeyType>();
+  emptyNode.externalArray = ExternalArray<KeyType, ValueType, Compare>();
 
   initDataset.resize(record_number);
   findQuery.resize(record_number);
-  insertQuery.resize(insertData.size());
+  insertQuery = std::move(insertData);
 
   querySize = 0;
   // generate initDataset, findQuery, insertQuery
@@ -926,6 +1026,18 @@ CARMI<KeyType, ValueType>::CARMI(const void *dataset,
     // calculate the total number of queries
     querySize++;
   }
+  std::sort(initDataset.begin(), initDataset.end(),
+            [this](const DataType &a, const DataType &b) {
+              return key_less_(a.first, b.first);
+            });
+  std::sort(findQuery.begin(), findQuery.end(),
+            [this](const std::pair<KeyType, int> &a,
+                   const std::pair<KeyType, int> &b) {
+              return key_less_(a.first, b.first);
+            });
+  std::sort(
+      insertQuery.begin(), insertQuery.end(),
+      [this](const KeyType &a, const KeyType &b) { return key_less_(a, b); });
 
   querySize += insertQuery.size();
 
