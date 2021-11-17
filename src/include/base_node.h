@@ -10,8 +10,13 @@
  */
 #ifndef BASE_NODE_H_
 #define BASE_NODE_H_
+#include <algorithm>
+#include <functional>
 #include <iostream>
+#include <map>
+#include <memory>
 #include <utility>
+#include <vector>
 
 #include "nodes/innerNode/bs_model.h"
 #include "nodes/innerNode/his_model.h"
@@ -25,8 +30,8 @@
  * @brief the root type of CARMI
  *
  * This class inherits PLRType as the root node. When accessing a data point, we
- * first use the model of the root node to compute the index of the next node.
- * In the CARMI framework, the object of this class serves as one of its private
+ * first use the root node's model to compute the next node's index.  In the
+ * CARMI framework, the object of this class serves as one of its private
  * members.
  *
  * @tparam DataVectorType the type of data vector
@@ -63,44 +68,46 @@ class CARMIRoot : public PLRType<DataVectorType, KeyType> {
  * The first byte is always the node type identifier, and the next three bytes
  * are used to store the number of child nodes (the number of data blocks for
  * leaf nodes). For inner nodes, the following 4 bytes represent the starting
- * index of the child nodes in node array. For leaf nodes, they store the
- * starting index of data blocks in data array instead. The remaining 56 bytes
- * store additional information depending on the tree node type.
+ * index of the child nodes in the node array. For leaf nodes, they store the
+ * starting index of data blocks in the data array instead. The remaining 56
+ * bytes store additional information depending on the tree node type.
  *
  * @tparam KeyType the type of the given key value
  * @tparam ValueType the type of the value
  */
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType,
+          typename Compare = std::less<KeyType>,
+          typename Alloc = std::allocator<LeafSlots<KeyType, ValueType>>>
 union BaseNode {
   /**
-   * @brief linear regression inner node
+   * @brief the linear regression inner node
    */
   LRModel<KeyType, ValueType> lr;
 
   /**
-   * @brief piecewise linear regression inner node
+   * @brief the piecewise linear regression inner node
    */
   PLRModel<KeyType, ValueType> plr;
 
   /**
-   * @brief histogram inner node
+   * @brief the histogram inner node
    */
   HisModel<KeyType, ValueType> his;
 
   /**
-   * @brief binary search inner node
+   * @brief the binary search inner node
    */
   BSModel<KeyType, ValueType> bs;
 
   /**
-   * @brief cache-friendly array leaf node
+   * @brief the cache-friendly array leaf node
    */
-  CFArrayType<KeyType, ValueType> cfArray;
+  CFArrayType<KeyType, ValueType, Compare, Alloc> cfArray;
 
   /**
-   * @brief external array leaf node
+   * @brief the external array leaf node
    */
-  ExternalArray<KeyType> externalArray;
+  ExternalArray<KeyType, ValueType, Compare> externalArray;
 
   BaseNode() {}
   ~BaseNode() {}
