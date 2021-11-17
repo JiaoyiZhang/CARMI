@@ -16,7 +16,7 @@ make
 
 ## Using CARMI
 
-If you want to use only CARMI as an index, then you only need to include the header file respectively:
+If you want to use CARMI as an index, then you only need to include the header file respectively:
 
 Use in-memory index:
 ```
@@ -28,39 +28,57 @@ Use external index:
 #include "./include/carmi_external.h"
 ```
 
-If you want to run CARMI on Windows platform, please add ```#define Windows``` in the ```params.h``` file.
-
 ## Instructions
 
 **Method of constructing an index:**
 
-1. **Automatic construction(CARMI)**: prepare the initial dataset, training datasets (historical access and insertion queries), and then create a CARMI object, and the algorithm will automatically build the index. Then you can perform *Find*, *Insert*, *Delete*, *Update*, *Range Scan* operations.
+1. **Automatic construction(CARMI)**: prepare the initial dataset, training datasets (historical access and insertion queries), and then create a CARMI object, and the hybrid algorithm will automatically build the index.
 
 **Main functions:**
 
-1. **Find**: find the corresponding record of the given key, return the iterator
+1. **find**: find the corresponding record of the given key, return the iterator
 
 ```
-CARMI<KeyType, ValueType>::iterator CARMI<KeyType, ValueType>::Find(double key);
+iterator find(const KeyType &key);
 ```
 
-2. **Insert**: insert a data point
+2. **lower_bound**: return an iterator pointing to the first element in the container whose key is not less than key.
 
 ```
-bool CARMI<KeyType, ValueType>::Insert(DataType data);
+iterator lower_bound(const KeyType &key);
 ```
 
-3. **Update**: update a record ( find the record according to given key, then update the value)
+3. **upper_bound**: insert a data point into the index.
 
 ```
-bool CARMI<KeyType, ValueType>::Update(DataType data);
+std::pair<iterator, bool> insert(const DataType &datapoint);
 ```
 
-4. **Delete**: delete the record of the given key
+4. **erase**: delete the record of the given key and return the number of elements erased.
 
 ```
-bool CARMI<KeyType, ValueType>::Delete(double key);
+size_t erase(const KeyType &key);
 ```
+
+5. **swap**: swap two carmi tree objects.
+
+```
+void swap(CARMIMap &other);
+```
+
+6. **swap**: return the number of data points in the carmi tree.
+
+```
+size_t size();
+```
+
+7. **CalculateSpace**: return the space of the carmi tree in bytes.
+
+```
+long long CalculateSpace();
+```
+
+Only a few commonly used functions are briefly introduced here. In fact, we provide all interfaces similar to std::map in the C++11 version, and you can use CARMIMap like std::map. CARMIExternalMap is designed to store the data points externally. It also implements the std::map interfaces, but the template parameters are slightly different. You can check the examples we provide to use.
 
 ## File structure of CARMI
 
