@@ -42,7 +42,6 @@ TEST(TestMultiTrain, MultiTrainPLRModel) {
     PLRModel<KeyType, ValueType> tmpModel(kChildNum);
     tmpModel.Train(0, testTrainData.size(), testTrainData);
     EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF);
-    EXPECT_EQ(2, tmpModel.flagNumber >> 24);
     for (int j = 0; j < 5; j++) {
       EXPECT_LE(tmpModel.index[j], tmpModel.index[j + 1]);
     }

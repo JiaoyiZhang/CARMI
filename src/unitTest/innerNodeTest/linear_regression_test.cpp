@@ -41,8 +41,7 @@ TEST(TestMultiTrain, MultiTrainLRModel) {
     std::cout << "Dataset is ready, start to test." << std::endl;
     LRModel<KeyType, ValueType> tmpModel(kChildNum);
     tmpModel.Train(0, testTrainData.size(), testTrainData);
-    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF);
-    EXPECT_EQ(1, tmpModel.flagNumber >> 24);
+    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF); 
     EXPECT_GE(tmpModel.slope, 0);
   }
 }

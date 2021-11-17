@@ -157,7 +157,7 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   // cand_point to speed up the dp algorithm
   TrainType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
-  CandidateCost<DataVectorType> cand_cost;
+  CandidateCost<TrainType> cand_cost;
   float seg = size * 1.0 / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
     if (i * seg >= size) {

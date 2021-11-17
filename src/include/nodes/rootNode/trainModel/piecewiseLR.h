@@ -116,17 +116,19 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
   if (size == 0) {
     return;
   }
-  DataVectorType currdata = dataset;
+  typedef std::vector<std::pair<KeyType, double>> TrainType;
+  TrainType currdata(dataset.size());
   for (int i = 0; i < size; i++) {
+    currdata[i].first = dataset[i].first;
     currdata[i].second = i * 1.0 / size * maxChildIdx;
   }
 
   // store the index and data points of candidate points into cand_index and
   // cand_point to speed up the dp algorithm
   int cand_size = std::min(size, 1000);
-  DataVectorType cand_point(cand_size, {0, 0});
+  TrainType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
-  CandidateCost<DataVectorType> cand_cost;
+  CandidateCost<TrainType> cand_cost;
   float seg = size * 1.0 / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
     if (i * seg >= size) {

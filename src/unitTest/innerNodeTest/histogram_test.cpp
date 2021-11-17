@@ -40,8 +40,7 @@ TEST(TestMultiTrain, MultiTrainHisModel) {
     std::sort(testTrainData.begin(), testTrainData.end());
     HisModel<KeyType, ValueType> tmpModel(kChildNum);
     tmpModel.Train(0, testTrainData.size(), testTrainData);
-    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF);
-    EXPECT_EQ(3, tmpModel.flagNumber >> 24);
+    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF); 
     EXPECT_NE(0, tmpModel.divisor);
     for (int j = 0; j < 16; j++) {
       EXPECT_GE(tmpModel.base[j], 0);

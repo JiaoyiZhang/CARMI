@@ -39,8 +39,7 @@ TEST(TestMultiTrain, MultiTrainBSModel) {
     std::sort(testTrainData.begin(), testTrainData.end());
     BSModel<KeyType, ValueType> tmpModel(kChildNum);
     tmpModel.Train(0, testTrainData.size(), testTrainData);
-    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF);
-    EXPECT_EQ(4, tmpModel.flagNumber >> 24);
+    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF); 
     for (int j = 0; j < 13; j++) {
       EXPECT_LE(tmpModel.keys[j], tmpModel.keys[j + 1]);
     }
