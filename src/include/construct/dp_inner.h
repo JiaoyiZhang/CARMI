@@ -17,9 +17,10 @@
 
 #include "../carmi.h"
 
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
 template <typename InnerNodeType>
-void CARMI<KeyType, ValueType>::UpdateDPOptSetting(
+void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateDPOptSetting(
     const DataRange &dataRange, int c, double frequency_weight,
     NodeCost *optimalCost, InnerNodeType *optimal_node_struct) {
   double space_cost = kBaseNodeSpace * c;
@@ -68,12 +69,14 @@ void CARMI<KeyType, ValueType>::UpdateDPOptSetting(
   }
 }
 
-template <typename KeyType, typename ValueType>
-NodeCost CARMI<KeyType, ValueType>::DPInner(const DataRange &dataRange) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DPInner(
+    const DataRange &dataRange) {
   // the optimal cost of this sub-dataset
   NodeCost optimalCost{DBL_MAX, DBL_MAX, DBL_MAX};
   // the optimal node of this sub-dataset
-  BaseNode<KeyType, ValueType> optimal_node_struct = emptyNode;
+  BaseNode<KeyType, ValueType, Compare, Alloc> optimal_node_struct = emptyNode;
   // calculate the weight of the frequency of this sub-dataset (findQuery and
   // insertQury)
   double frequency_weight = CalculateFrequencyWeight(dataRange);

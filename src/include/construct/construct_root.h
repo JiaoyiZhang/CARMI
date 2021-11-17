@@ -19,10 +19,11 @@
 #include "./store_node.h"
 #include "./structures.h"
 
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
 template <typename RootNodeType>
-void CARMI<KeyType, ValueType>::UpdateRootOptSetting(int c, double *optimalCost,
-                                                     RootStruct *rootStruct) {
+void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateRootOptSetting(
+    int c, double *optimalCost, RootStruct *rootStruct) {
   // calculate the basic space cost of the c child nodes of the root node
   double space_cost = kBaseNodeSpace * c;
   // calculate the time cost of the root node
@@ -44,7 +45,8 @@ void CARMI<KeyType, ValueType>::UpdateRootOptSetting(int c, double *optimalCost,
 
   int maxLeafCapacity = carmi_params::kMaxLeafNodeSizeExternal;
   if (!isPrimary) {
-    maxLeafCapacity = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
+    maxLeafCapacity =
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxLeafCapacity;
   }
   for (int i = 0; i < c; i++) {
     int totalDataNum = perSize[i].size + perInsertSize[i].size;
@@ -52,7 +54,8 @@ void CARMI<KeyType, ValueType>::UpdateRootOptSetting(int c, double *optimalCost,
     // blocks to the total space cost
     if (!isPrimary) {
       int tmpBlockNum =
-          CFArrayType<KeyType, ValueType>::CalNeededBlockNum(totalDataNum);
+          CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+              totalDataNum);
       space_cost +=
           tmpBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
     }
@@ -67,7 +70,7 @@ void CARMI<KeyType, ValueType>::UpdateRootOptSetting(int c, double *optimalCost,
   }
 
   // calculate the entropy of the root node
-  double entropy = CalculateEntropy(initDataset.size(), c, perSize);
+  double entropy = CalculateEntropy(perSize);
   double cost = (time_cost + static_cast<float>(lambda * space_cost)) / entropy;
 
   // if the current cost is smaller than the optimal cost, update the optimal
@@ -79,8 +82,9 @@ void CARMI<KeyType, ValueType>::UpdateRootOptSetting(int c, double *optimalCost,
   }
 }
 
-template <typename KeyType, typename ValueType>
-RootStruct CARMI<KeyType, ValueType>::ChooseRoot() {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+RootStruct CARMI<KeyType, ValueType, Compare, Alloc>::ChooseRoot() {
   double OptimalValue = DBL_MAX;
   RootStruct rootStruct(PLR_ROOT_NODE, kMinChildNumber);
   int minNum =
@@ -97,8 +101,10 @@ RootStruct CARMI<KeyType, ValueType>::ChooseRoot() {
   return rootStruct;
 }
 
-template <typename KeyType, typename ValueType>
-SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+SubDataset CARMI<KeyType, ValueType, Compare, Alloc>::StoreRoot(
+    const RootStruct &rootStruct) {
   SubDataset subDataset(rootStruct.rootChildNum);
   // allocate a block of empty memory for these child nodes
   node.AllocateNodeMemory(rootStruct.rootChildNum);
@@ -123,9 +129,10 @@ SubDataset CARMI<KeyType, ValueType>::StoreRoot(const RootStruct &rootStruct) {
   int blockNum = 0;
   for (int i = 0; i < rootStruct.rootChildNum; i++) {
     if (subDataset.subInit[i].size + subDataset.subInsert[i].size <
-        CFArrayType<KeyType, ValueType>::kMaxLeafCapacity)
-      blockNum += CFArrayType<KeyType, ValueType>::CalNeededBlockNum(
-          subDataset.subInit[i].size + subDataset.subInsert[i].size);
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxLeafCapacity)
+      blockNum +=
+          CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+              subDataset.subInit[i].size + subDataset.subInsert[i].size);
   }
 
   // update the block number of the prefetch prediction model

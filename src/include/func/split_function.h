@@ -20,9 +20,10 @@
 #include "../construct/minor_function.h"
 #include "../params.h"
 
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
 template <typename LeafNodeType>
-inline void CARMI<KeyType, ValueType>::Split(int idx) {
+inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
   // get the parameters of this leaf node
   bool isExternal = node.nodeArray[idx].lr.flagNumber >> 24;
   int previousIdx = node.nodeArray[idx].cfArray.previousLeaf;
@@ -35,14 +36,15 @@ inline void CARMI<KeyType, ValueType>::Split(int idx) {
     leftIdx = node.nodeArray[idx].externalArray.m_left;
     int rightIdx =
         leftIdx + (node.nodeArray[idx].externalArray.flagNumber & 0x00FFFFFF);
-    tmpDataset = ExternalArray<KeyType>::ExtractDataset(external_data, leftIdx,
-                                                        rightIdx, recordLength);
+    tmpDataset = ExternalArray<KeyType, ValueType, Compare>::ExtractDataset(
+        external_data, leftIdx, rightIdx, recordLength);
   } else {
     leftIdx = node.nodeArray[idx].cfArray.m_left;
     int rightIdx =
         leftIdx + (node.nodeArray[idx].cfArray.flagNumber & 0x00FFFFFF);
-    tmpDataset = CFArrayType<KeyType, ValueType>::ExtractDataset(data, leftIdx,
-                                                                 rightIdx);
+    tmpDataset =
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::ExtractDataset(
+            data, leftIdx, rightIdx);
   }
   int actualSize = tmpDataset.size();
 
@@ -76,7 +78,8 @@ inline void CARMI<KeyType, ValueType>::Split(int idx) {
       tmpLeft += perSize[i].size;
     }
     node.nodeArray[currnode.childLeft + i].cfArray =
-        *(reinterpret_cast<CFArrayType<KeyType, ValueType> *>(&tmpLeaf));
+        *(reinterpret_cast<CFArrayType<KeyType, ValueType, Compare, Alloc> *>(
+            &tmpLeaf));
   }
   if (idx == lastLeaf) {
     lastLeaf = currnode.childLeft + kInsertNewChildNumber - 1;

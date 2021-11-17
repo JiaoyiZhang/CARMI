@@ -16,8 +16,9 @@
 #include "../carmi.h"
 #include "../params.h"
 
-template <typename KeyType, typename ValueType>
-long long CARMI<KeyType, ValueType>::CalculateSpace() const {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+long long CARMI<KeyType, ValueType, Compare, Alloc>::CalculateSpace() const {
   // calculate the space of the plr root node
   long long space_cost = kPLRRootSpace * 1024 * 1024;
   // calculate the space of the node array

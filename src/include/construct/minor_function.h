@@ -10,14 +10,16 @@
  */
 #ifndef CONSTRUCT_MINOR_FUNCTION_H_
 #define CONSTRUCT_MINOR_FUNCTION_H_
+
 #include <algorithm>
 #include <utility>
 #include <vector>
 
 #include "../carmi.h"
 
-template <typename KeyType, typename ValueType>
-double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+double CARMI<KeyType, ValueType, Compare, Alloc>::CalculateFrequencyWeight(
     const DataRange &dataRange) {
   float frequency = 0.0;
   // count the frequency of findQuery
@@ -31,8 +33,9 @@ double CARMI<KeyType, ValueType>::CalculateFrequencyWeight(
   return frequency_weight;
 }
 
-template <typename KeyType, typename ValueType>
-double CARMI<KeyType, ValueType>::CalculateEntropy(
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+double CARMI<KeyType, ValueType, Compare, Alloc>::CalculateEntropy(
     const std::vector<IndexPair> &perSize) const {
   // the sum of -size(i)*log(size(i))
   double slogs = 0.0;
@@ -51,23 +54,31 @@ double CARMI<KeyType, ValueType>::CalculateEntropy(
   return entropy;
 }
 
-template <typename KeyType, typename ValueType>
-std::vector<double> CARMI<KeyType, ValueType>::CalculateCFArrayCost(
-    int size, int totalPrefetchedNum) {
-  std::vector<double> cost(CFArrayType<KeyType, ValueType>::kMaxBlockNum, 0);
-  for (int k = 0; k < CFArrayType<KeyType, ValueType>::kMaxBlockNum; k++) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+std::vector<double> CARMI<KeyType, ValueType, Compare,
+                          Alloc>::CalculateCFArrayCost(int size,
+                                                       int totalPrefetchedNum) {
+  std::vector<double> cost(
+      CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockNum, 0);
+  for (int k = 0;
+       k < CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockNum; k++) {
     double space = kBaseNodeSpace;
     double time = carmi_params::kLeafBaseTime;
-    if ((k + 1) * CFArrayType<KeyType, ValueType>::kMaxBlockCapacity >= size) {
+    if ((k + 1) * CFArrayType<KeyType, ValueType, Compare,
+                              Alloc>::kMaxBlockCapacity >=
+        size) {
       // Case 1: these data points can be prefetched, then the space cost is the
-      // space cost of allocated data blocks and the time cost does not increase
+      // space cost of allocated data blocks, and the time cost does not
+      // increase
       space += (k + 1) * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
     } else {
       // Case 2: these data points cannot be prefetched, then the space cost is
       // the space cost of actually needed data blocks and the time cost should
       // include the latency of a memory access
       int neededBlock =
-          CFArrayType<KeyType, ValueType>::CalNeededBlockNum(size);
+          CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+              size);
       space += neededBlock * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
       time += carmi_params::kMemoryAccessTime;
     }
@@ -77,14 +88,20 @@ std::vector<double> CARMI<KeyType, ValueType>::CalculateCFArrayCost(
   return cost;
 }
 
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
 template <typename InnerNodeType>
-void CARMI<KeyType, ValueType>::NodePartition(
+void CARMI<KeyType, ValueType, Compare, Alloc>::NodePartition(
     const InnerNodeType &currnode, const IndexPair &range,
     const DataVectorType &dataset, std::vector<IndexPair> *subData) const {
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = currnode.Predict(dataset[i].first);
+    if (p < 0 || p >= (*subData).size()) {
+      throw std::out_of_range(
+          "CARMI::NodePartition: the output of the model is out of range.");
+    }
+
     // if this sub-dataset is newly divided, store its leaf index in the dataset
     if ((*subData)[p].left == -1) {
       (*subData)[p].left = i;
@@ -94,14 +111,16 @@ void CARMI<KeyType, ValueType>::NodePartition(
   }
 }
 
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
 template <typename InnerNodeType>
-void CARMI<KeyType, ValueType>::NodePartition(
+void CARMI<KeyType, ValueType, Compare, Alloc>::NodePartition(
     const InnerNodeType &currnode, const IndexPair &range,
     const KeyVectorType &dataset, std::vector<IndexPair> *subData) const {
   int end = range.left + range.size;
   for (int i = range.left; i < end; i++) {
     int p = currnode.Predict(dataset[i]);
+
     // if this sub-dataset is newly divided, store its leaf index in the dataset
     if ((*subData)[p].left == -1) {
       (*subData)[p].left = i;
@@ -111,9 +130,10 @@ void CARMI<KeyType, ValueType>::NodePartition(
   }
 }
 
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
 template <typename InnerNodeType>
-InnerNodeType CARMI<KeyType, ValueType>::InnerDivideAll(
+InnerNodeType CARMI<KeyType, ValueType, Compare, Alloc>::InnerDivideAll(
     const DataRange &range, int c, SubDataset *subDataset) {
   InnerNodeType currnode(c);
   currnode.Train(range.initRange.left, range.initRange.size, initDataset);
@@ -128,8 +148,9 @@ InnerNodeType CARMI<KeyType, ValueType>::InnerDivideAll(
   return currnode;
 }
 
-template <typename KeyType, typename ValueType>
-void CARMI<KeyType, ValueType>::UpdateLeaf() {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateLeaf() {
   if (isPrimary) return;
   node.nodeArray[scanLeaf[0]].cfArray.nextLeaf = scanLeaf[1];
   int end = scanLeaf.size() - 1;

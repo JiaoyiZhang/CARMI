@@ -197,8 +197,8 @@ class LeafSlots {
  public:
   /**
    * @brief the structure of a data block which actually stores the data points,
-   * the size of it is determined by the kMaxLeafNodeSize and the type of the
-   * data point. Each element in slots is: {key value, value}.
+   * its size is determined by the kMaxLeafNodeSize and the type of the data
+   * point. Each element in slots is: {key value, value}.
    */
   std::pair<KeyType, ValueType> slots[carmi_params::kMaxLeafNodeSize /
                                       sizeof(std::pair<KeyType, ValueType>)];

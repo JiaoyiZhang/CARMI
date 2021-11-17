@@ -21,17 +21,19 @@
 #include "../params.h"
 #include "./structures.h"
 
-template <typename KeyType, typename ValueType>
-NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DPLeaf(
+    const DataRange &dataRange) {
   NodeCost nodeCost{DBL_MAX, DBL_MAX, DBL_MAX};
-  BaseNode<KeyType, ValueType> optimal_node_struct;
+  BaseNode<KeyType, ValueType, Compare, Alloc> optimal_node_struct;
 
   if (isPrimary) {
     // construct an external array leaf node as the current node
     nodeCost.time = 0.0;
     nodeCost.space = 0.0;
 
-    ExternalArray<KeyType> tmp;
+    ExternalArray<KeyType, ValueType, Compare> tmp;
     tmp.Train(initDataset, dataRange.initRange.left, dataRange.initRange.size);
     int findEnd = dataRange.findRange.left + dataRange.findRange.size;
     // calculate the time cost of this external array leaf node
@@ -58,10 +60,12 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
     int totalDataNum = dataRange.initRange.size + dataRange.insertRange.size;
     // calculate the number of needed data blocks
     int blockNum =
-        CFArrayType<KeyType, ValueType>::CalNeededBlockNum(totalDataNum);
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+            totalDataNum);
     int avgSlotNum = std::max(1.0, ceil(totalDataNum * 1.0 / blockNum));
-    avgSlotNum = std::min(avgSlotNum,
-                          CFArrayType<KeyType, ValueType>::kMaxBlockCapacity);
+    avgSlotNum = std::min(
+        avgSlotNum,
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockCapacity);
 
     nodeCost.time = carmi_params::kLeafBaseTime;
     nodeCost.space = blockNum * carmi_params::kMaxLeafNodeSize;
@@ -78,7 +82,8 @@ NodeCost CARMI<KeyType, ValueType>::DPLeaf(const DataRange &dataRange) {
                        ((log2(avgSlotNum) * carmi_params::kCostBSTime) +
                         (1 + avgSlotNum) / 2.0 * carmi_params::kCostMoveTime);
     }
-    optimal_node_struct.cfArray = CFArrayType<KeyType, ValueType>();
+    optimal_node_struct.cfArray =
+        CFArrayType<KeyType, ValueType, Compare, Alloc>();
   }
   nodeCost.cost = nodeCost.time + nodeCost.space * lambda;
 

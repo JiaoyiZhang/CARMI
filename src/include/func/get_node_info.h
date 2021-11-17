@@ -14,9 +14,10 @@
 
 #include "../carmi.h"
 
-template <typename KeyType, typename ValueType>
-int CARMI<KeyType, ValueType>::GetNodeInfo(int idx, int *childNumber,
-                                           int *childStartIndex) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+int CARMI<KeyType, ValueType, Compare, Alloc>::GetNodeInfo(
+    int idx, int *childNumber, int *childStartIndex) {
   // Case 1: the index of the node is invalid
   if (idx < 0 || idx >= node.nowNodeNumber) {
     return -1;

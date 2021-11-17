@@ -23,8 +23,9 @@
 #include "./greedy.h"
 #include "./structures.h"
 
-template <typename KeyType, typename ValueType>
-NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DP(const DataRange &range) {
   NodeCost nodeCost;
   // Case 1: the dataset is empty, construct an empty node and return directly
   if (range.initRange.size == 0) {
@@ -33,19 +34,19 @@ NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
     // it in the structMap. The type of this leaf node depends on the isPrimary
     // parameter, if it is true, construct an external array leaf node,
     // otherwise, construct a cache-friendly array leaf node.
-    BaseNode<KeyType, ValueType> optimal_node_struct;
+    BaseNode<KeyType, ValueType, Compare, Alloc> optimal_node_struct;
     if (isPrimary) {
-      ExternalArray<KeyType> tmp;
-      tmp.Train(initDataset, range.initRange.left, range.initRange.size);
-      optimal_node_struct.externalArray = tmp;
+      optimal_node_struct.externalArray =
+          ExternalArray<KeyType, ValueType, Compare>();
     } else {
-      optimal_node_struct.cfArray = CFArrayType<KeyType, ValueType>();
+      optimal_node_struct.cfArray =
+          CFArrayType<KeyType, ValueType, Compare, Alloc>();
     }
     structMap.insert({range.initRange, optimal_node_struct});
     return nodeCost;
   }
 
-  // Case 2: the sub-dataset has been solved before, return the minimum cost
+  // Case 2: this sub-dataset has been solved before, return the minimum cost
   // directly
   auto it = COST.find(range.initRange);
   if (it != COST.end()) {
@@ -55,7 +56,8 @@ NodeCost CARMI<KeyType, ValueType>::DP(const DataRange &range) {
 
   double minRatio = 0.9;
   // record the maximum capacity of the leaf node
-  int maxStoredNum = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
+  int maxStoredNum =
+      CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxLeafCapacity;
   if (isPrimary) {
     maxStoredNum = carmi_params::kMaxLeafNodeSizeExternal;
   }

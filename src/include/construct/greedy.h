@@ -23,9 +23,10 @@
 #include "./minor_function.h"
 #include "./structures.h"
 
-template <typename KeyType, typename ValueType>
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
 template <typename InnerNodeType>
-void CARMI<KeyType, ValueType>::UpdateGreedyOptSetting(
+void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateGreedyOptSetting(
     const DataRange &range, int c, double frequency_weight,
     NodeCost *optimalCost, InnerNodeType *optimal_node_struct) {
   // calculate the basic space cost of the c child nodes of the inner node
@@ -37,7 +38,8 @@ void CARMI<KeyType, ValueType>::UpdateGreedyOptSetting(
   InnerNodeType currnode = InnerDivideAll<InnerNodeType>(range, c, &subDataset);
   int maxLeafCapacity = carmi_params::kMaxLeafNodeSizeExternal;
   if (!isPrimary) {
-    maxLeafCapacity = CFArrayType<KeyType, ValueType>::kMaxLeafCapacity;
+    maxLeafCapacity =
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxLeafCapacity;
   }
   for (int i = 0; i < c; i++) {
     int totalDataNum =
@@ -46,7 +48,8 @@ void CARMI<KeyType, ValueType>::UpdateGreedyOptSetting(
     // blocks to the total space cost
     if (!isPrimary) {
       int tmpBlockNum =
-          CFArrayType<KeyType, ValueType>::CalNeededBlockNum(totalDataNum);
+          CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+              totalDataNum);
       space_cost +=
           tmpBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
     }
@@ -71,13 +74,14 @@ void CARMI<KeyType, ValueType>::UpdateGreedyOptSetting(
   }
 }
 
-template <typename KeyType, typename ValueType>
-NodeCost CARMI<KeyType, ValueType>::GreedyAlgorithm(
+template <typename KeyType, typename ValueType, typename Compare,
+          typename Alloc>
+NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::GreedyAlgorithm(
     const DataRange &dataRange) {
   // the optimal cost of this sub-dataset
   NodeCost optimalCost{DBL_MAX, DBL_MAX, DBL_MAX};
   // the optimal node of this sub-dataset
-  BaseNode<KeyType, ValueType> opt_struct;
+  BaseNode<KeyType, ValueType, Compare, Alloc> opt_struct;
   // calculate the weight of the frequency of this sub-dataset (findQuery and
   // insertQury)
   double frequency_weight = CalculateFrequencyWeight(dataRange);
