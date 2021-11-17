@@ -14,6 +14,8 @@
 #include <math.h>
 
 #include <algorithm>
+#include <functional>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -24,18 +26,21 @@
 /**
  * @brief the external array leaf node
  *
- * @tparam KeyType the type of the keyword
+ * @tparam KeyType Type of keys.
+ * @tparam ValueType Type of value.
+ * @tparam Compare A binary predicate that takes two element keys as arguments
+ * and returns a bool.
  */
-template <typename KeyType>
+template <typename KeyType, typename ValueType,
+          typename Compare = std::less<KeyType>>
 class ExternalArray {
  public:
   // *** Constructed Types and Constructor
 
   /**
    * @brief the pair of data points
-   *
    */
-  typedef std::pair<KeyType, KeyType> DataType;
+  typedef std::pair<KeyType, ValueType> DataType;
 
   /**
    * @brief the vector of data points, which is the type of dataset
@@ -49,6 +54,9 @@ class ExternalArray {
     m_left = -1;
     slope = 0.0001;
     intercept = 0.666;
+    for (int i = 0; i < 11; i++) {
+      placeholder[i] = 0;
+    }
   }
 
  public:
@@ -80,9 +88,11 @@ class ExternalArray {
    * @param[in] data this parameter is to be consistent with the cf leaf
    * node. It is useless here.
    */
-  void Init(const DataVectorType &dataset,
-            const std::vector<int> &prefetchIndex, int start_idx,
-            DataArrayStructure<KeyType, KeyType> *data);
+  void Init(
+      const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
+      int start_idx,
+      DataArrayStructure<KeyType, KeyType,
+                         std::allocator<LeafSlots<KeyType, KeyType>>> *data);
 
   /**
    * @brief train the external array node
@@ -209,10 +219,14 @@ class ExternalArray {
   float placeholder[11];
 };
 
-template <typename KeyType>
-typename ExternalArray<KeyType>::DataVectorType
-ExternalArray<KeyType>::ExtractDataset(const void *external_data, int left,
-                                       int right, int recordLength) {
+template <typename KeyType, typename DataType, typename Compare>
+typename ExternalArray<KeyType, DataType, Compare>::DataVectorType
+ExternalArray<KeyType, DataType, Compare>::ExtractDataset(
+    const void *external_data, int left, int right, int recordLength) {
+  if (left < 0 || left > right) {
+    throw std::out_of_range(
+        "ExternalArray::DataVectorType: the range is invalid.");
+  }
   DataVectorType currdata;
   for (int i = left; i < right; i++) {
     KeyType tmpKey = *reinterpret_cast<const KeyType *>(
@@ -224,10 +238,15 @@ ExternalArray<KeyType>::ExtractDataset(const void *external_data, int left,
   return currdata;
 }
 
-template <typename KeyType>
-inline void ExternalArray<KeyType>::Init(
+template <typename KeyType, typename DataType, typename Compare>
+inline void ExternalArray<KeyType, DataType, Compare>::Init(
     const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
-    int start_idx, DataArrayStructure<KeyType, KeyType> *data) {
+    int start_idx,
+    DataArrayStructure<KeyType, KeyType,
+                       std::allocator<LeafSlots<KeyType, KeyType>>> *data) {
+  if (start_idx < 0) {
+    throw std::out_of_range("ExternalArray::Init: the range is invalid.");
+  }
   m_left = start_idx;
   int size = prefetchIndex.size();
   if (size == 0) return;
@@ -235,10 +254,14 @@ inline void ExternalArray<KeyType>::Init(
   Train(dataset, start_idx, size);
 }
 
-template <typename KeyType>
-inline void ExternalArray<KeyType>::Train(const DataVectorType &dataset,
-                                          int start_idx, int size) {
-  DataVectorType currdata(size, {DBL_MAX, DBL_MAX});
+template <typename KeyType, typename DataType, typename Compare>
+inline void ExternalArray<KeyType, DataType, Compare>::Train(
+    const DataVectorType &dataset, int start_idx, int size) {
+  if (start_idx < 0 || size < 0 || start_idx + size > dataset.size()) {
+    throw std::out_of_range("ExternalArray::Train: the range is invalid.");
+  }
+  typedef std::vector<std::pair<KeyType, double>> TrainType;
+  TrainType currdata(size, {static_cast<KeyType>(DBL_MAX), DBL_MAX});
   int end = start_idx + size;
   for (int i = start_idx, j = 0; i < end; i++, j++) {
     currdata[j].first = dataset[i].first;
@@ -266,12 +289,12 @@ inline void ExternalArray<KeyType>::Train(const DataVectorType &dataset,
     intercept = 0;
   }
   // update the error parameter
-  FindOptError(0, size, currdata);
+  FindOptError(0, size, dataset);
 }
 
-template <typename KeyType>
-inline int ExternalArray<KeyType>::Find(const KeyType &key, int recordLength,
-                                        const void *external_data) const {
+template <typename KeyType, typename DataType, typename Compare>
+inline int ExternalArray<KeyType, DataType, Compare>::Find(
+    const KeyType &key, int recordLength, const void *external_data) const {
   // Use the lr model to predict the position of the data point.
   int preIdx = Predict(key);
 
@@ -297,8 +320,9 @@ inline int ExternalArray<KeyType>::Find(const KeyType &key, int recordLength,
   return preIdx;
 }
 
-template <typename KeyType>
-bool ExternalArray<KeyType>::Insert(const DataType &datapoint, int *curr) {
+template <typename KeyType, typename DataType, typename Compare>
+bool ExternalArray<KeyType, DataType, Compare>::Insert(
+    const DataType &datapoint, int *curr) {
   // Get the size of data points in this leaf node.
   int size = flagNumber & 0x00FFFFFF;
   // Case 1: insert fails.
@@ -317,14 +341,14 @@ bool ExternalArray<KeyType>::Insert(const DataType &datapoint, int *curr) {
   }
   // Case 3: update the parameters and return the current index of the insert
   flagNumber++;
-  (*curr)++;
+  *curr = (*curr) + 1;
   return true;
 }
 
-template <typename KeyType>
-inline int ExternalArray<KeyType>::Search(KeyType key, int preIdx,
-                                          int recordLength,
-                                          const void *external_data) const {
+template <typename KeyType, typename DataType, typename Compare>
+inline int ExternalArray<KeyType, DataType, Compare>::Search(
+    KeyType key, int preIdx, int recordLength,
+    const void *external_data) const {
   int start = std::max(0, preIdx - error) + m_left;
   int size = flagNumber & 0x00FFFFFF;
   int end = std::min(std::max(0, size - 1), preIdx + error) + m_left;
@@ -347,8 +371,8 @@ inline int ExternalArray<KeyType>::Search(KeyType key, int preIdx,
   return res;
 }
 
-template <typename KeyType>
-inline int ExternalArray<KeyType>::BinarySearch(
+template <typename KeyType, typename DataType, typename Compare>
+inline int ExternalArray<KeyType, DataType, Compare>::BinarySearch(
     KeyType key, int start, int end, int recordLength,
     const void *external_data) const {
   while (start < end) {
@@ -363,9 +387,9 @@ inline int ExternalArray<KeyType>::BinarySearch(
   return start;
 }
 
-template <typename KeyType>
-void ExternalArray<KeyType>::FindOptError(int start_idx, int size,
-                                          const DataVectorType &dataset) {
+template <typename KeyType, typename DataType, typename Compare>
+void ExternalArray<KeyType, DataType, Compare>::FindOptError(
+    int start_idx, int size, const DataVectorType &dataset) {
   std::vector<int> error_count(size + 1, 0);
 
   // record each difference
