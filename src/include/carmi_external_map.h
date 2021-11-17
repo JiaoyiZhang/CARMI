@@ -22,7 +22,6 @@
 #include "func/find_function.h"
 #include "func/get_node_info.h"
 #include "func/insert_function.h"
-#include "func/update_function.h"
 #include "memoryLayout/node_array.h"
 
 /**
@@ -30,47 +29,55 @@
  * CARMI only stores the pointer of the position of external records in the
  * index structure.
  *
- * The implementation of the external CARMI. This class is designed for primary
- * index structures, where the original records are already sorted according
- * to the key value and stored in an external location. In such a case, we only
- * need to store the pointer to external locations.
+ * Implements the STL map using a CARMI tree. It can be used as a drop-in
+ * replacement for std::map.
  *
- * This class provides users with basic operations such as find, insert, update,
- * and delete and so on. Users can automatically obtain the optimal indexes with
- * good performance for a given dataset without the need of manual tuning. In
- * addition, during initialization, users can set different lambda values to
- * control the different proportions of time and space costs, so as to achieve a
- * balance between the time and space cost under the corresponding parameters.
+ * This class is designed for primary index structures, where the original
+ * records are already sorted according to the key value and stored in an
+ * external location. In such a case, we only need to store the pointer to
+ * external locations.
+ *
+ * This class provides users with basic operations as STL::map. Users can
+ * automatically obtain the optimal indexes with good performance for a given
+ * dataset without manual tuning. In addition, during initialization, users can
+ * set different lambda values to control the different proportions of time and
+ * space costs to achieve a balance between the time and space cost under the
+ * corresponding parameters.
  *
  * The hybrid construction algorithm in CARMI can automatically construct the
  * optimal index structures under various datasets with the help of the given
  * historical find/insert queries. If there are no historical queries, users
- * only need to pass in the empty objects of the approriate type and CARMI will
- * default to a read-only workload to construct the optimal index structure
+ * only need to pass in the empty objects of the appropriate type, and CARMI
+ * will default to a read-only workload to construct the optimal index structure
  * using the initDataset.
  *
- * @tparam KeyType the type of the given key value
+ * @tparam KeyType Type of keys.
+ * @tparam DataType Type of data points. This type is a user-defined
+ * structure. It is required to have key() and data() functions to obtain
+ * keyword and values respectively. For example, if the data point is a pair
+ * of: {double, double}, then the DataType is a structure including two
+ * member: double k, double v.
+ * @tparam Compare A binary predicate that takes two element keys as arguments
+ * and returns a bool.
+ * @tparam Alloc Type of the allocator object used to define the storage
+ * allocation model.
  */
-template <typename KeyType, typename Compare = std::less<KeyType>,
-          typename Alloc = std::allocator<KeyType>>
+template <typename KeyType, typename DataType,
+          typename Compare = std::less<KeyType>,
+          typename Alloc = std::allocator<LeafSlots<KeyType, KeyType>>>
 class CARMIExternalMap {
  public:
   // *** Constructed Types
 
   /**
-   * @brief the type of implementation of CARMI
+   * @brief The type of implementation of CARMI.
    */
-  typedef CARMI<KeyType, KeyType> carmi_impl;
+  typedef CARMI<KeyType, KeyType, Compare, Alloc> carmi_impl;
 
   /**
-   * @brief the type of the key value vector: [key_0, key_1, ..., key_n].
+   * @brief The type of the key value vector: [key_0, key_1, ..., key_n].
    */
   typedef std::vector<KeyType> KeyVectorType;
-
-  /**
-   * @brief the type of the key value vector: [key, [member_0, ..., member_n]].
-   */
-  typedef std::pair<KeyType, KeyVectorType> DataType;
 
  private:
   /**
@@ -78,14 +85,11 @@ class CARMIExternalMap {
    */
   carmi_impl carmi_tree;
 
-  Compare key_less_ = Compare();
-  Alloc allocator_ = Alloc();
-
  public:
   // *** Constructors and Destructor
 
   /**
-   * @brief Construct a new empty CARMIExternalMap object
+   * @brief Constructs a new empty CARMIExternalMap object.
    */
   CARMIExternalMap() : carmi_tree() {}
 
@@ -95,16 +99,18 @@ class CARMIExternalMap {
   ~CARMIExternalMap() {}
 
   /**
-   * @brief Construct a new empty CARMIExternalMap object with the standard key
-   * comparison function
+   * @brief Constructs a new empty CARMIExternalMap object with the standard key
+   * comparison function.
    *
    * @param[in] alloc The allocator object used to define the storage allocation
    * model.
    */
-  explicit CARMIExternalMap(const Alloc &alloc) : allocator_(alloc) {}
+  explicit CARMIExternalMap(const Alloc &alloc) {
+    carmi_tree.allocator_ = alloc;
+  }
 
   /**
-   * @brief Construct a new empty CARMIExternalMap object with a special key
+   * @brief Constructs a new empty CARMIExternalMap object with a special key
    * comparision object.
    *
    * @param[in] comp A binary predicate that takes two element keys as arguments
@@ -112,18 +118,19 @@ class CARMIExternalMap {
    * @param[in] alloc The allocator object used to define the storage allocation
    * model.
    */
-  explicit CARMIExternalMap(const Compare &comp = Compare(),
-                            const Alloc &alloc = Alloc())
-      : key_less_(comp), allocator_(alloc) {}
+  explicit CARMIExternalMap(const Compare &comp, const Alloc &alloc) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
+  }
 
   /**
-   * @brief Construct a new CARMIExternalMap object.
+   * @brief Constructs a new CARMIExternalMap object.
    *
-   * The CARMI index structure can achieve a good performance under the
-   * time/space setting based on the lambda parameter. The goal of the hybrid
-   * construction algorithm is to minimize the total cost of historical access
-   * and insert queries, which is: the average time cost of each query + lambda
-   * times the space cost of the index tree.
+   * The CARMI index structure can achieve good performance under the time/space
+   * setting based on the lambda parameter. The goal of the hybrid construction
+   * algorithm is to minimize the total cost of historical access and insert
+   * queries, which is: the average time cost of each query + lambda times the
+   * space cost of the index tree.
    *
    * @param[in] dataset the pointer to the external dataset used to construct
    * the index and the historical find queries
@@ -131,9 +138,16 @@ class CARMIExternalMap {
    * @param[in] record_len the length of a record (byte)
    * @param[in] lambda lambda (time + lambda * space), used to tradeoff
    * between time and space cost
+   * @param[in] comp A binary predicate that takes two element keys as arguments
+   * and returns a bool.
+   * @param[in] alloc The allocator object used to define the storage allocation
+   * model.
    */
   CARMIExternalMap(const void *dataset, int record_number, int record_len,
-                   double lambda) {
+                   double lambda, const Compare &comp = Compare(),
+                   const Alloc &alloc = Alloc()) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
     KeyVectorType tmp;
     carmi_tree = carmi_impl(dataset, tmp, lambda, record_number, record_len);
 
@@ -141,14 +155,14 @@ class CARMIExternalMap {
   }
 
   /**
-   * @brief Construct a new CARMIExternalMap object with the historical insert
+   * @brief Constructs a new CARMIExternalMap object with the historical insert
    * queries.
    *
-   * The CARMI index structure can achieve a good performance under the
-   * time/space setting based on the lambda parameter. The goal of the hybrid
-   * construction algorithm is to minimize the total cost of historical access
-   * and insert queries, which is: the average time cost of each query + lambda
-   * times the space cost of the index tree.
+   * The CARMI index structure can perform well under the time/space setting
+   * based on the lambda parameter. The goal of the hybrid construction
+   * algorithm is to minimize the total cost of historical access and insert
+   * queries, which is: the average time cost of each query + lambda times the
+   * space cost of the index tree.
    *
    * @param[in] dataset the pointer to the external dataset used to construct
    * the index and the historical find queries
@@ -159,9 +173,17 @@ class CARMIExternalMap {
    * @param[in] record_len the length of a record (byte)
    * @param[in] lambda lambda (time + lambda * space), used to tradeoff
    * between time and space cost
+   * @param[in] comp A binary predicate that takes two element keys as arguments
+   * and returns a bool.
+   * @param[in] alloc The allocator object used to define the storage allocation
+   * model.
    */
   CARMIExternalMap(const void *dataset, const KeyVectorType &future_insert,
-                   int record_number, int record_len, double lambda) {
+                   int record_number, int record_len, double lambda,
+                   const Compare &comp = Compare(),
+                   const Alloc &alloc = Alloc()) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
     carmi_tree =
         carmi_impl(dataset, future_insert, lambda, record_number, record_len);
 
@@ -172,24 +194,26 @@ class CARMIExternalMap {
   /// *** Fast Copy: Assign Operator and Copy Constructors
 
   /**
-   * @brief Construct a new CARMIExternalMap object using the copy constructor
+   * @brief Constructs a new CARMIExternalMap object using the copy constructor.
    *
    * @param[in] x the other carmi external map object
    */
   CARMIExternalMap(const CARMIExternalMap &x) : carmi_tree(x.carmi_tree) {}
 
   /**
-   * @brief Construct a new CARMIExternalMap object using the copy constructor
+   * @brief Constructs a new CARMIExternalMap object using the copy constructor.
    *
    * @param[in] x the other carmi external map object
    * @param[in] alloc The allocator object used to define the storage allocation
    * model.
    */
   CARMIExternalMap(const CARMIExternalMap &x, const Alloc &alloc)
-      : carmi_tree(x.carmi_tree), allocator_(alloc) {}
+      : carmi_tree(x.carmi_tree) {
+    carmi_tree.allocator_ = alloc;
+  }
 
   /**
-   * @brief Assignment operator. All the key/data pairs are copied
+   * @brief Assignment operator. All the key/data pairs are copied.
    *
    * @param[in] other the given carmi map object
    * @return CARMIExternalMap& this object
@@ -197,8 +221,6 @@ class CARMIExternalMap {
   inline CARMIExternalMap &operator=(const CARMIExternalMap &other) {
     if (this != &other) {
       carmi_tree = other.carmi_tree;
-      allocator_ = other.allocator_;
-      key_less_ = other.key_less_;
     }
     return *this;
   }
@@ -209,29 +231,27 @@ class CARMIExternalMap {
   class const_reverse_iterator;
 
   /**
-   * @brief the iterator of CARMIExternalMap items. The iterator points to a
+   * @brief The iterator of CARMIExternalMap items. The iterator points to a
    * specific position of a record in the carmi_tree and provides some basic
-   * functions, such as: get the key value, get the data, get the next data
-   * point and so on. Users can use this iterator to get the key/value of a data
-   * point stored in the carmi_tree.
+   * functions as STL::map.
    */
   class iterator {
    public:
     /**
-     * @brief Construct an empty new iterator object with the default values
+     * @brief Constructs an empty new iterator object with the default values.
      */
     inline iterator() : tree(NULL), currslot(0) {}
 
     /**
-     * @brief Construct a new iterator object and set the pointer to the current
-     * carmi index
+     * @brief Constructs a new iterator object and set the pointer to the
+     * current carmi index.
      *
      * @param[in] t the pointer of the carmi tree
      */
     explicit inline iterator(CARMIExternalMap *t) : tree(t), currslot(0) {}
 
     /**
-     * @brief Construct a new iterator object
+     * @brief Constructs a new iterator object.
      *
      * @param[in] t the pointer of the carmi tree
      * @param[in] slot the index of the records in the data block
@@ -239,7 +259,7 @@ class CARMIExternalMap {
     inline iterator(CARMIExternalMap *t, int slot) : tree(t), currslot(slot) {}
 
     /**
-     * @brief Construct a new iterator object from a reverse iterator
+     * @brief Constructs a new iterator object from a reverse iterator.
      *
      * @param[in] it the given reverse iterator
      */
@@ -247,72 +267,66 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief get the key value of this iterator
+     * @brief Gets the key value of this iterator.
      *
      * @return const KeyType& the key value
-     * @retval DBL_MAX the record is invalid
      */
-    inline const KeyType key() const {
-      // Case 1: the current iterator is invalid, return DBL_MAX directly
+    inline const KeyType &key() const {
+      // Case 1: the current iterator is invalid
       if (tree == NULL || currslot < 0 ||
           currslot >= tree->carmi_tree.currsize) {
-        return DBL_MAX;
+        throw std::out_of_range(
+            "CARMIExternalMap::iterator::key: this iterator is invalid.");
       }
-      // Case 2: the current iterator is valid, return the key value in the data
-      // block
-      return *(static_cast<const char *>(tree->carmi_tree.external_data) +
-               currslot * tree->carmi_tree.recordLength);
+      // Case 2: the current iterator is valid, return the key value
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(tree->carmi_tree.external_data) +
+                     currslot * tree->carmi_tree.recordLength))
+          ->key();
     }
 
     /**
-     * @brief get the data value of this iterator
+     * @brief Gets the data value of this iterator.
      *
-     * @return const KeyVectorType& the data value
-     * @retval KeyVectorType() the record is invalid
+     * @return const DataType::ValueType_& the data value
      */
-    inline const KeyVectorType data() const {
-      // Case 1: the current iterator is invalid, return DBL_MAX directly
+    inline const typename DataType::ValueType_ &data() const {
+      // Case 1: the current iterator is invalid
       if (tree == NULL || currslot < 0 ||
           currslot >= tree->carmi_tree.currsize) {
-        return KeyVectorType();
+        throw std::out_of_range(
+            "CARMIExternalMap::iterator::data: this iterator is invalid.");
       }
-      // Case 2: the current iterator is valid, return the key value in the data
-      // block
-      KeyVectorType res(tree->carmi_tree.recordLength / sizeof(KeyType) - 1);
-      for (int i = 0; i < res.size(); i++) {
-        res[i] = *(static_cast<const char *>(tree->carmi_tree.external_data) +
-                   currslot * tree->carmi_tree.recordLength +
-                   (i + 1) * sizeof(KeyType));
+      // Case 2: the current iterator is valid, return the data point
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(tree->carmi_tree.external_data) +
+                     currslot * tree->carmi_tree.recordLength))
+          ->data();
+    }
+
+    /**
+     * @brief Gets the pointer of this iterator.
+     *
+     * @return const void* the pointer of this iterator.
+     */
+    inline const void *key_pointer() const {
+      // Case 1: the current iterator is invalid
+      if (tree == NULL || currslot < 0 ||
+          currslot >= tree->carmi_tree.currsize) {
+        throw std::out_of_range(
+            "CARMIExternalMap::iterator::key_pointer: this iterator is "
+            "invalid.");
       }
-      return res;
+      // Case 2: the current iterator is valid, return the key value
+      return static_cast<const void *>(
+          static_cast<const char *>(tree->carmi_tree.external_data) +
+          currslot * tree->carmi_tree.recordLength);
     }
 
     /**
-     * @brief Return a reference of the record of this iterator
-     *
-     * @return KeyVectorType the reference of this record
-     */
-    inline DataType operator*() const {
-      DataType res;
-      res.first = key();
-      res.second = data();
-      return res;
-    }
-
-    /**
-     * @brief Return the pointer to this record
-     *
-     * @return DataType* the pointer to this record
-     */
-    inline DataType *operator->() const {
-      DataType *res;
-      res->first = key();
-      res->second = data();
-      return res;
-    }
-
-    /**
-     * @brief check if the given iterator x is equal to this iterator
+     * @brief Checks if the given iterator x is equal to this iterator.
      *
      * @param[in] x the given iterator
      * @retval true the given iterator is equal to this iterator
@@ -323,7 +337,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief check if the given iterator x is unequal to this iterator
+     * @brief Checks if the given iterator x is unequal to this iterator.
      *
      * @param[in] x the given iterator
      * @retval true the given iterator is unequal to this iterator
@@ -334,7 +348,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Prefix++ get the iterator of the next record
+     * @brief Prefix++ get the iterator of the next record.
      *
      * @return iterator& the next iterator
      */
@@ -348,7 +362,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Postfix++ get the iterator of the next record
+     * @brief Postfix++ get the iterator of the next record.
      *
      * @return iterator& the next iterator
      */
@@ -363,7 +377,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Prefix-- get the iterator of the previous record
+     * @brief Prefix-- get the iterator of the previous record.
      *
      * @return iterator& the previous iterator
      */
@@ -377,7 +391,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Postfix-- get the iterator of the previous record
+     * @brief Postfix-- get the iterator of the previous record.
      *
      * @return iterator& the previous iterator
      */
@@ -395,27 +409,32 @@ class CARMIExternalMap {
     //*** Public Data Members of Iterator Objects
 
     /**
-     * @brief the pointer of the carmi tree
+     * @brief The pointer of the carmi tree.
      */
     CARMIExternalMap *tree;
 
     /**
-     * @brief the index of the record in the external dataset
+     * @brief The index of the record in the external dataset.
      */
     int currslot;
   };
 
+  /**
+   * @brief The const iterator of CARMIExternalMap items. The iterator points to
+   * a specific position of a record in the carmi_tree and provides some basic
+   * functions as STL::map.
+   */
   class const_iterator {
    public:
     /**
-     * @brief Construct an empty new const iterator object with the default
+     * @brief Constructs an empty new const iterator object with the default
      * values
      */
     inline const_iterator() {}
 
     /**
-     * @brief Construct a new const iterator object and set the pointer to the
-     * current carmi index
+     * @brief Constructs a new const iterator object and set the pointer to the
+     * current carmi index.
      *
      * @param[in] t the pointer of the carmi tree
      */
@@ -423,7 +442,7 @@ class CARMIExternalMap {
         : tree(t), currslot(0) {}
 
     /**
-     * @brief Construct a new const iterator object
+     * @brief Constructs a new const iterator object.
      *
      * @param[in] t the pointer of the carmi tree
      * @param[in] slot the index of the records in the data block
@@ -432,7 +451,7 @@ class CARMIExternalMap {
         : tree(t), currslot(slot) {}
 
     /**
-     * @brief Construct a new const iterator object from an iterator
+     * @brief Constructs a new const iterator object from an iterator.
      *
      * @param[in] it the given iterator
      */
@@ -440,7 +459,7 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief Construct a new const iterator object from a reverse iterator
+     * @brief Constructs a new const iterator object from a reverse iterator.
      *
      * @param[in] it the given iterator
      */
@@ -448,8 +467,8 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief Construct a new const iterator object from a const reverse
-     * iterator
+     * @brief Constructs a new const iterator object from a const reverse
+     * iterator.
      *
      * @param[in] it the given iterator
      */
@@ -457,72 +476,67 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief get the key value of this iterator
+     * @brief Gets the key value of this iterator.
      *
      * @return const KeyType& the key value
-     * @retval DBL_MAX the record is invalid
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid, return DBL_MAX directly
+      // Case 1: the current iterator is invalid
       if (tree == NULL || currslot < 0 ||
           currslot >= tree->carmi_tree.currsize) {
-        return DBL_MAX;
+        throw std::out_of_range(
+            "CARMIExternalMap::const_iterator::key: this iterator is invalid.");
       }
-      // Case 2: the current iterator is valid, return the key value in the data
-      // block
-      return *(static_cast<const char *>(tree->carmi_tree.external_data) +
-               currslot * tree->carmi_tree.recordLength);
+      // Case 2: the current iterator is valid, return the key value
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(tree->carmi_tree.external_data) +
+                     currslot * tree->carmi_tree.recordLength))
+          ->key();
     }
 
     /**
-     * @brief get the data value of this iterator
+     * @brief Gets the data point of this iterator.
      *
-     * @return const KeyVectorType& the data value
-     * @retval KeyVectorType() the record is invalid
+     * @return const DataType::ValueType_& the data point
      */
-    inline const KeyVectorType &data() const {
-      // Case 1: the current iterator is invalid, return DBL_MAX directly
+    inline const typename DataType::ValueType_ &data() const {
+      // Case 1: the current iterator is invalid
       if (tree == NULL || currslot < 0 ||
           currslot >= tree->carmi_tree.currsize) {
-        return KeyVectorType();
+        throw std::out_of_range(
+            "CARMIExternalMap::const_iterator::data: this iterator is "
+            "invalid.");
       }
-      // Case 2: the current iterator is valid, return the key value in the data
-      // block
-      KeyVectorType res(tree->carmi_tree.recordLength / sizeof(KeyType) - 1);
-      for (int i = 0; i < res.size(); i++) {
-        res[i] = *(static_cast<const char *>(tree->carmi_tree.external_data) +
-                   currslot * tree->carmi_tree.recordLength +
-                   (i + 1) * sizeof(KeyType));
+      // Case 2: the current iterator is valid, return the data point
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(tree->carmi_tree.external_data) +
+                     currslot * tree->carmi_tree.recordLength))
+          ->data();
+    }
+
+    /**
+     * @brief Gets the pointer of this iterator.
+     *
+     * @return const void* the pointer of this iterator.
+     */
+    inline const void *key_pointer() const {
+      // Case 1: the current iterator is invalid
+      if (tree == NULL || currslot < 0 ||
+          currslot >= tree->carmi_tree.currsize) {
+        throw std::out_of_range(
+            "CARMIExternalMap::const_iterator::key_pointer: this iterator is "
+            "invalid.");
       }
-      return res;
+      // Case 2: the current iterator is valid, return the key value
+      return static_cast<const void *>(
+          static_cast<const char *>(tree->carmi_tree.external_data) +
+          currslot * tree->carmi_tree.recordLength);
     }
 
     /**
-     * @brief Return a reference of the record of this iterator
-     *
-     * @return KeyVectorType& the reference of this record
-     */
-    inline DataType &operator*() const {
-      DataType res;
-      res.first = key();
-      res.second = data();
-      return res;
-    }
-
-    /**
-     * @brief Return the pointer to this record
-     *
-     * @return DataType* the pointer to this record
-     */
-    inline DataType *operator->() const {
-      DataType *res;
-      res->first = key();
-      res->second = data();
-      return res;
-    }
-
-    /**
-     * @brief check if the given iterator x is equal to this iterator
+     * @brief Checks if the given iterator x is equal to this iterator.
      *
      * @param[in] x the given iterator
      * @retval true the given iterator is equal to this iterator
@@ -533,7 +547,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief check if the given iterator x is unequal to this iterator
+     * @brief Checks if the given iterator x is unequal to this iterator.
      *
      * @param[in] x the given iterator
      * @retval true the given iterator is unequal to this iterator
@@ -544,7 +558,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Prefix++ get the iterator of the next record
+     * @brief Prefix++ get the iterator of the next record.
      *
      * @return const_iterator& the next iterator
      */
@@ -558,7 +572,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Postfix++ get the iterator of the next record
+     * @brief Postfix++ get the iterator of the next record.
      *
      * @return const_iterator& the next iterator
      */
@@ -573,7 +587,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Prefix-- get the iterator of the previous record
+     * @brief Prefix-- get the iterator of the previous record.
      *
      * @return const_iterator& the previous iterator
      */
@@ -587,7 +601,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Postfix-- get the iterator of the previous record
+     * @brief Postfix-- get the iterator of the previous record.
      *
      * @return const_iterator& the previous iterator
      */
@@ -605,27 +619,32 @@ class CARMIExternalMap {
     //*** Public Data Members of Iterator Objects
 
     /**
-     * @brief the pointer of the carmi tree
+     * @brief The pointer of the carmi tree.
      */
     CARMIExternalMap *tree;
 
     /**
-     * @brief the index of the record in the external dataset
+     * @brief The index of the record in the external dataset.
      */
     int currslot;
   };
 
+  /**
+   * @brief The reverse iterator of CARMIExternalMap items. The iterator points
+   * to a specific position of a record in the carmi_tree and provides some
+   * basic functions as STL::map.
+   */
   class reverse_iterator {
    public:
     /**
-     * @brief Construct an empty new reverse iterator object with the default
-     * values
+     * @brief Constructs an empty new reverse iterator object with the default
+     * values.
      */
     inline reverse_iterator() {}
 
     /**
-     * @brief Construct a new reverse iterator object and set the pointer to the
-     * current carmi index
+     * @brief Constructs a new reverse iterator object and set the pointer to
+     * the current carmi index.
      *
      * @param[in] t the pointer of the carmi tree
      */
@@ -633,7 +652,7 @@ class CARMIExternalMap {
         : tree(t), currslot(0) {}
 
     /**
-     * @brief Construct a new reverse iterator object
+     * @brief Constructs a new reverse iterator object.
      *
      * @param[in] t the pointer of the carmi tree
      * @param[in] slot the index of the records in the data block
@@ -642,7 +661,7 @@ class CARMIExternalMap {
         : tree(t), currslot(slot) {}
 
     /**
-     * @brief Construct a new reverse iterator object from an iterator
+     * @brief Constructs a new reverse iterator object from an iterator.
      *
      * @param[in] it the given iterator
      */
@@ -650,7 +669,7 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief Construct a new reverse iterator object from a reverse iterator
+     * @brief Constructs a new reverse iterator object from a reverse iterator.
      *
      * @param[in] it the given iterator
      */
@@ -658,72 +677,68 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief get the key value of this iterator
+     * @brief Gets the key value of this iterator.
      *
      * @return const KeyType& the key value
-     * @retval DBL_MAX the record is invalid
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid, return DBL_MAX directly
+      // Case 1: the current iterator is invalid
       if (tree == NULL || currslot < 1 ||
           currslot > tree->carmi_tree.currsize) {
-        return DBL_MAX;
+        throw std::out_of_range(
+            "CARMIExternalMap::reverse_iterator::key: this iterator is "
+            "invalid.");
       }
-      // Case 2: the current iterator is valid, return the key value in the data
-      // block
-      return *(static_cast<const char *>(tree->carmi_tree.external_data) +
-               (currslot - 1) * tree->carmi_tree.recordLength);
+      // Case 2: the current iterator is valid, return the key value
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(tree->carmi_tree.external_data) +
+                     (currslot - 1) * tree->carmi_tree.recordLength))
+          ->key();
     }
 
     /**
-     * @brief get the data value of this iterator
+     * @brief Gets the data point of this iterator.
      *
-     * @return const KeyVectorType& the data value
-     * @retval KeyVectorType() the record is invalid
+     * @return const DataType::ValueType_& the data point
      */
-    inline const KeyVectorType &data() const {
-      // Case 1: the current iterator is invalid, return DBL_MAX directly
+    inline const typename DataType::ValueType_ &data() const {
+      // Case 1: the current iterator is invalid
       if (tree == NULL || currslot < 1 ||
           currslot > tree->carmi_tree.currsize) {
-        return DBL_MAX;
+        throw std::out_of_range(
+            "CARMIExternalMap::reverse_iterator::data: this iterator is "
+            "invalid.");
       }
-      // Case 2: the current iterator is valid, return the key value in the data
-      // block
-      KeyVectorType res(tree->carmi_tree.recordLength / sizeof(KeyType) - 1);
-      for (int i = 0; i < res.size(); i++) {
-        res[i] = *(static_cast<const char *>(tree->carmi_tree.external_data) +
-                   (currslot - 1) * tree->carmi_tree.recordLength +
-                   (i + 1) * sizeof(KeyType));
+      // Case 2: the current iterator is valid, return the data point
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(tree->carmi_tree.external_data) +
+                     (currslot - 1) * tree->carmi_tree.recordLength))
+          ->data();
+    }
+
+    /**
+     * @brief Gets the pointer of this iterator.
+     *
+     * @return const void* the pointer of this iterator.
+     */
+    inline const void *key_pointer() const {
+      // Case 1: the current iterator is invalid
+      if (tree == NULL || currslot < 1 ||
+          currslot > tree->carmi_tree.currsize) {
+        throw std::out_of_range(
+            "CARMIExternalMap::reverse_iterator::key_pointer: this iterator is "
+            "invalid.");
       }
-      return res;
+      // Case 2: the current iterator is valid, return the key value
+      return static_cast<const void *>(
+          static_cast<const char *>(tree->carmi_tree.external_data) +
+          (currslot - 1) * tree->carmi_tree.recordLength);
     }
 
     /**
-     * @brief Return a reference of the record of this iterator
-     *
-     * @return KeyVectorType& the reference of this record
-     */
-    inline DataType &operator*() const {
-      DataType res;
-      res.first = key();
-      res.second = data();
-      return res;
-    }
-
-    /**
-     * @brief Return the pointer to this record
-     *
-     * @return DataType* the pointer to this record
-     */
-    inline DataType *operator->() const {
-      DataType *res;
-      res->first = key();
-      res->second = data();
-      return res;
-    }
-
-    /**
-     * @brief check if the given iterator x is equal to this iterator
+     * @brief Checks if the given iterator x is equal to this iterator.
      *
      * @param[in] x the given iterator
      * @retval true the given iterator is equal to this iterator
@@ -734,7 +749,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief check if the given iterator x is unequal to this iterator
+     * @brief Checks if the given iterator x is unequal to this iterator.
      *
      * @param[in] x the given iterator
      * @retval true the given iterator is unequal to this iterator
@@ -745,7 +760,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Prefix++ get the iterator of the next record
+     * @brief Prefix++ get the iterator of the next record.
      *
      * @return reverse_iterator& the next iterator
      */
@@ -759,7 +774,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Postfix++ get the iterator of the next record
+     * @brief Postfix++ get the iterator of the next record.
      *
      * @return reverse_iterator& the next iterator
      */
@@ -774,7 +789,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Prefix-- get the iterator of the previous record
+     * @brief Prefix-- get the iterator of the previous record.
      *
      * @return reverse_iterator& the previous iterator
      */
@@ -788,7 +803,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Postfix-- get the iterator of the previous record
+     * @brief Postfix-- get the iterator of the previous record.
      *
      * @return reverse_iterator& the previous iterator
      */
@@ -806,27 +821,32 @@ class CARMIExternalMap {
     //*** Public Data Members of Iterator Objects
 
     /**
-     * @brief the pointer of the carmi tree
+     * @brief The pointer of the carmi tree.
      */
     CARMIExternalMap *tree;
 
     /**
-     * @brief the index of the record in the external dataset
+     * @brief The index of the record in the external dataset.
      */
     int currslot;
   };
 
+  /**
+   * @brief The const reverse iterator of CARMIExternalMap items. The iterator
+   * points to a specific position of a record in the carmi_tree and provides
+   * some basic functions as STL::map.
+   */
   class const_reverse_iterator {
    public:
     /**
-     * @brief Construct an empty new const reverse iterator object with the
-     * default values
+     * @brief Constructs an empty new const reverse iterator object with the
+     * default values.
      */
     inline const_reverse_iterator() {}
 
     /**
-     * @brief Construct a new const reverse iterator object and set the pointer
-     * to the current carmi index
+     * @brief Constructs a new const reverse iterator object and set the pointer
+     * to the current carmi index.
      *
      * @param[in] t the pointer of the carmi tree
      */
@@ -834,7 +854,7 @@ class CARMIExternalMap {
         : tree(t), currslot(0) {}
 
     /**
-     * @brief Construct a new reverse iterator object
+     * @brief Constructs a new reverse iterator object.
      *
      * @param[in] t the pointer of the carmi tree
      * @param[in] slot the index of the records in the data block
@@ -843,7 +863,7 @@ class CARMIExternalMap {
         : tree(t), currslot(slot) {}
 
     /**
-     * @brief Construct a new reverse iterator object from an iterator
+     * @brief Constructs a new reverse iterator object from an iterator.
      *
      * @param[in] it the given iterator
      */
@@ -851,7 +871,7 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief Construct a new reverse iterator object from a const iterator
+     * @brief Constructs a new reverse iterator object from a const iterator.
      *
      * @param[in] it the given iterator
      */
@@ -859,7 +879,7 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief Construct a new reverse iterator object from a reverse iterator
+     * @brief Constructs a new reverse iterator object from a reverse iterator.
      *
      * @param[in] it the given iterator
      */
@@ -867,72 +887,68 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief get the key value of this iterator
+     * @brief Gets the key value of this iterator.
      *
      * @return const KeyType& the key value
-     * @retval DBL_MAX the record is invalid
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid, return DBL_MAX directly
+      // Case 1: the current iterator is invalid
       if (tree == NULL || currslot < 1 ||
           currslot > tree->carmi_tree.currsize) {
-        return DBL_MAX;
+        throw std::out_of_range(
+            "CARMIExternalMap::const_reverse_iterator::key: this iterator is "
+            "invalid.");
       }
-      // Case 2: the current iterator is valid, return the key value in the data
-      // block
-      return *(static_cast<const char *>(tree->carmi_tree.external_data) +
-               (currslot - 1) * tree->carmi_tree.recordLength);
+      // Case 2: the current iterator is valid, return the key value
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(tree->carmi_tree.external_data) +
+                     (currslot - 1) * tree->carmi_tree.recordLength))
+          ->key();
     }
 
     /**
-     * @brief get the data value of this iterator
+     * @brief Gets the data point of this iterator.
      *
-     * @return const KeyVectorType& the data value
-     * @retval KeyVectorType() the record is invalid
+     * @return const DataType::ValueType_& the data point
      */
-    inline const KeyVectorType &data() const {
-      // Case 1: the current iterator is invalid, return DBL_MAX directly
+    inline const typename DataType::ValueType_ &data() const {
+      // Case 1: the current iterator is invalid
       if (tree == NULL || currslot < 1 ||
           currslot > tree->carmi_tree.currsize) {
-        return DBL_MAX;
+        throw std::out_of_range(
+            "CARMIExternalMap::const_reverse_iterator::data: this iterator is "
+            "invalid.");
       }
-      // Case 2: the current iterator is valid, return the key value in the data
-      // block
-      KeyVectorType res(tree->carmi_tree.recordLength / sizeof(KeyType) - 1);
-      for (int i = 0; i < res.size(); i++) {
-        res[i] = *(static_cast<const char *>(tree->carmi_tree.external_data) +
-                   (currslot - 1) * tree->carmi_tree.recordLength +
-                   (i + 1) * sizeof(KeyType));
+      // Case 2: the current iterator is valid, return the data point
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(tree->carmi_tree.external_data) +
+                     (currslot - 1) * tree->carmi_tree.recordLength))
+          ->data();
+    }
+
+    /**
+     * @brief Gets the pointer of this iterator.
+     *
+     * @return const void* the pointer of this iterator.
+     */
+    inline const void *key_pointer() const {
+      // Case 1: the current iterator is invalid
+      if (tree == NULL || currslot < 1 ||
+          currslot > tree->carmi_tree.currsize) {
+        throw std::out_of_range(
+            "CARMIExternalMap::const_reverse_iterator::key_pointer: this "
+            "iterator is invalid.");
       }
-      return res;
+      // Case 2: the current iterator is valid, return the key value
+      return static_cast<const void *>(
+          static_cast<const char *>(tree->carmi_tree.external_data) +
+          (currslot - 1) * tree->carmi_tree.recordLength);
     }
 
     /**
-     * @brief Return a reference of the record of this iterator
-     *
-     * @return DataType& the reference of this record
-     */
-    inline DataType &operator*() const {
-      DataType res;
-      res.first = key();
-      res.second = data();
-      return res;
-    }
-
-    /**
-     * @brief Return the pointer to this record
-     *
-     * @return DataType* the pointer to this record
-     */
-    inline DataType *operator->() const {
-      DataType *res;
-      res->first = key();
-      res->second = data();
-      return res;
-    }
-
-    /**
-     * @brief check if the given iterator x is equal to this iterator
+     * @brief Checks if the given iterator x is equal to this iterator.
      *
      * @param[in] x the given iterator
      * @retval true the given iterator is equal to this iterator
@@ -943,7 +959,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief check if the given iterator x is unequal to this iterator
+     * @brief Checks if the given iterator x is unequal to this iterator.
      *
      * @param[in] x the given iterator
      * @retval true the given iterator is unequal to this iterator
@@ -954,7 +970,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Prefix++ get the iterator of the next record
+     * @brief Prefix++ get the iterator of the next record.
      *
      * @return const_reverse_iterator& the next iterator
      */
@@ -968,7 +984,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Postfix++ get the iterator of the next record
+     * @brief Postfix++ get the iterator of the next record.
      *
      * @return const_reverse_iterator& the next iterator
      */
@@ -983,7 +999,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Prefix-- get the iterator of the previous record
+     * @brief Prefix-- get the iterator of the previous record.
      *
      * @return const_reverse_iterator& the previous iterator
      */
@@ -997,7 +1013,7 @@ class CARMIExternalMap {
     }
 
     /**
-     * @brief Postfix-- get the iterator of the previous record
+     * @brief Postfix-- get the iterator of the previous record.
      *
      * @return const_reverse_iterator& the previous iterator
      */
@@ -1015,12 +1031,12 @@ class CARMIExternalMap {
     //*** Public Data Members of Iterator Objects
 
     /**
-     * @brief the pointer of the carmi tree
+     * @brief The pointer of the carmi tree.
      */
     CARMIExternalMap *tree;
 
     /**
-     * @brief the index of the record in the external dataset
+     * @brief The index of the record in the external dataset.
      */
     int currslot;
   };
@@ -1029,14 +1045,15 @@ class CARMIExternalMap {
   // *** STL Iterator Construction Functions
 
   /**
-   * @brief Returns an iterator referring to the first element in the carmi tree
+   * @brief Returns an iterator referring to the first element in the carmi
+   * tree.
    *
    * @return iterator
    */
   iterator begin() { return iterator(this); }
 
   /**
-   * @brief get the end of the carmi tree
+   * @brief Gets the end of the carmi tree.
    *
    * @return iterator
    */
@@ -1048,14 +1065,14 @@ class CARMIExternalMap {
 
   /**
    * @brief Returns a const iterator referring to the first element in the carmi
-   * tree
+   * tree.
    *
    * @return const_iterator
    */
   const_iterator cbegin() const { return const_iterator(this); }
 
   /**
-   * @brief get the end of the carmi tree
+   * @brief Gets the end of the carmi tree.
    *
    * @return const_iterator
    */
@@ -1067,7 +1084,7 @@ class CARMIExternalMap {
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
-   * carmi tree
+   * carmi tree.
    *
    * @return reverse_iterator
    */
@@ -1078,7 +1095,7 @@ class CARMIExternalMap {
   }
 
   /**
-   * @brief get the end of the carmi tree
+   * @brief Gets the end of the carmi tree.
    *
    * @return reverse_iterator
    */
@@ -1090,7 +1107,7 @@ class CARMIExternalMap {
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
-   * carmi tree
+   * carmi tree.
    *
    * @return const_reverse_iterator
    */
@@ -1101,7 +1118,7 @@ class CARMIExternalMap {
   }
 
   /**
-   * @brief get the end of the carmi tree
+   * @brief Gets the end of the carmi tree.
    *
    * @return const_reverse_iterator
    */
@@ -1125,8 +1142,18 @@ class CARMIExternalMap {
   iterator lower_bound(const KeyType &key) {
     iterator it(this);
     int tmp = 0;
-    carmi_tree.Find(key, tmp, &it.currslot);
-    return it;
+    carmi_tree.Find(key, &tmp, &it.currslot);
+    if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
+      return end();
+    } else {
+      auto tmp = it;
+      tmp--;
+      while (tmp.currslot >= 0 && tmp.key() >= key) {
+        tmp--;
+      }
+      it = ++tmp;
+      return it;
+    }
   }
 
   /**
@@ -1140,8 +1167,18 @@ class CARMIExternalMap {
   const_iterator lower_bound(const KeyType &key) const {
     const_iterator it(this);
     int tmp = 0;
-    carmi_tree.Find(key, tmp, &it.currslot);
-    return it;
+    carmi_tree.Find(key, &tmp, &it.currslot);
+    if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
+      return cend();
+    } else {
+      auto tmp = it;
+      tmp--;
+      while (tmp.currslot >= 0 && tmp.key() >= key) {
+        tmp--;
+      }
+      it = ++tmp;
+      return it;
+    }
   }
 
   /**
@@ -1156,10 +1193,14 @@ class CARMIExternalMap {
     iterator it(this);
     int tmp = 0;
     carmi_tree.Find(key, &tmp, &it.currslot);
-    while (it != end() && it.key() == key) {
-      it++;
+    if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
+      return end();
+    } else {
+      while (it != end() && it.key() == key) {
+        it++;
+      }
+      return it;
     }
-    return it;
   }
 
   /**
@@ -1174,14 +1215,18 @@ class CARMIExternalMap {
     const_iterator it(this);
     int tmp = 0;
     carmi_tree.Find(key, &tmp, &it.currslot);
-    while (it != cend() && it.key() == key) {
-      it++;
+    if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
+      return cend();
+    } else {
+      while (it != cend() && it.key() == key) {
+        it++;
+      }
+      return it;
     }
-    return it;
   }
 
   /**
-   * @brief find the corresponding iterator of the given key value
+   * @brief Finds the corresponding iterator of the given key value.
    *
    * @param[in] key the given key value
    * @return iterator the iterator of the data point
@@ -1190,15 +1235,15 @@ class CARMIExternalMap {
     iterator it(this);
     int tmp = 0;
     carmi_tree.Find(key, &tmp, &it.currslot);
-    if (it.key() == key) {
-      return it;
-    } else {
+    if (it.currslot == -1 || it.key() != key) {
       return end();
+    } else {
+      return it;
     }
   }
 
   /**
-   * @brief find the corresponding iterator of the given key value
+   * @brief Finds the corresponding iterator of the given key value.
    *
    * @param[in] key the given key value
    * @return const_iterator the iterator of the data point
@@ -1207,10 +1252,10 @@ class CARMIExternalMap {
     const_iterator it(this);
     int tmp = 0;
     carmi_tree.Find(key, &tmp, &it.currslot);
-    if (it.key() == key) {
-      return it;
-    } else {
+    if (it.currslot == -1 || it.key() != key) {
       return cend();
+    } else {
+      return it;
     }
   }
 
@@ -1246,9 +1291,9 @@ class CARMIExternalMap {
    * @return size_t the number of matched data points
    */
   size_t count(const KeyType &key) {
-    const_iterator it = lower_bound(key);
+    iterator it = lower_bound(key);
     size_t num_equal = 0;
-    while (it != end() && key_equal(it.key(), key)) {
+    while (it != end() && it.key() == key) {
       num_equal++;
       ++it;
     }
@@ -1259,7 +1304,7 @@ class CARMIExternalMap {
   //*** Public Modify Functions
 
   /**
-   * @brief insert the given key into carmi
+   * @brief Inserts the given key into carmi.
    *
    * @param[in] key the given key value
    * @return std::pair<iterator, bool> a pair, with its member pair::first set
@@ -1275,7 +1320,7 @@ class CARMIExternalMap {
   }
 
   /**
-   * @brief insert the given data point into carmi. This interface is the same
+   * @brief Inserts the given data point into carmi. This interface is the same
    * as the ordinary interface. This interface is only added to keep consistent
    * with the format of stl::map.
    *
@@ -1323,7 +1368,7 @@ class CARMIExternalMap {
   }
 
   /**
-   * @brief Removes all elements
+   * @brief Removes all elements.
    */
   void clear() { carmi_tree.clear(); }
 
@@ -1331,49 +1376,63 @@ class CARMIExternalMap {
   //*** Public Element Access Functions
 
   /**
-   * @brief inserts a new element with that key and returns a reference to its
-   * value
+   * @brief Inserts a new element with that key and returns a reference to its
+   * value.
    *
    * @param[in] key the given key value
-   * @return KeyVectorType& the value of it
+   * @return DataType& the value of it
    */
-  KeyVectorType &operator[](const KeyType &key) {
+  DataType &operator[](const KeyType &key) {
     iterator it(this);
     int tmp = 0;
     auto res = carmi_tree.Insert({key, DBL_MAX}, &tmp, &it.currslot);
     it.currnode = res.first;
-    return *(it.data());
+    return static_cast<DataType *>(
+               static_cast<const void *>(
+                   static_cast<const char *>(carmi_tree.external_data) +
+                   it.currslot * carmi_tree.recordLength))
+        ->data();
   }
 
   /**
    * @brief Returns a reference to the mapped value of the element identified
-   * with key
+   * with key.
    *
    * @param[in] key the given key value
-   * @return KeyVectorType& the value of it
+   * @return DataType& the value of it
    */
-  KeyVectorType &at(const KeyType &key) {
+  DataType &at(const KeyType &key) {
     iterator it = find(key);
     if (it == end()) {
-      throw std::out_of_range("CARMI::at: input does not match any key.");
+      throw std::out_of_range(
+          "CARMIExternalMap::at: input does not match any key.");
     } else {
-      return *(it.data());
+      return static_cast<DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(carmi_tree.external_data) +
+                     it.currslot * carmi_tree.recordLength))
+          ->data();
     }
   }
 
   /**
    * @brief Returns a reference to the mapped value of the element identified
-   * with key
+   * with key.
    *
    * @param[in] key the given key value
-   * @return KeyVectorType& the value of it
+   * @return DataType& the value of it
    */
-  const KeyVectorType &at(const KeyType &key) const {
+  const DataType &at(const KeyType &key) const {
     const_iterator it = find(key);
     if (it == cend()) {
-      throw std::out_of_range("CARMI::at: input does not match any key.");
+      throw std::out_of_range(
+          "CARMIExternalMap::at: input does not match any key.");
     } else {
-      return *(it.data());
+      return static_cast<const DataType *>(
+                 static_cast<const void *>(
+                     static_cast<const char *>(carmi_tree.external_data) +
+                     it.currslot * carmi_tree.recordLength))
+          ->data();
     }
   }
 
@@ -1381,14 +1440,14 @@ class CARMIExternalMap {
   // *** Access Functions to the Item Count
 
   /**
-   * @brief Return the number of data points in the carmi_tree
+   * @brief Returns the number of data points in the carmi_tree.
    *
    * @return size_type the number of data points
    */
   inline size_t size() const { return carmi_tree.currsize; }
 
   /**
-   * @brief Returns true if there is at least one data point in the carmi tree
+   * @brief Returns true if there is at least one data point in the carmi tree.
    *
    * @retval true there is at least one data point in the carmi tree
    * @retval false there is no data point in the carmi tree
@@ -1401,17 +1460,17 @@ class CARMIExternalMap {
    *
    * @return size_t
    */
-  inline size_t max_size() const { return size_t(-1); }
+  inline size_t max_size() const { return INT32_MAX; }
 
   /**
-   * @brief calculate the space of carmi tree
+   * @brief Calculates the space of carmi tree.
    *
    * @return long double: space
    */
   long double CalculateSpace() const { return carmi_tree.CalculateSpace(); }
 
   /**
-   * @brief Get the information of the tree node, return the type identifier of
+   * @brief Gets the information of the tree node, return the type identifier of
    * this node, the number of its child nodes and the starting index of the
    * first child node in the node array.
    *
@@ -1421,6 +1480,10 @@ class CARMIExternalMap {
    * @return int the type identifier of this node
    */
   int GetNodeInfo(int idx, int *childNumber, int *childStartIndex) {
+    if (idx < 0 || idx >= carmi_tree.node.nodeArray.size()) {
+      throw std::out_of_range(
+          "CARMIExternalMap::GetNodeInfo: input does not match any node.");
+    }
     return carmi_tree.GetNodeInfo(idx, childNumber, childStartIndex);
   }
 
@@ -1428,53 +1491,31 @@ class CARMIExternalMap {
   // *** Key and Value Comparison Function Objects
 
   /**
-   * @brief Get the allocator object
+   * @brief Gets the allocator object.
    *
    * @return Alloc
    */
-  Alloc get_allocator() const { return allocator_; }
+  Alloc get_allocator() const { return carmi_tree.get_allocator(); }
 
   /**
-   * @brief Returns a copy of the comparison object used by the container to
-   * compare keys.
+   * @brief Returns a copy of the comparison object used by the container
+   * to compare keys.
    *
    * @return Compare
    */
-  Compare key_comp() const { return key_less_; }
+  Compare key_comp() const { return carmi_tree.key_less_; }
 
   /**
-   * @brief A class that uses the internal comparison object to generate the
-   * appropriate comparison functional class.
-   */
-  class value_compare {
-   protected:
-    Compare comp;
-    explicit value_compare(Compare c) : comp(c) {}
-
-   public:
-    /**
-     * @brief compare two elements to get whether the key of the first one goes
-     * before the second.
-     *
-     * @param[in] x the first object
-     * @param[in] y the second object
-     * @retval true the key of the first argument is considered to go before
-     * that of the second
-     * @retval false the key of the first argument is considered to go after
-     * that of the second
-     */
-    bool operator()(const DataType &x, const DataType &y) const {
-      return comp(x.first, y.first);
-    }
-  };
-
-  /**
-   * @brief Returns a comparison object that can be used to compare two elements
-   * to get whether the key of the first one goes before the second.
+   * @brief Returns a comparison object that can be used to compare two
+   * elements to get whether the key of the first one goes before the
+   * second.
    *
    * @return value_compare The comparison object for element values.
    */
-  value_compare value_comp() const { return value_compare(key_less_); }
+  typename CARMI<KeyType, DataType, Compare, Alloc>::value_compare value_comp()
+      const {
+    return carmi_tree.value_comp();
+  }
 };
 
 #endif  // CARMI_EXTERNAL_MAP_H_
