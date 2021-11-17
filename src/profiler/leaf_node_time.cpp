@@ -21,7 +21,7 @@
 
 typedef CARMIRoot<std::vector<std::pair<double, double>>, double> RootType;
 typedef CFArrayType<double, double> CFType;
-typedef ExternalArray<double> ExtType;
+typedef ExternalArray<double, double> ExtType;
 
 const int kSize = 110;
 const float kSecondToNanosecond = 1000000000.0;
@@ -39,13 +39,13 @@ double GetCFNodePredictTime() {
       CFArrayType<double, double>::kMaxBlockNum, kModelNumber / kSize);
   RootType root;
   DataArrayStructure<double, double> data;
-  double tmpKeys[6];
-  for (int i = 0; i < 6; i++) {
+  double tmpKeys[CFArrayType<double, double>::kMaxBlockNum - 1];
+  for (int i = 0; i < CFArrayType<double, double>::kMaxBlockNum - 1; i++) {
     tmpKeys[i] = dataset[(i + 1) * 16].first;
   }
   for (int i = 0; i < kModelNumber; i++) {
     node[i].flagNumber = 7;
-    for (int j = 0; j < 6; j++) {
+    for (int j = 0; j < CFArrayType<double, double>::kMaxBlockNum - 1; j++) {
       node[i].slotkeys[j] = tmpKeys[j];
     }
   }
@@ -115,7 +115,9 @@ double GetBlockSearchTime() {
   for (int i = 0; i < end; i++) {
     tmpIdx = idx[rand() % end];
     key = keys[rand() % CFArrayType<double, double>::kMaxBlockCapacity];
-    res += tmpNode.SearchDataBlock(data.dataArray[tmpIdx], key);
+    res +=
+        tmpNode.SearchDataBlock(data.dataArray[tmpIdx], key,
+                                CFArrayType<double, double>::kMaxBlockCapacity);
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
@@ -154,7 +156,7 @@ double GetExternalNodePredictTime() {
   srand(time(0));
   const int record_size = sizeof(double) * 2;
   int extLen = kExternalDatasize * 2 + 10;
-  double *externalDataset = new double[extLen];
+  double* externalDataset = new double[extLen];
   for (int i = 0, j = 0; i < kExternalDatasize; i++) {
     *(externalDataset + j) = tmpKeys[i];
     *(externalDataset + j + 1) = tmpKeys[i] * 2;
