@@ -82,16 +82,131 @@ class CFArrayType {
     }
   }
 
+ private:
+  // *** Static Comparison Functions of the CF Array Leaf Node
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The second key value
+   * @retval true a < b
+   * @retval false a >= b
+   */
+  inline static bool key_less(const KeyType &a, const KeyType &b) {
+    return key_less_(a, b);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first key value
+   * @param[in] b The second key value
+   * @retval true a <= b
+   * @retval false a > b
+   */
+  inline static bool key_lessequal(const KeyType &a, const KeyType &b) {
+    return !key_less_(b, a);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first key value
+   * @param[in] b The second key value
+   * @retval true a > b
+   * @retval false a <= b
+   */
+  inline static bool key_greater(const KeyType &a, const KeyType &b) {
+    return key_less_(b, a);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first key value
+   * @param[in] b The second key value
+   * @retval true a >= b
+   * @retval false a < b
+   */
+  inline static bool key_greaterequal(const KeyType &a, const KeyType &b) {
+    return !key_less_(a, b);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first key value
+   * @param[in] b The second key value
+   * @retval true a == b
+   * @retval false a != b
+   */
+  inline static bool key_equal(const KeyType &a, const KeyType &b) {
+    return !key_less_(a, b) && !key_less_(b, a);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a < b
+   * @retval false a >= b
+   */
+  inline static bool data_less(const DataType &a, const KeyType &b) {
+    return key_less_(a.first, b);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a <= b
+   * @retval false a > b
+   */
+  inline static bool data_lessequal(const DataType &a, const KeyType &b) {
+    return !key_less_(b, a.first);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a > b
+   * @retval false a <= b
+   */
+  inline static bool data_greater(const DataType &a, const KeyType &b) {
+    return key_less_(b, a.first);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a >= b
+   * @retval false a < b
+   */
+  inline static bool data_greaterequal(const DataType &a, const KeyType &b) {
+    return !key_less_(a.first, b);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a == b
+   * @retval false a != b
+   */
+  inline static bool data_equal(const DataType &a, const KeyType &b) {
+    return !key_less_(a.first, b) && !key_less_(b, a.first);
+  }
+
  public:
   // *** Static Functions of the CF Array Leaf Node
-
-  static bool mycomp(const DataType &a, const KeyType &b) {
-    return a.first < b;
-  }
-
-  static bool slotkeys_cmp(const KeyType &a, const KeyType &b) {
-    return a <= b;
-  }
 
   /**
    * @brief Get the actual size of data blocks
@@ -428,6 +543,11 @@ class CFArrayType {
    */
   static constexpr int kMaxLeafCapacity = kMaxBlockCapacity * kMaxBlockNum;
 
+  /**
+   * @brief Compare two elements.
+   */
+  static constexpr Compare key_less_ = Compare();
+
  public:
   //*** Public Data Members of CF Array Leaf Node Objects
 
@@ -736,44 +856,10 @@ template <typename KeyType, typename ValueType, typename Compare,
           typename Alloc>
 inline int CFArrayType<KeyType, ValueType, Compare, Alloc>::Search(
     const KeyType &key) const {
-  // int end_idx = (flagNumber & 0x00FFFFFF);
-  // int res = std::lower_bound(slotkeys, slotkeys + end_idx, key, slotkeys_cmp)
-  // -
-  //           slotkeys;
-  // res = std::min(end_idx - 1, res);
-  // return res;
-
-  // int end_idx = (flagNumber & 0x00FFFFFF) - 1;
-  // for (int i = 0; i < end_idx; i++) {
-  //   if (key < slotkeys[i]) {
-  //     return i;
-  //   }
-  // }
-  // return end_idx;
-
-#if defined(CATCH_PLATFORM_LINUX) || defined(CATCH_PLATFORM_WINDOWS)
-  int end = (flagNumber & 0x00FFFFFF) - 1;
-  if (end <= 0) {
-    return 0;
-  }
-  int start = 0, mid;
-  while (start < end) {
-    mid = (start + end) / 2;
-    if (slotkeys[mid] <= key)
-      start = mid + 1;
-    else
-      end = mid;
-  }
-  return start;
-#elif defined(CATCH_PLATFORM_MAC)
   int end_idx = (flagNumber & 0x00FFFFFF) - 1;
-  for (int i = 0; i < end_idx; i++) {
-    if (key < slotkeys[i]) {
-      return i;
-    }
-  }
-  return end_idx;
-#endif
+  int res = std::lower_bound(slotkeys, slotkeys + end_idx, key, key_lessequal) -
+            slotkeys;
+  return res;
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
@@ -781,59 +867,8 @@ template <typename KeyType, typename ValueType, typename Compare,
 inline int CFArrayType<KeyType, ValueType, Compare, Alloc>::SearchDataBlock(
     const LeafSlots<KeyType, ValueType> &block, const KeyType &key,
     int currsize) const {
-  // int res = std::lower_bound(block.slots, block.slots + currsize, key,
-  // mycomp) -
-  //           block.slots;
-  // return res;
-
-  // int i = 0;
-  // const int half = currsize / 2;
-  // if (key <= block.slots[currsize / 2 - 1].first) {
-  //   for (; i < half; i++) {
-  //     if (key <= block.slots[i].first) {
-  //       break;
-  //     }
-  //   }
-  // } else {
-  //   for (i = half; i < currsize; i++) {
-  //     if (key <= block.slots[i].first) {
-  //       break;
-  //     }
-  //   }
-  // }
-  // return i;
-
-#if defined(CATCH_PLATFORM_LINUX) || defined(CATCH_PLATFORM_WINDOWS)
-  if (currsize == 0 || key > block.slots[currsize - 1].first) {
-    return currsize;
-  }
-  int end = currsize - 1;
-  int start = 0, mid;
-  while (start < end) {
-    mid = (start + end) / 2;
-    if (block.slots[mid].first < key)
-      start = mid + 1;
-    else
-      end = mid;
-  }
-  return start;
-#elif defined(CATCH_PLATFORM_MAC)
-  int i = 0;
-  if (key <= block.slots[currsize / 2 - 1].first) {
-    for (; i < currsize / 2; i++) {
-      if (key <= block.slots[i].first) {
-        break;
-      }
-    }
-  } else {
-    for (i = currsize / 2; i < currsize; i++) {
-      if (key <= block.slots[i].first) {
-        break;
-      }
-    }
-  }
-  return i;
-#endif
+  return std::lower_bound(block.slots, block.slots + currsize, key, data_less) -
+         block.slots;
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
