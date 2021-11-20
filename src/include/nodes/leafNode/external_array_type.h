@@ -156,7 +156,8 @@ class ExternalArray {
              const void *external_data) const;
 
   /**
-   * @brief search a key-value through binary search in the external leaf node
+   * @brief search a key-value through binary search in the external leaf
+   node
    *
    * @param[in] key the given key value
    * @param[in] start the start index of the search bounary

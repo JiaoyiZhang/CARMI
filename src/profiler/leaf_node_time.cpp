@@ -59,8 +59,8 @@ double GetCFNodePredictTime() {
   shuffle(idx.begin(), idx.end(), engine);
   shuffle(keys.begin(), keys.end(), engine);
 
-  int tmpIdx, type, key;
-  int currblock, find_idx;
+  int tmpIdx, key;
+  int find_idx = 0;
   std::clock_t s, e;
   double tmp, tmp1 = 0;
   srand(time(0));
@@ -106,8 +106,8 @@ double GetBlockSearchTime() {
   shuffle(idx.begin(), idx.end(), engine);
   shuffle(keys.begin(), keys.end(), engine);
 
-  int tmpIdx, type, key;
-  int currblock, find_idx, res;
+  int tmpIdx, key;
+  int find_idx = 0;
   std::clock_t s, e;
   double tmp, tmp1 = 0;
   srand(time(0));
@@ -115,7 +115,7 @@ double GetBlockSearchTime() {
   for (int i = 0; i < end; i++) {
     tmpIdx = idx[rand() % end];
     key = keys[rand() % CFArrayType<double, double>::kMaxBlockCapacity];
-    res +=
+    find_idx +=
         tmpNode.SearchDataBlock(data.dataArray[tmpIdx], key,
                                 CFArrayType<double, double>::kMaxBlockCapacity);
   }
@@ -181,8 +181,8 @@ double GetExternalNodePredictTime() {
   shuffle(idx.begin(), idx.end(), engine);
   shuffle(keys.begin(), keys.end(), engine);
 
-  int tmpIdx, type, key;
-  int currblock, find_idx;
+  int tmpIdx, key;
+  int find_idx = 0;
   std::clock_t s, e;
   double tmp, tmp1 = 0;
   srand(time(0));

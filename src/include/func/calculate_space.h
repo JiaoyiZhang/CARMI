@@ -24,10 +24,10 @@ long long CARMI<KeyType, ValueType, Compare, Alloc>::CalculateSpace() const {
   // calculate the space of the node array
   space_cost += kBaseNodeSpace * node.nowNodeNumber * 1024 * 1024;
 #ifdef DEBUG
-  std::cout << "node.size(): " << node.nodeArray.size()
-            << ",\tnowChildNumber:" << node.nowNodeNumber << std::endl;
-  std::cout << "data.size(): " << data.dataArray.size()
-            << ",\tkMaxLeafNodeSize:" << carmi_params::kMaxLeafNodeSize
+  std::cout << "node.size(), " << node.nodeArray.size()
+            << ",\tnowChildNumber," << node.nowNodeNumber << std::endl;
+  std::cout << "data.size(), " << data.dataArray.size()
+            << ",\tkMaxLeafNodeSize," << carmi_params::kMaxLeafNodeSize
             << std::endl;
 #endif  // DEBUG
   if (!isPrimary) {

@@ -44,7 +44,8 @@ TEST(TestSearchDataBlock, CheckSearchBlockRes) {
     }
     for (int j = 0; j < i; j++) {
       int res = tmpCFNode.SearchDataBlock(currblock, testTrainData[j].first, i);
-      ASSERT_EQ(testTrainData[res].first, testTrainData[j].first);
+      EXPECT_EQ(testTrainData[res].first, testTrainData[j].first)
+          << "j:" << j << ",\tres:" << res << ",\ti:" << i << std::endl;
     }
   }
 }
@@ -107,11 +108,8 @@ TEST(TestFind, CFArrayFindData) {
       int currslot = tmpCFNode.Find(data, testTrainData[j].first, &currblock);
       KeyType res =
           data.dataArray[tmpCFNode.m_left + currblock].slots[currslot].first;
-      if (res != testTrainData[j].first) {
-        std::cout << res << std::endl;
-      int currslot = tmpCFNode.Find(data, testTrainData[j].first, &currblock);
-      }
-      ASSERT_EQ(res, testTrainData[j].first);
+      ASSERT_EQ(res, testTrainData[j].first)
+          << "j:" << j << ",\tres:" << res << ",\ti:" << i;
     }
   }
 }
@@ -139,10 +137,7 @@ TEST(TestInsert, InsertData) {
       int m_left = tmpCFNode.m_left;
       int blockNum = tmpCFNode.flagNumber & 0x00FFFFFF;
       int nowDataNum = CFType::GetDataNum(data, m_left, m_left + blockNum);
-      if (i + 1 != nowDataNum) {
-        std::cout << i + 1 << ",\tnow:" << nowDataNum << std::endl;
-        nowDataNum = CFType::GetDataNum(data, m_left, m_left + blockNum);
-      }
+
       ASSERT_EQ(i + 1, nowDataNum);
       for (int j = m_left; j < m_left + blockNum; j++) {
         for (int k = 0; k < CFType::kMaxBlockCapacity - 1; k++) {
