@@ -54,8 +54,7 @@ double GetCFNodePredictTime() {
     keys[i] = i;
   }
 
-  unsigned seed = std::clock();
-  std::default_random_engine engine(seed);
+  std::default_random_engine engine(std::clock());
   shuffle(idx.begin(), idx.end(), engine);
   shuffle(keys.begin(), keys.end(), engine);
 
@@ -63,11 +62,12 @@ double GetCFNodePredictTime() {
   int find_idx = 0;
   std::clock_t s, e;
   double tmp, tmp1 = 0;
-  srand(time(0));
+  std::uniform_int_distribution<int> dis_idx(0, end);
+  std::uniform_int_distribution<int> dis_key(0, kSize);
   s = std::clock();
   for (int i = 0; i < end; i++) {
-    tmpIdx = idx[rand() % end];
-    key = keys[rand() % kSize];
+    tmpIdx = idx[dis_idx(engine)];
+    key = keys[dis_key(engine)];
     find_idx += node[tmpIdx].Search(key);
   }
   e = std::clock();
@@ -75,8 +75,8 @@ double GetCFNodePredictTime() {
   std::cout << "size:" << sizeof(node[0]) << "\n";
   s = std::clock();
   for (int i = 0; i < end; i++) {
-    tmpIdx = idx[rand() % end];
-    key = keys[rand() % kSize];
+    tmpIdx = idx[dis_idx(engine)];
+    key = keys[dis_key(engine)];
     find_idx += node[tmpIdx].m_left + node[tmpIdx].slotkeys[3];
   }
   e = std::clock();
@@ -91,9 +91,8 @@ double GetBlockSearchTime() {
   for (int i = 0; i < CFArrayType<double, double>::kMaxBlockCapacity; i++) {
     tmpSlots.slots[i] = {i, i * 10};
   }
-  unsigned seed = std::clock();
   DataArrayStructure<double, double> data;
-  std::default_random_engine engine(seed);
+  std::default_random_engine engine(std::clock());
   CFType tmpNode;
   for (int i = 0; i < kModelNumber; i++) {
     data.dataArray.push_back(tmpSlots);
@@ -110,11 +109,13 @@ double GetBlockSearchTime() {
   int find_idx = 0;
   std::clock_t s, e;
   double tmp, tmp1 = 0;
-  srand(time(0));
+  std::uniform_int_distribution<int> dis_idx(0, end);
+  std::uniform_int_distribution<int> dis_key(
+      0, CFArrayType<double, double>::kMaxBlockCapacity);
   s = std::clock();
   for (int i = 0; i < end; i++) {
-    tmpIdx = idx[rand() % end];
-    key = keys[rand() % CFArrayType<double, double>::kMaxBlockCapacity];
+    tmpIdx = idx[dis_idx(engine)];
+    key = keys[dis_key(engine)];
     find_idx +=
         tmpNode.SearchDataBlock(data.dataArray[tmpIdx], key,
                                 CFArrayType<double, double>::kMaxBlockCapacity);
@@ -123,8 +124,8 @@ double GetBlockSearchTime() {
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
   s = std::clock();
   for (int i = 0; i < end; i++) {
-    tmpIdx = idx[rand() % end];
-    key = keys[rand() % CFArrayType<double, double>::kMaxBlockCapacity];
+    tmpIdx = idx[dis_idx(engine)];
+    key = keys[dis_key(engine)];
     find_idx += data.dataArray[tmpIdx].slots[0].first +
                 data.dataArray[tmpIdx].slots[4].first +
                 data.dataArray[tmpIdx].slots[8].first +
@@ -143,8 +144,10 @@ double GetExternalNodePredictTime() {
   kExternalDatasize = block * end;
   std::vector<ExtType> node(kModelNumber);
   std::vector<double> keys(block);
+  std::default_random_engine engine(std::clock());
+  std::uniform_int_distribution<int> dis(0, 4096);
   for (int i = 0; i < block; i++) {
-    keys[i] = rand() % 4096;
+    keys[i] = dis(engine);
   }
   sort(keys.begin(), keys.end());
   std::vector<double> tmpKeys(kExternalDatasize);
@@ -153,7 +156,6 @@ double GetExternalNodePredictTime() {
     tmpKeys[i] = keys[j];
   }
   std::vector<std::pair<double, double>> initDataset(kExternalDatasize, {1, 1});
-  srand(time(0));
   const int record_size = sizeof(double) * 2;
   int extLen = kExternalDatasize * 2 + 10;
   double* externalDataset = new double[extLen];
@@ -176,8 +178,6 @@ double GetExternalNodePredictTime() {
     node[idx[i]].m_left = i * block;
   }
 
-  unsigned seed = std::clock();
-  std::default_random_engine engine(seed);
   shuffle(idx.begin(), idx.end(), engine);
   shuffle(keys.begin(), keys.end(), engine);
 
@@ -185,11 +185,12 @@ double GetExternalNodePredictTime() {
   int find_idx = 0;
   std::clock_t s, e;
   double tmp, tmp1 = 0;
-  srand(time(0));
+  std::uniform_int_distribution<int> dis_idx(0, end);
+  std::uniform_int_distribution<int> dis_key(0, block);
   s = std::clock();
   for (int i = 0; i < end; i++) {
-    tmpIdx = idx[rand() % end];
-    key = keys[rand() % block];
+    tmpIdx = idx[dis_idx(engine)];
+    key = keys[dis_key(engine)];
     find_idx += node[tmpIdx].Find(key, 16, externalDataset);
   }
   e = std::clock();
@@ -197,8 +198,8 @@ double GetExternalNodePredictTime() {
   std::cout << "size:" << sizeof(node[0]) << "\n";
   s = std::clock();
   for (int i = 0; i < end; i++) {
-    tmpIdx = idx[rand() % end];
-    key = keys[rand() % block];
+    tmpIdx = idx[dis_idx(engine)];
+    key = keys[dis_key(engine)];
     find_idx += node[tmpIdx].m_left + node[tmpIdx].error;
   }
   e = std::clock();

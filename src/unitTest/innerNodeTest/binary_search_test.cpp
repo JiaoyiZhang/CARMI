@@ -25,21 +25,23 @@ const int kTestMaxValue = kMaxValue;
 
 LognormalDataset logData(0.9);
 BSModel<KeyType, ValueType> model(kChildNum);
+std::default_random_engine engine(time(0));
 
 TEST(TestMultiTrain, MultiTrainBSModel) {
+  std::uniform_real_distribution<KeyType> dis(0, kTestMaxValue);
   std::vector<DataType> testTrainData;
   unsigned int seed = time(NULL);
   for (int i = 0; i < 9; i++) {
     int tmpSize = std::pow(10, i) - 1;
     testTrainData = std::vector<DataType>(tmpSize);
     for (int j = 0; j < tmpSize; j++) {
-      KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+      KeyType tmpKey = dis(engine);
       testTrainData[j] = {tmpKey, tmpKey};
     }
     std::sort(testTrainData.begin(), testTrainData.end());
     BSModel<KeyType, ValueType> tmpModel(kChildNum);
     tmpModel.Train(0, testTrainData.size(), testTrainData);
-    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF); 
+    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF);
     for (int j = 0; j < 13; j++) {
       EXPECT_LE(tmpModel.keys[j], tmpModel.keys[j + 1]);
     }

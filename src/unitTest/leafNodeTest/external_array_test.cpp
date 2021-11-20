@@ -9,6 +9,8 @@
  * @copyright Copyright (c) 2021
  *
  */
+#include <random>
+
 #include "../../include/nodes/leafNode/external_array_type.h"
 #include "gtest/gtest.h"
 
@@ -17,6 +19,9 @@ typedef double ValueType;
 
 const int kTestMaxValue = 10000;
 unsigned int seed = time(NULL);
+std::default_random_engine engine(time(0));
+std::uniform_real_distribution<KeyType> dis(0, kTestMaxValue);
+
 template <typename KeyType, typename ValueType>
 class DataType {
  public:
@@ -48,7 +53,7 @@ TEST(TestTrain, TrainExternalArrayNode) {
     std::vector<std::pair<KeyType, ValueType>> testTrainData(i);
     ExternalArray<KeyType, ValueType> externalNode;
     for (int j = 0; j < i; j++) {
-      KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+      KeyType tmpKey = dis(engine);
       testTrainData[j] = {tmpKey, tmpKey * 10};
     }
     std::sort(testTrainData.begin(), testTrainData.end());
@@ -63,7 +68,7 @@ TEST(TestFind, ExternalArrayNodeFind) {
     ExternalArray<KeyType, ValueType> externalNode;
     KeyType* externalDataset = new KeyType[i * 2];
     for (int j = 0, k = 0; j < i; j++, k += 2) {
-      KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+      KeyType tmpKey = dis(engine);
       testTrainData[j] = {tmpKey, tmpKey * 10};
     }
     std::sort(testTrainData.begin(), testTrainData.end());
@@ -77,6 +82,10 @@ TEST(TestFind, ExternalArrayNodeFind) {
       int currslot =
           externalNode.Find(testTrainData[j].first, 16, externalDataset);
       KeyType res = testTrainData[currslot].first;
+      if (res != testTrainData[j].first) {
+        currslot =
+            externalNode.Find(testTrainData[j].first, 16, externalDataset);
+      }
       ASSERT_EQ(res, testTrainData[j].first);
     }
   }
