@@ -337,6 +337,11 @@ class CARMI {
       const KeyType &key,
       const BaseNode<KeyType, ValueType, Compare, Alloc> &currnode,
       int currblock, int currslot) {
+    if (currblock < 0 || currslot < 0 ||
+        currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
+        currslot >= currnode->cfArray.GetBlockSize(currblock)) {
+      return true;
+    }
     return currnode.DeleteSingleData(key, currblock, currslot, &data);
   }
 

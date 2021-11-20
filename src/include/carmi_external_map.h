@@ -272,13 +272,6 @@ class CARMIExternalMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 0 ||
-          currslot >= tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::iterator::key: this iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, return the key value
       return static_cast<const DataType *>(
                  static_cast<const void *>(
                      static_cast<const char *>(tree->carmi_tree.external_data) +
@@ -292,13 +285,6 @@ class CARMIExternalMap {
      * @return const DataType::ValueType_& the data value
      */
     inline const typename DataType::ValueType_ &data() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 0 ||
-          currslot >= tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::iterator::data: this iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, return the data point
       return static_cast<const DataType *>(
                  static_cast<const void *>(
                      static_cast<const char *>(tree->carmi_tree.external_data) +
@@ -312,14 +298,6 @@ class CARMIExternalMap {
      * @return const void* the pointer of this iterator.
      */
     inline const void *key_pointer() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 0 ||
-          currslot >= tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::iterator::key_pointer: this iterator is "
-            "invalid.");
-      }
-      // Case 2: the current iterator is valid, return the key value
       return static_cast<const void *>(
           static_cast<const char *>(tree->carmi_tree.external_data) +
           currslot * tree->carmi_tree.recordLength);
@@ -405,8 +383,8 @@ class CARMIExternalMap {
       return tmp;
     }
 
-   public:
-    //*** Public Data Members of Iterator Objects
+   private:
+    //*** Private Data Members of Iterator Objects
 
     /**
      * @brief The pointer of the carmi tree.
@@ -417,6 +395,11 @@ class CARMIExternalMap {
      * @brief The index of the record in the external dataset.
      */
     int currslot;
+
+    friend class const_iterator;
+    friend class reverse_iterator;
+    friend class const_reverse_iterator;
+    friend class CARMIExternalMap;
   };
 
   /**
@@ -481,13 +464,6 @@ class CARMIExternalMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 0 ||
-          currslot >= tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::const_iterator::key: this iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, return the key value
       return static_cast<const DataType *>(
                  static_cast<const void *>(
                      static_cast<const char *>(tree->carmi_tree.external_data) +
@@ -501,14 +477,6 @@ class CARMIExternalMap {
      * @return const DataType::ValueType_& the data point
      */
     inline const typename DataType::ValueType_ &data() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 0 ||
-          currslot >= tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::const_iterator::data: this iterator is "
-            "invalid.");
-      }
-      // Case 2: the current iterator is valid, return the data point
       return static_cast<const DataType *>(
                  static_cast<const void *>(
                      static_cast<const char *>(tree->carmi_tree.external_data) +
@@ -522,14 +490,6 @@ class CARMIExternalMap {
      * @return const void* the pointer of this iterator.
      */
     inline const void *key_pointer() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 0 ||
-          currslot >= tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::const_iterator::key_pointer: this iterator is "
-            "invalid.");
-      }
-      // Case 2: the current iterator is valid, return the key value
       return static_cast<const void *>(
           static_cast<const char *>(tree->carmi_tree.external_data) +
           currslot * tree->carmi_tree.recordLength);
@@ -615,8 +575,8 @@ class CARMIExternalMap {
       return tmp;
     }
 
-   public:
-    //*** Public Data Members of Iterator Objects
+   private:
+    //*** Private Data Members of Iterator Objects
 
     /**
      * @brief The pointer of the carmi tree.
@@ -627,6 +587,11 @@ class CARMIExternalMap {
      * @brief The index of the record in the external dataset.
      */
     int currslot;
+
+    friend class iterator;
+    friend class reverse_iterator;
+    friend class const_reverse_iterator;
+    friend class CARMIExternalMap;
   };
 
   /**
@@ -682,14 +647,6 @@ class CARMIExternalMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 1 ||
-          currslot > tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::reverse_iterator::key: this iterator is "
-            "invalid.");
-      }
-      // Case 2: the current iterator is valid, return the key value
       return static_cast<const DataType *>(
                  static_cast<const void *>(
                      static_cast<const char *>(tree->carmi_tree.external_data) +
@@ -703,14 +660,6 @@ class CARMIExternalMap {
      * @return const DataType::ValueType_& the data point
      */
     inline const typename DataType::ValueType_ &data() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 1 ||
-          currslot > tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::reverse_iterator::data: this iterator is "
-            "invalid.");
-      }
-      // Case 2: the current iterator is valid, return the data point
       return static_cast<const DataType *>(
                  static_cast<const void *>(
                      static_cast<const char *>(tree->carmi_tree.external_data) +
@@ -724,14 +673,6 @@ class CARMIExternalMap {
      * @return const void* the pointer of this iterator.
      */
     inline const void *key_pointer() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 1 ||
-          currslot > tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::reverse_iterator::key_pointer: this iterator is "
-            "invalid.");
-      }
-      // Case 2: the current iterator is valid, return the key value
       return static_cast<const void *>(
           static_cast<const char *>(tree->carmi_tree.external_data) +
           (currslot - 1) * tree->carmi_tree.recordLength);
@@ -817,8 +758,8 @@ class CARMIExternalMap {
       return tmp;
     }
 
-   public:
-    //*** Public Data Members of Iterator Objects
+   private:
+    //*** Private Data Members of Iterator Objects
 
     /**
      * @brief The pointer of the carmi tree.
@@ -829,6 +770,11 @@ class CARMIExternalMap {
      * @brief The index of the record in the external dataset.
      */
     int currslot;
+
+    friend class iterator;
+    friend class const_iterator;
+    friend class const_reverse_iterator;
+    friend class CARMIExternalMap;
   };
 
   /**
@@ -892,14 +838,6 @@ class CARMIExternalMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 1 ||
-          currslot > tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::const_reverse_iterator::key: this iterator is "
-            "invalid.");
-      }
-      // Case 2: the current iterator is valid, return the key value
       return static_cast<const DataType *>(
                  static_cast<const void *>(
                      static_cast<const char *>(tree->carmi_tree.external_data) +
@@ -913,14 +851,6 @@ class CARMIExternalMap {
      * @return const DataType::ValueType_& the data point
      */
     inline const typename DataType::ValueType_ &data() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 1 ||
-          currslot > tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::const_reverse_iterator::data: this iterator is "
-            "invalid.");
-      }
-      // Case 2: the current iterator is valid, return the data point
       return static_cast<const DataType *>(
                  static_cast<const void *>(
                      static_cast<const char *>(tree->carmi_tree.external_data) +
@@ -934,14 +864,6 @@ class CARMIExternalMap {
      * @return const void* the pointer of this iterator.
      */
     inline const void *key_pointer() const {
-      // Case 1: the current iterator is invalid
-      if (tree == NULL || currslot < 1 ||
-          currslot > tree->carmi_tree.currsize) {
-        throw std::out_of_range(
-            "CARMIExternalMap::const_reverse_iterator::key_pointer: this "
-            "iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, return the key value
       return static_cast<const void *>(
           static_cast<const char *>(tree->carmi_tree.external_data) +
           (currslot - 1) * tree->carmi_tree.recordLength);
@@ -1027,8 +949,8 @@ class CARMIExternalMap {
       return tmp;
     }
 
-   public:
-    //*** Public Data Members of Iterator Objects
+   private:
+    //*** Private Data Members of Iterator Objects
 
     /**
      * @brief The pointer of the carmi tree.
@@ -1039,6 +961,11 @@ class CARMIExternalMap {
      * @brief The index of the record in the external dataset.
      */
     int currslot;
+
+    friend class iterator;
+    friend class const_iterator;
+    friend class reverse_iterator;
+    friend class CARMIExternalMap;
   };
 
  public:
@@ -1057,11 +984,7 @@ class CARMIExternalMap {
    *
    * @return iterator
    */
-  iterator end() {
-    iterator it(this);
-    it.currslot = -1;
-    return it;
-  }
+  iterator end() { return iterator(this, -1); }
 
   /**
    * @brief Returns a const iterator referring to the first element in the carmi
@@ -1076,11 +999,7 @@ class CARMIExternalMap {
    *
    * @return const_iterator
    */
-  const_iterator cend() const {
-    const_iterator it(this);
-    it.currslot = -1;
-    return it;
-  }
+  const_iterator cend() const { return const_iterator(this, -1); }
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
@@ -1089,9 +1008,7 @@ class CARMIExternalMap {
    * @return reverse_iterator
    */
   reverse_iterator rbegin() {
-    reverse_iterator it(this);
-    it.currslot = carmi_tree.currsize;
-    return it;
+    return reverse_iterator(this, carmi_tree.currsize);
   }
 
   /**
@@ -1099,11 +1016,7 @@ class CARMIExternalMap {
    *
    * @return reverse_iterator
    */
-  reverse_iterator rend() {
-    reverse_iterator it(this);
-    it.currslot = -1;
-    return it;
-  }
+  reverse_iterator rend() { return reverse_iterator(this, -1); }
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
@@ -1112,9 +1025,7 @@ class CARMIExternalMap {
    * @return const_reverse_iterator
    */
   const_reverse_iterator crbegin() const {
-    const_reverse_iterator it(this);
-    it.currslot = carmi_tree.currsize;
-    return it;
+    return const_reverse_iterator(this, carmi_tree.currsize);
   }
 
   /**
@@ -1123,9 +1034,7 @@ class CARMIExternalMap {
    * @return const_reverse_iterator
    */
   const_reverse_iterator crend() const {
-    const_reverse_iterator it(this);
-    it.currslot = -1;
-    return it;
+    return const_reverse_iterator(this, -1);
   }
 
  public:
@@ -1141,8 +1050,8 @@ class CARMIExternalMap {
    */
   iterator lower_bound(const KeyType &key) {
     iterator it(this);
-    int tmp = 0;
-    carmi_tree.Find(key, &tmp, &it.currslot);
+    int t = 0;
+    carmi_tree.Find(key, &t, &it.currslot);
     if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
       return end();
     } else {
@@ -1235,7 +1144,7 @@ class CARMIExternalMap {
     iterator it(this);
     int tmp = 0;
     carmi_tree.Find(key, &tmp, &it.currslot);
-    if (it.currslot == -1 || it.key() != key) {
+    if (it.currslot < 0 || it.key() != key) {
       return end();
     } else {
       return it;
@@ -1252,7 +1161,7 @@ class CARMIExternalMap {
     const_iterator it(this);
     int tmp = 0;
     carmi_tree.Find(key, &tmp, &it.currslot);
-    if (it.currslot == -1 || it.key() != key) {
+    if (it.currslot < 0 || it.key() != key) {
       return cend();
     } else {
       return it;
@@ -1334,8 +1243,7 @@ class CARMIExternalMap {
   iterator insert(const_iterator position, const KeyType &key) {
     iterator it(this);
     int tmp = 0;
-    auto res = carmi_tree.Insert({key, 0}, &tmp, &it.currslot);
-    it.currnode = res.first;
+    carmi_tree.Insert({key, 0}, &tmp, &it.currslot);
     return it;
   }
 
@@ -1385,13 +1293,8 @@ class CARMIExternalMap {
   DataType &operator[](const KeyType &key) {
     iterator it(this);
     int tmp = 0;
-    auto res = carmi_tree.Insert({key, DBL_MAX}, &tmp, &it.currslot);
-    it.currnode = res.first;
-    return static_cast<DataType *>(
-               static_cast<const void *>(
-                   static_cast<const char *>(carmi_tree.external_data) +
-                   it.currslot * carmi_tree.recordLength))
-        ->data();
+    carmi_tree.Insert({key, DBL_MAX}, &tmp, &it.currslot);
+    return it.data();
   }
 
   /**
@@ -1407,11 +1310,7 @@ class CARMIExternalMap {
       throw std::out_of_range(
           "CARMIExternalMap::at: input does not match any key.");
     } else {
-      return static_cast<DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(carmi_tree.external_data) +
-                     it.currslot * carmi_tree.recordLength))
-          ->data();
+      return it.data();
     }
   }
 
@@ -1428,11 +1327,7 @@ class CARMIExternalMap {
       throw std::out_of_range(
           "CARMIExternalMap::at: input does not match any key.");
     } else {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(carmi_tree.external_data) +
-                     it.currslot * carmi_tree.recordLength))
-          ->data();
+      return it.data();
     }
   }
 
