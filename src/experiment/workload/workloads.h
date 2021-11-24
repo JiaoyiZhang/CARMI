@@ -46,32 +46,25 @@ void WorkloadA(bool isZipfian, const DataVecType &findDataset,
 
   std::clock_t s, e;
   double tmp;
+  auto resIte = carmi->end();
+  double res = 0.0;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      carmi->find(findQuery[index[i]].first);
+      resIte = carmi->find(findQuery[index[i]].first);
+      res += resIte.data();
       carmi->insert(insertQuery[i]);
     }
   } else {
     for (int i = 0; i < end; i++) {
-      carmi->find(findQuery[i].first);
+      resIte = carmi->find(findQuery[i].first);
+      res += resIte.data();
       carmi->insert(insertQuery[i]);
     }
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-
-  s = std::clock();
-  if (isZipfian) {
-    for (int i = 0; i < end; i++) {
-    }
-  } else {
-    for (int i = 0; i < end; i++) {
-    }
-  }
-  e = std::clock();
-  double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-  tmp -= tmp0;
+  std::cout << "        res: " << res << std::endl;
 
   PrintAvgTime(tmp);
 }
@@ -101,11 +94,14 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
 
   std::clock_t s, e;
   double tmp;
+  auto resIte = carmi->end();
+  double res = 0.0;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < index.size(); j++) {
-        carmi->find(findQuery[index[findCnt]].first);
+        resIte = carmi->find(findQuery[index[findCnt]].first);
+        res += resIte.data();
         findCnt++;
       }
       carmi->insert(insertQuery[i]);
@@ -113,32 +109,15 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
   } else {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        carmi->find(findQuery[findCnt++].first);
+        resIte = carmi->find(findQuery[findCnt++].first);
+        res += resIte.data();
       }
       carmi->insert(insertQuery[i]);
     }
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-
-  findCnt = 0;
-  s = std::clock();
-  if (isZipfian) {
-    for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19; j++) {
-        findCnt++;
-      }
-    }
-  } else {
-    for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
-        findCnt++;
-      }
-    }
-  }
-  e = std::clock();
-  double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-  tmp -= tmp0;
+  std::cout << "        res: " << res << std::endl;
 
   PrintAvgTime(tmp);
 }
@@ -163,30 +142,23 @@ void WorkloadC(bool isZipfian, const DataVecType &findDataset,
 
   std::clock_t s, e;
   double tmp;
+  auto resIte = carmi->end();
+  double res = 0.0;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      carmi->find(findQuery[index[i]].first);
+      resIte = carmi->find(findQuery[index[i]].first);
+      res += resIte.data();
     }
   } else {
     for (int i = 0; i < end; i++) {
-      carmi->find(findQuery[i].first);
+      resIte = carmi->find(findQuery[i].first);
+      res += resIte.data();
     }
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-
-  s = std::clock();
-  if (isZipfian) {
-    for (int i = 0; i < end; i++) {
-    }
-  } else {
-    for (int i = 0; i < end; i++) {
-    }
-  }
-  e = std::clock();
-  double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-  tmp -= tmp0;
+  std::cout << "        res: " << res << std::endl;
 
   PrintAvgTime(tmp);
 }
@@ -236,7 +208,7 @@ void WorkloadD(bool isZipfian, const DataVecType &findDataset,
   } else {
     for (int i = 0; i < insert_length; i++) {
       for (int j = 0; j < 17 && findCnt < length; j++) {
-        carmi->find(findQuery[findCnt].first);
+        resIte = carmi->find(findQuery[findCnt].first);
         res += resIte.data();
         findCnt++;
       }
@@ -248,30 +220,7 @@ void WorkloadD(bool isZipfian, const DataVecType &findDataset,
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-
-  findCnt = 0;
-  insertCnt = 0;
-  s = std::clock();
-  if (isZipfian) {
-    for (int i = 0; i < insert_length; i++) {
-      for (int j = 0; j < 17 && findCnt < findQuery.size(); j++) findCnt++;
-      for (int j = 0; j < 3 && insertCnt < insertQuery.size(); j++) {
-        insertCnt++;
-      }
-    }
-  } else {
-    for (int i = 0; i < insert_length; i++) {
-      for (int j = 0; j < 17 && findCnt < length; j++) {
-        findCnt++;
-      }
-      for (int j = 0; j < 3 && insertCnt < insert_length; j++) {
-        insertCnt++;
-      }
-    }
-  }
-  e = std::clock();
-  double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-  tmp -= tmp0;
+  std::cout << "        res: " << res << std::endl;
 
   PrintAvgTime(tmp);
 }
@@ -310,7 +259,7 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
         auto it = carmi->find(findQuery[index[findCnt]].first);
 
         for (int l = 0; l < length[index[findCnt]] && it != carmi->end(); l++) {
-          ret[l] = {it.key(), it.key()};
+          ret[l] = {it.key(), it.data()};
           ++it;
         }
         findCnt++;
@@ -322,7 +271,7 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
       for (int j = 0; j < 19 && findCnt < findQuery.size(); j++) {
         auto it = carmi->find(findQuery[findCnt].first);
         for (int l = 0; l < length[findCnt] && it != carmi->end(); l++) {
-          ret[l] = {it.key(), it.key()};
+          ret[l] = {it.key(), it.data()};
           ++it;
         }
         findCnt++;
