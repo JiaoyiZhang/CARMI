@@ -190,6 +190,77 @@ class CARMIExternalMap {
     carmi_tree.Construction();
   }
 
+  /**
+   * @brief Constructs a new CARMIExternalMap object.
+   *
+   * The CARMI index structure can achieve good performance under the time/space
+   * setting based on the lambda parameter. The goal of the hybrid construction
+   * algorithm is to minimize the total cost of historical access and insert
+   * queries, which is: the average time cost of each query + lambda times the
+   * space cost of the index tree.
+   *
+   * @param[in] dataset the pointer to the external dataset used to construct
+   * the index and the historical find queries
+   * @param[in] record_number the number of the records
+   * @param[in] record_len the length of a record (byte)
+   * @param[in] comp A binary predicate that takes two element keys as arguments
+   * and returns a bool.
+   * @param[in] alloc The allocator object used to define the storage allocation
+   * model.
+   */
+  CARMIExternalMap(const void *dataset, int record_number, int record_len,
+                   const Compare &comp = Compare(),
+                   const Alloc &alloc = Alloc()) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
+    KeyVectorType tmp;
+    float datasize = record_len * record_number / 1024.0 / 1024.0;  // MB
+    float leafRate =
+        1 + 64.0 / (carmi_params::kMaxLeafNodeSizeExternal * record_len * 0.75);
+    float lambda = 100.0 / leafRate / datasize;
+    carmi_tree = carmi_impl(dataset, tmp, lambda, record_number, record_len);
+
+    carmi_tree.Construction();
+  }
+
+  /**
+   * @brief Constructs a new CARMIExternalMap object with the historical insert
+   * queries.
+   *
+   * The CARMI index structure can perform well under the time/space setting
+   * based on the lambda parameter. The goal of the hybrid construction
+   * algorithm is to minimize the total cost of historical access and insert
+   * queries, which is: the average time cost of each query + lambda times the
+   * space cost of the index tree.
+   *
+   * @param[in] dataset the pointer to the external dataset used to construct
+   * the index and the historical find queries
+   * @param[in] future_insert the array of keywords that may be inserted in
+   * the future to reserve space for them, which is also the historical insert
+   * queries
+   * @param[in] record_number the number of the records
+   * @param[in] record_len the length of a record (byte)
+   * @param[in] comp A binary predicate that takes two element keys as arguments
+   * and returns a bool.
+   * @param[in] alloc The allocator object used to define the storage allocation
+   * model.
+   */
+  CARMIExternalMap(const void *dataset, const KeyVectorType &future_insert,
+                   int record_number, int record_len,
+                   const Compare &comp = Compare(),
+                   const Alloc &alloc = Alloc()) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
+    float datasize = record_len * record_number / 1024.0 / 1024.0;  // MB
+    float leafRate =
+        1 + 64.0 / (carmi_params::kMaxLeafNodeSizeExternal * record_len * 0.75);
+    float lambda = 100.0 / leafRate / datasize;
+    carmi_tree =
+        carmi_impl(dataset, future_insert, lambda, record_number, record_len);
+
+    carmi_tree.Construction();
+  }
+
  public:
   /// *** Fast Copy: Assign Operator and Copy Constructors
 

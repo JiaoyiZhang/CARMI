@@ -242,6 +242,107 @@ class CARMIMap {
     Init(initDataset, insertDataset, lambda);
   }
 
+  /**
+   * @brief Construct a new CARMIMap object with the range [first, last)
+   * of initDataset. The range does not need to be sorted. This constructor has
+   * no historical insert query by default, indicating that it is currently a
+   * read-only workload.
+   *
+   * (1) The constructor uses the two input iterators of first and last to
+   * construct the init dataset to train the model in each node and construct
+   * the optimal index structure on it. These data points will be actually
+   * stored in the part of the index tree responsible for managing data points.
+   * In addition, these data points will also be regarded as being accessed once
+   * in historical find queries by default, providing a basis for the
+   * calculation of the cost model.
+   *
+   *
+   * @tparam InputIterator
+   * @param[in] first the first input iterator of initDataset, used to
+   * construct the init dataset, which will be indexed. The initDataset is also
+   * help for the calculation of the cost model.
+   * @param[in] last the last input iterator of initDataset, used to
+   * construct the init dataset, which will be indexed.
+   * @param[in] comp A binary predicate that takes two element keys as arguments
+   * and returns a bool.
+   * @param[in] alloc The allocator object used to define the storage allocation
+   * model.
+   */
+  template <class InputIterator>
+  CARMIMap(const InputIterator &first, const InputIterator &last,
+           const Compare &comp = Compare(), const Alloc &alloc = Alloc()) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
+    // use the given two iterators to get the init dataset in the form of vector
+    DataVectorType initDataset;
+    PreprocessInput<InputIterator>(first, last, &initDataset);
+    DataVectorType insertDataset;
+    float datasize = sizeof(DataType) *
+                     (initDataset.size() + insertDataset.size()) / 1024.0 /
+                     1024.0;  // MB
+    float leafRate = 1 + 64.0 / (carmi_params::kMaxLeafNodeSize * 0.75);
+    float lambda = 100.0 / leafRate / datasize;
+    Init(initDataset, insertDataset, lambda);
+  }
+
+  /**
+   * @brief Construct a new CARMIMap object with the range [initFirst, initLast)
+   * of initDataset and the range [insertFirst, insertLast] of insertDataset.
+   * The range does not need to be sorted.
+   *
+   * (1) The constructor uses the two input iterator of initFirst and initLast
+   * to construct the init dataset to train the model in each node and construct
+   * the optimal index structure. These data points will be actually stored in
+   * the part of the index tree responsible for managing data points. In
+   * addition, these data points will also be regarded as being accessed once in
+   * historical find queries by default, providing a basis for the calculation
+   * of the cost model.
+   *
+   * (2) Similarly, CARMI uses the two input iterator of insertFirst and
+   * insertLast to construct the insert dataset. These data points will be
+   * regarded as being inserted once in historical insert queries and used to
+   * calculate the cost model.
+   *
+   * @tparam InputIterator the iterator type of input
+   * @param[in] initFirst the first input iterator of initDataset, used to
+   * construct the init dataset, which will be indexed. The initDataset is also
+   * help for the calculation of the cost model.
+   * @param[in] initLast the last input iterator of initDataset, used to
+   * construct the init dataset, which will be indexed.
+   * @param[in] insertFirst the first input iterator of insertDataset, used to
+   * construct the insert dataset. The insert dataset is used to calculate the
+   * average insert time cost in the historical insert queries when calculating
+   * the total cost model.
+   * @param[in] insertLast the last input iterator of insertDataset, used to
+   * construct the insert dataset.
+   * @param[in] comp A binary predicate that takes two element keys as arguments
+   * and returns a bool.
+   * @param[in] alloc The allocator object used to define the storage allocation
+   * model.
+   */
+  template <typename InputIterator>
+  CARMIMap(const InputIterator &initFirst, const InputIterator &initLast,
+           const InputIterator &insertFirst, const InputIterator &insertLast,
+           const Compare &comp = Compare(), const Alloc &alloc = Alloc()) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
+    // use the given two iterators to get the init dataset in the form of vector
+    DataVectorType initDataset;
+    PreprocessInput<InputIterator>(initFirst, initLast, &initDataset);
+    // use the given two iterators to get the insert dataset in the form of
+    // vector
+    DataVectorType insertDataset;
+    PreprocessInput<InputIterator>(insertFirst, insertLast, &insertDataset);
+    // construct the findQuery/insertQuery using the two datasets and call the
+    // construction function of carmi_tree to obtain the optimal index structure
+    float datasize = sizeof(DataType) *
+                     (initDataset.size() + insertDataset.size()) / 1024.0 /
+                     1024.0;  // MB
+    float leafRate = 1 + 64.0 / (carmi_params::kMaxLeafNodeSize * 0.75);
+    float lambda = 100.0 / leafRate / datasize;
+    Init(initDataset, insertDataset, lambda);
+  }
+
  public:
   /// *** Fast Copy: Assign Operator and Copy Constructors
 
@@ -342,9 +443,9 @@ class CARMIMap {
     /**
      * @brief Get the data value of this iterator.
      *
-     * @return const ValueType& the data value
+     * @return ValueType& the data value
      */
-    inline const ValueType &data() const {
+    inline ValueType &data() const {
       // return the data value in the data block
       return tree->carmi_tree.data
           .dataArray[currnode->cfArray.m_left + currblock]
@@ -694,7 +795,8 @@ class CARMIMap {
      * @brief Construct an empty new const iterator object with the default
      * values.
      */
-    inline const_iterator() {}
+    inline const_iterator()
+        : tree(NULL), currnode(NULL), currblock(0), currslot(0) {}
 
     /**
      * @brief Construct a new const iterator object and set the pointer to the
@@ -1120,7 +1222,8 @@ class CARMIMap {
      * @brief Construct an empty new reverse iterator object with the default
      * values.
      */
-    inline reverse_iterator() {}
+    inline reverse_iterator()
+        : tree(NULL), currnode(NULL), currblock(0), currslot(0) {}
 
     /**
      * @brief Construct a new reverse iterator object and set the pointer to the
@@ -1150,17 +1253,6 @@ class CARMIMap {
      * @param[in] it the given iterator
      */
     explicit inline reverse_iterator(const iterator &it)
-        : tree(it.tree),
-          currnode(it.currnode),
-          currblock(it.currblock),
-          currslot(it.currslot) {}
-
-    /**
-     * @brief Construct a new reverse iterator object from a reverse iterator.
-     *
-     * @param[in] it the given iterator
-     */
-    explicit inline reverse_iterator(const reverse_iterator &it)
         : tree(it.tree),
           currnode(it.currnode),
           currblock(it.currblock),
@@ -1239,6 +1331,22 @@ class CARMIMap {
     }
 
     /**
+     * @brief Assign this iterator with another iterator
+     *
+     * @param other the given iterator
+     * @return reverse_iterator&
+     */
+    reverse_iterator &operator=(const reverse_iterator &other) {
+      if (this != &other) {
+        currnode = other.currnode;
+        tree = other.tree;
+        currslot = other.currslot;
+        currblock = other.currblock;
+      }
+      return *this;
+    }
+
+    /**
      * @brief Prefix++ get the iterator of the next data point.
      *
      * @return reverse_iterator& the next iterator
@@ -1274,7 +1382,8 @@ class CARMIMap {
      * @return reverse_iterator& the next iterator
      */
     inline reverse_iterator operator++(int) {
-      reverse_iterator tmp = *this;  // copy ourselves
+      reverse_iterator tmp =
+          static_cast<reverse_iterator>(*this);  // copy ourselves
       // Case 1: the next data point is stored in the same data block,
       // return it
       bool isSuccess = advanceSlot();
@@ -1534,7 +1643,8 @@ class CARMIMap {
      * @brief Construct an empty new const reverse iterator object with the
      * default values.
      */
-    inline const_reverse_iterator() {}
+    inline const_reverse_iterator()
+        : tree(NULL), currnode(NULL), currblock(0), currslot(0) {}
 
     /**
      * @brief Construct a new const reverse iterator object and set the pointer
@@ -2046,13 +2156,14 @@ class CARMIMap {
    * @return const_iterator
    */
   const_iterator cbegin() const {
-    const_iterator it(this);
+    const_iterator it(const_cast<CARMIMap<KeyType, ValueType> *>(this));
     if (it.tree == NULL || carmi_tree.firstLeaf < 0 ||
         carmi_tree.firstLeaf >= carmi_tree.node.nodeArray.size()) {
       throw std::invalid_argument(
           "CARMIMap::cbegin: the index has not been constructed.");
     }
-    it.currnode = &carmi_tree.node.nodeArray[carmi_tree.firstLeaf];
+    it.currnode = const_cast<BaseNode<KeyType, ValueType, Compare, Alloc> *>(
+        &carmi_tree.node.nodeArray[carmi_tree.firstLeaf]);
     while (it.currnode->cfArray.GetBlockSize(it.currblock) == 0) {
       it++;
     }
@@ -2064,7 +2175,9 @@ class CARMIMap {
    *
    * @return const_iterator
    */
-  const_iterator cend() const { return const_iterator(this); }
+  const_iterator cend() const {
+    return const_iterator(const_cast<CARMIMap<KeyType, ValueType> *>(this));
+  }
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
@@ -2386,9 +2499,7 @@ class CARMIMap {
    * @return ValueType& the value of it
    */
   ValueType &operator[](const KeyType &key) {
-    iterator it(this);
-    auto res = carmi_tree.Insert({key, KeyType()}, &it.currblock, &it.currslot);
-    it.currnode = res.first;
+    iterator it = insert({key, KeyType()}).first;
     return it.data();
   }
 
@@ -2400,7 +2511,7 @@ class CARMIMap {
    * @return ValueType& the value of it
    */
   ValueType &at(const KeyType &key) {
-    iterator it = find(key);
+    iterator it = static_cast<iterator>(find(key));
     if (it == end()) {
       throw std::out_of_range("CARMIMap::at: input does not match any key.");
     } else {
