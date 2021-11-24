@@ -78,8 +78,7 @@ CARMI<KeyType, ValueType, Compare, Alloc>::Insert(const DataType &datapoint,
           // split it and replace it with a new inner node and several new leaf
           // nodes
           Split<CFArrayType<KeyType, ValueType, Compare, Alloc>>(idx);
-          idx = node.nodeArray[idx].lr.childLeft +
-                node.nodeArray[idx].lr.Predict(datapoint.first);
+          idx = node.nodeArray[idx].lr.Predict(datapoint.first);
         }
         break;
       }
@@ -97,8 +96,7 @@ CARMI<KeyType, ValueType, Compare, Alloc>::Insert(const DataType &datapoint,
           // split it and replace it with a new inner node and several new leaf
           // nodes
           Split<ExternalArray<KeyType, ValueType, Compare>>(idx);
-          idx = node.nodeArray[idx].lr.childLeft +
-                node.nodeArray[idx].lr.Predict(datapoint.first);
+          idx = node.nodeArray[idx].lr.Predict(datapoint.first);
         }
       }
     }

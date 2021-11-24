@@ -59,10 +59,12 @@ typedef CARMIExternalMap<KeyType, ExternalDataType<KeyType, ValueType>>
     CarmiType;
 CarmiType carmi;
 KeyType *externalDataset;
+std::default_random_engine engine(time(0));
 
 TEST(TestCarmiExtmapConstructor, CARMIExtMapConstructor) {
+  std::uniform_real_distribution<KeyType> dis(0, kTestMaxValue);
   for (int i = 0; i < kInitSize; i++) {
-    KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+    KeyType tmpKey = dis(engine);
     initDataset[i] = {tmpKey, tmpKey * 10};
   }
   std::sort(initDataset.begin(), initDataset.end());

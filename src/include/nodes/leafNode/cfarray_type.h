@@ -82,16 +82,131 @@ class CFArrayType {
     }
   }
 
+ private:
+  // *** Static Comparison Functions of the CF Array Leaf Node
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The second key value
+   * @retval true a < b
+   * @retval false a >= b
+   */
+  inline static bool key_less(const KeyType &a, const KeyType &b) {
+    return key_less_(a, b);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first key value
+   * @param[in] b The second key value
+   * @retval true a <= b
+   * @retval false a > b
+   */
+  inline static bool key_lessequal(const KeyType &a, const KeyType &b) {
+    return !key_less_(b, a);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first key value
+   * @param[in] b The second key value
+   * @retval true a > b
+   * @retval false a <= b
+   */
+  inline static bool key_greater(const KeyType &a, const KeyType &b) {
+    return key_less_(b, a);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first key value
+   * @param[in] b The second key value
+   * @retval true a >= b
+   * @retval false a < b
+   */
+  inline static bool key_greaterequal(const KeyType &a, const KeyType &b) {
+    return !key_less_(a, b);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first key value
+   * @param[in] b The second key value
+   * @retval true a == b
+   * @retval false a != b
+   */
+  inline static bool key_equal(const KeyType &a, const KeyType &b) {
+    return !key_less_(a, b) && !key_less_(b, a);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a < b
+   * @retval false a >= b
+   */
+  inline static bool data_less(const DataType &a, const KeyType &b) {
+    return key_less_(a.first, b);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a <= b
+   * @retval false a > b
+   */
+  inline static bool data_lessequal(const DataType &a, const KeyType &b) {
+    return !key_less_(b, a.first);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a > b
+   * @retval false a <= b
+   */
+  inline static bool data_greater(const DataType &a, const KeyType &b) {
+    return key_less_(b, a.first);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a >= b
+   * @retval false a < b
+   */
+  inline static bool data_greaterequal(const DataType &a, const KeyType &b) {
+    return !key_less_(a.first, b);
+  }
+
+  /**
+   * @brief Compare two elements.
+   *
+   * @param[in] a The first data point
+   * @param[in] b The key value
+   * @retval true a == b
+   * @retval false a != b
+   */
+  inline static bool data_equal(const DataType &a, const KeyType &b) {
+    return !key_less_(a.first, b) && !key_less_(b, a.first);
+  }
+
  public:
   // *** Static Functions of the CF Array Leaf Node
-
-  static bool mycomp(const DataType &a, const KeyType &b) {
-    return a.first < b;
-  }
-
-  static bool slotkeys_cmp(const KeyType &a, const KeyType &b) {
-    return a <= b;
-  }
 
   /**
    * @brief Get the actual size of data blocks
@@ -155,8 +270,8 @@ class CFArrayType {
    * @return int: the index of the data point in this data block
    * @retval kMaxBlockCapacity: find the data point unsuccessfully
    */
-  int Find(const DataArrayStructure<KeyType, ValueType, Alloc> &data,
-           const KeyType &key, int *currblock) const;
+  inline int Find(const DataArrayStructure<KeyType, ValueType, Alloc> &data,
+                  const KeyType &key, int *currblock) const;
 
   /**
    * @brief Insert the datapoint into this leaf node
@@ -175,8 +290,8 @@ class CFArrayType {
    * @retval true the insert is successful
    * @retval false the insert fails
    */
-  bool Insert(const DataType &datapoint, int *currblock, int *currslot,
-              DataArrayStructure<KeyType, ValueType, Alloc> *data);
+  inline bool Insert(const DataType &datapoint, int *currblock, int *currslot,
+                     DataArrayStructure<KeyType, ValueType, Alloc> *data);
 
   /**
    * @brief Delete all the records of the given key value
@@ -191,8 +306,8 @@ class CFArrayType {
    * @param[inout] data the data array after the delete
    * @retval true the delete is successful
    */
-  bool Delete(const KeyType &key, size_t *cnt,
-              DataArrayStructure<KeyType, ValueType, Alloc> *data);
+  inline bool Delete(const KeyType &key, size_t *cnt,
+                     DataArrayStructure<KeyType, ValueType, Alloc> *data);
 
   /**
    * @brief Delete the data point at the given position
@@ -205,8 +320,9 @@ class CFArrayType {
    * @retval true if the operation succeeds
    * @retval false if the operation fails (the given position is invalid)
    */
-  bool DeleteSingleData(const KeyType &key, int currblock, int currslot,
-                        DataArrayStructure<KeyType, ValueType, Alloc> *data);
+  inline bool DeleteSingleData(
+      const KeyType &key, int currblock, int currslot,
+      DataArrayStructure<KeyType, ValueType, Alloc> *data);
 
   /**
    * @brief store data points into the data array
@@ -225,11 +341,11 @@ class CFArrayType {
    * @retval true store data points in the data array successfully
    * @retval false store data points unsuccessfully, this status will not occur.
    */
-  bool StoreData(const DataVectorType &dataset,
-                 const std::vector<int> &prefetchIndex, bool isInitMode,
-                 int neededBlockNum, int left,
-                 DataArrayStructure<KeyType, ValueType, Alloc> *data,
-                 int *prefetchEnd);
+  inline bool StoreData(const DataVectorType &dataset,
+                        const std::vector<int> &prefetchIndex, bool isInitMode,
+                        int neededBlockNum, int left,
+                        DataArrayStructure<KeyType, ValueType, Alloc> *data,
+                        int *prefetchEnd);
 
  public:
   //*** Sub-Functions of Find
@@ -240,12 +356,16 @@ class CFArrayType {
    * @param[in] currblock the index of the data block
    * @return int the size of the data block
    */
-  int GetBlockSize(int currblock) {
+  inline int GetBlockSize(int currblock) {
 #ifdef DEBUG
     if (currblock < 0 || currblock >= (flagNumber & 0x00FFFFFF)) {
+      std::cout << "now block size:" << (flagNumber & 0x00FFFFFF)
+                << ",\tcurrblock:" << currblock << std::endl;
+      throw std::out_of_range(
+          "CFArrayType::GetBlockSize: the currblock is invalid.");
       return 0;
     }
-#endif  // DEBUG
+#endif  // CHECK
     return perSize[currblock];
   }
 
@@ -258,7 +378,7 @@ class CFArrayType {
    * @param[in] key the given key value
    * @return int: the index of the data block
    */
-  int Search(const KeyType &key) const;
+  inline int Search(const KeyType &key) const;
 
   /**
    * @brief Search the data point of the given key value in the given data block
@@ -273,8 +393,8 @@ class CFArrayType {
    * @retval kMaxBlockCapacity: if we fail to find the corresponding data
    * point, return kMaxBlockCapacity
    */
-  int SearchDataBlock(const LeafSlots<KeyType, ValueType> &block,
-                      const KeyType &key, int currsize) const;
+  inline int SearchDataBlock(const LeafSlots<KeyType, ValueType> &block,
+                             const KeyType &key, int currsize) const;
 
  private:
   // *** Private functions for insert operations
@@ -428,6 +548,11 @@ class CFArrayType {
    */
   static constexpr int kMaxLeafCapacity = kMaxBlockCapacity * kMaxBlockNum;
 
+  /**
+   * @brief Compare two elements.
+   */
+  static constexpr Compare key_less_ = Compare();
+
  public:
   //*** Public Data Members of CF Array Leaf Node Objects
 
@@ -538,11 +663,14 @@ template <typename KeyType, typename ValueType, typename Compare,
 inline void CFArrayType<KeyType, ValueType, Compare, Alloc>::Init(
     const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
     int start_idx, DataArrayStructure<KeyType, ValueType, Alloc> *data) {
+  int size = prefetchIndex.size();
+  if (size == 0) {
+    return;
+  }
   if (start_idx < 0 || start_idx >= data->dataArray.size()) {
     throw std::out_of_range("CFArrayType::Init: the range is invalid.");
   }
 
-  int size = prefetchIndex.size();
   int neededBlockNum = CalNeededBlockNum(size);
   StoreData(dataset, prefetchIndex, false, neededBlockNum, start_idx, data, 0);
 }
@@ -736,35 +864,10 @@ template <typename KeyType, typename ValueType, typename Compare,
           typename Alloc>
 inline int CFArrayType<KeyType, ValueType, Compare, Alloc>::Search(
     const KeyType &key) const {
-  // int end_idx = (flagNumber & 0x00FFFFFF);
-  // int res = std::lower_bound(slotkeys, slotkeys + end_idx, key, slotkeys_cmp)
-  // -
-  //           slotkeys;
-  // res = std::min(end_idx - 1, res);
-  // return res;
-
-  // int end_idx = (flagNumber & 0x00FFFFFF) - 1;
-  // for (int i = 0; i < end_idx; i++) {
-  //   if (key < slotkeys[i]) {
-  //     return i;
-  //   }
-  // }
-  // return end_idx;
-
 #if defined(CATCH_PLATFORM_LINUX) || defined(CATCH_PLATFORM_WINDOWS)
-  int end = (flagNumber & 0x00FFFFFF) - 1;
-  if (end <= 0) {
-    return 0;
-  }
-  int start = 0, mid;
-  while (start < end) {
-    mid = (start + end) / 2;
-    if (slotkeys[mid] <= key)
-      start = mid + 1;
-    else
-      end = mid;
-  }
-  return start;
+  return std::lower_bound(slotkeys, slotkeys + (flagNumber & 0x00FFFFFF) - 1,
+                          key, key_lessequal) -
+         slotkeys;
 #elif defined(CATCH_PLATFORM_MAC)
   int end_idx = (flagNumber & 0x00FFFFFF) - 1;
   for (int i = 0; i < end_idx; i++) {
@@ -781,42 +884,9 @@ template <typename KeyType, typename ValueType, typename Compare,
 inline int CFArrayType<KeyType, ValueType, Compare, Alloc>::SearchDataBlock(
     const LeafSlots<KeyType, ValueType> &block, const KeyType &key,
     int currsize) const {
-  // int res = std::lower_bound(block.slots, block.slots + currsize, key,
-  // mycomp) -
-  //           block.slots;
-  // return res;
-
-  // int i = 0;
-  // const int half = currsize / 2;
-  // if (key <= block.slots[currsize / 2 - 1].first) {
-  //   for (; i < half; i++) {
-  //     if (key <= block.slots[i].first) {
-  //       break;
-  //     }
-  //   }
-  // } else {
-  //   for (i = half; i < currsize; i++) {
-  //     if (key <= block.slots[i].first) {
-  //       break;
-  //     }
-  //   }
-  // }
-  // return i;
-
 #if defined(CATCH_PLATFORM_LINUX) || defined(CATCH_PLATFORM_WINDOWS)
-  if (currsize == 0 || key > block.slots[currsize - 1].first) {
-    return currsize;
-  }
-  int end = currsize - 1;
-  int start = 0, mid;
-  while (start < end) {
-    mid = (start + end) / 2;
-    if (block.slots[mid].first < key)
-      start = mid + 1;
-    else
-      end = mid;
-  }
-  return start;
+  return std::lower_bound(block.slots, block.slots + currsize, key, data_less) -
+         block.slots;
 #elif defined(CATCH_PLATFORM_MAC)
   int i = 0;
   if (key <= block.slots[currsize / 2 - 1].first) {
@@ -943,9 +1013,9 @@ CFArrayType<KeyType, ValueType, Compare, Alloc>::InsertNextBlock(
     currslot = res.second;
     tmpBlockIdx++;
   } else {
-    // Case 2: the key value of the inserted data point is smaller than the last
-    // data point in the current data block, insert the last data point in the
-    // current data block into the next data block
+    // Case 2: the key value of the inserted data point is smaller than the
+    // last data point in the current data block, insert the last data point
+    // in the current data block into the next data block
     InsertDataBlock(data->dataArray[nowDataIdx].slots[kMaxBlockCapacity - 1],
                     *currBlockIdx + 1, &data->dataArray[nowDataIdx + 1]);
 
@@ -1180,8 +1250,8 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::StoreData(
     isPossible = CheckIsPrefetch(*data, prefetchIndex, neededBlockNum);
   }
   if (isInitMode && isPossible) {
-    // if the current status is init mode and these data points can be stored as
-    // prefetched, we then store them as the position in the prefetchIndex
+    // if the current status is init mode and these data points can be stored
+    // as prefetched, we then store them as the position in the prefetchIndex
     m_left = leftIdx;
 
     LeafSlots<KeyType, ValueType> tmpSlot;
@@ -1208,9 +1278,6 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::StoreData(
     bool isNextSuccess =
         StoreSubsequent(tmpDataset, prefetchIndex, neededBlockNum, &nextBlocks,
                         &nextActualNum, &nextMissNum);
-    for (int i = 0; i < kMaxPerSizeNum; i++) {
-      perSize[i] = 0;
-    }
 
     bool isPrev = true;
     if (isNextSuccess && isPreviousSuccess) {
@@ -1256,15 +1323,15 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::StoreData(
     // update the prefetchEnd
     *prefetchEnd = m_left + actualBlockNum - 1;
   } else {
-    // if the current status is not the init mode or these data points cannot be
-    // stored as prefetching, store them evenly in the data blocks
+    // if the current status is not the init mode or these data points cannot
+    // be stored as prefetching, store them evenly in the data blocks
     int nowBlockNum = flagNumber & 0x00FFFFFF;
     // allocate empty memory block for this node
     if (nowBlockNum == 0) {
       m_left = data->AllocateMemory(neededBlockNum);
     } else {
-      // if this node has been initialized before, we should release its memory
-      // before allocating the new empty memory blocks
+      // if this node has been initialized before, we should release its
+      // memory before allocating the new empty memory blocks
       if (nowBlockNum != neededBlockNum) {
         if (m_left != -1) {
           data->ReleaseMemory(m_left, nowBlockNum);

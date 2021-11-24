@@ -58,7 +58,7 @@ void InitTestSet(const DataVecType &findQueryset,
  * @param[in] time
  */
 void PrintAvgTime(double time) {
-  std::cout << "average time:" << time * kSecondToNanosecond / kTestSize
+  std::cout << "average time, " << time * kSecondToNanosecond / kTestSize
             << std::endl;
   outRes << time * kSecondToNanosecond / kTestSize << ",";
 }

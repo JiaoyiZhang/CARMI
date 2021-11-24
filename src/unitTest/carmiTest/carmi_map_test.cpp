@@ -29,20 +29,22 @@ DataVecType initDataset(kInitSize);
 DataVecType insertDataset(kInsertSize);
 DataVecType testInsertQuery(kInsertSize);
 CarmiType carmi;
+std::default_random_engine engine(time(0));
 
 TEST(TestCarmimapConstructor, CARMIMapConstructor) {
+  std::uniform_real_distribution<KeyType> dis(0, kTestMaxValue);
   for (int i = 0; i < kInitSize; i++) {
-    KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+    KeyType tmpKey = dis(engine);
     initDataset[i] = {tmpKey, tmpKey * 10};
   }
   std::sort(initDataset.begin(), initDataset.end());
   for (int i = 0; i < kInsertSize; i++) {
-    KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+    KeyType tmpKey = dis(engine);
     insertDataset[i] = {tmpKey, tmpKey * 10};
   }
   std::sort(insertDataset.begin(), insertDataset.end());
   for (int i = 0; i < kInsertSize; i++) {
-    KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+    KeyType tmpKey = dis(engine);
     testInsertQuery[i] = {tmpKey, tmpKey * 10};
   }
   ASSERT_TRUE(carmi.empty());

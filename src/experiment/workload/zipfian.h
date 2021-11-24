@@ -15,6 +15,7 @@
 #include <stdlib.h>
 
 #include <iostream>
+#include <random>
 class Zipfian {
  public:
   double *pf;
@@ -33,9 +34,10 @@ class Zipfian {
   }
 
   int GenerateNextIndex() {
-    srand(time(0));
     int index = 0;
-    double data = static_cast<double>(rand()) / RAND_MAX;  // 0-1
+    std::default_random_engine e(time(0));
+    std::uniform_real_distribution<double> dis(0, 1);
+    double data = dis(e);  // 0-1
     while (data > pf[index]) index++;
     return index;
   }

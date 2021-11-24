@@ -44,9 +44,10 @@ void mainExperiment() {
   mainMap(kWritePartial, length);
 
   // range scan
-  srand(time(0));
+  std::default_random_engine e(time(0));
+  std::uniform_int_distribution<int> dis(0, 100);
   for (int i = 0; i < kDatasetSize; i++) {
-    length.push_back(std::min(i + rand() % 100 + 1, kDatasetSize) - i);
+    length.push_back(std::min(dis(e), kDatasetSize) - i);
   }
   mainSynthetic(kRangeScan, length);
   mainYCSB(kRangeScan, length);
@@ -93,13 +94,13 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
     // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
     // testInsert);
 
-    std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
-              << std::endl;
-    expData.GenerateDataset(&initData, &insertData, &testInsert);
-    CoreCARMI(false, initRatio, kRate, length, initData, insertData,
-              testInsert);
-    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
-    // testInsert);
+    // std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
+    //           << std::endl;
+    // expData.GenerateDataset(&initData, &insertData, &testInsert);
+    // CoreCARMI(false, initRatio, kRate, length, initData, insertData,
+    //           testInsert);
+    // // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
+    // // testInsert);
 
     std::cout << "+++++++++++ normal dataset ++++++++++++++++++++++++++"
               << std::endl;

@@ -242,6 +242,107 @@ class CARMIMap {
     Init(initDataset, insertDataset, lambda);
   }
 
+  /**
+   * @brief Construct a new CARMIMap object with the range [first, last)
+   * of initDataset. The range does not need to be sorted. This constructor has
+   * no historical insert query by default, indicating that it is currently a
+   * read-only workload.
+   *
+   * (1) The constructor uses the two input iterators of first and last to
+   * construct the init dataset to train the model in each node and construct
+   * the optimal index structure on it. These data points will be actually
+   * stored in the part of the index tree responsible for managing data points.
+   * In addition, these data points will also be regarded as being accessed once
+   * in historical find queries by default, providing a basis for the
+   * calculation of the cost model.
+   *
+   *
+   * @tparam InputIterator
+   * @param[in] first the first input iterator of initDataset, used to
+   * construct the init dataset, which will be indexed. The initDataset is also
+   * help for the calculation of the cost model.
+   * @param[in] last the last input iterator of initDataset, used to
+   * construct the init dataset, which will be indexed.
+   * @param[in] comp A binary predicate that takes two element keys as arguments
+   * and returns a bool.
+   * @param[in] alloc The allocator object used to define the storage allocation
+   * model.
+   */
+  template <class InputIterator>
+  CARMIMap(const InputIterator &first, const InputIterator &last,
+           const Compare &comp = Compare(), const Alloc &alloc = Alloc()) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
+    // use the given two iterators to get the init dataset in the form of vector
+    DataVectorType initDataset;
+    PreprocessInput<InputIterator>(first, last, &initDataset);
+    DataVectorType insertDataset;
+    float datasize = sizeof(DataType) *
+                     (initDataset.size() + insertDataset.size()) / 1024.0 /
+                     1024.0;  // MB
+    float leafRate = 1 + 64.0 / (carmi_params::kMaxLeafNodeSize * 0.75);
+    float lambda = 100.0 / leafRate / datasize;
+    Init(initDataset, insertDataset, lambda);
+  }
+
+  /**
+   * @brief Construct a new CARMIMap object with the range [initFirst, initLast)
+   * of initDataset and the range [insertFirst, insertLast] of insertDataset.
+   * The range does not need to be sorted.
+   *
+   * (1) The constructor uses the two input iterator of initFirst and initLast
+   * to construct the init dataset to train the model in each node and construct
+   * the optimal index structure. These data points will be actually stored in
+   * the part of the index tree responsible for managing data points. In
+   * addition, these data points will also be regarded as being accessed once in
+   * historical find queries by default, providing a basis for the calculation
+   * of the cost model.
+   *
+   * (2) Similarly, CARMI uses the two input iterator of insertFirst and
+   * insertLast to construct the insert dataset. These data points will be
+   * regarded as being inserted once in historical insert queries and used to
+   * calculate the cost model.
+   *
+   * @tparam InputIterator the iterator type of input
+   * @param[in] initFirst the first input iterator of initDataset, used to
+   * construct the init dataset, which will be indexed. The initDataset is also
+   * help for the calculation of the cost model.
+   * @param[in] initLast the last input iterator of initDataset, used to
+   * construct the init dataset, which will be indexed.
+   * @param[in] insertFirst the first input iterator of insertDataset, used to
+   * construct the insert dataset. The insert dataset is used to calculate the
+   * average insert time cost in the historical insert queries when calculating
+   * the total cost model.
+   * @param[in] insertLast the last input iterator of insertDataset, used to
+   * construct the insert dataset.
+   * @param[in] comp A binary predicate that takes two element keys as arguments
+   * and returns a bool.
+   * @param[in] alloc The allocator object used to define the storage allocation
+   * model.
+   */
+  template <typename InputIterator>
+  CARMIMap(const InputIterator &initFirst, const InputIterator &initLast,
+           const InputIterator &insertFirst, const InputIterator &insertLast,
+           const Compare &comp = Compare(), const Alloc &alloc = Alloc()) {
+    carmi_tree.key_less_ = comp;
+    carmi_tree.allocator_ = alloc;
+    // use the given two iterators to get the init dataset in the form of vector
+    DataVectorType initDataset;
+    PreprocessInput<InputIterator>(initFirst, initLast, &initDataset);
+    // use the given two iterators to get the insert dataset in the form of
+    // vector
+    DataVectorType insertDataset;
+    PreprocessInput<InputIterator>(insertFirst, insertLast, &insertDataset);
+    // construct the findQuery/insertQuery using the two datasets and call the
+    // construction function of carmi_tree to obtain the optimal index structure
+    float datasize = sizeof(DataType) *
+                     (initDataset.size() + insertDataset.size()) / 1024.0 /
+                     1024.0;  // MB
+    float leafRate = 1 + 64.0 / (carmi_params::kMaxLeafNodeSize * 0.75);
+    float lambda = 100.0 / leafRate / datasize;
+    Init(initDataset, insertDataset, lambda);
+  }
+
  public:
   /// *** Fast Copy: Assign Operator and Copy Constructors
 
@@ -332,18 +433,9 @@ class CARMIMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid
-      if (currnode == NULL || tree == NULL || currblock < 0 || currslot < 0 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot >= currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::iterator::key: input does not match any key, this "
-            "iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, get the index of the data block
-      // and return the key value in the data block
-      int left = currnode->cfArray.m_left;
-      return tree->carmi_tree.data.dataArray[left + currblock]
+      // return the key value in the data block
+      return tree->carmi_tree.data
+          .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot]
           .first;
     }
@@ -351,21 +443,12 @@ class CARMIMap {
     /**
      * @brief Get the data value of this iterator.
      *
-     * @return const ValueType& the data value
+     * @return ValueType& the data value
      */
-    inline const ValueType &data() const {
-      // Case 1: the current iterator is invalid
-      if (currnode == NULL || tree == NULL || currblock < 0 || currslot < 0 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot >= currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::iterator::data: input does not match any key, this "
-            "iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, get the index of the data block
-      // and return the data value in the data block
-      int left = currnode->cfArray.m_left;
-      return tree->carmi_tree.data.dataArray[left + currblock]
+    inline ValueType &data() const {
+      // return the data value in the data block
+      return tree->carmi_tree.data
+          .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot]
           .second;
     }
@@ -376,13 +459,6 @@ class CARMIMap {
      * @return DataType& the reference of this data point
      */
     inline DataType &operator*() const {
-      if (currnode == NULL || tree == NULL || currblock < 0 || currslot < 0 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot >= currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::iterator::operator*: input does not match any key, this "
-            "iterator is invalid.");
-      }
       return tree->carmi_tree.data
           .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot];
@@ -394,13 +470,6 @@ class CARMIMap {
      * @return DataType* the pointer to this data point
      */
     inline DataType *operator->() const {
-      if (currnode == NULL || tree == NULL || currblock < 0 || currslot < 0 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot >= currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::iterator::operator->: input does not match any key, "
-            "this iterator is invalid.");
-      }
       return &(
           tree->carmi_tree.data.dataArray[currnode->cfArray.m_left + currblock]
               .slots[currslot]);
@@ -686,8 +755,8 @@ class CARMIMap {
       return false;
     }
 
-   public:
-    //*** Public Data Members of Iterator Objects
+   private:
+    //*** Private Data Members of Iterator Objects
 
     /**
      * @brief The pointer of the carmi tree.
@@ -708,6 +777,11 @@ class CARMIMap {
      * @brief The index of the data point in the data block.
      */
     int currslot;
+
+    friend class const_iterator;
+    friend class reverse_iterator;
+    friend class const_reverse_iterator;
+    friend class CARMIMap;
   };
 
   /**
@@ -721,7 +795,8 @@ class CARMIMap {
      * @brief Construct an empty new const iterator object with the default
      * values.
      */
-    inline const_iterator() {}
+    inline const_iterator()
+        : tree(NULL), currnode(NULL), currblock(0), currslot(0) {}
 
     /**
      * @brief Construct a new const iterator object and set the pointer to the
@@ -785,18 +860,9 @@ class CARMIMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid
-      if (currnode == NULL || tree == NULL || currblock < 0 || currslot < 0 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot >= currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::const_iterator::key: input does not match any key, this "
-            "iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, get the index of the data block
-      // and return the key value in the data block
-      int left = currnode->cfArray.m_left;
-      return tree->carmi_tree.data.dataArray[left + currblock]
+      // return the key value in the data block
+      return tree->carmi_tree.data
+          .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot]
           .first;
     }
@@ -807,18 +873,9 @@ class CARMIMap {
      * @return const ValueType& the data value
      */
     inline const ValueType &data() const {
-      // Case 1: the current iterator is invalid
-      if (currnode == NULL || tree == NULL || currblock < 0 || currslot < 0 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot >= currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::const_iterator::data: input does not match any key, "
-            "this iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, get the index of the data block
-      // and return the data value in the data block
-      int left = currnode->cfArray.m_left;
-      return tree->carmi_tree.data.dataArray[left + currblock]
+      // return the data value in the data block
+      return tree->carmi_tree.data
+          .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot]
           .second;
     }
@@ -829,13 +886,6 @@ class CARMIMap {
      * @return DataType& the reference of this data point
      */
     inline DataType &operator*() const {
-      if (currnode == NULL || tree == NULL || currblock < 0 || currslot < 0 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot >= currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::const_iterator::operator*: input does not match any "
-            "key, this iterator is invalid.");
-      }
       return tree->carmi_tree.data
           .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot];
@@ -847,13 +897,6 @@ class CARMIMap {
      * @return DataType* the pointer to this data point
      */
     inline DataType *operator->() const {
-      if (currnode == NULL || tree == NULL || currblock < 0 || currslot < 0 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot >= currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::const_iterator::operator->: input does not match any "
-            "key, this iterator is invalid.");
-      }
       return &(
           tree->carmi_tree.data.dataArray[currnode->cfArray.m_left + currblock]
               .slots[currslot]);
@@ -1139,8 +1182,8 @@ class CARMIMap {
       return false;
     }
 
-   public:
-    //*** Public Data Members of Iterator Objects
+   private:
+    //*** Private Data Members of Iterator Objects
 
     /**
      * @brief the pointer of the carmi tree
@@ -1161,6 +1204,11 @@ class CARMIMap {
      * @brief the index of the data point in the data block
      */
     int currslot;
+
+    friend class iterator;
+    friend class reverse_iterator;
+    friend class const_reverse_iterator;
+    friend class CARMIMap;
   };
 
   /**
@@ -1174,7 +1222,8 @@ class CARMIMap {
      * @brief Construct an empty new reverse iterator object with the default
      * values.
      */
-    inline reverse_iterator() {}
+    inline reverse_iterator()
+        : tree(NULL), currnode(NULL), currblock(0), currslot(0) {}
 
     /**
      * @brief Construct a new reverse iterator object and set the pointer to the
@@ -1210,34 +1259,14 @@ class CARMIMap {
           currslot(it.currslot) {}
 
     /**
-     * @brief Construct a new reverse iterator object from a reverse iterator.
-     *
-     * @param[in] it the given iterator
-     */
-    explicit inline reverse_iterator(const reverse_iterator &it)
-        : tree(it.tree),
-          currnode(it.currnode),
-          currblock(it.currblock),
-          currslot(it.currslot) {}
-
-    /**
      * @brief Get the key value of this iterator.
      *
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid
-      if (currnode == NULL || tree == NULL || currblock < 1 || currslot < 1 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot > currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::reverse_iterator::key: input does not match any key, "
-            "this iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, get the index of the data block
-      // and return the key value in the data block
-      int left = currnode->cfArray.m_left;
-      return tree->carmi_tree.data.dataArray[left + currblock]
+      // return the key value in the data block
+      return tree->carmi_tree.data
+          .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot - 1]
           .first;
     }
@@ -1248,18 +1277,9 @@ class CARMIMap {
      * @return const ValueType& the data value
      */
     inline const ValueType &data() const {
-      // Case 1: the current iterator is invalid
-      if (currnode == NULL || tree == NULL || currblock < 1 || currslot < 1 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot > currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::reverse_iterator::data: input does not match any key, "
-            "this iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, get the index of the data block
-      // and return the data value in the data block
-      int left = currnode->cfArray.m_left;
-      return tree->carmi_tree.data.dataArray[left + currblock]
+      // return the data value in the data block
+      return tree->carmi_tree.data
+          .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot - 1]
           .second;
     }
@@ -1270,13 +1290,6 @@ class CARMIMap {
      * @return DataType& the reference of this data point
      */
     inline DataType &operator*() const {
-      if (currnode == NULL || tree == NULL || currblock < 1 || currslot < 1 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot > currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::reverse_iterator::operator*: input does not match any "
-            "key, this iterator is invalid.");
-      }
       return tree->carmi_tree.data
           .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot - 1];
@@ -1288,13 +1301,6 @@ class CARMIMap {
      * @return DataType* the pointer to this data point
      */
     inline DataType *operator->() const {
-      if (currnode == NULL || tree == NULL || currblock < 1 || currslot < 1 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot > currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::reverse_iterator::operator->: input does not match any "
-            "key, this iterator is invalid.");
-      }
       return &(
           tree->carmi_tree.data.dataArray[currnode->cfArray.m_left + currblock]
               .slots[currslot - 1]);
@@ -1322,6 +1328,22 @@ class CARMIMap {
     inline bool operator!=(const reverse_iterator &x) const {
       return (x.currnode != currnode || x.tree != tree) ||
              (x.currslot != currslot || x.currblock != currblock);
+    }
+
+    /**
+     * @brief Assign this iterator with another iterator
+     *
+     * @param other the given iterator
+     * @return reverse_iterator&
+     */
+    reverse_iterator &operator=(const reverse_iterator &other) {
+      if (this != &other) {
+        currnode = other.currnode;
+        tree = other.tree;
+        currslot = other.currslot;
+        currblock = other.currblock;
+      }
+      return *this;
     }
 
     /**
@@ -1360,7 +1382,8 @@ class CARMIMap {
      * @return reverse_iterator& the next iterator
      */
     inline reverse_iterator operator++(int) {
-      reverse_iterator tmp = *this;  // copy ourselves
+      reverse_iterator tmp =
+          static_cast<reverse_iterator>(*this);  // copy ourselves
       // Case 1: the next data point is stored in the same data block,
       // return it
       bool isSuccess = advanceSlot();
@@ -1580,8 +1603,8 @@ class CARMIMap {
       return false;
     }
 
-   public:
-    //*** Public Data Members of Iterator Objects
+   private:
+    //*** Private Data Members of Iterator Objects
 
     /**
      * @brief the pointer of the carmi tree
@@ -1602,6 +1625,11 @@ class CARMIMap {
      * @brief the index of the data point in the data block
      */
     int currslot;
+
+    friend class iterator;
+    friend class const_iterator;
+    friend class const_reverse_iterator;
+    friend class CARMIMap;
   };
 
   /**
@@ -1615,7 +1643,8 @@ class CARMIMap {
      * @brief Construct an empty new const reverse iterator object with the
      * default values.
      */
-    inline const_reverse_iterator() {}
+    inline const_reverse_iterator()
+        : tree(NULL), currnode(NULL), currblock(0), currslot(0) {}
 
     /**
      * @brief Construct a new const reverse iterator object and set the pointer
@@ -1678,18 +1707,9 @@ class CARMIMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      // Case 1: the current iterator is invalid
-      if (currnode == NULL || tree == NULL || currblock < 1 || currslot < 1 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot > currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::const_reverse_iterator::key: input does not match any "
-            "key, this iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, get the index of the data block
-      // and return the key value in the data block
-      int left = currnode->cfArray.m_left;
-      return tree->carmi_tree.data.dataArray[left + currblock]
+      // return the key value in the data block
+      return tree->carmi_tree.data
+          .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot - 1]
           .first;
     }
@@ -1700,18 +1720,9 @@ class CARMIMap {
      * @return const ValueType& the data value
      */
     inline const ValueType &data() const {
-      // Case 1: the current iterator is invalid
-      if (currnode == NULL || tree == NULL || currblock < 1 || currslot < 1 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot > currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::const_reverse_iterator::data: input does not match any "
-            "key, this iterator is invalid.");
-      }
-      // Case 2: the current iterator is valid, get the index of the data block
-      // and return the data value in the data block
-      int left = currnode->cfArray.m_left;
-      return tree->carmi_tree.data.dataArray[left + currblock]
+      // return the data value in the data block
+      return tree->carmi_tree.data
+          .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot - 1]
           .second;
     }
@@ -1722,13 +1733,6 @@ class CARMIMap {
      * @return DataType& the reference of this data point
      */
     inline DataType &operator*() const {
-      if (currnode == NULL || tree == NULL || currblock < 1 || currslot < 1 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot > currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::const_reverse_iterator::operator*: input does not match "
-            "any key, this iterator is invalid.");
-      }
       return tree->carmi_tree.data
           .dataArray[currnode->cfArray.m_left + currblock]
           .slots[currslot - 1];
@@ -1740,13 +1744,6 @@ class CARMIMap {
      * @return DataType* the pointer to this data point
      */
     inline DataType *operator->() const {
-      if (currnode == NULL || tree == NULL || currblock < 1 || currslot < 1 ||
-          currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-          currslot > currnode->cfArray.GetBlockSize(currblock)) {
-        throw std::out_of_range(
-            "CARMIMap::const_reverse_iterator::operator->: input does not "
-            "match any key, this iterator is invalid.");
-      }
       return &(
           tree->carmi_tree.data.dataArray[currnode->cfArray.m_left + currblock]
               .slots[currslot - 1]);
@@ -2032,8 +2029,8 @@ class CARMIMap {
       return false;
     }
 
-   public:
-    //*** Public Data Members of Iterator Objects
+   private:
+    //*** Private Data Members of Iterator Objects
 
     /**
      * @brief the pointer of the carmi tree
@@ -2054,6 +2051,11 @@ class CARMIMap {
      * @brief the index of the data point in the data block
      */
     int currslot;
+
+    friend class iterator;
+    friend class const_iterator;
+    friend class reverse_iterator;
+    friend class CARMIMap;
   };
 
  private:
@@ -2134,7 +2136,7 @@ class CARMIMap {
           "CARMIMap::begin: the index has not been constructed.");
     }
     it.currnode = &carmi_tree.node.nodeArray[carmi_tree.firstLeaf];
-    while (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock)) {
+    while (it.currnode->cfArray.GetBlockSize(it.currblock) == 0) {
       it++;
     }
     return it;
@@ -2154,14 +2156,15 @@ class CARMIMap {
    * @return const_iterator
    */
   const_iterator cbegin() const {
-    const_iterator it(this);
+    const_iterator it(const_cast<CARMIMap<KeyType, ValueType> *>(this));
     if (it.tree == NULL || carmi_tree.firstLeaf < 0 ||
         carmi_tree.firstLeaf >= carmi_tree.node.nodeArray.size()) {
       throw std::invalid_argument(
           "CARMIMap::cbegin: the index has not been constructed.");
     }
-    it.currnode = &carmi_tree.node.nodeArray[carmi_tree.firstLeaf];
-    while (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock)) {
+    it.currnode = const_cast<BaseNode<KeyType, ValueType, Compare, Alloc> *>(
+        &carmi_tree.node.nodeArray[carmi_tree.firstLeaf]);
+    while (it.currnode->cfArray.GetBlockSize(it.currblock) == 0) {
       it++;
     }
     return it;
@@ -2172,7 +2175,9 @@ class CARMIMap {
    *
    * @return const_iterator
    */
-  const_iterator cend() const { return const_iterator(this); }
+  const_iterator cend() const {
+    return const_iterator(const_cast<CARMIMap<KeyType, ValueType> *>(this));
+  }
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
@@ -2190,7 +2195,7 @@ class CARMIMap {
     it.currnode = &carmi_tree.node.nodeArray[carmi_tree.lastLeaf];
     it.currblock = (it.currnode->cfArray.flagNumber & 0x00FFFFFF) - 1;
     it.currslot = it.currnode->cfArray.perSize[it.currblock];
-    while (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock)) {
+    while (it.currnode->cfArray.GetBlockSize(it.currblock) == 0) {
       it++;
     }
     return it;
@@ -2219,7 +2224,7 @@ class CARMIMap {
     it.currnode = &carmi_tree.node.nodeArray[carmi_tree.lastLeaf];
     it.currblock = (it.currnode->cfArray.flagNumber & 0x00FFFFFF) - 1;
     it.currslot = it.currnode->cfArray.perSize[it.currblock];
-    while (it.currslot > it.currnode->cfArray.GetBlockSize(it.currblock)) {
+    while (it.currnode->cfArray.GetBlockSize(it.currblock) == 0) {
       it++;
     }
     return it;
@@ -2310,12 +2315,13 @@ class CARMIMap {
    * @return iterator the iterator of the data point
    */
   iterator find(const KeyType &key) {
-    iterator it(this);
-    it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
-    if (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock)) {
+    int currblock, currslot;
+    BaseNode<KeyType, ValueType, Compare, Alloc> *node =
+        carmi_tree.Find(key, &currblock, &currslot);
+    if (currslot >= node->cfArray.GetBlockSize(currblock)) {
       return end();
     } else {
-      return it;
+      return iterator(this, node, currblock, currslot);
     }
   }
 
@@ -2326,12 +2332,13 @@ class CARMIMap {
    * @return const_iterator the iterator of the data point
    */
   const_iterator find(const KeyType &key) const {
-    const_iterator it(this);
-    it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
-    if (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock)) {
+    int currblock, currslot;
+    BaseNode<KeyType, ValueType, Compare, Alloc> *node =
+        carmi_tree.Find(key, &currblock, &currslot);
+    if (currslot >= node->cfArray.GetBlockSize(currblock)) {
       return cend();
     } else {
-      return it;
+      return const_iterator(this, node, currblock, currslot);
     }
   }
 
@@ -2438,12 +2445,7 @@ class CARMIMap {
    * index.
    */
   void erase(iterator it) {
-    if (it == end() || it.currblock < 0 || it.currslot < 0 ||
-        it.currblock >= (it.currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-        it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock)) {
-      return;
-    }
-    carmi_tree.DeleteSingleData(it.first(), *(it.currnode), it.currblock,
+    carmi_tree.DeleteSingleData(it.key(), *(it.currnode), it.currblock,
                                 it.currslot);
   }
 
@@ -2466,12 +2468,6 @@ class CARMIMap {
    * @param[in] last the last iterator
    */
   void erase(iterator first, iterator last) {
-    if (first == end() || first.currblock < 0 || first.currslot < 0 ||
-        first.currblock >= (first.currnode->cfArray.flagNumber & 0x00FFFFFF) ||
-        first.currslot >=
-            first.currnode->cfArray.GetBlockSize(first.currblock)) {
-      return;
-    }
     for (auto it = first; it != last; ++it) {
       erase(*it);
     }
@@ -2503,13 +2499,8 @@ class CARMIMap {
    * @return ValueType& the value of it
    */
   ValueType &operator[](const KeyType &key) {
-    iterator it(this);
-    auto res = carmi_tree.Insert({key, KeyType()}, &it.currblock, &it.currslot);
-    it.currnode = res.first;
-    int left = it.currnode->cfArray.m_left;
-    return it.tree->carmi_tree.data.dataArray[left + it.currblock]
-        .slots[it.currslot]
-        .second;
+    iterator it = insert({key, KeyType()}).first;
+    return it.data();
   }
 
   /**
@@ -2520,14 +2511,11 @@ class CARMIMap {
    * @return ValueType& the value of it
    */
   ValueType &at(const KeyType &key) {
-    iterator it = find(key);
+    iterator it = static_cast<iterator>(find(key));
     if (it == end()) {
       throw std::out_of_range("CARMIMap::at: input does not match any key.");
     } else {
-      int left = it.currnode->cfArray.m_left;
-      return it.tree->carmi_tree.data.dataArray[left + it.currblock]
-          .slots[it.currslot]
-          .second;
+      return it.data();
     }
   }
 
@@ -2543,10 +2531,7 @@ class CARMIMap {
     if (it == cend()) {
       throw std::out_of_range("CARMIMap::at: input does not match any key.");
     } else {
-      int left = it.currnode->cfArray.m_left;
-      return it.tree->carmi_tree.data.dataArray[left + it.currblock]
-          .slots[it.currslot]
-          .second;
+      return it.data();
     }
   }
 

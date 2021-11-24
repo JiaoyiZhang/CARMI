@@ -57,20 +57,36 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::ConstructSubTree(
     // if this node is the cf array leaf node, prepare for the prefetch function
     if ((it->second.cfArray.flagNumber >> 24) == ARRAY_LEAF_NODE &&
         range.initRange.left != -1) {
-      int end = range.initRange.left + range.initRange.size;
       prefetchNum += range.initRange.size;
+      int totalSize = range.initRange.size + range.insertRange.size;
       int neededBlockNum =
           CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
-              range.initRange.size + range.insertRange.size);
-      int avg =
-          std::max(1.0, ceil((range.initRange.size + range.insertRange.size) *
-                             1.0 / neededBlockNum));
+              totalSize);
+      int avg = std::max(1.0, ceil((totalSize)*1.0 / neededBlockNum));
+
+      // use the init data points and the future inserted data points to train
+      // the leaf node, but we only store the init data points into the leaf
+      // node
+      QueryType initInsertData(totalSize);
+      int cnt = 0;
+      int end = range.initRange.left + range.initRange.size;
+      for (int j = range.initRange.left; j < end; j++) {
+        initInsertData[cnt++] = {initDataset[j].first, 1};
+      }
+      end = range.insertRange.left + range.insertRange.size;
+      for (int j = range.insertRange.left; j < end; j++) {
+        initInsertData[cnt++] = {insertQuery[j], 0};
+      }
+      std::sort(initInsertData.begin(), initInsertData.end());
+
       // construct the prefetch dataset: {the unrounded leaf node index, the
       // index of the data block}
-      for (int j = range.initRange.left, k = 1; j < end; j++, k++) {
-        double preIdx = root.model.Predict(initDataset[j].first);
-        prefetchData.push_back({preIdx, nowBlockIdx});
-        if (k == avg || j == end - 1) {
+      for (int j = 0, k = 1; j < totalSize; j++, k++) {
+        if (initInsertData[j].second == 1) {
+          double preIdx = root.model.Predict(initInsertData[j].first);
+          prefetchData.push_back({preIdx, nowBlockIdx});
+        }
+        if (k == avg || j == totalSize - 1) {
           k = 0;
           nowBlockIdx++;
         }
@@ -97,8 +113,14 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::ConstructSubTree(
   }
 
   if (!isPrimary) {
-    // calculate the cost of all prefetched leaf nodes in different number of
-    // data blocks
+// calculate the cost of all prefetched leaf nodes in different number of
+// data blocks
+#ifdef DEBUG
+    std::cout << "Total size: " << initDataset.size()
+              << ",\tcan be prefetched:" << prefetchNum
+              << ",\trate:" << prefetchNum * 1.0 / initDataset.size()
+              << std::endl;
+#endif  // DEBUG
     for (int i = 0; i < prefetchNode.size(); i++) {
       std::vector<double> cost = CalculateCFArrayCost(
           prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size,
@@ -174,7 +196,6 @@ template <typename KeyType, typename ValueType, typename Compare,
 inline void CARMI<KeyType, ValueType, Compare, Alloc>::Construction() {
   // choose the optimal setting of the root node
   RootStruct res = ChooseRoot();
-  // RootStruct res = {0, 904349};
   // construct and store the root node, obtain the range of each sub-dataset
   SubDataset subDataset = StoreRoot(res);
 

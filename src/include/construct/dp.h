@@ -54,7 +54,7 @@ NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DP(const DataRange &range) {
     return nodeCost;
   }
 
-  double minRatio = 0.9;
+  double minRatio = 0.95;
   // record the maximum capacity of the leaf node
   int maxStoredNum =
       CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxLeafCapacity;

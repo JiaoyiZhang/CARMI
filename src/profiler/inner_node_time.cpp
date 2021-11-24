@@ -41,8 +41,7 @@ double GetNodePredictTime() {
     keys[i] = i;
   }
 
-  unsigned seed = std::clock();
-  std::default_random_engine engine(seed);
+  std::default_random_engine engine(std::clock());
   shuffle(idx.begin(), idx.end(), engine);
   shuffle(keys.begin(), keys.end(), engine);
 
@@ -51,19 +50,21 @@ double GetNodePredictTime() {
   double res;
   std::clock_t s, e;
   double tmp, tmp1 = 0;
-  srand(time(0));
+
+  std::uniform_int_distribution<int> dis_idx(0, end);
+  std::uniform_int_distribution<int> dis_key(0, kSize);
   s = std::clock();
   for (int i = 0; i < end; i++) {
-    tmpIdx = idx[rand() % end];
-    key = keys[rand() % kSize];
+    tmpIdx = idx[dis_idx(engine)];
+    key = keys[dis_key(engine)];
     res = node[tmpIdx].Predict(key);
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
   s = std::clock();
   for (int i = 0; i < end; i++) {
-    tmpIdx = idx[rand() % end];
-    key = keys[rand() % kSize];
+    tmpIdx = idx[dis_idx(engine)];
+    key = keys[dis_key(engine)];
     res = node[tmpIdx].flagNumber + node[tmpIdx].childLeft;
   }
   e = std::clock();

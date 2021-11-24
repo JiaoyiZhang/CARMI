@@ -9,14 +9,17 @@
  *
  */
 
+#include <random>
+
 #include "../../include/nodes/leafNode/cfarray_type.h"
 #include "gtest/gtest.h"
 
 const int kTestMaxValue = 10000;
-unsigned int seed = time(NULL);
 typedef double KeyType;
 typedef double ValueType;
 typedef CFArrayType<KeyType, ValueType> CFType;
+std::default_random_engine engine(time(0));
+std::uniform_real_distribution<KeyType> dis(0, kTestMaxValue);
 
 TEST(TestCalNeededBlockNum, CalNeededBlockNum) {
   int CFSize = sizeof(CFType);
@@ -35,7 +38,7 @@ TEST(TestSearchDataBlock, CheckSearchBlockRes) {
     LeafSlots<KeyType, ValueType> currblock;
     CFType tmpCFNode;
     for (int j = 0; j < i; j++) {
-      KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+      KeyType tmpKey = dis(engine);
       testTrainData[j] = {tmpKey, tmpKey * 10};
     }
     std::sort(testTrainData.begin(), testTrainData.end());
@@ -44,7 +47,8 @@ TEST(TestSearchDataBlock, CheckSearchBlockRes) {
     }
     for (int j = 0; j < i; j++) {
       int res = tmpCFNode.SearchDataBlock(currblock, testTrainData[j].first, i);
-      ASSERT_EQ(testTrainData[res].first, testTrainData[j].first);
+      EXPECT_EQ(testTrainData[res].first, testTrainData[j].first)
+          << "j:" << j << ",\tres:" << res << ",\ti:" << i << std::endl;
     }
   }
 }
@@ -59,7 +63,7 @@ TEST(TestNormalStoreData, CheckStoreData) {
       ASSERT_EQ(static_cast<int>(tmpCFNode.perSize[t]), 0);
     }
     for (int j = 0; j < i; j++) {
-      KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+      KeyType tmpKey = dis(engine);
       testTrainData[j] = {tmpKey, tmpKey * 10};
     }
     std::sort(testTrainData.begin(), testTrainData.end());
@@ -93,7 +97,7 @@ TEST(TestFind, CFArrayFindData) {
     DataArrayStructure<KeyType, ValueType> data(maxBlockNum, i);
     CFType tmpCFNode;
     for (int j = 0; j < i; j++) {
-      KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+      KeyType tmpKey = dis(engine);
       testTrainData[j] = {tmpKey, tmpKey * 10};
     }
     std::sort(testTrainData.begin(), testTrainData.end());
@@ -107,11 +111,8 @@ TEST(TestFind, CFArrayFindData) {
       int currslot = tmpCFNode.Find(data, testTrainData[j].first, &currblock);
       KeyType res =
           data.dataArray[tmpCFNode.m_left + currblock].slots[currslot].first;
-      if (res != testTrainData[j].first) {
-        std::cout << res << std::endl;
-      int currslot = tmpCFNode.Find(data, testTrainData[j].first, &currblock);
-      }
-      ASSERT_EQ(res, testTrainData[j].first);
+      ASSERT_EQ(res, testTrainData[j].first)
+          << "j:" << j << ",\tres:" << res << ",\ti:" << i;
     }
   }
 }
@@ -123,7 +124,7 @@ TEST(TestInsert, InsertData) {
     DataArrayStructure<KeyType, ValueType> data(maxBlockNum, i);
     CFType tmpCFNode;
     for (int j = 0; j < i; j++) {
-      KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+      KeyType tmpKey = dis(engine);
       testTrainData[j] = {tmpKey, tmpKey * 10};
     }
     std::sort(testTrainData.begin(), testTrainData.end());
@@ -131,18 +132,15 @@ TEST(TestInsert, InsertData) {
     int tmpEnd = -1;
     tmpCFNode.StoreData(testTrainData, std::vector<int>(i), false, needBlockNum,
                         0, &data, &tmpEnd);
-    std::pair<KeyType, ValueType> datapoint = {rand_r(&seed) % kTestMaxValue,
-                                               rand_r(&seed) % kTestMaxValue};
+    KeyType tmpKey = dis(engine);
+    std::pair<KeyType, ValueType> datapoint = {tmpKey, tmpKey};
     int currblock = 0, currslot = 0;
     auto isSuccess = tmpCFNode.Insert(datapoint, &currblock, &currslot, &data);
     if (isSuccess) {
       int m_left = tmpCFNode.m_left;
       int blockNum = tmpCFNode.flagNumber & 0x00FFFFFF;
       int nowDataNum = CFType::GetDataNum(data, m_left, m_left + blockNum);
-      if (i + 1 != nowDataNum) {
-        std::cout << i + 1 << ",\tnow:" << nowDataNum << std::endl;
-        nowDataNum = CFType::GetDataNum(data, m_left, m_left + blockNum);
-      }
+
       ASSERT_EQ(i + 1, nowDataNum);
       for (int j = m_left; j < m_left + blockNum; j++) {
         for (int k = 0; k < CFType::kMaxBlockCapacity - 1; k++) {
@@ -162,7 +160,7 @@ TEST(TestDelete, DeleteData) {
   DataArrayStructure<KeyType, ValueType> data(maxBlockNum, size);
   CFType tmpCFNode;
   for (int j = 0; j < size; j++) {
-    KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+    KeyType tmpKey = dis(engine);
     testTrainData[j] = {tmpKey, tmpKey * 10};
   }
   std::sort(testTrainData.begin(), testTrainData.end());

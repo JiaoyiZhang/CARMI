@@ -8,6 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
+#include <random>
+
 #include "../../experiment/dataset/lognormal_distribution.h"
 #include "../../include/nodes/innerNode/his_model.h"
 #include "gtest/gtest.h"
@@ -25,22 +27,23 @@ const int kTestMaxValue = kMaxValue;
 
 LognormalDataset logData(0.9);
 HisModel<double, double> model(kChildNum);
+std::default_random_engine engine(time(0));
 
 TEST(TestMultiTrain, MultiTrainHisModel) {
   std::vector<DataType> testTrainData;
-  unsigned int seed = time(NULL);
+  std::uniform_real_distribution<KeyType> dis(0, kTestMaxValue);
   for (int i = 0; i < 9; i++) {
     int tmpSize = std::pow(10, i) - 1;
     std::cout << "Start test size: " << tmpSize << std::endl;
     testTrainData = std::vector<DataType>(tmpSize);
     for (int j = 0; j < tmpSize; j++) {
-      KeyType tmpKey = rand_r(&seed) % kTestMaxValue;
+      KeyType tmpKey = dis(engine);
       testTrainData[j] = {tmpKey, tmpKey};
     }
     std::sort(testTrainData.begin(), testTrainData.end());
     HisModel<KeyType, ValueType> tmpModel(kChildNum);
     tmpModel.Train(0, testTrainData.size(), testTrainData);
-    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF); 
+    EXPECT_EQ(kChildNum, tmpModel.flagNumber & 0x00FFFFFF);
     EXPECT_NE(0, tmpModel.divisor);
     for (int j = 0; j < 16; j++) {
       EXPECT_GE(tmpModel.base[j], 0);

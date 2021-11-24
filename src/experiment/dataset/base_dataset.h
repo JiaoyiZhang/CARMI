@@ -34,7 +34,6 @@ class BaseDataset {
                      DataVecType *insertDataset, DataVecType *testInsertQuery) {
     (*initDataset) = std::vector<DataType>(kDatasetSize);
     int end = round(kTestSize * (1 - proportion));
-    (*insertDataset) = std::vector<DataType>(end * 10);
     (*testInsertQuery) = std::vector<DataType>(end);
     std::default_random_engine generator;
 
@@ -42,11 +41,6 @@ class BaseDataset {
     for (int i = 0; i < kDatasetSize; i++) {
       double tmp = distribution(generator) * kMaxValue;
       (*initDataset)[i] = {tmp, tmp * 10};
-    }
-    // generate insertQuery
-    for (int i = 0; i < end * 10; i++) {
-      double tmp = distribution(generator) * kMaxValue;
-      (*insertDataset)[i] = {tmp, tmp * 10};
     }
 
     // generate testInsertQuery
@@ -56,6 +50,11 @@ class BaseDataset {
     }
 
     std::sort(initDataset->begin(), initDataset->end());
+    // generate insertQuery
+    for (int i = 10; i < kDatasetSize - 1; i += 10) {
+      double tmp = ((*initDataset)[i].first + (*initDataset)[i + 1].first) / 2;
+      (*insertDataset).push_back({tmp, tmp * 10});
+    }
     std::sort(insertDataset->begin(), insertDataset->end());
 
     std::cout << "generate dataset over! init size:" << initDataset->size()

@@ -27,7 +27,7 @@ typedef std::vector<DataType> DataVecType;
 static bool kPrimaryIndex = false;
 
 const int kDatasetSize =
-    1024.0 / sizeof(DataType) * 1024 * 1024;  // 1 GB / 16 bytec
+    1024.0 / sizeof(DataType) * 1024 * 1024;  // 1 GB / 16 byte
 const float kTestSize = 100000.0;
 const float kMaxValue = 100000000;
 
