@@ -245,12 +245,12 @@ inline void ExternalArray<KeyType, DataType, Compare>::Init(
     int start_idx,
     DataArrayStructure<KeyType, KeyType,
                        std::allocator<LeafSlots<KeyType, KeyType>>> *data) {
+  int size = prefetchIndex.size();
+  if (size == 0) return;
   if (start_idx < 0) {
     throw std::out_of_range("ExternalArray::Init: the range is invalid.");
   }
   m_left = start_idx;
-  int size = prefetchIndex.size();
-  if (size == 0) return;
 
   Train(dataset, start_idx, size);
 }

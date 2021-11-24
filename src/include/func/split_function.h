@@ -25,14 +25,13 @@ template <typename KeyType, typename ValueType, typename Compare,
 template <typename LeafNodeType>
 inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
   // get the parameters of this leaf node
-  bool isExternal = node.nodeArray[idx].lr.flagNumber >> 24;
   int previousIdx = node.nodeArray[idx].cfArray.previousLeaf;
   int nextIdx = node.nodeArray[idx].cfArray.nextLeaf;
 
   DataVectorType tmpDataset;
   int leftIdx;
   // extract pure data points
-  if (isExternal) {
+  if (isPrimary) {
     leftIdx = node.nodeArray[idx].externalArray.m_left;
     int rightIdx =
         leftIdx + (node.nodeArray[idx].externalArray.flagNumber & 0x00FFFFFF);
@@ -50,7 +49,6 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
 
   // create a new inner node and store it in the node[idx]
   auto currnode = LRModel<KeyType, ValueType>(kInsertNewChildNumber);
-  currnode.childLeft = node.AllocateNodeMemory(kInsertNewChildNumber);
   currnode.Train(0, actualSize, tmpDataset);
   node.nodeArray[idx].lr = currnode;
 
@@ -58,6 +56,7 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
   IndexPair range{0, actualSize};
   NodePartition<LRModel<KeyType, ValueType>>(currnode, range, tmpDataset,
                                              &perSize);
+  currnode.childLeft = node.AllocateNodeMemory(kInsertNewChildNumber);
 
   int tmpLeft = leftIdx;
   // create kInsertNewChildNumber new leaf nodes and store them in the node
@@ -73,7 +72,7 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
       prefetchIndex[j - s] = p;
     }
     tmpLeaf.Init(tmpDataset, prefetchIndex, s, &data);
-    if (isExternal) {
+    if (isPrimary) {
       tmpLeaf.m_left = tmpLeft;
       tmpLeft += perSize[i].size;
     }
@@ -87,7 +86,7 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
 
   // if the original leaf node is the cf array leaf node, we need to update the
   // pointer to the siblings of the new leaf nodes
-  if (!isExternal) {
+  if (!isPrimary) {
     if (previousIdx >= 0) {
       node.nodeArray[previousIdx].cfArray.nextLeaf = currnode.childLeft;
     }
