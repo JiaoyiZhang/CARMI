@@ -69,6 +69,10 @@ class CARMIExternalMap {
  public:
   // *** Constructed Types
 
+#define EXTERNAL_TYPE_CAST(external_dataset, i, len)       \
+  static_cast<const DataType *>(static_cast<const void *>( \
+      static_cast<const char *>(external_dataset) + (i)*len))
+
   /**
    * @brief The type of implementation of CARMI.
    */
@@ -343,10 +347,8 @@ class CARMIExternalMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(tree->carmi_tree.external_data) +
-                     currslot * tree->carmi_tree.recordLength))
+      return EXTERNAL_TYPE_CAST(tree->carmi_tree.external_data, currslot,
+                                tree->carmi_tree.recordLength)
           ->key();
     }
 
@@ -356,10 +358,8 @@ class CARMIExternalMap {
      * @return const DataType::ValueType_& the data value
      */
     inline const typename DataType::ValueType_ &data() const {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(tree->carmi_tree.external_data) +
-                     currslot * tree->carmi_tree.recordLength))
+      return EXTERNAL_TYPE_CAST(tree->carmi_tree.external_data, currslot,
+                                tree->carmi_tree.recordLength)
           ->data();
     }
 
@@ -535,10 +535,8 @@ class CARMIExternalMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(tree->carmi_tree.external_data) +
-                     currslot * tree->carmi_tree.recordLength))
+      return EXTERNAL_TYPE_CAST(tree->carmi_tree.external_data, currslot,
+                                tree->carmi_tree.recordLength)
           ->key();
     }
 
@@ -548,10 +546,8 @@ class CARMIExternalMap {
      * @return const DataType::ValueType_& the data point
      */
     inline const typename DataType::ValueType_ &data() const {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(tree->carmi_tree.external_data) +
-                     currslot * tree->carmi_tree.recordLength))
+      return EXTERNAL_TYPE_CAST(tree->carmi_tree.external_data, currslot,
+                                tree->carmi_tree.recordLength)
           ->data();
     }
 
@@ -608,7 +604,7 @@ class CARMIExternalMap {
      * @return const_iterator& the next iterator
      */
     inline const_iterator operator++(int) {
-      iterator tmp = *this;  // copy ourselves
+      const_iterator tmp = *this;  // copy ourselves
       if (currslot + 1 >= tree->carmi_tree.currsize) {
         *this = this->tree->cend();
         return tmp;
@@ -637,7 +633,7 @@ class CARMIExternalMap {
      * @return const_iterator& the previous iterator
      */
     inline const_iterator operator--(int) {
-      iterator tmp = *this;  // copy ourselves
+      const_iterator tmp = *this;  // copy ourselves
       if (currslot - 1 < 0) {
         *this = this->tree->cend();
         return tmp;
@@ -685,7 +681,7 @@ class CARMIExternalMap {
      * @param[in] t the pointer of the carmi tree
      */
     explicit inline reverse_iterator(CARMIExternalMap *t)
-        : tree(t), currslot(0) {}
+        : tree(t), currslot(1) {}
 
     /**
      * @brief Constructs a new reverse iterator object.
@@ -705,23 +701,13 @@ class CARMIExternalMap {
         : tree(it.tree), currslot(it.currslot) {}
 
     /**
-     * @brief Constructs a new reverse iterator object from a reverse iterator.
-     *
-     * @param[in] it the given iterator
-     */
-    explicit inline reverse_iterator(const reverse_iterator &it)
-        : tree(it.tree), currslot(it.currslot) {}
-
-    /**
      * @brief Gets the key value of this iterator.
      *
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(tree->carmi_tree.external_data) +
-                     (currslot - 1) * tree->carmi_tree.recordLength))
+      return EXTERNAL_TYPE_CAST(tree->carmi_tree.external_data, currslot - 1,
+                                tree->carmi_tree.recordLength)
           ->key();
     }
 
@@ -731,10 +717,8 @@ class CARMIExternalMap {
      * @return const DataType::ValueType_& the data point
      */
     inline const typename DataType::ValueType_ &data() const {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(tree->carmi_tree.external_data) +
-                     (currslot - 1) * tree->carmi_tree.recordLength))
+      return EXTERNAL_TYPE_CAST(tree->carmi_tree.external_data, currslot - 1,
+                                tree->carmi_tree.recordLength)
           ->data();
     }
 
@@ -770,6 +754,19 @@ class CARMIExternalMap {
     inline bool operator!=(const reverse_iterator &x) const {
       return x.tree != tree || x.currslot != currslot;
     }
+    /**
+     * @brief Assign this iterator with another iterator
+     *
+     * @param other the given iterator
+     * @return reverse_iterator&
+     */
+    reverse_iterator &operator=(const reverse_iterator &other) {
+      if (this != &other) {
+        tree = other.tree;
+        currslot = other.currslot;
+      }
+      return *this;
+    }
 
     /**
      * @brief Prefix++ get the iterator of the next record.
@@ -791,7 +788,7 @@ class CARMIExternalMap {
      * @return reverse_iterator& the next iterator
      */
     inline reverse_iterator operator++(int) {
-      iterator tmp = *this;  // copy ourselves
+      reverse_iterator tmp = *this;  // copy ourselves
       if (currslot - 1 <= 0) {
         *this = this->tree->rend();
         return tmp;
@@ -820,8 +817,8 @@ class CARMIExternalMap {
      * @return reverse_iterator& the previous iterator
      */
     inline reverse_iterator operator--(int) {
-      iterator tmp = *this;  // copy ourselves
-      if (currslot + 1 >= tree->carmi_tree.currsize) {
+      reverse_iterator tmp = *this;  // copy ourselves
+      if (currslot + 1 > tree->carmi_tree.currsize) {
         *this = this->tree->rend();
         return tmp;
       }
@@ -868,7 +865,7 @@ class CARMIExternalMap {
      * @param[in] t the pointer of the carmi tree
      */
     explicit inline const_reverse_iterator(CARMIExternalMap *t)
-        : tree(t), currslot(0) {}
+        : tree(t), currslot(1) {}
 
     /**
      * @brief Constructs a new reverse iterator object.
@@ -909,10 +906,8 @@ class CARMIExternalMap {
      * @return const KeyType& the key value
      */
     inline const KeyType &key() const {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(tree->carmi_tree.external_data) +
-                     (currslot - 1) * tree->carmi_tree.recordLength))
+      return EXTERNAL_TYPE_CAST(tree->carmi_tree.external_data, currslot - 1,
+                                tree->carmi_tree.recordLength)
           ->key();
     }
 
@@ -922,10 +917,8 @@ class CARMIExternalMap {
      * @return const DataType::ValueType_& the data point
      */
     inline const typename DataType::ValueType_ &data() const {
-      return static_cast<const DataType *>(
-                 static_cast<const void *>(
-                     static_cast<const char *>(tree->carmi_tree.external_data) +
-                     (currslot - 1) * tree->carmi_tree.recordLength))
+      return EXTERNAL_TYPE_CAST(tree->carmi_tree.external_data, currslot - 1,
+                                tree->carmi_tree.recordLength)
           ->data();
     }
 
@@ -982,7 +975,7 @@ class CARMIExternalMap {
      * @return const_reverse_iterator& the next iterator
      */
     inline const_reverse_iterator operator++(int) {
-      iterator tmp = *this;  // copy ourselves
+      const_reverse_iterator tmp = *this;  // copy ourselves
       if (currslot - 1 <= 0) {
         *this = this->tree->crend();
         return tmp;
@@ -1011,8 +1004,8 @@ class CARMIExternalMap {
      * @return const_reverse_iterator& the previous iterator
      */
     inline const_reverse_iterator operator--(int) {
-      iterator tmp = *this;  // copy ourselves
-      if (currslot + 1 >= tree->carmi_tree.currsize) {
+      const_reverse_iterator tmp = *this;  // copy ourselves
+      if (currslot + 1 > tree->carmi_tree.currsize) {
         *this = this->tree->crend();
         return tmp;
       }
@@ -1055,7 +1048,7 @@ class CARMIExternalMap {
    *
    * @return iterator
    */
-  iterator end() { return iterator(this, -1); }
+  iterator end() { return iterator(this, carmi_tree.currsize); }
 
   /**
    * @brief Returns a const iterator referring to the first element in the carmi
@@ -1063,14 +1056,21 @@ class CARMIExternalMap {
    *
    * @return const_iterator
    */
-  const_iterator cbegin() const { return const_iterator(this); }
+  const_iterator cbegin() const {
+    return const_iterator(
+        const_cast<CARMIExternalMap<KeyType, DataType> *>(this));
+  }
 
   /**
    * @brief Gets the end of the carmi tree.
    *
    * @return const_iterator
    */
-  const_iterator cend() const { return const_iterator(this, -1); }
+  const_iterator cend() const {
+    return const_iterator(
+        const_cast<CARMIExternalMap<KeyType, DataType> *>(this),
+        carmi_tree.currsize);
+  }
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
@@ -1087,7 +1087,7 @@ class CARMIExternalMap {
    *
    * @return reverse_iterator
    */
-  reverse_iterator rend() { return reverse_iterator(this, -1); }
+  reverse_iterator rend() { return reverse_iterator(this, 0); }
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
@@ -1096,7 +1096,9 @@ class CARMIExternalMap {
    * @return const_reverse_iterator
    */
   const_reverse_iterator crbegin() const {
-    return const_reverse_iterator(this, carmi_tree.currsize);
+    return const_reverse_iterator(
+        const_cast<CARMIExternalMap<KeyType, DataType> *>(this),
+        carmi_tree.currsize);
   }
 
   /**
@@ -1105,7 +1107,8 @@ class CARMIExternalMap {
    * @return const_reverse_iterator
    */
   const_reverse_iterator crend() const {
-    return const_reverse_iterator(this, -1);
+    return const_reverse_iterator(
+        const_cast<CARMIExternalMap<KeyType, DataType> *>(this), 0);
   }
 
  public:
@@ -1126,12 +1129,16 @@ class CARMIExternalMap {
     if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
       return end();
     } else {
-      auto tmp = it;
-      tmp--;
-      while (tmp.currslot >= 0 && tmp.key() >= key) {
-        tmp--;
+      if (it.key() < key) {
+        it++;
+      } else {
+        while (it.key() >= key && it.currslot >= 1) {
+          it.currslot--;
+        }
+        if (it.key() < key) {
+          it.currslot++;
+        }
       }
-      it = ++tmp;
       return it;
     }
   }
@@ -1151,12 +1158,16 @@ class CARMIExternalMap {
     if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
       return cend();
     } else {
-      auto tmp = it;
-      tmp--;
-      while (tmp.currslot >= 0 && tmp.key() >= key) {
-        tmp--;
+      if (it.key() < key) {
+        it++;
+      } else {
+        while (it.key() >= key && it.currslot >= 1) {
+          it.currslot--;
+        }
+        if (it.key() < key) {
+          it.currslot++;
+        }
       }
-      it = ++tmp;
       return it;
     }
   }
@@ -1176,7 +1187,7 @@ class CARMIExternalMap {
     if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
       return end();
     } else {
-      while (it != end() && it.key() == key) {
+      while (it != end() && it.key() <= key) {
         it++;
       }
       return it;
@@ -1198,7 +1209,7 @@ class CARMIExternalMap {
     if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
       return cend();
     } else {
-      while (it != cend() && it.key() == key) {
+      while (it != cend() && it.key() <= key) {
         it++;
       }
       return it;

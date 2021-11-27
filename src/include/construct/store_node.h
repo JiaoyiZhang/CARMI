@@ -108,9 +108,10 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::StoreOptimalNode(
           it->second.externalArray;
       int size = range.initRange.size;
       if (size <= 0)
-        currnode.m_left = currsize;
+        currnode.m_left = prefetchEnd;
       else
         currnode.m_left = range.initRange.left;
+      prefetchEnd += range.initRange.size;
       node.nodeArray[storeIdx].externalArray = currnode;
       break;
     }

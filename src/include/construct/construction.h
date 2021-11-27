@@ -92,7 +92,7 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::ConstructSubTree(
         }
       }
       scanLeaf.push_back(i);
-      lastLeaf = i;
+
       // add this node to the prefetchNode/Range
       prefetchNode.push_back(i);
       prefetchRange.push_back(range);

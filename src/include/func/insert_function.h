@@ -68,10 +68,15 @@ CARMI<KeyType, ValueType, Compare, Alloc>::Insert(const DataType &datapoint,
         bool isSuccess = node.nodeArray[idx].cfArray.Insert(
             datapoint, currblock, currslot, &data);
         if (isSuccess) {
-          currsize++;
-          if (idx < firstLeaf) {
-            firstLeaf = idx;
+          if (datapoint.first > lastKey) {
+            lastLeaf = idx;
+            lastKey = datapoint.first;
           }
+          if (datapoint.first < firstKey) {
+            firstLeaf = idx;
+            firstKey = datapoint.first;
+          }
+          currsize++;
           return {&node.nodeArray[idx], true};
         } else {
           // if this leaf node cannot accomodate more data points, we need to
