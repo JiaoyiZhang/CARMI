@@ -16,6 +16,8 @@ target_link_libraries(CARMI)
 ## Test
 # add_executable(CARMI unitTest/carmiTest/carmi_map_test.cpp)
 # add_executable(CARMI unitTest/carmiTest/carmi_external_map_test.cpp)
+# add_executable(CARMI unitTest/carmiTest/map_test.cpp)
+# add_executable(CARMI unitTest/carmiTest/externalmap_test.cpp)
 
 ## rootNode
 # add_executable(CARMI unitTest/rootNodeTest/piecewiseLR_test.cpp)
