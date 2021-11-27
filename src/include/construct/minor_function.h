@@ -154,8 +154,8 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateLeaf() {
   if (isPrimary) return;
   node.nodeArray[scanLeaf[0]].cfArray.nextLeaf = scanLeaf[1];
   int end = scanLeaf.size() - 1;
-  node.nodeArray[end].cfArray.nextLeaf = -1;
-  node.nodeArray[end].cfArray.previousLeaf = scanLeaf[end - 1];
+  node.nodeArray[scanLeaf[end]].cfArray.nextLeaf = -1;
+  node.nodeArray[scanLeaf[end]].cfArray.previousLeaf = scanLeaf[end - 1];
   for (int i = 1; i < end; i++) {
     node.nodeArray[scanLeaf[i]].cfArray.nextLeaf = scanLeaf[i + 1];
     node.nodeArray[scanLeaf[i]].cfArray.previousLeaf = scanLeaf[i - 1];

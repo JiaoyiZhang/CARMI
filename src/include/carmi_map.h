@@ -1498,9 +1498,9 @@ class CARMIMap {
      */
     inline bool advanceBlock() {
       currblock--;
-      while (currblock > 0) {
+      while (currblock >= 0) {
         currslot = currnode->cfArray.GetBlockSize(currblock) + 1;
-        bool isSuccess = backwardSlot();
+        bool isSuccess = advanceSlot();
         if (isSuccess) {
           return true;
         }
@@ -1528,7 +1528,7 @@ class CARMIMap {
               tree->carmi_tree.node.nodeArray[currnode->cfArray.previousLeaf]);
         }
         currblock = (currnode->cfArray.flagNumber & 0x00FFFFFF);
-        bool isSuccess = backwardBlock();
+        bool isSuccess = advanceBlock();
         if (isSuccess) {
           return true;
         }
@@ -1564,7 +1564,7 @@ class CARMIMap {
      */
     inline bool backwardBlock() {
       currblock++;
-      while (currblock <= (currnode->cfArray.flagNumber & 0x00FFFFFF)) {
+      while (currblock < (currnode->cfArray.flagNumber & 0x00FFFFFF)) {
         currslot = 0;
         bool isSuccess = backwardSlot();
         if (isSuccess) {
@@ -1924,9 +1924,9 @@ class CARMIMap {
      */
     inline bool advanceBlock() {
       currblock--;
-      while (currblock > 0) {
+      while (currblock >= 0) {
         currslot = currnode->cfArray.GetBlockSize(currblock) + 1;
-        bool isSuccess = backwardSlot();
+        bool isSuccess = advanceSlot();
         if (isSuccess) {
           return true;
         }
@@ -1954,7 +1954,7 @@ class CARMIMap {
               tree->carmi_tree.node.nodeArray[currnode->cfArray.previousLeaf]);
         }
         currblock = (currnode->cfArray.flagNumber & 0x00FFFFFF);
-        bool isSuccess = backwardBlock();
+        bool isSuccess = advanceBlock();
         if (isSuccess) {
           return true;
         }
@@ -1990,7 +1990,7 @@ class CARMIMap {
      */
     inline bool backwardBlock() {
       currblock++;
-      while (currblock <= (currnode->cfArray.flagNumber & 0x00FFFFFF)) {
+      while (currblock < (currnode->cfArray.flagNumber & 0x00FFFFFF)) {
         currslot = 0;
         bool isSuccess = backwardSlot();
         if (isSuccess) {
@@ -2130,11 +2130,6 @@ class CARMIMap {
    */
   iterator begin() {
     iterator it(this);
-    if (it.tree == NULL || carmi_tree.firstLeaf < 0 ||
-        carmi_tree.firstLeaf >= carmi_tree.node.nodeArray.size()) {
-      throw std::invalid_argument(
-          "CARMIMap::begin: the index has not been constructed.");
-    }
     it.currnode = &carmi_tree.node.nodeArray[carmi_tree.firstLeaf];
     while (it.currnode->cfArray.GetBlockSize(it.currblock) == 0) {
       it++;
@@ -2147,7 +2142,7 @@ class CARMIMap {
    *
    * @return iterator
    */
-  iterator end() { return iterator(this); }
+  iterator end() { return iterator(rbegin()); }
 
   /**
    * @brief Returns a const iterator referring to the first element in the carmi
@@ -2157,11 +2152,6 @@ class CARMIMap {
    */
   const_iterator cbegin() const {
     const_iterator it(const_cast<CARMIMap<KeyType, ValueType> *>(this));
-    if (it.tree == NULL || carmi_tree.firstLeaf < 0 ||
-        carmi_tree.firstLeaf >= carmi_tree.node.nodeArray.size()) {
-      throw std::invalid_argument(
-          "CARMIMap::cbegin: the index has not been constructed.");
-    }
     it.currnode = const_cast<BaseNode<KeyType, ValueType, Compare, Alloc> *>(
         &carmi_tree.node.nodeArray[carmi_tree.firstLeaf]);
     while (it.currnode->cfArray.GetBlockSize(it.currblock) == 0) {
@@ -2175,9 +2165,7 @@ class CARMIMap {
    *
    * @return const_iterator
    */
-  const_iterator cend() const {
-    return const_iterator(const_cast<CARMIMap<KeyType, ValueType> *>(this));
-  }
+  const_iterator cend() const { return const_iterator(crbegin()); }
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
@@ -2187,11 +2175,6 @@ class CARMIMap {
    */
   reverse_iterator rbegin() {
     reverse_iterator it(this);
-    if (it.tree == NULL || carmi_tree.lastLeaf < 0 ||
-        carmi_tree.lastLeaf >= carmi_tree.node.nodeArray.size()) {
-      throw std::invalid_argument(
-          "CARMIMap::rbegin: the index has not been constructed.");
-    }
     it.currnode = &carmi_tree.node.nodeArray[carmi_tree.lastLeaf];
     it.currblock = (it.currnode->cfArray.flagNumber & 0x00FFFFFF) - 1;
     it.currslot = it.currnode->cfArray.perSize[it.currblock];
@@ -2206,7 +2189,7 @@ class CARMIMap {
    *
    * @return reverse_iterator
    */
-  reverse_iterator rend() { return reverse_iterator(this); }
+  reverse_iterator rend() { return reverse_iterator(begin()); }
 
   /**
    * @brief Returns a reverse iterator referring to the first element in the
@@ -2215,13 +2198,9 @@ class CARMIMap {
    * @return const_reverse_iterator
    */
   const_reverse_iterator crbegin() const {
-    const_reverse_iterator it(this);
-    if (it.tree == NULL || carmi_tree.lastLeaf < 0 ||
-        carmi_tree.lastLeaf >= carmi_tree.node.nodeArray.size()) {
-      throw std::invalid_argument(
-          "CARMIMap::crbegin: the index has not been constructed.");
-    }
-    it.currnode = &carmi_tree.node.nodeArray[carmi_tree.lastLeaf];
+    const_reverse_iterator it(const_cast<CARMIMap<KeyType, ValueType> *>(this));
+    it.currnode = const_cast<BaseNode<KeyType, ValueType, Compare, Alloc> *>(
+        &carmi_tree.node.nodeArray[carmi_tree.lastLeaf]);
     it.currblock = (it.currnode->cfArray.flagNumber & 0x00FFFFFF) - 1;
     it.currslot = it.currnode->cfArray.perSize[it.currblock];
     while (it.currnode->cfArray.GetBlockSize(it.currblock) == 0) {
@@ -2235,7 +2214,9 @@ class CARMIMap {
    *
    * @return const_reverse_iterator
    */
-  const_reverse_iterator crend() const { return const_reverse_iterator(this); }
+  const_reverse_iterator crend() const {
+    return const_reverse_iterator(cbegin());
+  }
 
  public:
   // *** Standard Access Functions Querying the Tree
@@ -2285,7 +2266,9 @@ class CARMIMap {
   iterator upper_bound(const KeyType &key) {
     iterator it(this);
     it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
-    while (it != end() && it.key() == key) {
+    while (it != end() &&
+           (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock) ||
+            it.key() == key)) {
       it++;
     }
     return it;
@@ -2302,7 +2285,9 @@ class CARMIMap {
   const_iterator upper_bound(const KeyType &key) const {
     const_iterator it(this);
     it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
-    while (it != cend() && it.key() == key) {
+    while (it != cend() &&
+           (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock) ||
+            it.key() == key)) {
       it++;
     }
     return it;
@@ -2318,7 +2303,10 @@ class CARMIMap {
     int currblock, currslot;
     BaseNode<KeyType, ValueType, Compare, Alloc> *node =
         carmi_tree.Find(key, &currblock, &currslot);
-    if (currslot >= node->cfArray.GetBlockSize(currblock)) {
+    if (currslot >= node->cfArray.GetBlockSize(currblock) ||
+        carmi_tree.data.dataArray[node->cfArray.m_left + currblock]
+                .slots[currslot]
+                .first != key) {
       return end();
     } else {
       return iterator(this, node, currblock, currslot);

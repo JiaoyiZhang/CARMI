@@ -356,18 +356,7 @@ class CFArrayType {
    * @param[in] currblock the index of the data block
    * @return int the size of the data block
    */
-  inline int GetBlockSize(int currblock) {
-#ifdef DEBUG
-    if (currblock < 0 || currblock >= (flagNumber & 0x00FFFFFF)) {
-      std::cout << "now block size:" << (flagNumber & 0x00FFFFFF)
-                << ",\tcurrblock:" << currblock << std::endl;
-      throw std::out_of_range(
-          "CFArrayType::GetBlockSize: the currblock is invalid.");
-      return 0;
-    }
-#endif  // CHECK
-    return perSize[currblock];
-  }
+  inline int GetBlockSize(int currblock) { return perSize[currblock]; }
 
   /**
    * @brief Compare the given key value with slotkeys to search the index of the
@@ -701,14 +690,8 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::Insert(
     const DataType &datapoint, int *currblock, int *currslot,
     DataArrayStructure<KeyType, ValueType, Alloc> *data) {
   int nowBlockNum = flagNumber & 0x00FFFFFF;
-  // Case 1: insert fails.
-  // If there is no empty position for the newly inserted data point,
-  // return false directly.
-  if (nowBlockNum >= kMaxLeafCapacity) {
-    return false;
-  }
 
-  // Case 2: this node is empty.
+  // Case 1: this node is empty.
   // If this node is empty, we first need to allocate a block of memory for it
   // and use the first index to update m_left, then insert the data point in the
   // first allocated data block. After that, we update the number of data blocks
@@ -723,7 +706,7 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::Insert(
     return true;
   }
 
-  // Case 3: insert into the current data block.
+  // Case 2: insert into the current data block.
   // Use the Search function to find the corresponding data block to store this
   // data point. currblock is the serial number of this data block in all data
   // blocks managed by this leaf node. Then insert the data point into this data
@@ -739,7 +722,7 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::Insert(
 
   int nowDataNum = GetDataNum(*data, m_left, m_left + nowBlockNum);
 
-  // Case 4: insert into the next data block.
+  // Case 3: insert into the next data block.
   // If inserting into the current data block fails, and there is an empty
   // position in the next data block, insert into the next data block.
   // Return directly if successful.
@@ -753,21 +736,21 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::Insert(
     }
   }
 
-  // Case 5: If the latter data block has no empty position, we first need some
+  // Case 4: If the latter data block has no empty position, we first need some
   // additional mechanisms to make room for the inserted data point.
   if (nowDataNum < nowBlockNum * (kMaxBlockCapacity - 1)) {
-    // Case 5.1: rebalance.
+    // Case 4.1: rebalance.
     // If the data block to be inserted is full and the next data block is also
     // saturated, the rebalance mechanism is triggered. Through this mechnism,
     // we can reallocate the data points evenly to all the data blocks.
     Rebalance(m_left, m_left + nowBlockNum, data);
   } else if (nowBlockNum == kMaxBlockNum) {
-    // Case 5.2: return false.
+    // Case 4.2: return false.
     // If the data blocks have reached the upper limit, this node cannot expand.
     // Return false directly.
     return false;
   } else {
-    // Case 5.3: expand.
+    // Case 4.3: expand.
     // This leaf node needs more space to store data points, we can initiate
     // the expand operation to get more data blocks.
     Expand(m_left, m_left + nowBlockNum, data);
@@ -1027,6 +1010,7 @@ CFArrayType<KeyType, ValueType, Compare, Alloc>::InsertNextBlock(
         if (*currBlockIdx != 0)
           slotkeys[*currBlockIdx - 1] =
               data->dataArray[nowDataIdx].slots[0].first;
+        break;
       }
       if (data->dataArray[nowDataIdx].slots[i - 1].first > currdata.first) {
         data->dataArray[nowDataIdx].slots[i] =

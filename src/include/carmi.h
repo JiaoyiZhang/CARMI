@@ -265,6 +265,11 @@ class CARMI {
     data = DataArrayStructure<KeyType, ValueType, Alloc>(
         CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockNum, 1000);
     node = NodeArrayStructure<KeyType, ValueType, Compare, Alloc>();
+    currsize = 0;
+    firstLeaf = -1;
+    lastLeaf = 0;
+    reservedSpace = 0;
+    prefetchEnd = -1;
   }
 
   /**
@@ -781,6 +786,16 @@ class CARMI {
   //*** Private Data Members of CARMI Objects for Construction
 
   /**
+   * @brief The last key.
+   */
+  KeyType lastKey;
+
+  /**
+   * @brief The first key.
+   */
+  KeyType firstKey;
+
+  /**
    * @brief The last index of the prefetched data block. This parameter is
    * useless after the index is constructed.
    */
@@ -922,6 +937,9 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI() {
   lastLeaf = 0;
   isInitMode = true;
   prefetchEnd = -1;
+  currsize = 0;
+  lastKey = static_cast<KeyType>(-DBL_MAX);
+  firstKey = static_cast<KeyType>(DBL_MAX);
 
   key_less_ = Compare();
   allocator_ = Alloc();
@@ -930,6 +948,22 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI() {
   reservedSpace = 0;
   data = DataArrayStructure<KeyType, ValueType, Alloc>(
       CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockNum, 1000);
+  node.AllocateNodeMemory(kInsertNewChildNumber);
+  root =
+      PLRType<DataVectorType, KeyType>(kInsertNewChildNumber, DataVectorType());
+  CFArrayType<KeyType, ValueType, Compare, Alloc> tmpLeaf;
+  std::vector<int> prefetchIndex;
+  tmpLeaf.Init(DataVectorType(), prefetchIndex, 0, &data);
+  for (int i = 0; i < kInsertNewChildNumber; i++) {
+    node.nodeArray[i].cfArray = tmpLeaf;
+  }
+  node.nodeArray[0].cfArray.nextLeaf = 1;
+  for (int i = 1; i < kInsertNewChildNumber - 1; i++) {
+    node.nodeArray[i].cfArray.nextLeaf = i + 1;
+    node.nodeArray[i].cfArray.previousLeaf = i - 1;
+  }
+  node.nodeArray[kInsertNewChildNumber - 1].cfArray.previousLeaf =
+      kInsertNewChildNumber - 2;
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
@@ -984,6 +1018,9 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
   data = DataArrayStructure<KeyType, ValueType, Alloc>(
       CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockNum,
       initDataset.size());
+
+  lastKey = initDataset[initDataset.size() - 1].first;
+  firstKey = initDataset[0].first;
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
@@ -1010,7 +1047,7 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
   isInitMode = true;
   isPrimary = true;
   lambda = l;
-  prefetchEnd = -1;
+  prefetchEnd = 0;
 
   // store the pointer to the dataset
   external_data = dataset;

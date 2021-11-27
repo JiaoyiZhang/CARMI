@@ -50,13 +50,13 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
   // create a new inner node and store it in the node[idx]
   auto currnode = LRModel<KeyType, ValueType>(kInsertNewChildNumber);
   currnode.Train(0, actualSize, tmpDataset);
-  node.nodeArray[idx].lr = currnode;
 
   std::vector<IndexPair> perSize(kInsertNewChildNumber, emptyRange);
   IndexPair range{0, actualSize};
   NodePartition<LRModel<KeyType, ValueType>>(currnode, range, tmpDataset,
                                              &perSize);
   currnode.childLeft = node.AllocateNodeMemory(kInsertNewChildNumber);
+  node.nodeArray[idx].lr = currnode;
 
   int tmpLeft = leftIdx;
   // create kInsertNewChildNumber new leaf nodes and store them in the node
@@ -83,6 +83,9 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
   if (idx == lastLeaf) {
     lastLeaf = currnode.childLeft + kInsertNewChildNumber - 1;
   }
+  if (idx == firstLeaf) {
+    firstLeaf = currnode.childLeft;
+  }
 
   // if the original leaf node is the cf array leaf node, we need to update the
   // pointer to the siblings of the new leaf nodes
@@ -91,6 +94,8 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::Split(int idx) {
       node.nodeArray[previousIdx].cfArray.nextLeaf = currnode.childLeft;
     }
     node.nodeArray[currnode.childLeft].cfArray.previousLeaf = previousIdx;
+    node.nodeArray[currnode.childLeft].cfArray.nextLeaf =
+        currnode.childLeft + 1;
     int end = currnode.childLeft + kInsertNewChildNumber - 1;
     for (int i = currnode.childLeft + 1; i < end; i++) {
       node.nodeArray[i].cfArray.previousLeaf = i - 1;
