@@ -48,31 +48,37 @@ iterator find(const KeyType &key);
 iterator lower_bound(const KeyType &key);
 ```
 
-3. **upper_bound**: insert a data point into the index.
+3. **upper_bound**: return an iterator pointing to the first element in the container whose key is larger than key.
+
+```
+iterator upper_bound(const KeyType &key);
+```
+
+4. **insert**: insert a data point into the index.
 
 ```
 std::pair<iterator, bool> insert(const DataType &datapoint);
 ```
 
-4. **erase**: delete the record of the given key and return the number of elements erased.
+5. **erase**: delete the record of the given key and return the number of elements erased.
 
 ```
 size_t erase(const KeyType &key);
 ```
 
-5. **swap**: swap two carmi tree objects.
+6. **swap**: swap two carmi tree objects.
 
 ```
 void swap(CARMIMap &other);
 ```
 
-6. **swap**: return the number of data points in the carmi tree.
+7. **size**: return the number of data points in the carmi tree.
 
 ```
 size_t size();
 ```
 
-7. **CalculateSpace**: return the space of the carmi tree in bytes.
+8. **CalculateSpace**: return the space of the carmi tree in bytes.
 
 ```
 long long CalculateSpace();
@@ -130,6 +136,4 @@ In this project, we include the CARMI header files, the source code of the exper
 
 ## Dependencies
 
-This code is based on C++.
-
-Main dependencies is [**STX-btree**](https://github.com/bingmann/stx-btree), [**ALEX**](https://github.com/microsoft/ALEX) and [**RS**](https://github.com/learnedsystems/RadixSpline).
+This code is based on C++17.
