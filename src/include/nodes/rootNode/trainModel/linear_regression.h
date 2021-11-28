@@ -43,6 +43,7 @@ class LinearRegression {
   LinearRegression() {
     slope = 0.0001;
     intercept = 0.666;
+    maxChildIdx = 2;
   }
 
   /**

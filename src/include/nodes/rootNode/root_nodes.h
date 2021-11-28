@@ -88,7 +88,7 @@ class PLRType {
    * output of this model (leaf index before rounding down) as the input to the
    * prefetch prediction model. (72 bytes)
    */
-  PiecewiseLR<DataVectorType, KeyType> model;
+  ModelType model;
 
   /**
    * @brief the prefetch prediction model.

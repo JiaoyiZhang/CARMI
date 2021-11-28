@@ -45,40 +45,25 @@ void WorkloadA(bool isZipfian, const DataVecType &findDataset,
 
   std::clock_t s, e;
   double tmp;
+  auto resIte = carmi->end();
+  double res = 0.0;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      carmi->find(findQuery[index[i]].first);
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->insert(data.first);
+      resIte = carmi->find(findQuery[index[i]].first);
+      res += resIte.data();
+      carmi->insert(insertQuery[i].first);
     }
   } else {
     for (int i = 0; i < end; i++) {
-      carmi->find(findQuery[i].first);
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->insert(data.first);
+      resIte = carmi->find(findQuery[i].first);
+      res += resIte.data();
+      carmi->insert(insertQuery[i].first);
     }
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-
-  s = std::clock();
-  if (isZipfian) {
-    for (int i = 0; i < end; i++) {
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-    }
-  } else {
-    for (int i = 0; i < end; i++) {
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-    }
-  }
-  e = std::clock();
-  double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-  tmp -= tmp0;
+  std::cout << "        res: " << res << std::endl;
 
   PrintAvgTime(tmp);
 }
@@ -106,53 +91,33 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
   int findCnt = 0;
 
   std::clock_t s, e;
+  auto resIte = carmi->end();
+  double res = 0.0;
   double tmp;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19; j++) {
-        carmi->find(findQuery[index[findCnt]].first);
+        resIte = carmi->find(findQuery[index[findCnt]].first);
+        res += resIte.data();
         findCnt++;
       }
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->insert(data.first);
+      carmi->insert(insertQuery[i].first);
     }
   } else {
     for (int i = 0; i < end; i++) {
       for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
            j++) {
-        carmi->find(findQuery[findCnt++].first);
+        resIte = carmi->find(findQuery[findCnt++].first);
+        res += resIte.data();
       }
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->insert(data.first);
+      carmi->insert(insertQuery[i].first);
     }
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
 
-  findCnt = 0;
-  s = std::clock();
-  if (isZipfian) {
-    for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19; j++) findCnt++;
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-    }
-  } else {
-    for (int i = 0; i < end; i++) {
-      for (int j = 0; j < 19 && findCnt < static_cast<int>(findQuery.size());
-           j++)
-        findCnt++;
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-    }
-  }
-  e = std::clock();
-  double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-  tmp -= tmp0;
-
+  std::cout << "        res: " << res << std::endl;
   PrintAvgTime(tmp);
 }
 
@@ -175,30 +140,24 @@ void WorkloadC(bool isZipfian, const DataVecType &findDataset,
 
   std::clock_t s, e;
   double tmp;
+  auto resIte = carmi->end();
+  double res = 0.0;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
-      carmi->find(findQuery[index[i]].first);
+      resIte = carmi->find(findQuery[index[i]].first);
+      res += resIte.data();
     }
   } else {
     for (int i = 0; i < end; i++) {
-      carmi->find(findQuery[i].first);
+      resIte = carmi->find(findQuery[i].first);
+      res += resIte.data();
     }
   }
   e = std::clock();
   tmp = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
 
-  s = std::clock();
-  if (isZipfian) {
-    for (int i = 0; i < end; i++) {
-    }
-  } else {
-    for (int i = 0; i < end; i++) {
-    }
-  }
-  e = std::clock();
-  double tmp0 = (e - s) / static_cast<double>(CLOCKS_PER_SEC);
-  tmp -= tmp0;
+  std::cout << "        res: " << res << std::endl;
 
   PrintAvgTime(tmp);
 }
@@ -241,9 +200,7 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
         }
         findCnt++;
       }
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->insert(data.first);
+      carmi->insert(insertQuery[i].first);
     }
   } else {
     for (int i = 0; i < end; i++) {
@@ -256,9 +213,7 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
         }
         findCnt++;
       }
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
-      carmi->insert(data.first);
+      carmi->insert(insertQuery[i].first);
     }
   }
   e = std::clock();
@@ -273,8 +228,6 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
         }
         findCnt++;
       }
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
     }
   } else {
     for (int i = 0; i < end; i++) {
@@ -284,8 +237,6 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
         }
         findCnt++;
       }
-      std::pair<KeyType, std::vector<KeyType>> data = {
-          insertQuery[i].first, std::vector<KeyType>(1, insertQuery[i].second)};
     }
   }
   e = std::clock();
