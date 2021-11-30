@@ -301,26 +301,31 @@ inline int PrefetchPLR::PrefetchTrain(
 }
 
 inline int PrefetchPLR::PrefetchPredict(double unroundedLeafIdx) const {
+  int s = 0;
+  int e = SegmentNumber - 1;
+  int mid;
+  // first perform a binary search among the keys
+  while (s < e) {
+    mid = (s + e) >> 1;
+    if (point[mid].first <= unroundedLeafIdx)
+      s = mid + 1;
+    else
+      e = mid;
+  }
+
   int p = 0;
-  if (unroundedLeafIdx < point[0].first) {
+  if (s == 0) {
     p = theta[0][0] * unroundedLeafIdx + theta[0][1];
     if (p < 0)
       p = 0;
     else if (p > point[0].second - 1)
       p = point[0].second - 1;
-
-  } else if (unroundedLeafIdx < point[SegmentNumber - 2].first) {
-    for (int j = 1; j < SegmentNumber - 1; j++) {
-      if (unroundedLeafIdx < point[j].first) {
-        p = theta[j][0] * unroundedLeafIdx + theta[j][1];
-        if (p < point[j - 1].second)
-          p = point[j - 1].second;
-        else if (p > point[j].second - 1)
-          p = point[j].second - 1;
-        return p;
-      }
-    }
-
+  } else if (s < SegmentNumber - 1) {
+    p = theta[s][0] * unroundedLeafIdx + theta[s][1];
+    if (p < point[s - 1].second)
+      p = point[s - 1].second;
+    else if (p > point[s].second - 1)
+      p = point[s].second - 1;
   } else {
     p = theta[SegmentNumber - 1][0] * unroundedLeafIdx +
         theta[SegmentNumber - 1][1];
