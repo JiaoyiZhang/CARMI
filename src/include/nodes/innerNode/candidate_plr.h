@@ -29,7 +29,7 @@ struct SegmentPoint {
   /**
    * @brief the current cost
    */
-  double cost;
+  float cost;
 
   /**
    * @brief the key values
@@ -97,6 +97,12 @@ class CandidateCost {
       px[i] += px[i - 1];
       p[i] += p[i - 1];
     }
+    xx[index.size() - 1] += dataset[index[index.size() - 1]].first *
+                            dataset[index[index.size() - 1]].first;
+    x[index.size() - 1] += dataset[index[index.size() - 1]].first;
+    px[index.size() - 1] += dataset[index[index.size() - 1]].first *
+                            dataset[index[index.size() - 1]].second;
+    p[index.size() - 1] += dataset[index[index.size() - 1]].second;
 
     // store the parameters of each segment
     for (int i = 0; i < index.size() - 1; i++) {
@@ -137,14 +143,16 @@ class CandidateCost {
    *
    * @param[in] leftIdx the left index of the sub-dataset
    * @param[in] rightIdx the right-index of the sub-dataset
+   * @param[in] y1
+   * @param[in] y2
    * @return double: entropy
    */
-  double Entropy(int leftIdx, int rightIdx) {
+  double Entropy(int leftIdx, int rightIdx, double y1, double y2) {
     auto tmp_theta = theta.find({leftIdx, rightIdx});
     double a = tmp_theta->second.first;
     double entropy = -DBL_MAX;
     if (a > 0) {
-      entropy = log2(a) * (rightIdx - leftIdx);
+      entropy = log2(a) * (y2 - y1);
     }
     return entropy;
   }

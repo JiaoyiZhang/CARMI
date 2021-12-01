@@ -141,7 +141,7 @@ inline void BSModel<KeyType, ValueType>::Train(int left, int size,
     if (cnt >= childNumber) {
       break;
     }
-    keys[cnt - 1] += static_cast<float>(dataset[i].first);
+    keys[cnt - 1] = static_cast<float>(dataset[i].first);
     cnt++;
   }
 }

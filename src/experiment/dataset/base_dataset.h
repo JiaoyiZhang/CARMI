@@ -51,9 +51,12 @@ class BaseDataset {
 
     std::sort(initDataset->begin(), initDataset->end());
     // generate insertQuery
-    for (int i = 10; i < kDatasetSize - 1; i += 10) {
-      double tmp = ((*initDataset)[i].first + (*initDataset)[i + 1].first) / 2;
-      (*insertDataset).push_back({tmp, tmp * 10});
+    if (testInsertQuery->size() > 0) {
+      for (int i = 10; i < kDatasetSize - 1; i += 10) {
+        double tmp =
+            ((*initDataset)[i].first + (*initDataset)[i + 1].first) / 2;
+        (*insertDataset).push_back({tmp, tmp * 10});
+      }
     }
     std::sort(insertDataset->begin(), insertDataset->end());
 
@@ -81,9 +84,12 @@ class BaseDataset {
     }
 
     std::sort(initDataset->begin(), initDataset->end());
-    for (int i = 10; i < kDatasetSize - 1; i += 10) {
-      double tmp = ((*initDataset)[i].first + (*initDataset)[i + 1].first) / 2;
-      (*insertDataset).push_back({tmp, tmp * 10});
+    if (testInsertQuery->size() > 0) {
+      for (int i = 10; i < kDatasetSize - 1; i += 10) {
+        double tmp =
+            ((*initDataset)[i].first + (*initDataset)[i + 1].first) / 2;
+        (*insertDataset).push_back({tmp, tmp * 10});
+      }
     }
     std::sort(insertDataset->begin(), insertDataset->end());
 

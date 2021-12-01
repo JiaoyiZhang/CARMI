@@ -56,7 +56,7 @@ class PLRModel {
   explicit PLRModel(int c) {
     childLeft = 0;
     for (int i = 0; i < 6; i++) {
-      index[i] = std::ceil(c / 6.0) * i;
+      index[i] = std::ceil(c / 7.0) * (i + 1);
     }
     for (int i = 0; i < 8; i++) {
       keys[i] = i;
@@ -196,7 +196,7 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
       SegmentPoint opt;
       opt.cost = -DBL_MAX;
       for (int k = i - 1; k < j; k++) {
-        double res = -DBL_MAX;
+        float res = -DBL_MAX;
         if (i < point_num - 1) {
           res = dp[0][k].cost + cand_cost.Entropy(cand_index[k], cand_index[j]);
         } else {
