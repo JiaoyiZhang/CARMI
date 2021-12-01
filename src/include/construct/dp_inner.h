@@ -47,15 +47,8 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateDPOptSetting(
         dataRange.initRange.size + dataRange.insertRange.size) {
       return;
     }
-    // Case 2.2: the size of this sub-dataset exceeds the threshold, use greedy
-    // node selection algorithm to construct this child node
-    if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
-        carmi_params::kAlgorithmThreshold)
-      res = GreedyAlgorithm(range);
-    // Case 2.3: the size of this sub-dataset does not exceed the threshold, use
-    // dp algorithm to construct this child node
-    else
-      res = DP(range);
+
+    res = DP(range);
 
     space_cost += res.space;
     time_cost += res.time;

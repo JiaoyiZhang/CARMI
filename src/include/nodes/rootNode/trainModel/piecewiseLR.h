@@ -250,37 +250,29 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
 template <typename DataVectorType, typename KeyType>
 inline double PiecewiseLR<DataVectorType, KeyType>::Predict(KeyType key) const {
   double p = 0;
-  if (SegmentNumber < 2) {
+  if (key <= point[0].first) {
     p = theta[0][0] * key + theta[0][1];
     if (p < 0)
       p = 0;
+    else if (p > point[0].second)
+      p = point[0].second;
+  } else if (key <= point[SegmentNumber - 2].first) {
+    for (int i = 1; i < SegmentNumber - 1; i++) {
+      if (key <= point[i].first) {
+        p = theta[i][0] * key + theta[i][1];
+        if (p < point[i - 1].second + 1)
+          p = point[i - 1].second + 1;
+        else if (p > point[i].second)
+          p = point[i].second;
+        break;
+      }
+    }
+  } else {
+    p = theta[SegmentNumber - 1][0] * key + theta[SegmentNumber - 1][1];
+    if (p < point[SegmentNumber - 2].second + 1)
+      p = point[SegmentNumber - 2].second + 1;
     else if (p > maxChildIdx)
       p = maxChildIdx;
-  } else {
-    if (key <= point[0].first) {
-      p = theta[0][0] * key + theta[0][1];
-      if (p < 0)
-        p = 0;
-      else if (p > point[0].second)
-        p = point[0].second;
-    } else if (key <= point[SegmentNumber - 2].first) {
-      for (int i = 1; i < SegmentNumber - 1; i++) {
-        if (key <= point[i].first) {
-          p = theta[i][0] * key + theta[i][1];
-          if (p < point[i - 1].second + 1)
-            p = point[i - 1].second + 1;
-          else if (p > point[i].second)
-            p = point[i].second;
-          break;
-        }
-      }
-    } else {
-      p = theta[SegmentNumber - 1][0] * key + theta[SegmentNumber - 1][1];
-      if (p < point[SegmentNumber - 2].second + 1)
-        p = point[SegmentNumber - 2].second + 1;
-      else if (p > maxChildIdx)
-        p = maxChildIdx;
-    }
   }
   return p;
 }

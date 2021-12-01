@@ -66,7 +66,7 @@ class BSModel {
   // *** Basic Functions of BS Inner Node Objects
 
   /**
-   * @brief train the histogram model
+   * @brief train the binary search model
    *
    * The training data points are stored in dataset[left, left + size].
    *
@@ -94,7 +94,7 @@ class BSModel {
   static constexpr int kTimeCost = carmi_params::kBSInnerTime;
 
  public:
-  //*** Public Data Members of His Inner Node Objects
+  //*** Public Data Members of BS Inner Node Objects
 
   /**
    * @brief A combined integer, composed of the flag of bs inner node

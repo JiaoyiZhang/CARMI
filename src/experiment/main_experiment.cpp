@@ -80,11 +80,7 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
 
   for (int r = 0; r < static_cast<int>(rate.size()); r++) {
-    double kRate;
-    if (initRatio == kWriteHeavy)
-      kRate = rate1[r];
-    else
-      kRate = rate[r];
+    double kRate = rate[r];
     outRes << "kRate:" << kRate << std::endl;
     std::cout << "+++++++++++ uniform dataset ++++++++++++++++++++++++++"
               << std::endl;
@@ -148,11 +144,7 @@ void mainMap(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
 
   for (int r = 0; r < static_cast<int>(rate.size()); r++) {
-    double kRate;
-    if (initRatio == kWriteHeavy)
-      kRate = rate1[r];
-    else
-      kRate = rate[r];
+    double kRate = rate[r];
     outRes << "kRate:" << kRate << std::endl;
 
     std::cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++"
@@ -201,11 +193,7 @@ void mainYCSB(double initRatio, const std::vector<int> &length) {
   DataVecType testInsert;
 
   for (int r = 0; r < static_cast<int>(rate.size()); r++) {
-    double kRate;
-    if (initRatio == kWriteHeavy)
-      kRate = rate1[r];
-    else
-      kRate = rate[r];
+    double kRate = rate[r];
     outRes << "kRate:" << kRate << std::endl;
     std::cout << "+++++++++++ ycsb dataset ++++++++++++++++++++++++++"
               << std::endl;
