@@ -1152,9 +1152,10 @@ class CARMIExternalMap {
    * less than key
    */
   const_iterator lower_bound(const KeyType &key) const {
-    const_iterator it(this);
-    int tmp = 0;
-    carmi_tree.Find(key, &tmp, &it.currslot);
+    int tmp = 0, slot = 0;
+    carmi_tree.Find(key, &tmp, &slot);
+    const_iterator it(const_cast<CARMIExternalMap<KeyType, DataType> *>(this),
+                      slot);
     if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
       return cend();
     } else {
@@ -1203,9 +1204,10 @@ class CARMIExternalMap {
    * greater than key
    */
   const_iterator upper_bound(const KeyType &key) const {
-    const_iterator it(this);
-    int tmp = 0;
-    carmi_tree.Find(key, &tmp, &it.currslot);
+    int tmp = 0, slot = 0;
+    carmi_tree.Find(key, &tmp, &slot);
+    const_iterator it(const_cast<CARMIExternalMap<KeyType, DataType> *>(this),
+                      slot);
     if (it.currslot >= carmi_tree.currsize || it.currslot < 0) {
       return cend();
     } else {
@@ -1240,9 +1242,10 @@ class CARMIExternalMap {
    * @return const_iterator the iterator of the data point
    */
   const_iterator find(const KeyType &key) const {
-    const_iterator it(this);
-    int tmp = 0;
-    carmi_tree.Find(key, &tmp, &it.currslot);
+    int tmp = 0, slot = 0;
+    carmi_tree.Find(key, &tmp, &slot);
+    const_iterator it(const_cast<CARMIExternalMap<KeyType, DataType> *>(this),
+                      slot);
     if (it.currslot < 0 || it.key() != key) {
       return cend();
     } else {

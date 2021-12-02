@@ -56,7 +56,7 @@ class PLRModel {
   explicit PLRModel(int c) {
     childLeft = 0;
     for (int i = 0; i < 6; i++) {
-      index[i] = std::ceil(c / 6.0) * i;
+      index[i] = std::ceil(c / 7.0) * (i + 1);
     }
     for (int i = 0; i < 8; i++) {
       keys[i] = i;
@@ -158,7 +158,7 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   TrainType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost<TrainType> cand_cost;
-  float seg = size * 1.0 / cand_size;
+  float seg = static_cast<double>(size) / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
     if (i * seg >= size) {
       for (; i < cand_size - 1; i++) {
@@ -181,7 +181,8 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
 
   // initialize the dp[0]
   for (int j = 1; j < cand_size; j++) {
-    dp[0][j].cost = cand_cost.Entropy(0, cand_index[j]);
+    dp[0][j].cost =
+        cand_cost.Entropy(0, cand_index[j], 0, cand_point[j].second);
     dp[0][j].key[0] = cand_point[0].first;
     dp[0][j].idx[0] = cand_index[0];
     dp[0][j].key[1] = cand_point[j].first;
@@ -196,13 +197,17 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
       SegmentPoint opt;
       opt.cost = -DBL_MAX;
       for (int k = i - 1; k < j; k++) {
-        double res = -DBL_MAX;
+        float res = -DBL_MAX;
         if (i < point_num - 1) {
-          res = dp[0][k].cost + cand_cost.Entropy(cand_index[k], cand_index[j]);
+          res = dp[0][k].cost + cand_cost.Entropy(cand_index[k], cand_index[j],
+                                                  cand_point[k].second,
+                                                  cand_point[j].second);
         } else {
           res = dp[0][k].cost +
-                cand_cost.Entropy(cand_index[k], cand_index[j]) +
-                cand_cost.Entropy(cand_index[j], size - 1);
+                cand_cost.Entropy(cand_index[k], cand_index[j],
+                                  cand_point[k].second, cand_point[j].second) +
+                cand_cost.Entropy(cand_index[j], size - 1, cand_point[j].second,
+                                  cand_point[cand_size - 1].second);
         }
         if (res > opt.cost) {
           opt.cost = res;
@@ -286,9 +291,9 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
     case 5:
     case 6: {
       float slope = static_cast<float>(index[e - 1] - index[e - 2]) /
-                    (keys[e] - keys[e - 1]);
+                    static_cast<float>(keys[e] - keys[e - 1]);
       // intercept = index[e-1] - slope * keys[e]
-      p = slope * (key - keys[e]) + index[e - 1];
+      p = slope * static_cast<double>(key - keys[e]) + index[e - 1];
       if (p < index[e - 2]) {
         p = index[e - 2];
       } else if (p > index[e - 1]) {
@@ -297,10 +302,11 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
       break;
     }
     case 7: {
-      e = (flagNumber & 0x00FFFFFF) - 1;                   // boundary
-      float slope = (e - index[5]) / (keys[7] - keys[6]);  // the slope
+      e = (flagNumber & 0x00FFFFFF) - 1;  // boundary
+      float slope = static_cast<float>(e - index[5]) /
+                    static_cast<float>(keys[7] - keys[6]);  // the slope
       // intercept = e - slope * keys[7], p = slope * x + intercept
-      p = slope * (key - keys[7]) + e;
+      p = slope * static_cast<double>(key - keys[7]) + e;
 
       if (p > e) {
         p = e;

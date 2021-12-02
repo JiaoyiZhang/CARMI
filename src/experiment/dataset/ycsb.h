@@ -50,7 +50,7 @@ class YCSBDataset : public BaseDataset {
       double k = stod(key);
       double v = k / 10;
       ds.push_back({k, v});
-      if (ds.size() == kDatasetSize + round(kTestSize * (1 - proportion))) {
+      if (ds.size() == kDatasetSize + end) {
         break;
       }
     }
@@ -59,9 +59,15 @@ class YCSBDataset : public BaseDataset {
     for (int i = 0; i < kDatasetSize; i++) {
       (*initDataset)[i] = ds[i];
     }
-
-    for (int i = 0; i < end; i++) {
-      (*testInsertQuery)[i] = ds[i + kDatasetSize];
+    double lastKey = ds[ds.size() - 1].first;
+    if (ds.size() < kDatasetSize + end) {
+      for (int i = 0; i < end; i++) {
+        (*testInsertQuery)[i] = {lastKey + i, lastKey + i};
+      }
+    } else {
+      for (int i = 0; i < end; i++) {
+        (*testInsertQuery)[i] = ds[i + kDatasetSize];
+      }
     }
 
     std::cout << "YCSB: init size:" << (*initDataset).size()

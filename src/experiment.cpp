@@ -19,7 +19,7 @@ std::ofstream outRes;
 
 int main() {
   kPrimaryIndex = false;
-  outRes.open("res_0907.csv", std::ios::app);
+  outRes.open("res_1122.csv", std::ios::app);
 
   time_t timep;
   time(&timep);

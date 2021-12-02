@@ -23,8 +23,9 @@ template <typename InnerNodeType>
 void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateDPOptSetting(
     const DataRange &dataRange, int c, double frequency_weight,
     NodeCost *optimalCost, InnerNodeType *optimal_node_struct) {
-  double space_cost = kBaseNodeSpace * c;
-  double time_cost = InnerNodeType::kTimeCost * frequency_weight;
+  double space_cost = kBaseNodeSpace * static_cast<double>(c);
+  double time_cost =
+      InnerNodeType::kTimeCost * static_cast<double>(frequency_weight);
   double RootCost = time_cost + lambda * space_cost;
   // Case 1: the cost of the root node has been larger than the optimal cost,
   // return directly
@@ -47,15 +48,8 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateDPOptSetting(
         dataRange.initRange.size + dataRange.insertRange.size) {
       return;
     }
-    // Case 2.2: the size of this sub-dataset exceeds the threshold, use greedy
-    // node selection algorithm to construct this child node
-    if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
-        carmi_params::kAlgorithmThreshold)
-      res = GreedyAlgorithm(range);
-    // Case 2.3: the size of this sub-dataset does not exceed the threshold, use
-    // dp algorithm to construct this child node
-    else
-      res = DP(range);
+
+    res = DP(range);
 
     space_cost += res.space;
     time_cost += res.time;

@@ -1325,7 +1325,7 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::StoreData(
     }
 
     LeafSlots<KeyType, ValueType> tmp;
-    int avg = std::max(1.0, ceil(size * 1.0 / neededBlockNum));
+    int avg = std::max(1.0, ceil(static_cast<double>(size) / neededBlockNum));
     avg = std::min(avg, kMaxBlockCapacity);
     CFArrayType tmpArr;
     data->dataArray[m_left] = LeafSlots<KeyType, ValueType>();

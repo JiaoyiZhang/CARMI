@@ -62,7 +62,8 @@ NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DPLeaf(
     int blockNum =
         CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
             totalDataNum);
-    int avgSlotNum = std::max(1.0, ceil(totalDataNum * 1.0 / blockNum));
+    int avgSlotNum =
+        std::max(1.0, ceil(static_cast<double>(totalDataNum) / blockNum));
     avgSlotNum = std::min(
         avgSlotNum,
         CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockCapacity);
@@ -72,13 +73,13 @@ NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DPLeaf(
     // calculate the time cost of find operations
     int end = dataRange.findRange.left + dataRange.findRange.size;
     for (int i = dataRange.findRange.left; i < end; i++) {
-      nodeCost.time += findQuery[i].second * 1.0 / querySize *
+      nodeCost.time += static_cast<double>(findQuery[i].second) / querySize *
                        (log2(avgSlotNum) * carmi_params::kCostBSTime);
     }
     // calculate the time cost of insert operations
     end = dataRange.insertRange.left + dataRange.insertRange.size;
     for (int i = dataRange.insertRange.left; i < end; i++) {
-      nodeCost.time += 1.0 / querySize *
+      nodeCost.time += 1.0 / static_cast<double>(querySize) *
                        ((log2(avgSlotNum) * carmi_params::kCostBSTime) +
                         (1 + avgSlotNum) / 2.0 * carmi_params::kCostMoveTime);
     }

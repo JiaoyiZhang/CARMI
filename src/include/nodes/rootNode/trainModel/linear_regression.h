@@ -43,6 +43,7 @@ class LinearRegression {
   LinearRegression() {
     slope = 0.0001;
     intercept = 0.666;
+    maxChildIdx = 2;
   }
 
   /**
@@ -64,13 +65,20 @@ class LinearRegression {
     // train the lr model
     double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
     for (int i = 0; i < size; i++) {
-      t1 += dataset[i].first * dataset[i].first;
-      t2 += dataset[i].first;
-      t3 += dataset[i].first * index[i];
-      t4 += index[i];
+      t1 += static_cast<double>(dataset[i].first) *
+            static_cast<double>(dataset[i].first);
+      t2 += static_cast<double>(dataset[i].first);
+      t3 +=
+          static_cast<double>(dataset[i].first) * static_cast<double>(index[i]);
+      t4 += static_cast<double>(index[i]);
     }
-    slope = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
-    intercept = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+    if (t1 * size - t2 * t2) {
+      slope = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
+      intercept = (t1 * t4 - t2 * t3) / (t1 * size - t2 * t2);
+    } else {
+      slope = 1.0;
+      intercept = 1.0;
+    }
   }
 
   /**
@@ -81,7 +89,7 @@ class LinearRegression {
    */
   inline double Predict(KeyType key) const {
     // predict the index of the next node using the lr model
-    double p = slope * key + intercept;
+    double p = slope * static_cast<double>(key) + intercept;
     // boundary processing
     if (p < 0)
       p = 0;

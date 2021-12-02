@@ -805,13 +805,13 @@ class CARMI {
    * @brief The total frequency of queries. This parameter is useless after the
    * index is constructed.
    */
-  int querySize;
+  double querySize;
 
   /**
    * @brief The space needed to be reserved for the future inserts. This
    * parameter is useless after the index is constructed.
    */
-  int reservedSpace;
+  double reservedSpace;
 
   /**
    * @brief Used to indicate whether the current mode is the init mode. The init
@@ -931,7 +931,17 @@ class CARMI {
 template <typename KeyType, typename ValueType, typename Compare,
           typename Alloc>
 CARMI<KeyType, ValueType, Compare, Alloc>::CARMI() {
-  // set the default values to the variables
+  if (carmi_params::kMaxLeafNodeSize <= 0 &&
+      (carmi_params::kMaxLeafNodeSize % 64 != 0)) {
+    throw std::logic_error(
+        "carmi_params::kMaxLeafNodeSize does not meet the logic requirements.");
+  }
+  if (carmi_params::kAlgorithmThreshold < carmi_params::kMaxLeafNodeSize) {
+    throw std::logic_error(
+        "carmi_params::kAlgorithmThreshold does not meet the logic "
+        "requirements.");
+  }
+
   isPrimary = false;
   firstLeaf = -1;
   lastLeaf = 0;
@@ -976,9 +986,7 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
     throw std::logic_error(
         "carmi_params::kMaxLeafNodeSize does not meet the logic requirements.");
   }
-  if (carmi_params::kAlgorithmThreshold < carmi_params::kMaxLeafNodeSize ||
-      carmi_params::kAlgorithmThreshold <
-          carmi_params::kMaxLeafNodeSizeExternal) {
+  if (carmi_params::kAlgorithmThreshold < carmi_params::kMaxLeafNodeSize) {
     throw std::logic_error(
         "carmi_params::kAlgorithmThreshold does not meet the logic "
         "requirements.");
@@ -1006,7 +1014,7 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
   }
   insertQuery = std::move(insertData);
   emptyNode.cfArray = CFArrayType<KeyType, ValueType, Compare, Alloc>();
-  reservedSpace = insertQuery.size() * 1.0 / initDataset.size() * 4096 * 16;
+  reservedSpace = insertQuery.size() * 1.0 / initDataset.size() * 4096.0 * 16.0;
 
   // calculate the total number of queries
   querySize = 0;
@@ -1033,9 +1041,8 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
     throw std::logic_error(
         "carmi_params::kMaxLeafNodeSize does not meet the logic requirements.");
   }
-  if (carmi_params::kAlgorithmThreshold < carmi_params::kMaxLeafNodeSize ||
-      carmi_params::kAlgorithmThreshold <
-          carmi_params::kMaxLeafNodeSizeExternal) {
+  if (carmi_params::kAlgorithmThreshold <
+      carmi_params::kMaxLeafNodeSizeExternal) {
     throw std::logic_error(
         "carmi_params::kAlgorithmThreshold does not meet the logic "
         "requirements.");

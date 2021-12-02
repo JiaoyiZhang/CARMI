@@ -41,12 +41,8 @@ const float kSecondToNanosecond = 1000000000.0;
 
 #ifdef DEBUG
 const std::vector<double> rate = {0.025};
-const std::vector<double> rate1 = {0.025};
 #else
 const std::vector<double> rate = {0.01, 0.02, 0.025, 0.03, 0.05, 0.1};
-const std::vector<double> rate1 = {0.01, 0.02, 0.025, 0.03, 0.05, 0.1};  // 0.5
 #endif  // !DEBUG
-
-const int kRMIInnerChild = 32;
 
 #endif  // EXPERIMENT_EXPERIMENT_PARAMS_H_

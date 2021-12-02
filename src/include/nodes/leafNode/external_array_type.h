@@ -130,9 +130,9 @@ class ExternalArray {
    * @param[in] key the given key value
    * @return int: the predicted index in the leaf node
    */
-  inline int Predict(double key) const {
+  inline int Predict(KeyType key) const {
     int size = (flagNumber & 0x00FFFFFF);
-    int p = (slope * key + intercept) * size;
+    int p = (slope * static_cast<double>(key) + intercept) * size;
     if (p < 0)
       p = 0;
     else if (p >= size && size != 0)
@@ -276,10 +276,12 @@ inline void ExternalArray<KeyType, DataType, Compare>::Train(
   // train the lr model
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   for (int i = 0; i < size; i++) {
-    t1 += currdata[i].first * currdata[i].first;
-    t2 += currdata[i].first;
-    t3 += currdata[i].first * currdata[i].second;
-    t4 += currdata[i].second;
+    t1 += static_cast<double>(currdata[i].first) *
+          static_cast<double>(currdata[i].first);
+    t2 += static_cast<double>(currdata[i].first);
+    t3 += static_cast<double>(currdata[i].first) *
+          static_cast<double>(currdata[i].second);
+    t4 += static_cast<double>(currdata[i].second);
   }
   // update the parameters
   if (t1 * size - t2 * t2) {
@@ -404,7 +406,7 @@ void ExternalArray<KeyType, DataType, Compare>::FindOptError(
   }
 
   // find the optimal value of error
-  int minRes = size * log2(size);
+  int minRes = static_cast<double>(size) * log2(size);
   int res;
   int cntBetween = 0;
   for (int e = 0; e <= size; e++) {
@@ -413,9 +415,10 @@ void ExternalArray<KeyType, DataType, Compare>::FindOptError(
     }
     cntBetween += error_count[e];
     if (e != 0)
-      res = cntBetween * log2(e) + (size - cntBetween) * log2(size);
+      res = static_cast<double>(cntBetween) * log2(e) +
+            static_cast<double>(size - cntBetween) * log2(size);
     else
-      res = (size - cntBetween) * log2(size);
+      res = static_cast<double>(size - cntBetween) * log2(size);
     if (res < minRes) {
       minRes = res;
       error = e;

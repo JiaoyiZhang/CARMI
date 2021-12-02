@@ -2247,8 +2247,11 @@ class CARMIMap {
    * less than key
    */
   const_iterator lower_bound(const KeyType &key) const {
-    const_iterator it(this);
-    it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
+    int currblock, currslot;
+    BaseNode<KeyType, ValueType, Compare, Alloc> *node =
+        carmi_tree.Find(key, &currblock, &currslot);
+    const_iterator it(const_cast<CARMIMap<KeyType, ValueType> *>(this), node,
+                      currblock, currslot);
     if (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock)) {
       it++;
     }
@@ -2283,8 +2286,11 @@ class CARMIMap {
    * greater than key
    */
   const_iterator upper_bound(const KeyType &key) const {
-    const_iterator it(this);
-    it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
+    int currblock, currslot;
+    BaseNode<KeyType, ValueType, Compare, Alloc> *node =
+        carmi_tree.Find(key, &currblock, &currslot);
+    const_iterator it(const_cast<CARMIMap<KeyType, ValueType> *>(this), node,
+                      currblock, currslot);
     while (it != cend() &&
            (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock) ||
             it.key() == key)) {
@@ -2326,7 +2332,8 @@ class CARMIMap {
     if (currslot >= node->cfArray.GetBlockSize(currblock)) {
       return cend();
     } else {
-      return const_iterator(this, node, currblock, currslot);
+      return const_iterator(const_cast<CARMIMap<KeyType, ValueType> *>(this),
+                            node, currblock, currslot);
     }
   }
 
