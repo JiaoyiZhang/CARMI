@@ -20,9 +20,9 @@ template <typename KeyType, typename ValueType, typename Compare,
           typename Alloc>
 long long CARMI<KeyType, ValueType, Compare, Alloc>::CalculateSpace() const {
   // calculate the space of the plr root node
-  long long space_cost = kPLRRootSpace * 1024 * 1024;
+  long long space_cost = kPLRRootSpace * 1024.0 * 1024.0;
   // calculate the space of the node array
-  space_cost += kBaseNodeSpace * node.nowNodeNumber * 1024 * 1024;
+  space_cost += kBaseNodeSpace * node.nowNodeNumber * 1024.0 * 1024.0;
 #ifdef DEBUG
   std::cout << "node.size(), " << node.nodeArray.size() << ",\tnowChildNumber,"
             << node.nowNodeNumber << std::endl;
@@ -33,7 +33,8 @@ long long CARMI<KeyType, ValueType, Compare, Alloc>::CalculateSpace() const {
 
   if (!isPrimary) {
     // calculate the space of the data array
-    space_cost += data.dataArray.size() * carmi_params::kMaxLeafNodeSize;
+    space_cost += static_cast<double>(data.dataArray.size()) *
+                  carmi_params::kMaxLeafNodeSize;
   }
   return space_cost;
 }

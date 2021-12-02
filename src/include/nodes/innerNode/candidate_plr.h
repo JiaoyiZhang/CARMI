@@ -87,22 +87,28 @@ class CandidateCost {
     p[0] = 0.0;
     for (int i = 1; i < static_cast<int>(index.size()); i++) {
       for (int j = index[i - 1]; j < index[i]; j++) {
-        xx[i] += dataset[j].first * dataset[j].first;
-        x[i] += dataset[j].first;
-        px[i] += dataset[j].first * dataset[j].second;
-        p[i] += dataset[j].second;
+        xx[i] += static_cast<double>(dataset[j].first) *
+                 static_cast<double>(dataset[j].first);
+        x[i] += static_cast<double>(dataset[j].first);
+        px[i] += static_cast<double>(dataset[j].first) *
+                 static_cast<double>(dataset[j].second);
+        p[i] += static_cast<double>(dataset[j].second);
       }
       xx[i] += xx[i - 1];
       x[i] += x[i - 1];
       px[i] += px[i - 1];
       p[i] += p[i - 1];
     }
-    xx[index.size() - 1] += dataset[index[index.size() - 1]].first *
-                            dataset[index[index.size() - 1]].first;
-    x[index.size() - 1] += dataset[index[index.size() - 1]].first;
-    px[index.size() - 1] += dataset[index[index.size() - 1]].first *
-                            dataset[index[index.size() - 1]].second;
-    p[index.size() - 1] += dataset[index[index.size() - 1]].second;
+    xx[index.size() - 1] +=
+        static_cast<double>(dataset[index[index.size() - 1]].first) *
+        static_cast<double>(dataset[index[index.size() - 1]].first);
+    x[index.size() - 1] +=
+        static_cast<double>(dataset[index[index.size() - 1]].first);
+    px[index.size() - 1] +=
+        static_cast<double>(dataset[index[index.size() - 1]].first) *
+        static_cast<double>(dataset[index[index.size() - 1]].second);
+    p[index.size() - 1] +=
+        static_cast<double>(dataset[index[index.size() - 1]].second);
 
     // store the parameters of each segment
     for (int i = 0; i < index.size() - 1; i++) {
@@ -120,10 +126,12 @@ class CandidateCost {
             theta1 = 0;
             theta2 = dataset[index[j]].second;
           } else {
-            theta1 = (dataset[index[j]].second - dataset[index[i]].second) /
-                     (dataset[index[j]].first - dataset[index[i]].first);
-            theta2 =
-                dataset[index[j]].second - theta1 * dataset[index[j]].first;
+            theta1 = (static_cast<double>(dataset[index[j]].second) -
+                      static_cast<double>(dataset[index[i]].second)) /
+                     (static_cast<double>(dataset[index[j]].first) -
+                      static_cast<double>(dataset[index[i]].first));
+            theta2 = static_cast<double>(dataset[index[j]].second) -
+                     theta1 * static_cast<double>(dataset[index[j]].first);
           }
         } else {
           theta1 = (t3 * tmpSize - t2 * t4) / (t1 * tmpSize - t2 * t2);

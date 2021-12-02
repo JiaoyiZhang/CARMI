@@ -281,20 +281,26 @@ inline int PrefetchPLR::PrefetchTrain(
   }
 
   theta[0][0] = opt.blockNum[1];
-  theta[0][1] = -theta[0][0] * candidates[opt.idx[0]].first;
-  point[0].second = theta[0][0] * point[0].first + theta[0][1];
+  theta[0][1] =
+      -theta[0][0] * static_cast<double>(candidates[opt.idx[0]].first);
+  point[0].second =
+      theta[0][0] * static_cast<double>(point[0].first) + theta[0][1];
   for (int i = 1; i < SegmentNumber; i++) {
     theta[i][0] = opt.blockNum[i + 1];
-    theta[i][1] = point[i - 1].second - theta[i][0] * point[i - 1].first;
+    theta[i][1] = static_cast<double>(point[i - 1].second) -
+                  theta[i][0] * static_cast<double>(point[i - 1].first);
     if (i < SegmentNumber - 1) {
-      point[i].second = theta[i][0] * point[i].first + theta[i][1];
+      point[i].second =
+          theta[i][0] * static_cast<double>(point[i].first) + theta[i][1];
     }
   }
   theta[SegmentNumber - 1][0] = opt.blockNum[SegmentNumber];
   theta[SegmentNumber - 1][1] =
       point[SegmentNumber - 2].second -
-      theta[SegmentNumber - 1][0] * point[SegmentNumber - 2].first;
-  blockNumber = theta[SegmentNumber - 1][0] * dataset[size - 1].first +
+      theta[SegmentNumber - 1][0] *
+          static_cast<double>(point[SegmentNumber - 2].first);
+  blockNumber = theta[SegmentNumber - 1][0] *
+                    static_cast<double>(dataset[size - 1].first) +
                 theta[SegmentNumber - 1][1] + 1;
 
   return blockNumber;

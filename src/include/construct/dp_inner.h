@@ -23,8 +23,9 @@ template <typename InnerNodeType>
 void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateDPOptSetting(
     const DataRange &dataRange, int c, double frequency_weight,
     NodeCost *optimalCost, InnerNodeType *optimal_node_struct) {
-  double space_cost = kBaseNodeSpace * c;
-  double time_cost = InnerNodeType::kTimeCost * frequency_weight;
+  double space_cost = kBaseNodeSpace * static_cast<double>(c);
+  double time_cost =
+      InnerNodeType::kTimeCost * static_cast<double>(frequency_weight);
   double RootCost = time_cost + lambda * space_cost;
   // Case 1: the cost of the root node has been larger than the optimal cost,
   // return directly

@@ -158,7 +158,7 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   TrainType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost<TrainType> cand_cost;
-  float seg = size * 1.0 / cand_size;
+  float seg = static_cast<double>(size) / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
     if (i * seg >= size) {
       for (; i < cand_size - 1; i++) {
@@ -291,9 +291,9 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
     case 5:
     case 6: {
       float slope = static_cast<float>(index[e - 1] - index[e - 2]) /
-                    (keys[e] - keys[e - 1]);
+                    static_cast<float>(keys[e] - keys[e - 1]);
       // intercept = index[e-1] - slope * keys[e]
-      p = slope * (key - keys[e]) + index[e - 1];
+      p = slope * static_cast<double>(key - keys[e]) + index[e - 1];
       if (p < index[e - 2]) {
         p = index[e - 2];
       } else if (p > index[e - 1]) {
@@ -302,10 +302,11 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
       break;
     }
     case 7: {
-      e = (flagNumber & 0x00FFFFFF) - 1;                   // boundary
-      float slope = (e - index[5]) / (keys[7] - keys[6]);  // the slope
+      e = (flagNumber & 0x00FFFFFF) - 1;  // boundary
+      float slope = static_cast<float>(e - index[5]) /
+                    static_cast<float>(keys[7] - keys[6]);  // the slope
       // intercept = e - slope * keys[7], p = slope * x + intercept
-      p = slope * (key - keys[7]) + e;
+      p = slope * static_cast<double>(key - keys[7]) + e;
 
       if (p > e) {
         p = e;

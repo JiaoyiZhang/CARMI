@@ -25,7 +25,7 @@ template <typename RootNodeType>
 void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateRootOptSetting(
     int c, double *optimalCost, RootStruct *rootStruct) {
   // calculate the basic space cost of the c child nodes of the root node
-  double space_cost = kBaseNodeSpace * c;
+  double space_cost = kBaseNodeSpace * static_cast<double>(c);
   // calculate the time cost of the root node
   double time_cost = RootNodeType::kTimeCost;
 
@@ -64,14 +64,16 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateRootOptSetting(
     // manage the data points together
     if (totalDataNum > maxLeafCapacity) {
       space_cost += kBaseNodeSpace * kMinChildNumber;
-      time_cost += carmi_params::kMemoryAccessTime * perSize[i].size /
-                   initDataset.size();
+      time_cost += carmi_params::kMemoryAccessTime *
+                   static_cast<double>(perSize[i].size) /
+                   static_cast<double>(initDataset.size());
     }
   }
 
   // calculate the entropy of the root node
   double entropy = CalculateEntropy(perSize);
-  double cost = (time_cost + static_cast<float>(lambda * space_cost)) / entropy;
+  double cost =
+      (time_cost + lambda * static_cast<double>(space_cost)) / entropy;
 
   // if the current cost is smaller than the optimal cost, update the optimal
   // cost and root setting

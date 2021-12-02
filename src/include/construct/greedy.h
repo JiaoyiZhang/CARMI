@@ -30,7 +30,7 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateGreedyOptSetting(
     const DataRange &range, int c, double frequency_weight,
     NodeCost *optimalCost, InnerNodeType *optimal_node_struct) {
   // calculate the basic space cost of the c child nodes of the inner node
-  double space_cost = kBaseNodeSpace * c;
+  double space_cost = kBaseNodeSpace * static_cast<double>(c);
   // calculate the time cost of the inner node
   double time_cost = InnerNodeType::kTimeCost;
 
@@ -50,8 +50,8 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateGreedyOptSetting(
       int tmpBlockNum =
           CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
               totalDataNum);
-      space_cost +=
-          tmpBlockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
+      space_cost += static_cast<double>(tmpBlockNum) *
+                    carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
     }
     // if the total number of data points exceeds the maximum capacity of the
     // leaf node, the current node needs at least kMinChildNumber inner nodes to
@@ -59,7 +59,8 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateGreedyOptSetting(
     if (totalDataNum > maxLeafCapacity) {
       space_cost += kBaseNodeSpace * kMinChildNumber;
       time_cost += carmi_params::kMemoryAccessTime *
-                   subDataset.subInit[i].size / range.initRange.size;
+                   static_cast<double>(subDataset.subInit[i].size) /
+                   static_cast<double>(range.initRange.size);
     }
   }
   // calculate the entropy of the inner node

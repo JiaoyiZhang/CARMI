@@ -159,14 +159,14 @@ inline void HisModel<KeyType, ValueType>::Train(int left, int size,
   // calculate divisor
   int end = left + size;
   int childNumber = flagNumber & 0x00FFFFFF;
-  double maxValue = dataset[end - 1].first;
+  float maxValue = dataset[end - 1].first;
   minValue = dataset[left].first;
-  divisor = 1.0 / ((maxValue - minValue) / childNumber);
+  divisor = 1.0 / (static_cast<double>(maxValue - minValue) / childNumber);
 
   // count the number of data points in each child
   std::vector<int> table(childNumber, 0);
   for (int i = left; i < end; i++) {
-    int idx = (dataset[i].first - minValue) * divisor;
+    int idx = static_cast<double>(dataset[i].first - minValue) * divisor;
     idx = std::min(std::max(0, idx), childNumber - 1);
     table[idx]++;
   }
@@ -217,7 +217,7 @@ template <typename KeyType, typename ValueType>
 inline int HisModel<KeyType, ValueType>::Predict(KeyType key) const {
   int childNumber = flagNumber & 0x00FFFFFF;
   // calculate the index of the corresponding bucket
-  int idx = (key - minValue) * divisor;
+  int idx = static_cast<float>(key - minValue) * divisor;
   if (idx < 0)
     idx = 0;
   else if (idx >= childNumber)

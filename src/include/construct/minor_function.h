@@ -44,7 +44,7 @@ double CARMI<KeyType, ValueType, Compare, Alloc>::CalculateEntropy(
   for (int i = 0; i < perSize.size(); i++) {
     n += perSize[i].size;
     if (perSize[i].size != 0)
-      slogs += perSize[i].size * 1.0 * (-log2(perSize[i].size));
+      slogs += static_cast<double>(perSize[i].size) * (-log2(perSize[i].size));
   }
   if (n == 0) {
     return DBL_MAX;
@@ -79,10 +79,11 @@ std::vector<double> CARMI<KeyType, ValueType, Compare,
       int neededBlock =
           CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
               size);
-      space += neededBlock * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
+      space += static_cast<double>(neededBlock) *
+               carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
       time += carmi_params::kMemoryAccessTime;
     }
-    time *= size * 1.0 / totalPrefetchedNum;
+    time *= static_cast<double>(size) / totalPrefetchedNum;
     cost[k] = time + lambda * space;
   }
   return cost;

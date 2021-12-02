@@ -57,6 +57,12 @@ class PiecewiseLR {
     maxChildIdx = 2;
   }
 
+#ifdef DEBUG
+  int GetSegNum() { return SegmentNumber; }
+
+  std::vector<std::pair<float, int>> GetPoint() { return point; }
+#endif  // DEBUG
+
  public:
   // *** Basic Public Functions of P. LR Model Objects
 
@@ -119,7 +125,7 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
   TrainType currdata(dataset.size());
   for (int i = 0; i < size; i++) {
     currdata[i].first = dataset[i].first;
-    currdata[i].second = i * 1.0 / size * maxChildIdx;
+    currdata[i].second = static_cast<double>(i) / size * maxChildIdx;
   }
 
   // store the index and data points of candidate points into cand_index and
@@ -128,7 +134,7 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
   TrainType cand_point(cand_size, {0, 0});
   std::vector<int> cand_index(cand_size, 0);
   CandidateCost<TrainType> cand_cost;
-  float seg = size * 1.0 / cand_size;
+  float seg = static_cast<double>(size) / cand_size;
   for (int i = 0; i < cand_size - 1; i++) {
     if (i * seg >= size) {
       for (; i < cand_size - 1; i++) {
@@ -146,7 +152,7 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
 
   float plr_cost =
       cand_cost.Entropy(0, size - 1, 0, cand_point[cand_size - 1].second);
-  point[0].first = currdata[size - 1].first * 10;
+  point[0].first = static_cast<KeyType>(DBL_MAX);
   point[0].second = maxChildIdx;
   auto tmp_theta = cand_cost.theta.find({0, size - 1});
   theta[0][0] = tmp_theta->second.first;
@@ -245,13 +251,16 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
     }
   }
   SegmentNumber = opt_seg;
+  if (SegmentNumber < 2) {
+    point[0] = {static_cast<KeyType>(DBL_MAX), maxChildIdx};
+  }
 }
 
 template <typename DataVectorType, typename KeyType>
 inline double PiecewiseLR<DataVectorType, KeyType>::Predict(KeyType key) const {
   double p = 0;
   if (key <= point[0].first) {
-    p = theta[0][0] * key + theta[0][1];
+    p = theta[0][0] * static_cast<double>(key) + theta[0][1];
     if (p < 0)
       p = 0;
     else if (p > point[0].second)
@@ -259,7 +268,7 @@ inline double PiecewiseLR<DataVectorType, KeyType>::Predict(KeyType key) const {
   } else if (key <= point[SegmentNumber - 2].first) {
     for (int i = 1; i < SegmentNumber - 1; i++) {
       if (key <= point[i].first) {
-        p = theta[i][0] * key + theta[i][1];
+        p = theta[i][0] * static_cast<double>(key) + theta[i][1];
         if (p < point[i - 1].second + 1)
           p = point[i - 1].second + 1;
         else if (p > point[i].second)
@@ -268,7 +277,8 @@ inline double PiecewiseLR<DataVectorType, KeyType>::Predict(KeyType key) const {
       }
     }
   } else {
-    p = theta[SegmentNumber - 1][0] * key + theta[SegmentNumber - 1][1];
+    p = theta[SegmentNumber - 1][0] * static_cast<double>(key) +
+        theta[SegmentNumber - 1][1];
     if (p < point[SegmentNumber - 2].second + 1)
       p = point[SegmentNumber - 2].second + 1;
     else if (p > maxChildIdx)

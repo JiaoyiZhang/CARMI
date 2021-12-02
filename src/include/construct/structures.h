@@ -174,10 +174,12 @@ class SubDataset {
  */
 enum NodeType {
   PLR_ROOT_NODE,
+
   LR_INNER_NODE,
   PLR_INNER_NODE,
   HIS_INNER_NODE,
   BS_INNER_NODE,
+
   ARRAY_LEAF_NODE,
   EXTERNAL_ARRAY_LEAF_NODE
 };

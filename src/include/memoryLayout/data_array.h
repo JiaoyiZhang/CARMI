@@ -77,8 +77,8 @@ class DataArrayStructure {
           "DataArrayStructure: the maximum block number is invalid.");
     }
     usedDatasize = 0;
-    int totalDataSize =
-        std::max(64.0, size / carmi_params::kMaxLeafNodeSize * 1.5);
+    int totalDataSize = std::max(
+        64.0, static_cast<double>(size) / carmi_params::kMaxLeafNodeSize * 1.5);
     std::vector<LeafSlots<KeyType, ValueType>, Alloc>().swap(dataArray);
     dataArray = std::vector<LeafSlots<KeyType, ValueType>, Alloc>(
         totalDataSize, LeafSlots<KeyType, ValueType>());

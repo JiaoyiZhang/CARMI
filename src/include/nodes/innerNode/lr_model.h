@@ -147,9 +147,10 @@ inline void LRModel<KeyType, ValueType>::Train(int left, int size,
   // train the lr model
   double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   for (int i = 0; i < size; i++) {
-    t1 += currdata[i].first * currdata[i].first;
-    t2 += currdata[i].first;
-    t3 += currdata[i].first * currdata[i].second;
+    t1 += static_cast<double>(currdata[i].first) *
+          static_cast<double>(currdata[i].first);
+    t2 += static_cast<double>(currdata[i].first);
+    t3 += static_cast<double>(currdata[i].first) * currdata[i].second;
     t4 += currdata[i].second;
   }
   if (t1 * size - t2 * t2) {
@@ -164,7 +165,7 @@ inline void LRModel<KeyType, ValueType>::Train(int left, int size,
 template <typename KeyType, typename ValueType>
 inline int LRModel<KeyType, ValueType>::Predict(KeyType key) const {
   // use the lr model to predict the index of the next node
-  int p = slope * key + intercept;
+  int p = slope * static_cast<double>(key) + intercept;
   // get its child number
   int bound = flagNumber & 0x00FFFFFF;
   // check whether p exceeds the boundaries
