@@ -181,7 +181,8 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
 
   // initialize the dp[0]
   for (int j = 1; j < cand_size; j++) {
-    dp[0][j].cost = cand_cost.Entropy(0, cand_index[j]);
+    dp[0][j].cost =
+        cand_cost.Entropy(0, cand_index[j], 0, cand_point[j].second);
     dp[0][j].key[0] = cand_point[0].first;
     dp[0][j].idx[0] = cand_index[0];
     dp[0][j].key[1] = cand_point[j].first;
@@ -198,11 +199,15 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
       for (int k = i - 1; k < j; k++) {
         float res = -DBL_MAX;
         if (i < point_num - 1) {
-          res = dp[0][k].cost + cand_cost.Entropy(cand_index[k], cand_index[j]);
+          res = dp[0][k].cost + cand_cost.Entropy(cand_index[k], cand_index[j],
+                                                  cand_point[k].second,
+                                                  cand_point[j].second);
         } else {
           res = dp[0][k].cost +
-                cand_cost.Entropy(cand_index[k], cand_index[j]) +
-                cand_cost.Entropy(cand_index[j], size - 1);
+                cand_cost.Entropy(cand_index[k], cand_index[j],
+                                  cand_point[k].second, cand_point[j].second) +
+                cand_cost.Entropy(cand_index[j], size - 1, cand_point[j].second,
+                                  cand_point[cand_size - 1].second);
         }
         if (res > opt.cost) {
           opt.cost = res;

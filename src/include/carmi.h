@@ -805,13 +805,13 @@ class CARMI {
    * @brief The total frequency of queries. This parameter is useless after the
    * index is constructed.
    */
-  int querySize;
+  double querySize;
 
   /**
    * @brief The space needed to be reserved for the future inserts. This
    * parameter is useless after the index is constructed.
    */
-  int reservedSpace;
+  double reservedSpace;
 
   /**
    * @brief Used to indicate whether the current mode is the init mode. The init
@@ -1014,7 +1014,7 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
   }
   insertQuery = std::move(insertData);
   emptyNode.cfArray = CFArrayType<KeyType, ValueType, Compare, Alloc>();
-  reservedSpace = insertQuery.size() * 1.0 / initDataset.size() * 4096 * 16;
+  reservedSpace = insertQuery.size() * 1.0 / initDataset.size() * 4096.0 * 16.0;
 
   // calculate the total number of queries
   querySize = 0;
