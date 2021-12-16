@@ -32,8 +32,6 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
                const std::vector<int> &length, const DataVecType &initDataset,
                const DataVecType &insertDataset,
                const DataVecType &testInsertQuery) {
-  DataVecType init = initDataset;
-
 #ifdef DEBUG
   std::cout << std::endl;
   std::cout << "-------------------------------" << std::endl;
@@ -64,19 +62,20 @@ void CoreCARMI(bool isZipfian, double initRatio, double rate,
 #endif
 
   if (initRatio == kWriteHeavy)
-    WorkloadA<KeyType, ValueType>(isZipfian, init, testInsertQuery,
+    WorkloadA<KeyType, ValueType>(isZipfian, initDataset, testInsertQuery,
                                   &carmi);  // write-heavy
   else if (initRatio == kReadHeavy)
-    WorkloadB<KeyType, ValueType>(isZipfian, init, testInsertQuery,
+    WorkloadB<KeyType, ValueType>(isZipfian, initDataset, testInsertQuery,
                                   &carmi);  // read-heavy
   else if (initRatio == kReadOnly)
-    WorkloadC<KeyType, ValueType>(isZipfian, init,
+    WorkloadC<KeyType, ValueType>(isZipfian, initDataset,
                                   &carmi);  // read-only
   else if (initRatio == kWritePartial)
-    WorkloadD<KeyType, ValueType>(isZipfian, init, testInsertQuery,
+    WorkloadD<KeyType, ValueType>(isZipfian, initDataset, testInsertQuery,
                                   &carmi);  // write-partial
   else if (initRatio == kRangeScan)
-    WorkloadE<KeyType, ValueType>(isZipfian, init, testInsertQuery, length,
+    WorkloadE<KeyType, ValueType>(isZipfian, initDataset, testInsertQuery,
+                                  length,
                                   &carmi);  // range scan
 }
 
