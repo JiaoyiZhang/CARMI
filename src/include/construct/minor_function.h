@@ -137,7 +137,18 @@ template <typename InnerNodeType>
 InnerNodeType CARMI<KeyType, ValueType, Compare, Alloc>::InnerDivideAll(
     const DataRange &range, int c, SubDataset *subDataset) {
   InnerNodeType currnode(c);
-  currnode.Train(range.initRange.left, range.initRange.size, initDataset);
+  int s = range.initRange.left;
+  int e = range.initRange.size + s;
+  DataVectorType tmpDataset(initDataset.begin() + s, initDataset.begin() + e);
+  if (range.insertRange.size > 0) {
+    s = range.insertRange.left;
+    e = s + range.insertRange.size;
+    for (int j = s; j < e; j++) {
+      tmpDataset.push_back({insertQuery[j], static_cast<ValueType>(DBL_MAX)});
+    }
+    std::sort(tmpDataset.begin(), tmpDataset.end());
+  }
+  currnode.Train(0, tmpDataset.size(), tmpDataset);
   // split initDataset into c sub-datasets
   NodePartition<InnerNodeType>(currnode, range.initRange, initDataset,
                                &(subDataset->subInit));

@@ -217,19 +217,6 @@ class CFArrayType {
   static int CalNeededBlockNum(int size);
 
   /**
-   * @brief Get the actual number of data points in data.dataArray[blockleft,
-   * blockright)
-   *
-   * @param[in] data the data array
-   * @param[in] blockleft the left index of the data blocks
-   * @param[in] blockright the right index of the data blocks
-   * @return int: the number of data points
-   */
-  static int GetDataNum(
-      const DataArrayStructure<KeyType, ValueType, Alloc> &data, int blockleft,
-      int blockright);
-
-  /**
    * @brief extract data points (delete useless gaps and deleted data points)
    *
    * @param[in] data the data array
@@ -335,6 +322,7 @@ class CFArrayType {
    * store them evenly in these data blocks.
    * @param[in] neededBlockNum the number of needed data blocks
    * @param[in] left the left index of these data points in the dataset
+   * @param[in] size the size of these data points in the dataset
    * @param[inout] data the data array
    * @param[inout] prefetchEnd the right index of prefetched blocks in initial
    * mode, this parameter is useless if the isInitMode is false.
@@ -343,7 +331,7 @@ class CFArrayType {
    */
   inline bool StoreData(const DataVectorType &dataset,
                         const std::vector<int> &prefetchIndex, bool isInitMode,
-                        int neededBlockNum, int left,
+                        int neededBlockNum, int left, int size,
                         DataArrayStructure<KeyType, ValueType, Alloc> *data,
                         int *prefetchEnd);
 
@@ -357,6 +345,14 @@ class CFArrayType {
    * @return int the size of the data block
    */
   inline int GetBlockSize(int currblock) { return perSize[currblock]; }
+
+  /**
+   * @brief Get the actual number of data points in data.dataArray[blockleft,
+   * blockright)
+   *
+   * @return int: the number of data points
+   */
+  inline int GetDataNum();
 
   /**
    * @brief Compare the given key value with slotkeys to search the index of the
@@ -605,23 +601,13 @@ inline int CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
 
 template <typename KeyType, typename ValueType, typename Compare,
           typename Alloc>
-int CFArrayType<KeyType, ValueType, Compare, Alloc>::GetDataNum(
-    const DataArrayStructure<KeyType, ValueType, Alloc> &data, int blockleft,
-    int blockright) {
-  if (blockleft < 0 || blockleft > blockright ||
-      blockright >= data.dataArray.size()) {
-    throw std::out_of_range("CFArrayType::GetDataNum: the range is invalid.");
+int CFArrayType<KeyType, ValueType, Compare, Alloc>::GetDataNum() {
+  int nowBlockNum = flagNumber & 0x00FFFFFF;
+  int cnt = 0;
+  for (int i = 0; i < nowBlockNum; i++) {
+    cnt += perSize[i];
   }
-
-  int num = 0;
-  for (int i = blockleft; i < blockright; i++) {
-    for (int j = 0; j < kMaxBlockCapacity; j++) {
-      if (data.dataArray[i].slots[j].first != static_cast<KeyType>(DBL_MAX)) {
-        num++;
-      }
-    }
-  }
-  return num;
+  return cnt;
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
@@ -631,7 +617,7 @@ CFArrayType<KeyType, ValueType, Compare, Alloc>::ExtractDataset(
     const DataArrayStructure<KeyType, ValueType, Alloc> &data, int blockleft,
     int blockright) {
   if (blockleft < 0 || blockleft > blockright ||
-      blockright >= data.dataArray.size()) {
+      blockright > data.dataArray.size()) {
     throw std::out_of_range(
         "CFArrayType::ExtractDataset: the range is invalid.");
   }
@@ -661,7 +647,8 @@ inline void CFArrayType<KeyType, ValueType, Compare, Alloc>::Init(
   }
 
   int neededBlockNum = CalNeededBlockNum(size);
-  StoreData(dataset, prefetchIndex, false, neededBlockNum, start_idx, data, 0);
+  StoreData(dataset, prefetchIndex, false, neededBlockNum, start_idx, size,
+            data, 0);
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
@@ -720,7 +707,7 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::Insert(
     return true;
   }
 
-  int nowDataNum = GetDataNum(*data, m_left, m_left + nowBlockNum);
+  int nowDataNum = GetDataNum();
 
   // Case 3: insert into the next data block.
   // If inserting into the current data block fails, and there is an empty
@@ -900,7 +887,8 @@ inline void CFArrayType<KeyType, ValueType, Compare, Alloc>::Rebalance(
   std::vector<int> prefetchIndex(newDataset.size(), 0);
 
   // store data points
-  StoreData(newDataset, prefetchIndex, false, nowBlockNum, 0, data, 0);
+  StoreData(newDataset, prefetchIndex, false, nowBlockNum, 0, newDataset.size(),
+            data, 0);
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
@@ -914,7 +902,8 @@ inline void CFArrayType<KeyType, ValueType, Compare, Alloc>::Expand(
   std::vector<int> prefetchIndex(newDataset.size(), 0);
 
   // store data points
-  StoreData(newDataset, prefetchIndex, false, neededBlockNum, 0, data, 0);
+  StoreData(newDataset, prefetchIndex, false, neededBlockNum, 0,
+            newDataset.size(), data, 0);
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
@@ -1214,7 +1203,7 @@ template <typename KeyType, typename ValueType, typename Compare,
           typename Alloc>
 inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::StoreData(
     const DataVectorType &dataset, const std::vector<int> &prefetchIndex,
-    bool isInitMode, int neededBlockNum, int left,
+    bool isInitMode, int neededBlockNum, int left, int actualSize,
     DataArrayStructure<KeyType, ValueType, Alloc> *data, int *prefetchEnd) {
   // if the dataset is empty, return true directly
   for (int i = 0; i < kMaxPerSizeNum; i++) {
@@ -1239,14 +1228,13 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::StoreData(
     m_left = leftIdx;
 
     LeafSlots<KeyType, ValueType> tmpSlot;
-    DataVectorType tmpDataset(dataset.begin() + left, dataset.begin() + end);
     std::vector<LeafSlots<KeyType, ValueType>> prevBlocks(neededBlockNum,
                                                           tmpSlot);
     // store in a way that gives priority to the previous data blocks
     int prevActualNum = 0;
     int prevMissNum = 0;
     bool isPreviousSuccess =
-        StorePrevious(tmpDataset, prefetchIndex, neededBlockNum, &prevBlocks,
+        StorePrevious(dataset, prefetchIndex, neededBlockNum, &prevBlocks,
                       &prevActualNum, &prevMissNum);
     char previousPerSize[kMaxPerSizeNum];
     for (int i = 0; i < kMaxPerSizeNum; i++) {
@@ -1260,7 +1248,7 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::StoreData(
     int nextActualNum = 0;
     int nextMissNum = 0;
     bool isNextSuccess =
-        StoreSubsequent(tmpDataset, prefetchIndex, neededBlockNum, &nextBlocks,
+        StoreSubsequent(dataset, prefetchIndex, neededBlockNum, &nextBlocks,
                         &nextActualNum, &nextMissNum);
 
     bool isPrev = true;
@@ -1350,26 +1338,40 @@ inline bool CFArrayType<KeyType, ValueType, Compare, Alloc>::StoreData(
 
   if (actualBlockNum <= 1) {
     slotkeys[0] = dataset[left + size - 1].first + 1;
-    return true;
-  }
-  end = m_left + actualBlockNum;
-  int j = 0;
-  double lastKey = dataset[left].first;
-  // store the minimum key value of each data block into slotkeys
-  for (int i = 0; i < kMaxBlockCapacity; i++) {
+  } else {
+    end = m_left + actualBlockNum;
+    int j = 0;
+    double lastKey = dataset[left].first;
+    // store the minimum key value of each data block into slotkeys
     if (perSize[0] > 0) {
-      lastKey = data->dataArray[m_left].slots[i].first;
-    } else {
-      break;
+      lastKey = data->dataArray[m_left].slots[perSize[0] - 1].first;
+    }
+
+    for (int i = m_left + 1; i < end; i++, j++) {
+      int tmpSize = perSize[i - m_left];
+      if (tmpSize > 0) {
+        slotkeys[j] = data->dataArray[i].slots[0].first;
+        lastKey = data->dataArray[i].slots[tmpSize - 1].first;
+      } else {
+        slotkeys[j] = lastKey + 1;
+      }
     }
   }
-  for (int i = m_left + 1; i < end; i++, j++) {
-    int tmpSize = perSize[i - m_left];
-    if (tmpSize > 0) {
-      slotkeys[j] = data->dataArray[i].slots[0].first;
-      lastKey = data->dataArray[i].slots[tmpSize - 1].first;
-    } else {
-      slotkeys[j] = lastKey + 1;
+
+  if (size != actualSize) {
+    for (int i = m_left, cnt = 0; i < m_left + actualBlockNum; i++) {
+      int tmpSize = perSize[i - m_left];
+      for (int j = 0; j < tmpSize; j++) {
+        if (dataset[cnt].second == static_cast<ValueType>(DBL_MAX)) {
+          for (int num = j; num < perSize[i - m_left] - 1; num++) {
+            data->dataArray[i].slots[num] = data->dataArray[i].slots[num + 1];
+          }
+          data->dataArray[i].slots[static_cast<int>(perSize[i - m_left]) - 1] =
+              {static_cast<KeyType>(DBL_MAX), static_cast<ValueType>(DBL_MAX)};
+          perSize[i - m_left]--;
+        }
+        cnt++;
+      }
     }
   }
   return true;

@@ -113,14 +113,8 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::ConstructSubTree(
   }
 
   if (!isPrimary) {
-// calculate the cost of all prefetched leaf nodes in different number of
-// data blocks
-#ifdef DEBUG
-    std::cout << "Total size: " << initDataset.size()
-              << ",\tcan be prefetched:" << prefetchNum
-              << ",\trate:" << prefetchNum * 1.0 / initDataset.size()
-              << std::endl;
-#endif  // DEBUG
+    // calculate the cost of all prefetched leaf nodes in different number of
+    // data blocks
     for (int i = 0; i < prefetchNode.size(); i++) {
       std::vector<double> cost = CalculateCFArrayCost(
           prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size,
@@ -134,24 +128,36 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::ConstructSubTree(
     // store the leaf nodes which can be prefetched
     for (int i = 0; i < prefetchNode.size(); i++) {
       CFArrayType<KeyType, ValueType, Compare, Alloc> currnode;
+      int totalSize =
+          prefetchRange[i].initRange.size + prefetchRange[i].insertRange.size;
       int neededBlockNum =
           CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
-              prefetchRange[i].initRange.size +
-              prefetchRange[i].insertRange.size);
+              totalSize);
       int predictBlockNum = root.fetch_model.PrefetchNum(prefetchNode[i]);
       bool isSuccess = false;
       if (neededBlockNum <= predictBlockNum) {
-        std::vector<int> prefetchIndex(prefetchRange[i].initRange.size);
+        std::vector<int> prefetchIndex(totalSize);
         int s = prefetchRange[i].initRange.left;
-        int e =
-            prefetchRange[i].initRange.left + prefetchRange[i].initRange.size;
-        for (int j = s; j < e; j++) {
-          double predictLeafIdx = root.model.Predict(initDataset[j].first);
-          int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
-          prefetchIndex[j - s] = p;
+        int e = s + prefetchRange[i].initRange.size;
+        DataVectorType tmpDataset(initDataset.begin() + s,
+                                  initDataset.begin() + e);
+        s = prefetchRange[i].insertRange.left;
+        e = s + prefetchRange[i].insertRange.size;
+        if (prefetchRange[i].insertRange.size > 0) {
+          for (int j = s; j < e; j++) {
+            tmpDataset.push_back(
+                {insertQuery[j], static_cast<ValueType>(DBL_MAX)});
+          }
+          std::sort(tmpDataset.begin(), tmpDataset.end());
         }
-        isSuccess = currnode.StoreData(initDataset, prefetchIndex, true,
-                                       predictBlockNum, s, &data, &prefetchEnd);
+        for (int j = 0; j < totalSize; j++) {
+          double predictLeafIdx = root.model.Predict(tmpDataset[j].first);
+          int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
+          prefetchIndex[j] = p;
+        }
+        isSuccess = currnode.StoreData(
+            tmpDataset, prefetchIndex, true, predictBlockNum, 0,
+            prefetchRange[i].initRange.size, &data, &prefetchEnd);
       }
       if (!isSuccess) {
         remainingNode.push_back(prefetchNode[i]);
@@ -164,27 +170,34 @@ inline void CARMI<KeyType, ValueType, Compare, Alloc>::ConstructSubTree(
 
   isInitMode = false;
   // store the remaining node which cannot be prefetched
-  if (remainingNode.size() > 0) {
-    for (int i = 0; i < remainingNode.size(); i++) {
-      CFArrayType<KeyType, ValueType, Compare, Alloc> currnode;
-      int neededBlockNum =
-          CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
-              remainingRange[i].initRange.size +
-              remainingRange[i].insertRange.size);
-      std::vector<int> prefetchIndex(remainingRange[i].initRange.size);
-      int s = remainingRange[i].initRange.left;
-      int e =
-          remainingRange[i].initRange.left + remainingRange[i].initRange.size;
+  for (int i = 0; i < remainingNode.size(); i++) {
+    CFArrayType<KeyType, ValueType, Compare, Alloc> currnode;
+    int totalSize =
+        remainingRange[i].initRange.size + remainingRange[i].insertRange.size;
+    int neededBlockNum =
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::CalNeededBlockNum(
+            totalSize);
+    std::vector<int> prefetchIndex(totalSize);
+    int s = remainingRange[i].initRange.left;
+    int e = s + remainingRange[i].initRange.size;
+    DataVectorType tmpDataset(initDataset.begin() + s, initDataset.begin() + e);
+    if (remainingRange[i].insertRange.size > 0) {
+      s = remainingRange[i].insertRange.left;
+      e = s + remainingRange[i].insertRange.size;
       for (int j = s; j < e; j++) {
-        double predictLeafIdx = root.model.Predict(initDataset[j].first);
-        int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
-        prefetchIndex[j - s] = p;
+        tmpDataset.push_back({insertQuery[j], static_cast<ValueType>(DBL_MAX)});
       }
-
-      currnode.StoreData(initDataset, prefetchIndex, isInitMode, neededBlockNum,
-                         s, &data, &prefetchEnd);
-      node.nodeArray[remainingNode[i]].cfArray = currnode;
+      std::sort(tmpDataset.begin(), tmpDataset.end());
     }
+    for (int j = 0; j < totalSize; j++) {
+      double predictLeafIdx = root.model.Predict(tmpDataset[j].first);
+      int p = root.fetch_model.PrefetchPredict(predictLeafIdx);
+      prefetchIndex[j] = p;
+    }
+    currnode.StoreData(tmpDataset, prefetchIndex, isInitMode, neededBlockNum, 0,
+                       remainingRange[i].initRange.size, &data, &prefetchEnd);
+
+    node.nodeArray[remainingNode[i]].cfArray = currnode;
   }
 
   std::vector<int>().swap(remainingNode);

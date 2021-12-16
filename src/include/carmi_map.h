@@ -2247,11 +2247,8 @@ class CARMIMap {
    * less than key
    */
   const_iterator lower_bound(const KeyType &key) const {
-    int currblock, currslot;
-    BaseNode<KeyType, ValueType, Compare, Alloc> *node =
-        carmi_tree.Find(key, &currblock, &currslot);
-    const_iterator it(const_cast<CARMIMap<KeyType, ValueType> *>(this), node,
-                      currblock, currslot);
+    const_iterator it(this);
+    it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
     if (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock)) {
       it++;
     }
@@ -2286,11 +2283,8 @@ class CARMIMap {
    * greater than key
    */
   const_iterator upper_bound(const KeyType &key) const {
-    int currblock, currslot;
-    BaseNode<KeyType, ValueType, Compare, Alloc> *node =
-        carmi_tree.Find(key, &currblock, &currslot);
-    const_iterator it(const_cast<CARMIMap<KeyType, ValueType> *>(this), node,
-                      currblock, currslot);
+    const_iterator it(this);
+    it.currnode = carmi_tree.Find(key, &it.currblock, &it.currslot);
     while (it != cend() &&
            (it.currslot >= it.currnode->cfArray.GetBlockSize(it.currblock) ||
             it.key() == key)) {
@@ -2306,7 +2300,7 @@ class CARMIMap {
    * @return iterator the iterator of the data point
    */
   iterator find(const KeyType &key) {
-    int currblock, currslot;
+    int currblock = 0, currslot = 0;
     BaseNode<KeyType, ValueType, Compare, Alloc> *node =
         carmi_tree.Find(key, &currblock, &currslot);
     if (currslot >= node->cfArray.GetBlockSize(currblock) ||
@@ -2326,14 +2320,13 @@ class CARMIMap {
    * @return const_iterator the iterator of the data point
    */
   const_iterator find(const KeyType &key) const {
-    int currblock, currslot;
+    int currblock = 0, currslot = 0;
     BaseNode<KeyType, ValueType, Compare, Alloc> *node =
         carmi_tree.Find(key, &currblock, &currslot);
     if (currslot >= node->cfArray.GetBlockSize(currblock)) {
       return cend();
     } else {
-      return const_iterator(const_cast<CARMIMap<KeyType, ValueType> *>(this),
-                            node, currblock, currslot);
+      return const_iterator(this, node, currblock, currslot);
     }
   }
 

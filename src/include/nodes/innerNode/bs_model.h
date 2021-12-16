@@ -91,7 +91,7 @@ class BSModel {
   /**
    * @brief The time cost of the bs inner node.
    */
-  static constexpr int kTimeCost = carmi_params::kBSInnerTime;
+  static constexpr double kTimeCost = carmi_params::kBSInnerTime;
 
  public:
   //*** Public Data Members of BS Inner Node Objects

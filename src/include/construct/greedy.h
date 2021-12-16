@@ -143,11 +143,27 @@ NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::GreedyAlgorithm(
                     subDataset.subInsert[i]);
     // choose the suitable algorithm to construct the sub-tree according to the
     // size of the sub-dataset
-    if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
-        carmi_params::kAlgorithmThreshold)
+    double minRatio = 0.95;
+    // record the maximum capacity of the leaf node
+    int maxStoredNum =
+        CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxLeafCapacity;
+    if (isPrimary) {
+      maxStoredNum = carmi_params::kMaxLeafNodeSizeExternal;
+    }
+    if (range.initRange.size + range.insertRange.size <=
+        minRatio * maxStoredNum) {
+      // Case 3: if the size is smaller than the threshold, directly construct a
+      // leaf node
+      res = DPLeaf(range);
+    } else if (subDataset.subInit[i].size + subDataset.subInsert[i].size >
+               carmi_params::kAlgorithmThreshold) {
       res = GreedyAlgorithm(range);
-    else
+    } else {
       res = DP(range);
+    }
+    optimalCost.cost += res.cost;
+    optimalCost.time += res.time;
+    optimalCost.space += res.space;
   }
 
   // store the optimal setting of this sub-dataset

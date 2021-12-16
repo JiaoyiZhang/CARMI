@@ -87,7 +87,7 @@ class LRModel {
   /**
    * @brief The time cost of the lr inner node.
    */
-  static constexpr int kTimeCost = carmi_params::kLRInnerTime;
+  static constexpr double kTimeCost = carmi_params::kLRInnerTime;
 
  public:
   //*** Public Data Members of LR Inner Node Objects

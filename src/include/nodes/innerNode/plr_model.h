@@ -94,7 +94,7 @@ class PLRModel {
   /**
    * @brief The time cost of the p. lr inner node.
    */
-  static constexpr int kTimeCost = carmi_params::kPLRInnerTime;
+  static constexpr double kTimeCost = carmi_params::kPLRInnerTime;
 
  public:
   //*** Public Data Members of P. LR Inner Node Objects

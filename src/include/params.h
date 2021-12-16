@@ -59,9 +59,9 @@ static constexpr int kMaxLeafNodeSizeExternal = 1024;
  * construct an inner node. If the size of the sub-dataset exceeds this
  * parameter, greedy node selection algorithm is used to construct the inner
  * node.
- * This value needs to be greater than or equal to the first two parameters.
+ * This value needs to be no less than the first two parameters.
  */
-static constexpr int kAlgorithmThreshold = 10240;
+static constexpr int kAlgorithmThreshold = 1024;
 
 /**
  * @brief The latency of a memory access

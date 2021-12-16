@@ -33,13 +33,15 @@ template <typename KeyType, typename ValueType, typename Compare,
           typename Alloc>
 template <typename InnerNodeType>
 void CARMI<KeyType, ValueType, Compare, Alloc>::StoreInnerNode(
-    const IndexPair &range, InnerNodeType *currnode) {
+    const DataRange &range, InnerNodeType *currnode) {
   // get the number of child nodes
   int optimalChildNumber = currnode->flagNumber & 0x00FFFFFF;
   // divide the initDataset
   SubDataset subDataset(optimalChildNumber);
-  NodePartition<InnerNodeType>(*currnode, range, initDataset,
+  NodePartition<InnerNodeType>(*currnode, range.initRange, initDataset,
                                &(subDataset.subInit));
+  NodePartition<InnerNodeType>(*currnode, range.insertRange, insertQuery,
+                               &(subDataset.subInsert));
   // allocate a block of empty memory for this node in the node array
   currnode->childLeft = node.AllocateNodeMemory(optimalChildNumber);
 
@@ -63,32 +65,28 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::StoreOptimalNode(
     case LR_INNER_NODE: {
       // Case 1: the optimal node is the lr inner node, use the StoreInnerNode
       // function to store itself and its child nodes.
-      StoreInnerNode<LRModel<KeyType, ValueType>>(range.initRange,
-                                                  &(it->second.lr));
+      StoreInnerNode<LRModel<KeyType, ValueType>>(range, &(it->second.lr));
       node.nodeArray[storeIdx].lr = it->second.lr;
       break;
     }
     case PLR_INNER_NODE: {
       // Case 2: the optimal node is the p. lr inner node, use the
       // StoreInnerNode function to store itself and its child nodes.
-      StoreInnerNode<PLRModel<KeyType, ValueType>>(range.initRange,
-                                                   &(it->second.plr));
+      StoreInnerNode<PLRModel<KeyType, ValueType>>(range, &(it->second.plr));
       node.nodeArray[storeIdx].plr = it->second.plr;
       break;
     }
     case HIS_INNER_NODE: {
       // Case 3: the optimal node is the his inner node, use the StoreInnerNode
       // function to store itself and its child nodes.
-      StoreInnerNode<HisModel<KeyType, ValueType>>(range.initRange,
-                                                   &(it->second.his));
+      StoreInnerNode<HisModel<KeyType, ValueType>>(range, &(it->second.his));
       node.nodeArray[storeIdx].his = it->second.his;
       break;
     }
     case BS_INNER_NODE: {
       // Case 4: the optimal node is the bs inner node, use the StoreInnerNode
       // function to store itself and its child nodes.
-      StoreInnerNode<BSModel<KeyType, ValueType>>(range.initRange,
-                                                  &(it->second.bs));
+      StoreInnerNode<BSModel<KeyType, ValueType>>(range, &(it->second.bs));
       node.nodeArray[storeIdx].bs = it->second.bs;
       break;
     }
@@ -116,11 +114,11 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::StoreOptimalNode(
       break;
     }
   }
-  if (type >= ARRAY_LEAF_NODE && firstLeaf == -1) {
-    firstLeaf = storeIdx;
-  }
   if (type >= ARRAY_LEAF_NODE && range.initRange.size > 0) {
     lastLeaf = storeIdx;
+    if (firstLeaf == -1) {
+      firstLeaf = storeIdx;
+    }
   }
 }
 

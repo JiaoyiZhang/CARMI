@@ -18,6 +18,10 @@
 #include <utility>
 #include <vector>
 
+#if defined(CATCH_PLATFORM_WINDOWS)
+#include <xmmintrin.h>
+#endif
+
 #include "../carmi.h"
 
 template <typename KeyType, typename ValueType, typename Compare,
