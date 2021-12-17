@@ -75,7 +75,7 @@ class PLRType {
   /**
    * @brief The time cost of the plr root node.
    */
-  static constexpr int kTimeCost = carmi_params::kPLRRootTime;
+  static constexpr double kTimeCost = carmi_params::kPLRRootTime;
 
  public:
   //*** Public Data Members of P. LR Root Node Objects

@@ -68,7 +68,7 @@ NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DPLeaf(
         avgSlotNum,
         CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockCapacity);
 
-    nodeCost.time = carmi_params::kLeafBaseTime;
+    nodeCost.time = carmi_params::kLeafBaseTime * totalDataNum / querySize;
     nodeCost.space = blockNum * carmi_params::kMaxLeafNodeSize;
     // calculate the time cost of find operations
     int end = dataRange.findRange.left + dataRange.findRange.size;

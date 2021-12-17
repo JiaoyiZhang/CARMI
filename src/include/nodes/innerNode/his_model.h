@@ -97,7 +97,7 @@ class HisModel {
   /**
    * @brief The time cost of the his inner node.
    */
-  static constexpr int kTimeCost = carmi_params::kHisInnerTime;
+  static constexpr double kTimeCost = carmi_params::kHisInnerTime;
 
  public:
   //*** Public Data Members of His Inner Node Objects

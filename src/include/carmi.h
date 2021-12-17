@@ -331,23 +331,22 @@ class CARMI {
    * @brief Delete a data point.
    *
    * @param[in] key the key value of the deleted record
-   * @param[in] currnode the leaf node
    * @param[in] currblock the index of the data block of the leaf node
    * @param[in] currslot the index of the data point in the data block in
    * the cf array leaf node
+   * @param[in] currnode the leaf node
    * @retval true if the operation succeeds
    * @retval false if the operation fails (the given position is invalid)
    */
   bool DeleteSingleData(
-      const KeyType &key,
-      const BaseNode<KeyType, ValueType, Compare, Alloc> &currnode,
-      int currblock, int currslot) {
+      const KeyType &key, int currblock, int currslot,
+      BaseNode<KeyType, ValueType, Compare, Alloc> *currnode) {
     if (currblock < 0 || currslot < 0 ||
         currblock >= (currnode->cfArray.flagNumber & 0x00FFFFFF) ||
         currslot >= currnode->cfArray.GetBlockSize(currblock)) {
       return true;
     }
-    return currnode.DeleteSingleData(key, currblock, currslot, &data);
+    return currnode->DeleteSingleData(key, currblock, currslot, &data);
   }
 
  public:
@@ -605,7 +604,7 @@ class CARMI {
    * nodes in the node array will be updated in this function
    */
   template <typename InnerNodeType>
-  void StoreInnerNode(const IndexPair &range, InnerNodeType *node);
+  void StoreInnerNode(const DataRange &range, InnerNodeType *node);
 
  private:
   //*** Private Minor Functions to Favour the Above Functions
@@ -931,20 +930,8 @@ class CARMI {
 template <typename KeyType, typename ValueType, typename Compare,
           typename Alloc>
 CARMI<KeyType, ValueType, Compare, Alloc>::CARMI() {
-  if (carmi_params::kMaxLeafNodeSize <= 0 &&
-      (carmi_params::kMaxLeafNodeSize % 64 != 0)) {
-    throw std::logic_error(
-        "carmi_params::kMaxLeafNodeSize does not meet the logic requirements.");
-  }
-  if (carmi_params::kAlgorithmThreshold < carmi_params::kMaxLeafNodeSize) {
-    throw std::logic_error(
-        "carmi_params::kAlgorithmThreshold does not meet the logic "
-        "requirements.");
-  }
-
+  // set the default values to the variables
   isPrimary = false;
-  firstLeaf = -1;
-  lastLeaf = 0;
   isInitMode = true;
   prefetchEnd = -1;
   currsize = 0;
@@ -974,6 +961,8 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI() {
   }
   node.nodeArray[kInsertNewChildNumber - 1].cfArray.previousLeaf =
       kInsertNewChildNumber - 2;
+  firstLeaf = 0;
+  lastLeaf = kInsertNewChildNumber - 1;
 }
 
 template <typename KeyType, typename ValueType, typename Compare,
