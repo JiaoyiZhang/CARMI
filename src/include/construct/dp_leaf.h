@@ -28,9 +28,9 @@ NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DPLeaf(
   NodeCost nodeCost{DBL_MAX, DBL_MAX, DBL_MAX};
   BaseNode<KeyType, ValueType, Compare, Alloc> optimal_node_struct;
 
+  nodeCost.time = 0.0;
   if (isPrimary) {
     // construct an external array leaf node as the current node
-    nodeCost.time = 0.0;
     nodeCost.space = 0.0;
 
     ExternalArray<KeyType, ValueType, Compare> tmp;
@@ -68,21 +68,24 @@ NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::DPLeaf(
         avgSlotNum,
         CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxBlockCapacity);
 
-    nodeCost.time = carmi_params::kLeafBaseTime * totalDataNum / querySize;
-    nodeCost.space = blockNum * carmi_params::kMaxLeafNodeSize;
+    nodeCost.space =
+        blockNum * carmi_params::kMaxLeafNodeSize / 1024.0 / 1024.0;
     // calculate the time cost of find operations
     int end = dataRange.findRange.left + dataRange.findRange.size;
     for (int i = dataRange.findRange.left; i < end; i++) {
       nodeCost.time += static_cast<double>(findQuery[i].second) / querySize *
-                       (log2(avgSlotNum) * carmi_params::kCostBSTime);
+                       (carmi_params::kLeafBaseTime +
+                        log2(avgSlotNum) * carmi_params::kCostBSTime);
     }
     // calculate the time cost of insert operations
     end = dataRange.insertRange.left + dataRange.insertRange.size;
     for (int i = dataRange.insertRange.left; i < end; i++) {
       nodeCost.time += 1.0 / static_cast<double>(querySize) *
-                       ((log2(avgSlotNum) * carmi_params::kCostBSTime) +
+                       (carmi_params::kLeafBaseTime +
+                        log2(avgSlotNum) * carmi_params::kCostBSTime +
                         (1 + avgSlotNum) / 2.0 * carmi_params::kCostMoveTime);
     }
+
     optimal_node_struct.cfArray =
         CFArrayType<KeyType, ValueType, Compare, Alloc>();
   }

@@ -54,6 +54,7 @@ class PiecewiseLR {
       theta[i][0] = 0.0001;
       theta[i][1] = 0.666;
     }
+    minValue = 0;
     maxChildIdx = 2;
   }
 
@@ -103,7 +104,12 @@ class PiecewiseLR {
    * the index of it}. Among them, the index is used as the index boundary of
    * each segment.
    */
-  std::vector<std::pair<float, int>> point;
+  std::vector<std::pair<KeyType, int>> point;
+
+  /**
+   * @brief The minimum value.
+   */
+  KeyType minValue;
 
   /**
    * @brief The linear regression parameters of each segment. Each pair is: {the
@@ -123,8 +129,9 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
   }
   typedef std::vector<std::pair<KeyType, double>> TrainType;
   TrainType currdata(dataset.size());
+  minValue = dataset[0].first;
   for (int i = 0; i < size; i++) {
-    currdata[i].first = dataset[i].first;
+    currdata[i].first = dataset[i].first - minValue;
     currdata[i].second = static_cast<double>(i) / size * maxChildIdx;
   }
 
@@ -160,10 +167,9 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
   int opt_seg = 1;
 
   for (int seg = 2; seg <= SegmentNumber; seg++) {
-    SegmentPoint tmp;
-    tmp.cost = -DBL_MAX;
-    std::vector<SegmentPoint> tmpp(cand_size, tmp);
-    std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
+    std::vector<std::vector<SegmentPoint<KeyType>>> dp(
+        2,
+        std::vector<SegmentPoint<KeyType>>(cand_size, SegmentPoint<KeyType>()));
 
     // initialize the dp[0]
     for (int j = 1; j < cand_size; j++) {
@@ -180,8 +186,7 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
     // use dp algorithm to calculate the optimal cost in each situation
     for (int i = 2; i < seg; i++) {
       for (int j = i; j < cand_size - 1; j++) {
-        SegmentPoint opt;
-        opt.cost = -DBL_MAX;
+        SegmentPoint<KeyType> opt;
         for (int k = i - 1; k < j; k++) {
           float res = -DBL_MAX;
           if (i < seg - 1) {
@@ -222,8 +227,7 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
     }
 
     // find the optimal setting and store the parameters into point and theta
-    SegmentPoint opt;
-    opt.cost = -DBL_MAX;
+    SegmentPoint<KeyType> opt;
     opt.idx[seg] = cand_index[cand_size - 1];
     opt.key[seg] = cand_point[cand_size - 1].first;
     for (int j = seg; j < cand_size - 1; j++) {
@@ -258,17 +262,18 @@ void PiecewiseLR<DataVectorType, KeyType>::Train(
 
 template <typename DataVectorType, typename KeyType>
 inline double PiecewiseLR<DataVectorType, KeyType>::Predict(KeyType key) const {
+  KeyType tmpKey = key - minValue;
   double p = 0;
-  if (key <= point[0].first) {
-    p = theta[0][0] * static_cast<double>(key) + theta[0][1];
+  if (tmpKey <= point[0].first) {
+    p = theta[0][0] * static_cast<double>(tmpKey) + theta[0][1];
     if (p < 0)
       p = 0;
     else if (p > point[0].second)
       p = point[0].second;
-  } else if (key <= point[SegmentNumber - 2].first) {
+  } else if (tmpKey <= point[SegmentNumber - 2].first) {
     for (int i = 1; i < SegmentNumber - 1; i++) {
-      if (key <= point[i].first) {
-        p = theta[i][0] * static_cast<double>(key) + theta[i][1];
+      if (tmpKey <= point[i].first) {
+        p = theta[i][0] * static_cast<double>(tmpKey) + theta[i][1];
         if (p < point[i - 1].second + 1)
           p = point[i - 1].second + 1;
         else if (p > point[i].second)
@@ -277,7 +282,7 @@ inline double PiecewiseLR<DataVectorType, KeyType>::Predict(KeyType key) const {
       }
     }
   } else {
-    p = theta[SegmentNumber - 1][0] * static_cast<double>(key) +
+    p = theta[SegmentNumber - 1][0] * static_cast<double>(tmpKey) +
         theta[SegmentNumber - 1][1];
     if (p < point[SegmentNumber - 2].second + 1)
       p = point[SegmentNumber - 2].second + 1;

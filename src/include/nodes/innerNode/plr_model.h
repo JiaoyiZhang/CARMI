@@ -55,10 +55,11 @@ class PLRModel {
    */
   explicit PLRModel(int c) {
     childLeft = 0;
-    for (int i = 0; i < 6; i++) {
-      index[i] = std::ceil(c / 7.0) * (i + 1);
+    minValue = 0;
+    for (int i = 0; i < kIndexNum; i++) {
+      index[i] = std::ceil(c / static_cast<double>(kSegmentNum)) * (i + 1);
     }
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < kSegmentNum + 1; i++) {
       keys[i] = i;
     }
     flagNumber = (PLR_INNER_NODE << 24) + std::max(std::min(c, 0x00FFFFFF), 2);
@@ -96,6 +97,23 @@ class PLRModel {
    */
   static constexpr double kTimeCost = carmi_params::kPLRInnerTime;
 
+  /**
+   * @brief The number of index to be stored.
+   */
+  static constexpr int kIndexNum =
+      (56 - 3 * sizeof(KeyType)) / (4 + sizeof(KeyType));
+
+  /**
+   * @brief The bytes of placeholder.
+   */
+  static constexpr int kPlaceHolderLen =
+      56 - 3 * sizeof(KeyType) - (4 + sizeof(KeyType)) * kIndexNum;
+
+  /**
+   * @brief The number of segments.
+   */
+  static constexpr int kSegmentNum = kIndexNum + 1;
+
  public:
   //*** Public Data Members of P. LR Inner Node Objects
 
@@ -116,16 +134,28 @@ class PLRModel {
 
   /**
    * @brief Store the maximum index of each segment, which is used as the
-   * boundary of each segment when predicting the next index. (24 bytes)
+   * boundary of each segment when predicting the next index. (kIndexNum * 4
+   * bytes)
    */
-  int index[6];
+  int index[kIndexNum];
 
   /**
    * @brief Store the key value of the endpoint in each segment. When predicting
    * the index of the next node, first perform a binary search among them to
-   * find the segment to which the given key value belongs (32 bytes)
+   * find the segment to which the given key value belongs ((kIndexNum + 2) *
+   * sizeof(KeyType) bytes)
    */
-  float keys[8];
+  KeyType keys[kIndexNum + 2];
+
+  /**
+   * @brief The minimum value.
+   */
+  KeyType minValue;
+
+  /**
+   * @brief Placeholder.
+   */
+  char placeholder[kPlaceHolderLen];
 };
 
 template <typename KeyType, typename ValueType>
@@ -141,15 +171,15 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   }
   typedef std::vector<std::pair<KeyType, double>> TrainType;
   TrainType currdata(size);
-  int point_num = 7;
 
-  keys[0] = dataset[left].first;
-  keys[7] = dataset[left + size - 1].first;
+  minValue = dataset[left].first;
+  keys[0] = dataset[left].first - minValue;
+  keys[kSegmentNum] = dataset[left + size - 1].first - minValue;
   // construct the training dataset, x is the key value in the dataset, y is the
   // corresponding ratio of index in the childNumber
   for (int i = 0, j = left; i < size; i++, j++) {
+    currdata[i].first = dataset[j].first - minValue;
     currdata[i].second = static_cast<float>(i) / size * (childNumber - 1);
-    currdata[i].first = dataset[j].first;
   }
 
   int cand_size = std::min(size, 100);
@@ -174,10 +204,9 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   cand_point[cand_size - 1] = currdata[size - 1];
   cand_cost.StoreTheta(currdata, cand_index);
 
-  SegmentPoint tmp;
-  tmp.cost = -DBL_MAX;
-  std::vector<SegmentPoint> tmpp(cand_size, tmp);
-  std::vector<std::vector<SegmentPoint>> dp(2, tmpp);
+  std::vector<std::vector<SegmentPoint<KeyType>>> dp(
+      2,
+      std::vector<SegmentPoint<KeyType>>(cand_size, SegmentPoint<KeyType>()));
 
   // initialize the dp[0]
   for (int j = 1; j < cand_size; j++) {
@@ -187,18 +216,17 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
     dp[0][j].idx[0] = cand_index[0];
     dp[0][j].key[1] = cand_point[j].first;
     dp[0][j].idx[1] = cand_index[j];
-    dp[0][j].key[point_num] = cand_point[cand_size - 1].first;
-    dp[0][j].idx[point_num] = cand_index[cand_size - 1];
+    dp[0][j].key[kSegmentNum] = cand_point[cand_size - 1].first;
+    dp[0][j].idx[kSegmentNum] = cand_index[cand_size - 1];
   }
 
   // use dp algorithm to calculate the optimal cost in each situation
-  for (int i = 2; i < point_num; i++) {
+  for (int i = 2; i < kSegmentNum; i++) {
     for (int j = i; j < cand_size - 1; j++) {
-      SegmentPoint opt;
-      opt.cost = -DBL_MAX;
+      SegmentPoint<KeyType> opt;
       for (int k = i - 1; k < j; k++) {
         float res = -DBL_MAX;
-        if (i < point_num - 1) {
+        if (i < kSegmentNum - 1) {
           res = dp[0][k].cost + cand_cost.Entropy(cand_index[k], cand_index[j],
                                                   cand_point[k].second,
                                                   cand_point[j].second);
@@ -235,20 +263,19 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
   }
 
   // find the optimal setting and store the params into keys and index
-  SegmentPoint opt;
-  opt.cost = -DBL_MAX;
-  opt.idx[point_num] = cand_index[cand_size - 1];
-  opt.key[point_num] = cand_point[cand_size - 1].first;
-  for (int j = point_num; j < cand_size - 1; j++) {
+  SegmentPoint<KeyType> opt;
+  opt.idx[kSegmentNum] = cand_index[cand_size - 1];
+  opt.key[kSegmentNum] = cand_point[cand_size - 1].first;
+  for (int j = kSegmentNum; j < cand_size - 1; j++) {
     if (dp[1][j].cost > opt.cost) {
       opt.cost = dp[1][j].cost;
-      for (int k = 0; k < point_num; k++) {
+      for (int k = 0; k < kSegmentNum; k++) {
         opt.idx[k] = dp[1][j].idx[k];
         opt.key[k] = dp[1][j].key[k];
       }
     }
   }
-  for (int i = 1; i < point_num; i++) {
+  for (int i = 1; i < kSegmentNum; i++) {
     if (opt.key[i] == -1) {
       opt.key[i] = opt.key[i - 1];
       opt.idx[i] = opt.idx[i - 1];
@@ -260,13 +287,14 @@ inline void PLRModel<KeyType, ValueType>::Train(int left, int size,
 
 template <typename KeyType, typename ValueType>
 inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
+  KeyType tmpKey = key - minValue;
   int s = 0;
-  int e = 7;
+  int e = kSegmentNum;
   int mid;
   // first perform a binary search among the keys
   while (s < e) {
     mid = (s + e) >> 1;
-    if (keys[mid] < key)
+    if (keys[mid] < tmpKey)
       s = mid + 1;
     else
       e = mid;
@@ -274,10 +302,13 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
 
   int p = 0;
   switch (e) {
+    case 0: {
+      break;
+    }
     case 1: {
-      float slope = static_cast<float>(index[0]) / (keys[1] - keys[0]);
+      float slope = static_cast<double>(index[0]) / (keys[1] - keys[0]);
       // intercept = -slope * keys[0], p = slope * x + intercept
-      p = slope * (key - keys[0]);
+      p = slope * (tmpKey - keys[0]);
       if (p < 0) {
         p = 0;
       } else if (p > index[0]) {
@@ -285,37 +316,31 @@ inline int PLRModel<KeyType, ValueType>::Predict(KeyType key) const {
       }
       break;
     }
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6: {
-      float slope = static_cast<float>(index[e - 1] - index[e - 2]) /
-                    static_cast<float>(keys[e] - keys[e - 1]);
+    case kSegmentNum: {
+      e = (flagNumber & 0x00FFFFFF) - 1;  // boundary
+      float slope = static_cast<double>(e - index[kIndexNum - 1]) /
+                    static_cast<double>(keys[kSegmentNum] -
+                                        keys[kIndexNum]);  // the slope
+      // intercept = e - slope * keys[7], p = slope * x + intercept
+      p = slope * static_cast<double>(tmpKey - keys[kSegmentNum]) + e;
+
+      if (p > e) {
+        p = e;
+      } else if (p < index[kIndexNum - 1]) {
+        p = index[kIndexNum - 1];
+      }
+      break;
+    }
+    default: {
+      float slope = static_cast<double>(index[e - 1] - index[e - 2]) /
+                    static_cast<double>(keys[e] - keys[e - 1]);
       // intercept = index[e-1] - slope * keys[e]
-      p = slope * static_cast<double>(key - keys[e]) + index[e - 1];
+      p = slope * static_cast<double>(tmpKey - keys[e]) + index[e - 1];
       if (p < index[e - 2]) {
         p = index[e - 2];
       } else if (p > index[e - 1]) {
         p = index[e - 1];
       }
-      break;
-    }
-    case 7: {
-      e = (flagNumber & 0x00FFFFFF) - 1;  // boundary
-      float slope = static_cast<float>(e - index[5]) /
-                    static_cast<float>(keys[7] - keys[6]);  // the slope
-      // intercept = e - slope * keys[7], p = slope * x + intercept
-      p = slope * static_cast<double>(key - keys[7]) + e;
-
-      if (p > e) {
-        p = e;
-      } else if (p < index[5]) {
-        p = index[5];
-      }
-      break;
-    }
-    default: {
       break;
     }
   }

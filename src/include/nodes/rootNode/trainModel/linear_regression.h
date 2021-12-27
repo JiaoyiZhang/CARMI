@@ -44,6 +44,7 @@ class LinearRegression {
     slope = 0.0001;
     intercept = 0.666;
     maxChildIdx = 2;
+    minValue = 0;
   }
 
   /**
@@ -54,23 +55,24 @@ class LinearRegression {
   void Train(const DataVectorType &dataset) {
     int idx = 0;
     int size = dataset.size();
+    if (size == 0) return;
+    minValue = dataset[0].first;
     std::vector<double> index(size, 0);
     // construct the training dataset, x is the key value in the dataset, y is
     // the corresponding ratio of index in the maxChildIdx
     for (int i = 0; i < size; i++) {
       index[idx++] = static_cast<double>(i) / size * maxChildIdx;
     }
-    if (size == 0) return;
 
     // train the lr model
-    double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+    long double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
     for (int i = 0; i < size; i++) {
-      t1 += static_cast<double>(dataset[i].first) *
-            static_cast<double>(dataset[i].first);
-      t2 += static_cast<double>(dataset[i].first);
-      t3 +=
-          static_cast<double>(dataset[i].first) * static_cast<double>(index[i]);
-      t4 += static_cast<double>(index[i]);
+      t1 += static_cast<long double>(dataset[i].first - minValue) *
+            static_cast<long double>(dataset[i].first - minValue);
+      t2 += static_cast<long double>(dataset[i].first - minValue);
+      t3 += static_cast<long double>(dataset[i].first - minValue) *
+            static_cast<long double>(index[i]);
+      t4 += static_cast<long double>(index[i]);
     }
     if (t1 * size - t2 * t2) {
       slope = (t3 * size - t2 * t4) / (t1 * size - t2 * t2);
@@ -89,7 +91,7 @@ class LinearRegression {
    */
   inline double Predict(KeyType key) const {
     // predict the index of the next node using the lr model
-    double p = slope * static_cast<double>(key) + intercept;
+    double p = slope * static_cast<double>(key - minValue) + intercept;
     // boundary processing
     if (p < 0)
       p = 0;
@@ -118,5 +120,10 @@ class LinearRegression {
    * @brief The linear regression parameter: the intercept
    */
   double intercept;
+
+  /**
+   * @brief The minimum value.
+   */
+  KeyType minValue;
 };
 #endif  // NODES_ROOTNODE_TRAINMODEL_LINEAR_REGRESSION_H_

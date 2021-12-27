@@ -44,6 +44,9 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateGreedyOptSetting(
   for (int i = 0; i < c; i++) {
     int totalDataNum =
         subDataset.subInit[i].size + subDataset.subInsert[i].size;
+    if (totalDataNum == range.initRange.size + range.insertRange.size) {
+      return;
+    }
     // if leaf nodes are cf array leaf nodes, add the space cost of data
     // blocks to the total space cost
     if (!isPrimary) {

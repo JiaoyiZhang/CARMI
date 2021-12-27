@@ -184,8 +184,8 @@ inline int PrefetchPLR::PrefetchTrain(
   }
 
   // initialize the dp[0]
-  std::vector<std::vector<SegmentPoint>> dp(
-      SegmentNumber, std::vector<SegmentPoint>(candidate_size));
+  std::vector<std::vector<SegmentPoint<double>>> dp(
+      SegmentNumber, std::vector<SegmentPoint<double>>(candidate_size));
   for (int i = 0; i < candidate_size; i++) {
     auto res = GetCost(CostCandidate, 0, i, maxBlockNum);
     dp[1][i].cost = res.second;
@@ -199,7 +199,7 @@ inline int PrefetchPLR::PrefetchTrain(
   // use dp algorithm to calculate the optimal cost in each situation
   for (int i = 2; i < SegmentNumber - 1; i++) {
     for (int j = i; j < candidate_size; j++) {
-      SegmentPoint opt;
+      SegmentPoint<double> opt;
       opt.cost = DBL_MAX;
       for (int k = i - 1; k < j; k++) {
         double tmp_cost = dp[i - 1][k].cost;
@@ -228,7 +228,7 @@ inline int PrefetchPLR::PrefetchTrain(
   }
 
   for (int j = SegmentNumber - 1; j < candidate_size; j++) {
-    SegmentPoint opt;
+    SegmentPoint<double> opt;
     opt.cost = DBL_MAX;
     for (int k = SegmentNumber - 2; k < j; k++) {
       double tmp_cost = dp[SegmentNumber - 2][k].cost;
@@ -262,7 +262,7 @@ inline int PrefetchPLR::PrefetchTrain(
   }
 
   // find the optimal setting and store the parameters
-  SegmentPoint opt;
+  SegmentPoint<double> opt;
   opt.cost = DBL_MAX;
   for (int i = SegmentNumber - 1; i < candidate_size; i++) {
     if (dp[SegmentNumber - 1][i].cost < opt.cost) {

@@ -54,6 +54,7 @@ class ExternalArray {
     m_left = -1;
     slope = 0.0001;
     intercept = 0.666;
+    minValue = 0;
     for (int i = 0; i < 11; i++) {
       placeholder[i] = 0;
     }
@@ -132,7 +133,7 @@ class ExternalArray {
    */
   inline int Predict(KeyType key) const {
     int size = (flagNumber & 0x00FFFFFF);
-    int p = (slope * static_cast<double>(key) + intercept) * size;
+    int p = (slope * static_cast<double>(key - minValue) + intercept) * size;
     if (p < 0)
       p = 0;
     else if (p >= size && size != 0)
@@ -181,6 +182,11 @@ class ExternalArray {
    */
   void FindOptError(int start_idx, int size, const DataVectorType &dataset);
 
+  /**
+   * @brief The bytes of placeholder.
+   */
+  static constexpr int kPlaceHolderLen = 40 - sizeof(KeyType);
+
  public:
   //*** Public Data Members of External Array Leaf Node Objects
 
@@ -214,10 +220,15 @@ class ExternalArray {
   float intercept;
 
   /**
-   * @brief Placeholder to make sure that the size of this node is 64 bytes. (44
-   * bytes)
+   * @brief The minimum value.
    */
-  float placeholder[11];
+  KeyType minValue;
+
+  /**
+   * @brief Placeholder, used to make sure that the size of this node is 64
+   * bytes. (kPlaceHolderLen bytes)
+   */
+  char placeholder[kPlaceHolderLen];
 };
 
 template <typename KeyType, typename DataType, typename Compare>
@@ -264,8 +275,9 @@ inline void ExternalArray<KeyType, DataType, Compare>::Train(
   typedef std::vector<std::pair<KeyType, double>> TrainType;
   TrainType currdata(size, {static_cast<KeyType>(DBL_MAX), DBL_MAX});
   int end = start_idx + size;
+  minValue = dataset[start_idx].first;
   for (int i = start_idx, j = 0; i < end; i++, j++) {
-    currdata[j].first = dataset[i].first;
+    currdata[j].first = dataset[i].first - minValue;
     currdata[j].second = static_cast<double>(j) / size;
   }
   if (size == 0) return;
@@ -274,14 +286,14 @@ inline void ExternalArray<KeyType, DataType, Compare>::Train(
     flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + size;
   }
   // train the lr model
-  double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
+  long double t1 = 0, t2 = 0, t3 = 0, t4 = 0;
   for (int i = 0; i < size; i++) {
-    t1 += static_cast<double>(currdata[i].first) *
-          static_cast<double>(currdata[i].first);
-    t2 += static_cast<double>(currdata[i].first);
-    t3 += static_cast<double>(currdata[i].first) *
-          static_cast<double>(currdata[i].second);
-    t4 += static_cast<double>(currdata[i].second);
+    t1 += static_cast<long double>(currdata[i].first) *
+          static_cast<long double>(currdata[i].first);
+    t2 += static_cast<long double>(currdata[i].first);
+    t3 += static_cast<long double>(currdata[i].first) *
+          static_cast<long double>(currdata[i].second);
+    t4 += static_cast<long double>(currdata[i].second);
   }
   // update the parameters
   if (t1 * size - t2 * t2) {
