@@ -47,7 +47,7 @@ double CARMI<KeyType, ValueType, Compare, Alloc>::CalculateEntropy(
       slogs += static_cast<double>(perSize[i].size) * (-log2(perSize[i].size));
   }
   if (n == 0) {
-    return DBL_MAX;
+    return -DBL_MAX;
   }
 
   double entropy = slogs / n + log2(n);

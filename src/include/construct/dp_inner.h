@@ -39,17 +39,16 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateDPOptSetting(
 
   for (int i = 0; i < c; i++) {
     // calculate the cost of each child node
-    NodeCost res;
     DataRange range(subDataset.subInit[i], subDataset.subFind[i],
                     subDataset.subInsert[i]);
     // Case 2.1: if this inner node fails to divide dataset evenly, return
     // directly
-    if (subDataset.subInit[i].size + subDataset.subInsert[i].size ==
+    if (range.initRange.size + range.initRange.size ==
         dataRange.initRange.size + dataRange.insertRange.size) {
       return;
     }
 
-    res = DP(range);
+    NodeCost res = DP(range);
 
     space_cost += res.space;
     time_cost += res.time;

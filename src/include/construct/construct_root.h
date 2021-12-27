@@ -49,6 +49,9 @@ void CARMI<KeyType, ValueType, Compare, Alloc>::UpdateRootOptSetting(
         CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxLeafCapacity;
   }
   for (int i = 0; i < c; i++) {
+    if (perSize[i].size == static_cast<int>(initDataset.size())) {
+      return;
+    }
     int totalDataNum = perSize[i].size + perInsertSize[i].size;
     // if leaf nodes are cf array leaf nodes, add the space cost of data
     // blocks to the total space cost
