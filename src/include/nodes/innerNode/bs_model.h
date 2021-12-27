@@ -23,9 +23,9 @@
  * @brief binary search inner node
  *
  * This class is the binary search inner node. Due to the size limit of 64
- * bytes, we can only store the 14 key values. Thus, this type is not suitable
- * for nodes with a large number of child nodes. However, the bs node can divide
- * the dataset evenly, thus dealing with the uneven dataset.
+ * bytes, we can only store the kMaxKeyNum key values. Thus, this type is not
+ * suitable for nodes with a large number of child nodes. However, the bs node
+ * can divide the dataset evenly, thus dealing with the uneven dataset.
  *
  * @tparam KeyType the type of the keyword
  * @tparam ValueType the type of the value
@@ -56,8 +56,9 @@ class BSModel {
    */
   explicit BSModel(int c) {
     childLeft = 0;
-    flagNumber = (BS_INNER_NODE << 24) + std::max(2, std::min(c, 15));
-    for (int i = 0; i < 14; i++) {
+    flagNumber =
+        (BS_INNER_NODE << 24) + std::max(2, std::min(c, kMaxKeyNum + 1));
+    for (int i = 0; i < kMaxKeyNum; i++) {
       keys[i] = 0;
     }
   }
@@ -93,6 +94,8 @@ class BSModel {
    */
   static constexpr double kTimeCost = carmi_params::kBSInnerTime;
 
+  static constexpr int kMaxKeyNum = 56 / sizeof(KeyType);
+
  public:
   //*** Public Data Members of BS Inner Node Objects
 
@@ -112,13 +115,13 @@ class BSModel {
   int childLeft;
 
   /**
-   * @brief store at most 14 key values
-   * This bs model divides the key range into 15 intervals. To determine which
-   * branch to go through, perform a binary search among the 14 key values to
-   * locate the corresponding key value interval covering the input key. (56
-   * bytes)
+   * @brief store at most kMaxKeyNum key values
+   * This bs model divides the key range into kMaxKeyNum + 1 intervals. To
+   * determine which branch to go through, perform a binary search among the
+   * kMaxKeyNum key values to locate the corresponding key value interval
+   * covering the input key. (56 bytes)
    */
-  float keys[14];
+  KeyType keys[kMaxKeyNum];
 };
 
 template <typename KeyType, typename ValueType>
@@ -134,14 +137,14 @@ inline void BSModel<KeyType, ValueType>::Train(int left, int size,
   // calculate the value of the segment
   float value = static_cast<float>(size) / childNumber;
   int cnt = 1;
-  int start = std::min(static_cast<float>(left), left + value * cnt - 1);
+  int start = value;
   int end = left + size;
   // store the minimum value of each segment
   for (int i = start; i < end; i += value) {
     if (cnt >= childNumber) {
       break;
     }
-    keys[cnt - 1] = static_cast<float>(dataset[i].first);
+    keys[cnt - 1] = dataset[i].first;
     cnt++;
   }
 }
@@ -150,7 +153,7 @@ template <typename KeyType, typename ValueType>
 inline int BSModel<KeyType, ValueType>::Predict(KeyType key) const {
   int start_idx = 0;
   // get the maximum index
-  int end_idx = (flagNumber & 0x00FFFFFF) - 1;
+  int end_idx = (flagNumber & 0x00FFFFFF) - 2;
   int mid;
   // perform binary search between the index vector
   while (start_idx < end_idx) {

@@ -59,12 +59,16 @@ class HisModel {
    */
   explicit HisModel(int c) {
     childLeft = 0;
-    flagNumber = (HIS_INNER_NODE << 24) + std::max(2, std::min(c, 256));
+    flagNumber =
+        (HIS_INNER_NODE << 24) + std::max(2, std::min(c, kMaxChildNum));
     minValue = 0;
     divisor = 1;
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < kBaseLen; i++) {
       base[i] = 0;
       offset[i] = 0;
+    }
+    for (int i = 0; i < kPlaceHolderLen; i++) {
+      base[i + kBaseLen] = 0;
     }
   }
 
@@ -99,8 +103,30 @@ class HisModel {
    */
   static constexpr double kTimeCost = carmi_params::kHisInnerTime;
 
+  /**
+   * @brief The number of base.
+   */
+  static constexpr int kBaseLen = (52 - sizeof(KeyType)) / 3;
+
+  /**
+   * @brief The bytes of placeholder.
+   */
+  static constexpr int kPlaceHolderLen = 52 - sizeof(KeyType) - 3 * kBaseLen;
+
+  /**
+   * @brief The max number of child nodes.
+   */
+  static constexpr int kMaxChildNum = 16 * kBaseLen;
+
  public:
   //*** Public Data Members of His Inner Node Objects
+
+  /**
+   * @brief The minimum value of the subdataset, used to determine the bucket.
+   * The index of the item in the base is equal to static_cast<int>((key -
+   * minValue) / divisor). (sizeof(KeyType) bytes)
+   */
+  KeyType minValue;
 
   /**
    * @brief A combined integer, composed of the flag of his inner node
@@ -125,26 +151,20 @@ class HisModel {
   float divisor;
 
   /**
-   * @brief The minimum value of the subdataset, used to determine the bucket.
-   * The index of the item in the base is equal to static_cast<int>((key -
-   * minValue) / divisor). (4 bytes)
-   */
-  float minValue;
-
-  /**
    * @brief Each byte represents the index in child nodes of the first bit of
    * the corresponding 16 bits in offset. When predicting the index of the next
-   * node, we need to visit this member to get the basic index. (16 bytes)
+   * node, we need to visit this member to get the basic index.
+   * (kBaseLen + kPlaceHolderLen bytes)
    */
-  unsigned char base[16];
+  unsigned char base[kBaseLen + kPlaceHolderLen];
 
   /**
    * @brief Each bit of offset represents the difference (0 or 1) between the
    * index of the current bucket and the previous bucket. After obtaining the
    * basic index, count the number of bits in the offset table and add them
-   * together to get the index of the next node. (32 bytes)
+   * together to get the index of the next node. (kBaseLen * 2 bytes)
    */
-  unsigned short offset[16];
+  unsigned short offset[kBaseLen];
 };
 
 template <typename KeyType, typename ValueType>
@@ -217,7 +237,7 @@ template <typename KeyType, typename ValueType>
 inline int HisModel<KeyType, ValueType>::Predict(KeyType key) const {
   int childNumber = flagNumber & 0x00FFFFFF;
   // calculate the index of the corresponding bucket
-  int idx = static_cast<float>(key - minValue) * divisor;
+  int idx = static_cast<double>(key - minValue) * divisor;
   if (idx < 0)
     idx = 0;
   else if (idx >= childNumber)

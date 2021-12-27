@@ -55,6 +55,7 @@ class LRModel {
     childLeft = 0;
     slope = 0;
     intercept = 0;
+    minValue = 0;
     flagNumber = (LR_INNER_NODE << 24) + std::max(std::min(c, 0x00FFFFFF), 2);
   }
 
@@ -89,6 +90,11 @@ class LRModel {
    */
   static constexpr double kTimeCost = carmi_params::kLRInnerTime;
 
+  /**
+   * @brief The bytes of placeholder.
+   */
+  static constexpr int kPlaceHolderLen = 48 - sizeof(KeyType);
+
  public:
   //*** Public Data Members of LR Inner Node Objects
 
@@ -118,10 +124,15 @@ class LRModel {
   float intercept;
 
   /**
-   * @brief Placeholder, used to make sure that the size of this node is 64
-   * bytes. (48 bytes)
+   * @brief The minimum value.
    */
-  int Placeholder[12];
+  KeyType minValue;
+
+  /**
+   * @brief Placeholder, used to make sure that the size of this node is 64
+   * bytes. (kPlaceHolderLen bytes)
+   */
+  char Placeholder[kPlaceHolderLen];
 };
 
 template <typename KeyType, typename ValueType>
@@ -138,9 +149,10 @@ inline void LRModel<KeyType, ValueType>::Train(int left, int size,
   // extract data points from dataset[left, left + size] and use their processed
   // relative index as y to train
   int childNumber = flagNumber & 0x00FFFFFF;
+  minValue = dataset[left].first;
   std::vector<std::pair<KeyType, double>> currdata(size);
   for (int i = 0, j = left; i < size; i++, j++) {
-    currdata[i].first = dataset[j].first;
+    currdata[i].first = dataset[j].first - minValue;
     currdata[i].second = i * 1.0 / size * childNumber;
   }
 
@@ -165,7 +177,7 @@ inline void LRModel<KeyType, ValueType>::Train(int left, int size,
 template <typename KeyType, typename ValueType>
 inline int LRModel<KeyType, ValueType>::Predict(KeyType key) const {
   // use the lr model to predict the index of the next node
-  int p = slope * static_cast<double>(key) + intercept;
+  int p = slope * static_cast<double>(key - minValue) + intercept;
   // get its child number
   int bound = flagNumber & 0x00FFFFFF;
   // check whether p exceeds the boundaries

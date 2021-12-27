@@ -25,16 +25,19 @@
  * records all the contents that need to be stored in the training process of
  * the piecewise linear function, which is the item in the dp table.
  */
+template <typename KeyType>
 struct SegmentPoint {
   /**
    * @brief the current cost
    */
-  float cost;
+  float cost = -DBL_MAX;
 
   /**
    * @brief the key values
    */
-  double key[12] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+  KeyType key[12] = {KeyType(), KeyType(), KeyType(), KeyType(),
+                     KeyType(), KeyType(), KeyType(), KeyType(),
+                     KeyType(), KeyType(), KeyType(), KeyType()};
 
   /**
    * @brief the corresponding indexes
@@ -87,12 +90,12 @@ class CandidateCost {
     p[0] = 0.0;
     for (int i = 1; i < static_cast<int>(index.size()); i++) {
       for (int j = index[i - 1]; j < index[i]; j++) {
-        xx[i] += static_cast<double>(dataset[j].first) *
-                 static_cast<double>(dataset[j].first);
-        x[i] += static_cast<double>(dataset[j].first);
-        px[i] += static_cast<double>(dataset[j].first) *
-                 static_cast<double>(dataset[j].second);
-        p[i] += static_cast<double>(dataset[j].second);
+        xx[i] += static_cast<long double>(dataset[j].first) *
+                 static_cast<long double>(dataset[j].first);
+        x[i] += static_cast<long double>(dataset[j].first);
+        px[i] += static_cast<long double>(dataset[j].first) *
+                 static_cast<long double>(dataset[j].second);
+        p[i] += static_cast<long double>(dataset[j].second);
       }
       xx[i] += xx[i - 1];
       x[i] += x[i - 1];
@@ -100,15 +103,15 @@ class CandidateCost {
       p[i] += p[i - 1];
     }
     xx[index.size() - 1] +=
-        static_cast<double>(dataset[index[index.size() - 1]].first) *
-        static_cast<double>(dataset[index[index.size() - 1]].first);
+        static_cast<long double>(dataset[index[index.size() - 1]].first) *
+        static_cast<long double>(dataset[index[index.size() - 1]].first);
     x[index.size() - 1] +=
-        static_cast<double>(dataset[index[index.size() - 1]].first);
+        static_cast<long double>(dataset[index[index.size() - 1]].first);
     px[index.size() - 1] +=
-        static_cast<double>(dataset[index[index.size() - 1]].first) *
-        static_cast<double>(dataset[index[index.size() - 1]].second);
+        static_cast<long double>(dataset[index[index.size() - 1]].first) *
+        static_cast<long double>(dataset[index[index.size() - 1]].second);
     p[index.size() - 1] +=
-        static_cast<double>(dataset[index[index.size() - 1]].second);
+        static_cast<long double>(dataset[index[index.size() - 1]].second);
 
     // store the parameters of each segment
     for (int i = 0; i < index.size() - 1; i++) {
@@ -126,12 +129,12 @@ class CandidateCost {
             theta1 = 0;
             theta2 = dataset[index[j]].second;
           } else {
-            theta1 = (static_cast<double>(dataset[index[j]].second) -
-                      static_cast<double>(dataset[index[i]].second)) /
-                     (static_cast<double>(dataset[index[j]].first) -
-                      static_cast<double>(dataset[index[i]].first));
-            theta2 = static_cast<double>(dataset[index[j]].second) -
-                     theta1 * static_cast<double>(dataset[index[j]].first);
+            theta1 = (static_cast<long double>(dataset[index[j]].second) -
+                      static_cast<long double>(dataset[index[i]].second)) /
+                     (static_cast<long double>(dataset[index[j]].first) -
+                      static_cast<long double>(dataset[index[i]].first));
+            theta2 = static_cast<long double>(dataset[index[j]].second) -
+                     theta1 * static_cast<long double>(dataset[index[j]].first);
           }
         } else {
           theta1 = (t3 * tmpSize - t2 * t4) / (t1 * tmpSize - t2 * t2);
