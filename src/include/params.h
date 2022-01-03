@@ -61,7 +61,7 @@ static constexpr int kMaxLeafNodeSizeExternal = 1024;
  * node.
  * This value needs to be no less than the first two parameters.
  */
-static constexpr int kAlgorithmThreshold = 1024;
+static constexpr int kAlgorithmThreshold = 60000;
 
 /**
  * @brief The latency of a memory access
