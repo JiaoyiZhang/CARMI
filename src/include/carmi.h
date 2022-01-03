@@ -909,7 +909,8 @@ class CARMI {
   /**
    * @brief The maximum child number in the histogram inner nodes.
    */
-  static constexpr int kHisMaxChildNumber = 256;
+  static constexpr int kHisMaxChildNumber =
+      HisModel<KeyType, ValueType>::kMaxChildNum;
 
   /**
    * @brief The maximum child number in the bs inner nodes.
@@ -919,7 +920,7 @@ class CARMI {
   /**
    * @brief The minimum child number of inner nodes.
    */
-  static constexpr int kMinChildNumber = 16;
+  static constexpr int kMinChildNumber = 4;
 
   /**
    * @brief The number of new leaf nodes when splitting a leaf node.
@@ -975,7 +976,8 @@ CARMI<KeyType, ValueType, Compare, Alloc>::CARMI(
     throw std::logic_error(
         "carmi_params::kMaxLeafNodeSize does not meet the logic requirements.");
   }
-  if (carmi_params::kAlgorithmThreshold < carmi_params::kMaxLeafNodeSize) {
+  if (carmi_params::kAlgorithmThreshold <
+      CFArrayType<KeyType, ValueType, Compare, Alloc>::kMaxLeafCapacity) {
     throw std::logic_error(
         "carmi_params::kAlgorithmThreshold does not meet the logic "
         "requirements.");

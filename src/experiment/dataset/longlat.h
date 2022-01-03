@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_EXPERIMENT_DATASET_LONGLAT_H_
-#define SRC_EXPERIMENT_DATASET_LONGLAT_H_
+#ifndef EXPERIMENT_DATASET_LONGLAT_H_
+#define EXPERIMENT_DATASET_LONGLAT_H_
 
 #include <algorithm>
 #include <fstream>
@@ -55,4 +55,4 @@ class LonglatDataset : public BaseDataset {
   }
 };
 
-#endif  // SRC_EXPERIMENT_DATASET_LONGLAT_H_
+#endif  // EXPERIMENT_DATASET_LONGLAT_H_

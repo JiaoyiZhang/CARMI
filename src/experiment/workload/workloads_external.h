@@ -41,12 +41,13 @@ void WorkloadA(bool isZipfian, const DataVecType &findDataset,
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kWriteHeavy;
-  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
+  InitTestSet(findDataset, insertDataset, isZipfian, &findQuery, &insertQuery,
+              &index);
 
   std::clock_t s, e;
   double tmp;
   auto resIte = carmi->end();
-  double res = 0.0;
+  KeyType res = 0;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
@@ -85,14 +86,15 @@ void WorkloadB(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
+  InitTestSet(findDataset, insertDataset, isZipfian, &findQuery, &insertQuery,
+              &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
 
   std::clock_t s, e;
   auto resIte = carmi->end();
-  double res = 0.0;
+  KeyType res = 0;
   double tmp;
   s = std::clock();
   if (isZipfian) {
@@ -136,12 +138,13 @@ void WorkloadC(bool isZipfian, const DataVecType &findDataset,
   DataVecType insertQuery;
   std::vector<int> index;
   int end = kTestSize * kReadOnly;
-  InitTestSet(findDataset, DataVecType(), &findQuery, &insertQuery, &index);
+  InitTestSet(findDataset, DataVecType(), isZipfian, &findQuery, &insertQuery,
+              &index);
 
   std::clock_t s, e;
   double tmp;
   auto resIte = carmi->end();
-  double res = 0.0;
+  KeyType res = 0;
   s = std::clock();
   if (isZipfian) {
     for (int i = 0; i < end; i++) {
@@ -180,12 +183,14 @@ void WorkloadE(bool isZipfian, const DataVecType &findDataset,
   DataVecType findQuery;
   DataVecType insertQuery;
   std::vector<int> index;
-  InitTestSet(findDataset, insertDataset, &findQuery, &insertQuery, &index);
+  InitTestSet(findDataset, insertDataset, isZipfian, &findQuery, &insertQuery,
+              &index);
 
   int end = round(kTestSize * (1 - kReadHeavy));
   int findCnt = 0;
 
-  std::vector<std::pair<KeyType, std::vector<KeyType>>> ret(100, {-1, {-1}});
+  std::vector<std::pair<KeyType, std::vector<KeyType>>> ret(
+      100, {KeyType(), {KeyType()}});
   std::clock_t s, e;
   double tmp;
   s = std::clock();

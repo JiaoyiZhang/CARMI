@@ -122,13 +122,6 @@ class HisModel {
   //*** Public Data Members of His Inner Node Objects
 
   /**
-   * @brief The minimum value of the subdataset, used to determine the bucket.
-   * The index of the item in the base is equal to static_cast<int>((key -
-   * minValue) / divisor). (sizeof(KeyType) bytes)
-   */
-  KeyType minValue;
-
-  /**
    * @brief A combined integer, composed of the flag of his inner node
    * (HIS_INNER_NODE, 1 byte) and the number of its child nodes (3 bytes). (This
    * member is 4 bytes)
@@ -165,6 +158,13 @@ class HisModel {
    * together to get the index of the next node. (kBaseLen * 2 bytes)
    */
   unsigned short offset[kBaseLen];
+
+  /**
+   * @brief The minimum value of the subdataset, used to determine the bucket.
+   * The index of the item in the base is equal to static_cast<int>((key -
+   * minValue) / divisor). (sizeof(KeyType) bytes)
+   */
+  KeyType minValue;
 };
 
 template <typename KeyType, typename ValueType>

@@ -94,6 +94,9 @@ class BSModel {
    */
   static constexpr double kTimeCost = carmi_params::kBSInnerTime;
 
+  /**
+   * @brief The maximum number of stored keys.
+   */
   static constexpr int kMaxKeyNum = 56 / sizeof(KeyType);
 
  public:
@@ -137,7 +140,7 @@ inline void BSModel<KeyType, ValueType>::Train(int left, int size,
   // calculate the value of the segment
   float value = static_cast<float>(size) / childNumber;
   int cnt = 1;
-  int start = value;
+  int start = left + value;
   int end = left + size;
   // store the minimum value of each segment
   for (int i = start; i < end; i += value) {
@@ -154,6 +157,9 @@ inline int BSModel<KeyType, ValueType>::Predict(KeyType key) const {
   int start_idx = 0;
   // get the maximum index
   int end_idx = (flagNumber & 0x00FFFFFF) - 2;
+  if (key > keys[end_idx]) {
+    return childLeft + end_idx + 1;
+  }
   int mid;
   // perform binary search between the index vector
   while (start_idx < end_idx) {

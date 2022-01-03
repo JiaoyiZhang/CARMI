@@ -1,15 +1,15 @@
 /**
- * @file longitudes.h
+ * @file osmc.h
  * @author Jiaoyi
  * @brief
  * @version 3.0
- * @date 2021-03-16
+ * @date 2021-12-16
  *
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef EXPERIMENT_DATASET_LONGITUDES_H_
-#define EXPERIMENT_DATASET_LONGITUDES_H_
+#ifndef EXPERIMENT_DATASET_OSMC_H_
+#define EXPERIMENT_DATASET_OSMC_H_
 
 #include <algorithm>
 #include <fstream>
@@ -22,16 +22,16 @@
 #include <vector>
 
 #include "./base_dataset.h"
-class LongitudesDataset : public BaseDataset {
+class OsmcDataset : public BaseDataset {
  public:
-  explicit LongitudesDataset(float initRatio) : BaseDataset(initRatio) {}
+  explicit OsmcDataset(float initRatio) : BaseDataset(initRatio) {}
 
   void GenerateDataset(DataVecType *initDataset, DataVecType *insertDataset,
                        DataVecType *testInsertQuery) {
     DataVecType ds;
-    std::ifstream inFile("../experiment/dataset/longitude.csv", std::ios::in);
+    std::ifstream inFile("../experiment/dataset/osmc.csv", std::ios::in);
     if (!inFile) {
-      std::cout << "open longitude.csv failed" << std::endl;
+      std::cout << "open osmc.csv failed" << std::endl;
       exit(1);
     }
     std::string line;
@@ -43,8 +43,12 @@ class LongitudesDataset : public BaseDataset {
       while (getline(sin, field, ',')) fields.push_back(field);
       std::string key = fields[0];
       std::string value = fields[1];
-      double k = stod(key);
-      double v = stod(value);
+      uint64_t k, v;
+      std::stringstream strK, strV;
+      strK << key;
+      strK >> k;
+      strV << value;
+      strV >> v;
       ds.push_back({k, v});
       if (ds.size() == kDatasetSize + round(kTestSize * (1 - proportion))) {
         break;
@@ -55,4 +59,4 @@ class LongitudesDataset : public BaseDataset {
   }
 };
 
-#endif  // EXPERIMENT_DATASET_LONGITUDES_H_
+#endif  // EXPERIMENT_DATASET_OSMC_H_
