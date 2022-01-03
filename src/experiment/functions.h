@@ -22,6 +22,7 @@
 #include "dataset/longitudes.h"
 #include "dataset/longlat.h"
 #include "dataset/normal_distribution.h"
+#include "dataset/osmc.h"
 #include "dataset/uniform_distribution.h"
 #include "dataset/ycsb.h"
 

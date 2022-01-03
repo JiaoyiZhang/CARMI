@@ -87,8 +87,7 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
     uniData.GenerateDataset(&initData, &insertData, &testInsert);
     CoreCARMI(false, initRatio, kRate, length, initData, insertData,
               testInsert);
-    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
-    // testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, insertData, testInsert);
 
     // std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
     //           << std::endl;
@@ -103,16 +102,14 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
     norData.GenerateDataset(&initData, &insertData, &testInsert);
     CoreCARMI(false, initRatio, kRate, length, initData, insertData,
               testInsert);
-    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
-    // testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, insertData, testInsert);
 
     std::cout << "+++++++++++ lognormal dataset ++++++++++++++++++++++++++"
               << std::endl;
     logData.GenerateDataset(&initData, &insertData, &testInsert);
     CoreCARMI(false, initRatio, kRate, length, initData, insertData,
               testInsert);
-    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
-    // testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, insertData, testInsert);
 
     outRes << std::endl;
   }
@@ -136,8 +133,7 @@ void mainMap(double initRatio, const std::vector<int> &length) {
   if (init == kRangeScan) {
     init = kReadHeavy;
   }
-  LongitudesDataset longData(init);
-  LonglatDataset latData(init);
+  OsmcDataset osmcData(init);
 
   DataVecType initData;
   DataVecType insertData;
@@ -147,19 +143,10 @@ void mainMap(double initRatio, const std::vector<int> &length) {
     double kRate = rate[r];
     outRes << "kRate:" << kRate << std::endl;
 
-    std::cout << "+++++++++++ longlat dataset ++++++++++++++++++++++++++"
+    std::cout << "+++++++++++ osmc dataset ++++++++++++++++++++++++++"
               << std::endl;
-    latData.GenerateDataset(&initData, &insertData, &testInsert);
-    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
-    // testInsert);
-    CoreCARMI(false, initRatio, kRate, length, initData, insertData,
-              testInsert);
-
-    std::cout << "+++++++++++ longitudes dataset ++++++++++++++++++++++++++"
-              << std::endl;
-    longData.GenerateDataset(&initData, &insertData, &testInsert);
-    // CoreCARMI(true, initRatio, kRate, length, initData, insertData,
-    // testInsert);
+    osmcData.GenerateDataset(&initData, &insertData, &testInsert);
+    CoreCARMI(true, initRatio, kRate, length, initData, insertData, testInsert);
     CoreCARMI(false, initRatio, kRate, length, initData, insertData,
               testInsert);
 
