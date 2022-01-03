@@ -89,7 +89,7 @@ void mainSynthetic(double initRatio, const std::vector<int> &length) {
               testInsert);
     CoreCARMI(true, initRatio, kRate, length, initData, insertData, testInsert);
 
-    // std::cout << "+++++++++++ exponential dataset ++++++++++++++++++++++++++"
+    // std::cout << "+++++++++++ exponential dataset +++++++++++++++++++"
     //           << std::endl;
     // expData.GenerateDataset(&initData, &insertData, &testInsert);
     // CoreCARMI(false, initRatio, kRate, length, initData, insertData,

@@ -269,6 +269,7 @@ inline void ExternalArray<KeyType, DataType, Compare>::Init(
 template <typename KeyType, typename DataType, typename Compare>
 inline void ExternalArray<KeyType, DataType, Compare>::Train(
     const DataVectorType &dataset, int start_idx, int size) {
+  if (size == 0) return;
   if (start_idx < 0 || size < 0 || start_idx + size > dataset.size()) {
     throw std::out_of_range("ExternalArray::Train: the range is invalid.");
   }
@@ -280,7 +281,6 @@ inline void ExternalArray<KeyType, DataType, Compare>::Train(
     currdata[j].first = dataset[i].first - minValue;
     currdata[j].second = static_cast<double>(j) / size;
   }
-  if (size == 0) return;
 
   if ((flagNumber & 0x00FFFFFF) != size) {
     flagNumber = (EXTERNAL_ARRAY_LEAF_NODE << 24) + size;
