@@ -98,7 +98,7 @@ int NodeArrayStructure<KeyType, ValueType, Compare, Alloc>::AllocateNodeMemory(
   // allocation fails, need to expand the nodeArray
   while (nowNodeNumber + size > tmpSize) {
     BaseNode<KeyType, ValueType, Compare, Alloc> t;
-    tmpSize *= 2;
+    tmpSize *= 1.25;
     nodeArray.resize(tmpSize, t);
   }
   newLeft = nowNodeNumber;

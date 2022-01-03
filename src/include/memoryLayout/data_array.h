@@ -245,8 +245,8 @@ int DataArrayStructure<KeyType, ValueType, Alloc>::AllocateMemory(
   // allocation fails, need to expand the dataArray
   if (newLeft == -1) {
     int oldDatasize = dataArray.size();
-    dataArray.resize(oldDatasize * 1.5, LeafSlots<KeyType, ValueType>());
-    AddEmptyMemoryBlock(oldDatasize, oldDatasize * 0.5);
+    dataArray.resize(oldDatasize * 1.25, LeafSlots<KeyType, ValueType>());
+    AddEmptyMemoryBlock(oldDatasize, oldDatasize * 0.25);
     newLeft = AllocateSingleMemory(idx);
   }
 

@@ -548,6 +548,12 @@ class CFArrayType {
   int flagNumber;
 
   /**
+   * @brief The first index of data blocks managed by this object in the data
+   * array. (4 bytes)
+   */
+  int m_left;
+
+  /**
    * @brief The index of the previous leaf node in the data array, used for
    * range scan workloads. (4 bytes)
    */
@@ -558,12 +564,6 @@ class CFArrayType {
    * scan workloads. (4 bytes)
    */
   int nextLeaf;
-
-  /**
-   * @brief The first index of data blocks managed by this object in the data
-   * array. (4 bytes)
-   */
-  int m_left;
 
   /**
    * @brief An array of length kMaxBlockNum-1, used to store the minimum key

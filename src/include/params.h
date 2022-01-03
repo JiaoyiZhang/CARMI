@@ -90,7 +90,7 @@ static constexpr double kLRInnerTime = kMemoryAccessTime + 5.23;
  * @brief The time cost of the plr inner node including the latency of
  * memory access and the CPU time
  */
-static constexpr double kPLRInnerTime = kMemoryAccessTime + 24.21;
+static constexpr double kPLRInnerTime = kMemoryAccessTime + 22.8;
 
 /**
  * @brief The time cost of the his inner node including the latency of
@@ -102,7 +102,7 @@ static constexpr double kHisInnerTime = kMemoryAccessTime + 18.44;
  * @brief The time cost of the bs inner node including the latency of
  * memory access and the CPU time
  */
-static constexpr double kBSInnerTime = kMemoryAccessTime + 36.38;
+static constexpr double kBSInnerTime = kMemoryAccessTime + 26.38;
 
 /**
  * @brief The time cost of moving a data point
@@ -112,9 +112,9 @@ static constexpr double kCostMoveTime = 6.25;
 /**
  * @brief The basic time cost of a leaf node including the latency of accessing
  * the leaf node in the memory and the time cost of searching in the leaf node
- * (25.4 ns) and the data block (53.8 ns)
+ * (25.4 ns).
  */
-static constexpr double kLeafBaseTime = kMemoryAccessTime + 25.4 + 53.8;
+static constexpr double kLeafBaseTime = kMemoryAccessTime + 25.4;
 
 /**
  * @brief The average time cost of a binary search
