@@ -89,7 +89,7 @@ NodeCost CARMI<KeyType, ValueType, Compare, Alloc>::GreedyAlgorithm(
   // calculate the weight of the frequency of this sub-dataset (findQuery and
   // insertQury)
   double frequency_weight = CalculateFrequencyWeight(dataRange);
-  int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 2);
+  int tmpEnd = std::min(0x00FFFFFF, dataRange.initRange.size / 16);
   tmpEnd = std::max(tmpEnd, kMinChildNumber);
   for (int c = kMinChildNumber; c <= tmpEnd; c *= 2) {
     // Case 1: construct a LR inner node, if it is better than the current
