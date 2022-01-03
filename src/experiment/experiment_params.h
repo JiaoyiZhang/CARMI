@@ -14,14 +14,20 @@
 
 #define PARAM_ZIPFIAN 0.99
 #define DEBUG
+// #define TEST_UINT64
 
 #include <utility>
 #include <vector>
 
+#ifdef TEST_UINT64
+typedef uint64_t KeyType;
+typedef uint64_t ValueType;
+#else
 typedef double KeyType;
 typedef double ValueType;
+#endif  // TEST_UINT
 
-typedef std::pair<double, double> DataType;
+typedef std::pair<KeyType, ValueType> DataType;
 typedef std::vector<DataType> DataVecType;
 
 static bool kPrimaryIndex = false;

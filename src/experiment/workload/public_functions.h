@@ -30,8 +30,9 @@ extern std::ofstream outRes;
  * @param[inout] index
  */
 void InitTestSet(const DataVecType &findQueryset,
-                 const DataVecType &insertDataset, DataVecType *findQuery,
-                 DataVecType *insertQuery, std::vector<int> *index);
+                 const DataVecType &insertDataset, bool isZipfian,
+                 DataVecType *findQuery, DataVecType *insertQuery,
+                 std::vector<int> *index);
 
 /**
  * @brief print the average time of the workload

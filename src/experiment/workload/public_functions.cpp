@@ -26,8 +26,9 @@
  * @param[inout] index
  */
 void InitTestSet(const DataVecType &findQueryset,
-                 const DataVecType &insertDataset, DataVecType *findQuery,
-                 DataVecType *insertQuery, std::vector<int> *index) {
+                 const DataVecType &insertDataset, bool isZipfian,
+                 DataVecType *findQuery, DataVecType *insertQuery,
+                 std::vector<int> *index) {
   (*findQuery) = findQueryset;
   (*insertQuery) = insertDataset;
 
@@ -43,12 +44,14 @@ void InitTestSet(const DataVecType &findQueryset,
     shuffle((*insertQuery).begin(), (*insertQuery).end(), engine);
   }
 
-  Zipfian zip;
-  zip.InitZipfian(PARAM_ZIPFIAN, (*findQuery).size());
-  *index = std::vector<int>(kTestSize, 0);
-  for (int i = 0; i < kTestSize; i++) {
-    int idx = zip.GenerateNextIndex();
-    (*index)[i] = idx;
+  if (isZipfian) {
+    Zipfian zip;
+    zip.InitZipfian(PARAM_ZIPFIAN, (*findQuery).size());
+    *index = std::vector<int>(kTestSize, 0);
+    for (int i = 0; i < kTestSize; i++) {
+      int idx = zip.GenerateNextIndex();
+      (*index)[i] = idx;
+    }
   }
 }
 
@@ -58,7 +61,7 @@ void InitTestSet(const DataVecType &findQueryset,
  * @param[in] time
  */
 void PrintAvgTime(double time) {
-  std::cout << "average time, " << time * kSecondToNanosecond / kTestSize
+  std::cout << "average time," << time * kSecondToNanosecond / kTestSize
             << std::endl;
   outRes << time * kSecondToNanosecond / kTestSize << ",";
 }
