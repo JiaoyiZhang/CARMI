@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef SRC_EXPERIMENT_DATASET_BASE_DATASET_H_
-#define SRC_EXPERIMENT_DATASET_BASE_DATASET_H_
+#ifndef EXPERIMENT_DATASET_BASE_DATASET_H_
+#define EXPERIMENT_DATASET_BASE_DATASET_H_
 
 #include <algorithm>
 #include <ctime>
@@ -98,4 +98,4 @@ class BaseDataset {
   }
 };
 
-#endif  // SRC_EXPERIMENT_DATASET_BASE_DATASET_H_
+#endif  // EXPERIMENT_DATASET_BASE_DATASET_H_

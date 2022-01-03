@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_EXPERIMENT_WORKLOAD_ZIPFIAN_H_
-#define SRC_EXPERIMENT_WORKLOAD_ZIPFIAN_H_
+#ifndef EXPERIMENT_WORKLOAD_ZIPFIAN_H_
+#define EXPERIMENT_WORKLOAD_ZIPFIAN_H_
 
 #include <math.h>
 #include <stdlib.h>
@@ -43,4 +43,4 @@ class Zipfian {
   }
 };
 
-#endif  // SRC_EXPERIMENT_WORKLOAD_ZIPFIAN_H_
+#endif  // EXPERIMENT_WORKLOAD_ZIPFIAN_H_

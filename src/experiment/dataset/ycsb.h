@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_EXPERIMENT_DATASET_YCSB_H_
-#define SRC_EXPERIMENT_DATASET_YCSB_H_
+#ifndef EXPERIMENT_DATASET_YCSB_H_
+#define EXPERIMENT_DATASET_YCSB_H_
 
 #include <algorithm>
 #include <fstream>
@@ -75,4 +75,4 @@ class YCSBDataset : public BaseDataset {
   }
 };
 
-#endif  // SRC_EXPERIMENT_DATASET_YCSB_H_
+#endif  // EXPERIMENT_DATASET_YCSB_H_

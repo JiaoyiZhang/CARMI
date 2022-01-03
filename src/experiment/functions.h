@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2021
  *
  */
-#ifndef SRC_EXPERIMENT_FUNCTIONS_H_
-#define SRC_EXPERIMENT_FUNCTIONS_H_
+#ifndef EXPERIMENT_FUNCTIONS_H_
+#define EXPERIMENT_FUNCTIONS_H_
 
 #include <vector>
 
@@ -82,4 +82,4 @@ void mainYCSB(double initRatio, const std::vector<int> &length);
 void mainMap(double initRatio, const std::vector<int> &length);
 void mainExperiment();
 
-#endif  // SRC_EXPERIMENT_FUNCTIONS_H_
+#endif  // EXPERIMENT_FUNCTIONS_H_
